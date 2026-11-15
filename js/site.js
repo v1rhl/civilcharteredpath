@@ -124,9 +124,21 @@
   renderAttr();
   if (window.matchMedia && window.matchMedia("(max-width: 1000px)").matches) $("sources-box").open = false;
 
+  /* Tips, each with a small line drawing */
+  var TIP_ICONS = [
+    '<rect x="5" y="3" width="11" height="15" rx="1.2"/><rect x="8" y="6" width="11" height="15" rx="1.2"/><path d="M11 11h5M11 14h5M11 17h3"/>',
+    '<circle cx="12" cy="13" r="8"/><path d="M12 9v4l3 2M9 2h6"/>',
+    '<path d="M4 5h16v11H9l-5 4z"/><path d="M10 9a2 2 0 1 1 2.8 1.8c-.5.3-.8.7-.8 1.2"/><path d="M12 14.2h.01"/>',
+    '<path d="M3 20h18"/><path d="M5 20v-6l7-8 7 8v6"/><path d="M15 4l5 5-9 9H6v-5z" transform="translate(0 0)" opacity="0"/><path d="M9 20v-5h6v5"/>',
+    '<circle cx="8" cy="8" r="3"/><circle cx="16" cy="8" r="3"/><path d="M3 19c0-3 2-5 5-5s5 2 5 5M11 19c0-3 2-5 5-5s5 2 5 5"/>',
+    '<circle cx="12" cy="7" r="3.5"/><path d="M5 21c0-4 3-7 7-7s7 3 7 7"/>',
+    '<path d="M5 4h11a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3z"/><path d="M5 17a3 3 0 0 1 3-3h11"/><path d="M9 8h6"/>',
+    '<path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-4 10.5c.8.8 1 1.5 1 2.5h6c0-1 .2-1.7 1-2.5A6 6 0 0 0 12 3z"/>'
+  ];
+  function tipIcon(i) { return '<svg class="tip-ill" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="stroke:var(--accent)">' + (TIP_ICONS[i] || TIP_ICONS[2]) + "</svg>"; }
   /* Tips */
   $("tips").innerHTML = T.map(function (t, i) {
-    return '<div class="panel tip"><span class="num">' + String(i + 1).padStart(2, "0") + '</span><div style="display:flex;flex-direction:column;gap:6px;min-width:0"><h3>' + esc(t.t) + "</h3><p>" + esc(t.d) + '</p><span class="src">Source: ' + ext(t.url, t.src) + "</span></div></div>";
+    return '<div class="panel tip">' + tipIcon(i) + '<div style="display:flex;flex-direction:column;gap:6px;min-width:0"><h3>' + esc(t.t) + "</h3><p>" + esc(t.d) + '</p><span class="src">Source: ' + ext(t.url, t.src) + "</span></div></div>";
   }).join("");
 
   /* Questions */

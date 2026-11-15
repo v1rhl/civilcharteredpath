@@ -140,7 +140,7 @@ details.q .pointer { padding: 0 16px 16px; color: var(--muted); max-width: 72ch;
 @media (max-width: 520px) { details.q summary { grid-template-columns: minmax(0, 1fr) auto; } details.q summary .tag { grid-column: 1 / -1; } }
 
 /* Tips */
-.tip { display: grid; grid-template-columns: 2.2em minmax(0, 1fr); gap: 4px 12px; }
+.tip { display: grid; grid-template-columns: 40px minmax(0, 1fr); gap: 4px 12px; }
 .tip .num { font: 500 0.9rem var(--font-mono); color: var(--accent); padding-top: 2px; }
 .tip .src { font-size: 0.85rem; }
 
@@ -394,6 +394,29 @@ footer .wrap { padding-block: 24px; display: flex; flex-direction: column; gap: 
 .feed-item { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
 .feed .tags { display: flex; flex-wrap: wrap; gap: 4px; }
 .feed .tag { font: 500 0.7rem var(--font-mono); color: var(--accent); background: var(--accent-soft); border-radius: 3px; padding: 2px 6px; }
+.tag-ice { display: inline-block; font: 600 0.68rem var(--font-mono); color: var(--accent); background: var(--accent-soft); border-radius: 3px; padding: 2px 6px; letter-spacing: 0.04em; vertical-align: middle; }
+.day-glance { gap: 10px; }
+.day-svg { width: 100%; height: auto; display: block; }
+.parts { display: flex; flex-direction: column; gap: 16px; }
+.part { display: grid !important; grid-template-columns: 120px minmax(0, 1fr) minmax(0, 1fr); column-gap: 20px; align-items: start; }
+.part .part-ill { grid-row: 1 / span 2; }
+.part h3 { grid-column: 2 / -1; }
+.part .ice-says { grid-column: 2; }
+.part .our-advice { grid-column: 3; display: flex; flex-direction: column; gap: 8px; }
+@media (max-width: 900px) { .part { grid-template-columns: minmax(0, 1fr); } .part .part-ill, .part h3, .part .ice-says, .part .our-advice { grid-column: 1; grid-row: auto; } .part .part-ill { width: 96px; } }
+.part { gap: 12px; }
+.part-ill { width: 120px; height: auto; display: block; }
+.part h3, .part h4 { margin: 0; }
+.part h4 { font-size: 0.95rem; color: var(--accent); }
+.ice-says { background: var(--paper); border-left: 3px solid var(--accent); border-radius: 0 var(--radius) var(--radius) 0; padding: 10px 12px; display: flex; flex-direction: column; gap: 6px; }
+.ice-says ul, .advice-list { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 6px; }
+.ice-says li, .advice-list li { font-size: 0.92rem; }
+.ice-says a { font: 500 0.75rem var(--font-mono); white-space: nowrap; }
+.grid.two { grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr)); }
+.tip-ill { width: 40px; height: 40px; padding: 7px; border-radius: var(--radius); background: var(--accent-soft); }
+#view-review { display: flex; flex-direction: column; gap: 20px; }
+#view-review[hidden] { display: none !important; }
+@media (max-width: 600px) { .day-svg { min-width: 560px; } .day-glance { overflow-x: auto; } }
 </style>
 </head>
 <body>
@@ -654,8 +677,117 @@ footer .wrap { padding-block: 24px; display: flex; flex-direction: column; gap: 
   <div class="view-head">
     <span class="eyebrow">Review day</span>
     <h2>Presentation, interview and communication task</h2>
-    <p class="lede">Advice gathered from ICE's guidance and from reviewers and recently chartered engineers. Each tip links to its source.</p>
+    <p class="lede">What happens on the day, what ICE says about each part, and practical advice. Facts from ICE's guidance are marked <span class="tag-ice">ICE</span> with a page number; everything under "Our advice" is our own suggestion.</p>
   </div>
+
+  <div class="panel day-glance">
+    <span class="eyebrow">The day at a glance (Chartered review)</span>
+    <svg viewBox="0 0 720 150" class="day-svg" role="img" aria-label="Timeline: 15-minute presentation and interview within 75 minutes, then a 90-minute written communication task" font-family="IBM Plex Sans, Arial, sans-serif">
+      <rect x="10" y="40" width="96" height="44" rx="6" style="fill:var(--accent)"/>
+      <text x="58" y="60" text-anchor="middle" font-size="13" font-weight="700" style="fill:var(--accent-ink)">Presentation</text>
+      <text x="58" y="76" text-anchor="middle" font-size="11" style="fill:var(--accent-ink)">15 min</text>
+      <rect x="110" y="40" width="300" height="44" rx="6" style="fill:var(--accent-soft);stroke:var(--accent)"/>
+      <text x="260" y="60" text-anchor="middle" font-size="13" font-weight="700" style="fill:var(--ink)">Interview</text>
+      <text x="260" y="76" text-anchor="middle" font-size="11" style="fill:var(--muted)">the rest of the 75 minutes</text>
+      <path d="M10 98 h400" stroke-width="1.5" style="stroke:var(--muted)"/><path d="M10 92 v12 M410 92 v12" stroke-width="1.5" style="stroke:var(--muted)"/>
+      <text x="210" y="118" text-anchor="middle" font-size="11" style="fill:var(--muted)">up to 75 minutes with two reviewers</text>
+      <path d="M418 62 h22" stroke-width="2" stroke-dasharray="3 3" style="stroke:var(--muted)"/>
+      <rect x="446" y="40" width="264" height="44" rx="6" style="fill:var(--flag-soft);stroke:var(--flag)"/>
+      <text x="578" y="60" text-anchor="middle" font-size="13" font-weight="700" style="fill:var(--ink)">Written communication task</text>
+      <text x="578" y="76" text-anchor="middle" font-size="11" style="fill:var(--muted)">90 min, after the interview</text>
+      <text x="10" y="24" font-size="11" style="fill:var(--muted)">Incorporated review: up to 60 minutes, then a 60-minute task.</text>
+    </svg>
+  </div>
+
+  <div class="parts">
+    <article class="panel part">
+      <svg class="part-ill" viewBox="0 0 160 110" aria-hidden="true"><rect x="22" y="10" width="116" height="70" rx="5" style="fill:var(--surface);stroke:var(--accent)" stroke-width="2"/><path d="M36 64 l20-18 14 10 22-22 22 14" fill="none" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="stroke:var(--accent)"/><path d="M80 80 v14 M60 100 h40" stroke-width="2.5" stroke-linecap="round" style="stroke:var(--muted)"/><circle cx="140" cy="88" r="9" style="fill:var(--flag-soft);stroke:var(--flag)" stroke-width="2"/><path d="M140 83 v5 l3 3" fill="none" stroke-width="2" stroke-linecap="round" style="stroke:var(--flag)"/></svg>
+      <h3>The presentation</h3>
+      <div class="ice-says">
+        <span class="tag-ice">ICE</span>
+        <ul>
+          <li>15 minutes. Reviewers may stop you if you go over. <a href="https://www.ice.org.uk/media/aj2gmts3/11-jun-26-professional-review-guidance.pdf" target="_blank" rel="noopener">p. 13</a></li>
+          <li>It should expand on one aspect of your report. It should not cover all the attributes, or summarise your CV or report. <a href="https://www.ice.org.uk/media/aj2gmts3/11-jun-26-professional-review-guidance.pdf" target="_blank" rel="noopener">p. 13</a></li>
+          <li>Visual aids are encouraged. In person, no larger than A3; a laptop is allowed but no power supply is provided. Online, share your screen on Teams. <a href="https://www.ice.org.uk/media/aj2gmts3/11-jun-26-professional-review-guidance.pdf" target="_blank" rel="noopener">p. 13</a></li>
+        </ul>
+      </div>
+      <div class="our-advice"><h4>Our advice</h4>
+      <ul class="advice-list">
+        <li>Pick the decision you're proudest of, where you made the call. Structure it as problem, options, your decision and why, result, and what you'd do differently.</li>
+        <li>Aim for 13 minutes, so nerves or a question don't push you past 15.</li>
+        <li>Use drawings, sections and photos rather than text-heavy slides. Show numbers you can talk to.</li>
+        <li>Rehearse aloud with a timer at least five times, and once in front of someone who'll interrupt you.</li>
+        <li>Online: test screen sharing on Teams beforehand and have a PDF backup ready.</li>
+      </ul></div>
+    </article>
+
+    <article class="panel part">
+      <svg class="part-ill" viewBox="0 0 160 110" aria-hidden="true"><rect x="20" y="62" width="120" height="8" rx="3" style="fill:var(--line)"/><circle cx="44" cy="34" r="12" style="fill:var(--surface);stroke:var(--accent)" stroke-width="2"/><path d="M26 62 c2-14 9-20 18-20 s16 6 18 20" style="fill:var(--surface);stroke:var(--accent)" stroke-width="2"/><circle cx="116" cy="34" r="12" style="fill:var(--accent)"/><path d="M98 62 c2-14 9-20 18-20 s16 6 18 20" style="fill:var(--accent)"/><path d="M62 12 h34 v16 h-20 l-7 7 v-7 h-7z" style="fill:var(--flag-soft);stroke:var(--flag)" stroke-width="2"/><text x="79" y="25" text-anchor="middle" font-size="12" font-weight="700" style="fill:var(--flag)">?</text><path d="M30 84 h100 M44 96 h72" stroke-width="2" stroke-linecap="round" style="stroke:var(--line)"/></svg>
+      <h3>The interview</h3>
+      <div class="ice-says">
+        <span class="tag-ice">ICE</span>
+        <ul>
+          <li>Two peer reviewers assess you; a third may join for specialist knowledge, and an observer may sit in without taking part. <a href="https://www.ice.org.uk/media/aj2gmts3/11-jun-26-professional-review-guidance.pdf" target="_blank" rel="noopener">pp. 4, 12-13</a></li>
+          <li>The presentation and interview together last up to 75 minutes for a Chartered review (60 for Incorporated). <a href="https://www.ice.org.uk/media/aj2gmts3/11-jun-26-professional-review-guidance.pdf" target="_blank" rel="noopener">p. 13</a></li>
+          <li>Reviewers confirm you've reached the required level in all the attributes. Where your report is light on an attribute, expect specific questions on it. <a href="https://www.ice.org.uk/media/aj2gmts3/11-jun-26-professional-review-guidance.pdf" target="_blank" rel="noopener">p. 13</a></li>
+          <li>Phones off before the interview starts; recording isn't allowed. <a href="https://www.ice.org.uk/media/aj2gmts3/11-jun-26-professional-review-guidance.pdf" target="_blank" rel="noopener">p. 13</a></li>
+        </ul>
+      </div>
+      <div class="our-advice"><h4>Our advice</h4>
+      <ul class="advice-list">
+        <li>Answer in the first person and give a real example for each claim: the situation, what you did, and the result.</li>
+        <li>Know every number in your report. If one is wrong, correct it before they find it.</li>
+        <li>If you don't know, say so. Then say what you do know, how you'd find out, and how you'd keep things safe meanwhile. Never bluff.</li>
+        <li>It's fine to pause, ask them to repeat a question, or sketch to explain.</li>
+        <li>Revise the Code of Conduct, CPD, H&amp;S and current affairs: the attributes cover them all. The flashcards help.</li>
+      </ul></div>
+    </article>
+
+    <article class="panel part">
+      <svg class="part-ill" viewBox="0 0 160 110" aria-hidden="true"><rect x="28" y="8" width="72" height="94" rx="4" style="fill:var(--surface);stroke:var(--accent)" stroke-width="2"/><path d="M40 26 h48 M40 38 h48 M40 50 h40 M40 62 h48 M40 74 h30" stroke-width="2.5" stroke-linecap="round" style="stroke:var(--line)"/><path d="M40 26 h30" stroke-width="2.5" stroke-linecap="round" style="stroke:var(--accent)"/><circle cx="124" cy="40" r="22" style="fill:var(--flag-soft);stroke:var(--flag)" stroke-width="2"/><path d="M124 26 v14 l9 7" fill="none" stroke-width="2.5" stroke-linecap="round" style="stroke:var(--flag)"/><text x="124" y="80" text-anchor="middle" font-size="12" font-weight="700" style="fill:var(--flag)">90 min</text></svg>
+      <h3>The written communication task</h3>
+      <div class="ice-says">
+        <span class="tag-ice">ICE</span>
+        <ul>
+          <li>Taken after the interview: 90 minutes for a Chartered review, 60 for Incorporated. <a href="https://www.ice.org.uk/media/aj2gmts3/11-jun-26-professional-review-guidance.pdf" target="_blank" rel="noopener">pp. 13-14</a></li>
+          <li>Chartered: choose one of two scenarios on current industry issues, written in a given style such as a blog post. Incorporated: answer one of two questions as a technical memo or note. <a href="https://www.ice.org.uk/media/aj2gmts3/11-jun-26-professional-review-guidance.pdf" target="_blank" rel="noopener">pp. 13-14</a></li>
+          <li>You may use two sides of A4 of reference notes, but not copy and paste from them. No internet, search engines or AI tools. <a href="https://www.ice.org.uk/media/aj2gmts3/11-jun-26-professional-review-guidance.pdf" target="_blank" rel="noopener">p. 27</a></li>
+          <li>Upload it as PDF or Word within 15 minutes of the end time. In person, bring your own laptop. <a href="https://www.ice.org.uk/media/aj2gmts3/11-jun-26-professional-review-guidance.pdf" target="_blank" rel="noopener">pp. 14, 27</a></li>
+          <li>For Chartered, reviewers look at whether you can digest the issue, organise your thoughts and present them logically and clearly. <a href="https://www.ice.org.uk/media/aj2gmts3/11-jun-26-professional-review-guidance.pdf" target="_blank" rel="noopener">p. 13</a></li>
+        </ul>
+      </div>
+      <div class="our-advice"><h4>Our advice</h4>
+      <ul class="advice-list">
+        <li>Split the 90 minutes: about 10 to choose and plan, 65 to write, 15 to check. Planning is what makes it read clearly.</li>
+        <li>Write for the audience and style you're given. A blog post for the public reads differently from a note to a client.</li>
+        <li>Use a simple structure: the issue, why it matters, the options or arguments, your view, and what should happen next.</li>
+        <li>Bring in a current example and, where it fits, sustainability, safety and cost.</li>
+        <li>Fill your two A4 sides with facts and figures on likely topics (from the News page), not pre-written paragraphs.</li>
+        <li>Practise at least three timed tasks, typed, with no internet.</li>
+      </ul></div>
+    </article>
+  </div>
+
+  <div class="grid two">
+    <div class="panel">
+      <span class="eyebrow">On the day <span class="tag-ice">ICE</span> <a class="small" href="https://www.ice.org.uk/media/aj2gmts3/11-jun-26-professional-review-guidance.pdf" target="_blank" rel="noopener">p. 24</a></span>
+      <ul class="advice-list">
+        <li>Dress professionally and bring ID.</li>
+        <li>In person: arrive at least 30 minutes early to register. Bring a copy of your submission, your visual aids, laptop and power cable, and your two A4 sides.</li>
+        <li>Online: a reliable connection, a laptop or PC with webcam and headset, power, and a private room. Have your submission open, paper and pen ready, and some water.</li>
+      </ul>
+    </div>
+    <div class="panel">
+      <span class="eyebrow">After the review <span class="tag-ice">ICE</span> <a class="small" href="https://www.ice.org.uk/media/aj2gmts3/11-jun-26-professional-review-guidance.pdf" target="_blank" rel="noopener">pp. 14-15</a></span>
+      <ul class="advice-list">
+        <li>You'll get your result by email no later than 6 weeks after the review.</li>
+        <li>If you're unsuccessful, you'll get the reviewers' comments. An appeal must reach ICE within two months of the date on your result letter.</li>
+        <li>To try again, you go through the full application process.</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3 style="margin:8px 0 0">Tips from reviewers and candidates</h3>
   <div class="grid" id="tips"></div>
 </section>
 
@@ -830,10 +962,10 @@ footer .wrap { padding-block: 24px; display: flex; flex-direction: column; gap: 
   </div>
 </footer>
 
-<script src="js/content.js?v=20261115o"></script>
-<script src="js/news-feed.js?v=20261115o"></script>
-<script src="js/config.js?v=20261115o"></script>
-<script src="js/pages.js?v=20261115o"></script>
-<script src="js/site.js?v=20261115o"></script>
+<script src="js/content.js?v=20261115p"></script>
+<script src="js/news-feed.js?v=20261115p"></script>
+<script src="js/config.js?v=20261115p"></script>
+<script src="js/pages.js?v=20261115p"></script>
+<script src="js/site.js?v=20261115p"></script>
 </body>
 </html>
