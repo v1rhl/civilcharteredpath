@@ -296,11 +296,11 @@ window.FACT_CARDS = [
    Add the 2027-28 dates here when ICE publishes them. */
 window.ICE_DATES_SOURCE = "https://www.ice.org.uk/join-ice/key-membership-dates";
 window.ICE_CYCLES = [
-  { id: "2026-10", label: "October 2026 reviews", sponsors: "2026-07-10", application: "2026-07-17", review: "2026-10-05",
+  { id: "2026-10", label: "October 2026 reviews", sponsors: "2026-07-10", application: "2026-07-17", review: "2026-10-05", reviewWindow: ["2026-10-01", "2026-11-14"],
     window: "Online in October 2026, possibly into the first two weeks of November", inPerson: "London 5-7 Oct, Belfast 14 Oct, Manchester 26-27 Oct, Hong Kong 10-14 Oct" },
-  { id: "2027-02", label: "February 2027 reviews", sponsors: "2026-10-23", application: "2026-10-30", review: "2027-02-03",
+  { id: "2027-02", label: "February 2027 reviews", sponsors: "2026-10-23", application: "2026-10-30", review: "2027-02-03", reviewWindow: ["2027-02-01", "2027-03-14"],
     window: "Online in February 2027, possibly into the first two weeks of March", inPerson: "London 3-5 Feb, Birmingham 16-17 Feb, Glasgow 23-24 Feb" },
-  { id: "2027-06", label: "June 2027 reviews", sponsors: "2027-03-12", application: "2027-03-19", review: "2027-06-07",
+  { id: "2027-06", label: "June 2027 reviews", sponsors: "2027-03-12", application: "2027-03-19", review: "2027-06-07", reviewWindow: ["2027-06-01", "2027-07-14"],
     window: "Online in June 2027, possibly into the first two weeks of July", inPerson: "London 7-9 Jun, York 16-17 Jun, Cardiff 29 Jun" }
 ];
 

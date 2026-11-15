@@ -117,18 +117,27 @@
     $("plan-summary").textContent = p.startAll < today ? "Start date has passed" : "Start in " + weeksLeft + " week" + (weeksLeft === 1 ? "" : "s");
     $("plan-summary").className = "small mono" + (p.startAll < today ? " warn" : "");
 
-    var lo = Math.min(p.startAll, today), hi = p.review.getTime(); var span = Math.max(hi - lo, DAY);
+    var cyR = cycById(planCycle);
+    var win = cyR && cyR.reviewWindow && !cyR.group ? [parse(cyR.reviewWindow[0]), parse(cyR.reviewWindow[1])] : null;
+    var reviewKind = p.reviewAssumed ? "assumed" : cyR && cyR.review === $("plan-review").value ? "cycle" : "own";
+    var lo = Math.min(p.startAll, today), hi = Math.max(p.review.getTime(), win ? win[1].getTime() : 0); var span = Math.max(hi - lo, DAY);
     function pct(d) { return ((d - lo) / span * 100).toFixed(2) + "%"; }
     var ticks = [], t = new Date(new Date(lo).getFullYear(), new Date(lo).getMonth() + 1, 1);
     var stepM = span / DAY > 400 ? 3 : span / DAY > 200 ? 2 : 1;
     while (t <= hi) { ticks.push(t); t = new Date(t.getFullYear(), t.getMonth() + stepM, 1); }
-    var lines = '<span class="g-line" style="left:' + pct(p.submit) + '" title="Submission"></span><span class="g-line" style="left:' + pct(p.review) + '" title="Review"></span>' +
+    var reviewName = reviewKind === "own" ? "Review day" : reviewKind === "cycle" ? "First in-person review" : "Review (assumed)";
+    var lines = (win ? '<span class="g-window" style="left:' + pct(win[0]) + ";width:calc(" + pct(win[1]) + " - " + pct(win[0]) + ')" title="ICE review window"></span>' : "") +
+      '<span class="g-line" style="left:' + pct(p.submit) + '" title="Submission"></span><span class="g-line review" style="left:' + pct(p.review) + '" title="' + reviewName + '"></span>' +
       (today >= lo && today <= hi ? '<span class="g-line today" style="left:' + pct(today) + '" title="Today"></span>' : "");
-    $("plan-gantt").innerHTML = '<div class="g-row"><span></span><div class="g-axis">' + ticks.map(function (d) { return '<span class="g-tick" style="left:' + pct(d) + '">' + MONTHS[d.getMonth()] + (d.getMonth() === 0 ? " " + d.getFullYear() : "") + "</span>"; }).join("") + "</div></div>" +
+    var flagLeft = (p.review - lo) / span < 0.35;
+    $("plan-gantt").innerHTML = '<div class="g-row"><span></span><div class="g-axis"><span class="g-flag' + (flagLeft ? " left" : "") + '" style="left:' + pct(p.review) + '">' + esc(reviewName) + " " + fmt(p.review) + "</span></div></div>" +
+      '<div class="g-row"><span></span><div class="g-axis">'  + ticks.map(function (d) { return '<span class="g-tick" style="left:' + pct(d) + '">' + MONTHS[d.getMonth()] + (d.getMonth() === 0 ? " " + d.getFullYear() : "") + "</span>"; }).join("") + "</div></div>" +
       p.items.map(function (it) {
         return '<div class="g-row"><span class="g-label" title="' + esc(it.s.t) + '">' + esc(it.s.t) + '</span><div class="g-track"><span class="g-bar" style="left:' + pct(it.start) + ";width:calc(" + pct(it.end) + " - " + pct(it.start) + ");background:" + it.s.c + '"></span>' + lines + "</div></div>";
       }).join("") +
-      '<div class="legend"><span><span class="sw" style="background:var(--ink)"></span>Submission and review</span><span><span class="sw" style="background:var(--flag)"></span>Today (dashed)</span></div>';
+      '<div class="legend"><span><span class="sw" style="background:var(--ink)"></span>Submission</span><span><span class="sw dash"></span>' + esc(reviewName) + (reviewKind === "cycle" ? " (enter your own date when ICE confirms it)" : "") + "</span>" +
+      (win ? '<span><span class="sw band"></span>ICE review window, online reviews may run into the next month</span>' : "") +
+      '<span><span class="sw" style="background:var(--flag)"></span>Today (dashed)</span></div>';
 
     var rows = p.items.map(function (it) { return { d: it.start, x: { t: it.s.t, k: "Stage", s: it.start, e: it.end, n: it.s.d }, html: '<li class="' + (it.end < today ? "past" : "") + '"><span class="sw" style="background:' + it.s.c + '"></span><strong>' + esc(it.s.t) + '</strong><span class="when">' + fmt(it.start) + " to " + fmt(it.end) + '</span><span class="what">' + esc(it.s.d) + "</span></li>", txt: fmt(it.start) + " to " + fmt(it.end) + ": " + it.s.t }; });
     var cy = cycById(planCycle);
