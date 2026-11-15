@@ -383,7 +383,7 @@ input[type="date"], input[type="number"] { font: 400 0.95rem var(--font-body); p
 /* Planner with the pinned resources pane: settings across the top, plan full width below */
 body.on-planner .planner { grid-template-columns: minmax(0, 1fr); }
 @media (min-width: 821px) {
-  body.on-planner #plan-form { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px 16px; align-items: start; }
+  body.on-planner .planner #plan-form { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px 16px; align-items: start; }
   body.on-planner #plan-form .dur-box { grid-column: 1 / -1; }
   body.on-planner #plan-form .durations { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); column-gap: 20px; }
 }
@@ -670,6 +670,19 @@ html:not([data-level="ieng"]) .cmp-table .c-ceng, html[data-level="ieng"] .cmp-t
 .wl-summary .chip.s { background: var(--paper); border: 1px solid var(--line); }
 #feed-sectors .my-sec { border-color: var(--accent-2); }
 .wl-summary .linkish { margin-left: 0; }
+/* Planner settings: collapsed above the plan, or pinned in the right pane on wide screens */
+.plan-settings { padding: 10px 14px !important; gap: 0 !important; }
+.plan-settings > summary { cursor: pointer; list-style: none; display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: baseline; }
+.plan-settings > summary::-webkit-details-marker { display: none; }
+.plan-settings .ps-sum { font-size: 0.88rem; color: var(--ink); }
+.plan-settings .ps-edit { font: 600 0.85rem var(--font-body); color: var(--accent); margin-left: auto; }
+.plan-settings[open] .ps-edit { display: none; }
+.plan-settings #plan-form { margin-top: 10px; display: flex; flex-direction: column; gap: 12px; }
+.sources .plan-settings { background: var(--surface); border: 1px solid var(--accent-2) !important; border-radius: var(--radius); margin-bottom: 12px; box-shadow: none; }
+.sources .plan-settings .ps-sum { display: block; width: 100%; order: 3; font-size: 0.85rem; }
+.sources .plan-settings .ps-edit { order: 2; }
+.sources .plan-settings #plan-form { display: flex !important; flex-direction: column; }
+.sources .plan-settings .durations { display: flex !important; flex-direction: column; }
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 .role-compare .linkish { margin-left: 0; }
 .fc-decks-mine { outline: 2px solid var(--accent-2); outline-offset: 1px; }
@@ -848,10 +861,12 @@ html:not([data-level="ieng"]) .cmp-table .c-ceng, html[data-level="ieng"] .cmp-t
   <div class="view-head">
     <span class="eyebrow">Submission planner</span>
     <h2>Plan back from your submission date</h2>
-    <p class="lede">Enter the date you want to submit by. The planner works back to tell you when to start each stage, then forward to your review. Change any duration to fit your workload and your supervisor's diary.</p>
   </div>
   <div class="planner">
-    <form class="panel" id="plan-form" autocomplete="off">
+    <details class="panel plan-settings no-print" id="plan-settings">
+      <summary><span class="eyebrow">Plan settings</span><span class="ps-sum" id="ps-sum"></span><span class="ps-edit">Change</span></summary>
+      <p class="small" style="margin:8px 0 0">Pick a cycle or type your own dates. The planner works back to when to start each stage, then forward to your review.</p>
+    <form id="plan-form" autocomplete="off">
       <div class="field">
         <label for="plan-cycle">ICE review cycle</label>
         <select id="plan-cycle"></select>
@@ -874,6 +889,7 @@ html:not([data-level="ieng"]) .cmp-table .c-ceng, html[data-level="ieng"] .cmp-t
         <button type="button" class="btn ghost" id="plan-reset" style="align-self:flex-start;margin-top:8px">Reset to suggested lengths</button>
       </details>
     </form>
+    </details>
     <div class="panel" style="gap:16px">
       <div class="no-print" style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;align-items:baseline">
         <h3>Your plan</h3>
@@ -1602,12 +1618,12 @@ html:not([data-level="ieng"]) .cmp-table .c-ceng, html[data-level="ieng"] .cmp-t
   </div>
 </footer>
 
-<script src="js/content.js?v=20261116k"></script>
-<script src="js/role.js?v=20261116k"></script>
-<script src="js/news-feed.js?v=20261116k"></script>
-<script src="js/news-archive.js?v=20261116k"></script>
-<script src="js/config.js?v=20261116k"></script>
-<script src="js/pages.js?v=20261116k"></script>
-<script src="js/site.js?v=20261116k"></script>
+<script src="js/content.js?v=20261116l"></script>
+<script src="js/role.js?v=20261116l"></script>
+<script src="js/news-feed.js?v=20261116l"></script>
+<script src="js/news-archive.js?v=20261116l"></script>
+<script src="js/config.js?v=20261116l"></script>
+<script src="js/pages.js?v=20261116l"></script>
+<script src="js/site.js?v=20261116l"></script>
 </body>
 </html>

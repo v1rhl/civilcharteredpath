@@ -332,6 +332,15 @@
   renderAttr();
   if (window.matchMedia && window.matchMedia("(max-width: 1000px)").matches) $("sources-box").open = false;
   if (window.matchMedia && window.matchMedia("(max-width: 1200px)").matches) $("ice-res-box").open = false;
+  /* Planner settings live in the right pane on wide screens, above the plan otherwise */
+  var wideMq = window.matchMedia ? window.matchMedia("(min-width: 1201px)") : null;
+  function placeSettings() {
+    var ps = $("plan-settings"), aside = $("sources"), planner = document.querySelector("#view-planner .planner");
+    if (!ps || !aside || !planner) return;
+    if (wideMq && wideMq.matches) { if (ps.parentNode !== aside) aside.insertBefore(ps, aside.firstChild); ps.hidden = !document.body.classList.contains("on-planner"); }
+    else { if (ps.parentNode !== planner) planner.insertBefore(ps, planner.firstChild); ps.hidden = false; }
+  }
+  if (wideMq) { if (wideMq.addEventListener) wideMq.addEventListener("change", placeSettings); else if (wideMq.addListener) wideMq.addListener(placeSettings); }
 
   /* Tips, each with a small line drawing */
   var TIP_ICONS = [
@@ -509,6 +518,7 @@
     var withSources = ["route", "attributes", "review", "presentation", "cheat-sheet", "planner"].indexOf(v) > -1;
     document.body.classList.toggle("on-planner", v === "planner");
     $("sources-box").hidden = v === "planner"; $("ice-res-box").hidden = v !== "planner";
+    placeSettings();
     $("sources").setAttribute("aria-label", v === "planner" ? "ICE resources" : "Official sources");
     document.body.classList.toggle("with-sources", withSources);
     $("sources").hidden = !withSources;

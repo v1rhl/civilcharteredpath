@@ -133,6 +133,8 @@
     var weeksLeft = Math.round((p.startAll - today) / DAY / 7);
     $("plan-summary").textContent = p.startAll < today ? "Start date has passed" : "Start in " + weeksLeft + " week" + (weeksLeft === 1 ? "" : "s");
     $("plan-summary").className = "small mono" + (p.startAll < today ? " warn" : "");
+    var cyS = cycById(planCycle);
+    $("ps-sum").textContent = (cyS ? cyS.label : "My own dates") + " · submit by " + fmt(parse($("plan-submit").value));
 
     var cyR = cycById(planCycle);
     var win = cyR && cyR.reviewWindow && !cyR.group ? [parse(cyR.reviewWindow[0]), parse(cyR.reviewWindow[1])] : null;
