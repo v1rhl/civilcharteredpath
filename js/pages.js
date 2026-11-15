@@ -346,10 +346,53 @@
   $("check-attrs").innerHTML = window.ATTRIBUTES.map(function (a) { return '<label><input type="checkbox" value="' + a.n + '" checked> ' + a.n + " " + esc(a.short) + "</label>"; }).join("");
   function words() { var t = $("check-text").value.trim(); var n = t ? t.split(/\s+/).length : 0; $("check-count").textContent = n + " word" + (n === 1 ? "" : "s") + (n > 6000 ? " · over the 6,000-word limit for one check" : ""); return n; }
   $("check-text").addEventListener("input", words);
+  /* File upload: read in the browser only. Word and PDF libraries load on first use. */
+  var LIBS = {
+    mammoth: "https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js",
+    pdf: "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js",
+    pdfWorker: "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js"
+  };
+  var loaded = {};
+  function loadScript(src) {
+    if (!loaded[src]) loaded[src] = new Promise(function (ok, fail) { var sc = document.createElement("script"); sc.src = src; sc.onload = ok; sc.onerror = function () { delete loaded[src]; fail(new Error("load")); }; document.head.appendChild(sc); });
+    return loaded[src];
+  }
+  function readAs(f, how) { return new Promise(function (ok, fail) { var r = new FileReader(); r.onload = function () { ok(r.result); }; r.onerror = fail; r[how](f); }); }
+  function fromDocx(f) {
+    return Promise.all([loadScript(LIBS.mammoth), readAs(f, "readAsArrayBuffer")]).then(function (x) { return window.mammoth.extractRawText({ arrayBuffer: x[1] }); }).then(function (r) { return r.value; });
+  }
+  function fromPdf(f) {
+    return Promise.all([loadScript(LIBS.pdf), readAs(f, "readAsArrayBuffer")]).then(function (x) {
+      var lib = window.pdfjsLib; lib.GlobalWorkerOptions.workerSrc = LIBS.pdfWorker;
+      return lib.getDocument({ data: new Uint8Array(x[1]) }).promise;
+    }).then(function (doc) {
+      var pages = []; for (var i = 1; i <= doc.numPages; i++) pages.push(i);
+      return Promise.all(pages.map(function (n) { return doc.getPage(n).then(function (pg) { return pg.getTextContent(); }).then(function (c) {
+        var out = "", lastY = null;
+        c.items.forEach(function (it) { var y = it.transform ? it.transform[5] : null; if (lastY !== null && y !== null && Math.abs(y - lastY) > 2 && out.slice(-1) !== "\n") out += "\n"; out += it.str; if (it.hasEOL) out += "\n"; lastY = y; });
+        return out;
+      }); })).then(function (ps) { return ps.join("\n\n"); });
+    });
+  }
   $("check-file").addEventListener("change", function (e) {
-    var f = e.target.files[0]; if (!f) return;
-    if (f.size > 500000) { $("check-status").textContent = "That file is too large. Paste a section instead."; return; }
-    var r = new FileReader(); r.onload = function () { $("check-text").value = r.result; words(); }; r.readAsText(f);
+    var f = e.target.files[0], st = $("check-file-status"); if (!f) return;
+    var name = f.name.toLowerCase(), ext = name.slice(name.lastIndexOf(".") + 1);
+    function done(text) {
+      text = (text || "").replace(/\r/g, "").replace(/[ \t]+\n/g, "\n").replace(/\n{3,}/g, "\n\n").trim();
+      if (!text) { st.textContent = ext === "pdf" ? "No text found in that PDF. It may be a scanned image: export it from Word as a PDF with text, or paste the text instead." : "No text found in that file."; return; }
+      $("check-text").value = text; var n = words();
+      st.textContent = "Read " + f.name + ": " + n.toLocaleString() + " words." + (n > 6000 ? " That's more than one check can take, so cut it down to the section you want feedback on." : " Check the text above before you send it.");
+      $("check-text").focus();
+    }
+    function fail() { st.textContent = "Couldn't read that file. Try saving it again as .docx or PDF, or paste the text instead."; }
+    if (ext === "doc") { st.textContent = "Old Word .doc files can't be read here. In Word, use Save As and choose .docx, or paste the text instead."; return; }
+    if (f.size > 15 * 1024 * 1024) { st.textContent = "That file is over 15 MB. Save just the report as its own file, or paste a section instead."; return; }
+    st.textContent = "Reading " + f.name + " in your browser...";
+    if (ext === "docx") fromDocx(f).then(done, fail);
+    else if (ext === "pdf") fromPdf(f).then(done, fail);
+    else if (ext === "txt" || ext === "md" || /^text\//.test(f.type)) { if (f.size > 2000000) { st.textContent = "That text file is too large. Paste a section instead."; return; } readAs(f, "readAsText").then(done, fail); }
+    else st.textContent = "That file type isn't supported. Use .docx, PDF, .txt or .md, or paste the text.";
+    e.target.value = "";
   });
 
   var EXAMPLE = {

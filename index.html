@@ -1051,7 +1051,7 @@ html:not([data-level="ieng"]) .cmp-table .c-ceng, html[data-level="ieng"] .cmp-t
   <div class="view-head">
     <span class="eyebrow">Report check</span>
     <h2>Get feedback on your report before your supervisor does</h2>
-    <p class="lede">Paste a section of your CEng report or IPD record. An AI reviewer reads it against the seven attributes and the chartered-level bar, then points out gaps, errors and passages to rewrite.</p>
+    <p class="lede">Paste a section of your CEng report or IPD record, or upload it as Word or PDF. An AI reviewer reads it against the seven attributes and the chartered-level bar, then points out gaps, errors and passages to rewrite.</p>
   </div>
   <div class="notice" role="note" id="check-offline">
     <span class="mono" aria-hidden="true">!</span>
@@ -1077,8 +1077,10 @@ html:not([data-level="ieng"]) .cmp-table .c-ceng, html[data-level="ieng"] .cmp-t
         <span class="small mono" id="check-count">0 words</span>
       </div>
       <div class="field">
-        <label for="check-file">Or upload a file (.txt or .md)</label>
-        <input type="file" id="check-file" accept=".txt,.md,text/plain,text/markdown">
+        <label for="check-file">Or upload a file (Word .docx, PDF, .txt or .md)</label>
+        <input type="file" id="check-file" accept=".docx,.pdf,.txt,.md,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain,text/markdown">
+        <span class="small">Your file is read in your browser and never uploaded. Its text appears in the box above, so you can see exactly what would be sent and cut it down to the section you want checked.</span>
+        <span class="small" id="check-file-status" role="status"></span>
       </div>
       <label class="consent"><input type="checkbox" id="check-consent"> I understand my text is sent to an AI model to generate feedback, and is not stored after the feedback is returned.</label>
       <div><button class="btn" type="submit" id="check-go">Check my text (coming soon)</button></div>
@@ -1282,10 +1284,10 @@ html:not([data-level="ieng"]) .cmp-table .c-ceng, html[data-level="ieng"] .cmp-t
   </div>
 </footer>
 
-<script src="js/content.js?v=20261115z"></script>
-<script src="js/news-feed.js?v=20261115z"></script>
-<script src="js/config.js?v=20261115z"></script>
-<script src="js/pages.js?v=20261115z"></script>
-<script src="js/site.js?v=20261115z"></script>
+<script src="js/content.js?v=20261116a"></script>
+<script src="js/news-feed.js?v=20261116a"></script>
+<script src="js/config.js?v=20261116a"></script>
+<script src="js/pages.js?v=20261116a"></script>
+<script src="js/site.js?v=20261116a"></script>
 </body>
 </html>
