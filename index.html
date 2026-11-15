@@ -298,7 +298,7 @@ body.with-sources .shell .view.wrap { padding-left: 0; padding-right: 0; max-wid
 .levels { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px; }
 .levels > div { border: 1px solid var(--line); border-radius: var(--radius); padding: 12px 14px; display: flex; flex-direction: column; gap: 6px; }
 .levels ul { margin: 0; padding-left: 1.1em; font-size: 0.9rem; color: var(--muted); display: flex; flex-direction: column; gap: 3px; }
-.levels .ceng { border-color: var(--accent); background: var(--accent-soft); }
+
 .ladder { display: flex; flex-direction: column; gap: 10px; }
 .rung { border: 1px solid var(--line); border-left-width: 4px; border-radius: var(--radius); padding: 12px 14px; display: flex; flex-direction: column; gap: 6px; }
 .rung .grade { font: 500 0.74rem var(--font-mono); text-transform: uppercase; letter-spacing: 0.06em; }
@@ -307,7 +307,7 @@ body.with-sources .shell .view.wrap { padding-left: 0; padding-right: 0; max-wid
 .rung.weak { border-left-color: var(--flag); } .rung.weak .grade { color: var(--flag); }
 .rung.ok { border-left-color: var(--line); } .rung.ok .grade { color: var(--muted); }
 .rung.good { border-left-color: var(--s-blue); } .rung.good .grade { color: var(--s-blue); }
-.rung.excellent { border-left-color: var(--accent); background: var(--accent-soft); } .rung.excellent .grade { color: var(--accent); }
+.rung.excellent { border-left-color: var(--accent); } .rung.excellent .grade { color: var(--accent); }
 @media (max-width: 640px) { .levels { grid-template-columns: 1fr; } }
 
 footer { border-top: 1px solid var(--line); background: var(--surface); }
@@ -448,6 +448,15 @@ footer .wrap { padding-block: 24px; display: flex; flex-direction: column; gap: 
 .flip .q { font-weight: 600; font-size: 1.05rem; }
 .flip .a { color: var(--muted); white-space: pre-line; }
 .flip .hint { font-size: 0.8rem; color: var(--muted); margin-top: auto; }
+.level-pick { display: inline-flex; align-items: center; gap: 4px; padding: 3px; border: 1px solid var(--line); border-radius: 999px; background: var(--surface); align-self: flex-start; flex-wrap: wrap; }
+.level-pick .lp-label { font: 600 0.8rem var(--font-body); color: var(--muted); padding: 0 6px 0 8px; }
+.level-pick button { font: 600 0.88rem var(--font-body); border: 0; border-radius: 999px; padding: 6px 14px; background: none; color: var(--ink); cursor: pointer; }
+.level-pick button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
+.level-banner { flex-direction: row !important; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px; padding: 12px 16px !important; background: var(--accent-soft) !important; border-color: var(--accent) !important; }
+.levels .mine { border-color: var(--accent); background: var(--accent-soft); }
+.levels .other { opacity: 0.85; }
+.rung .target { font: 600 0.7rem var(--font-mono); color: var(--accent-ink); background: var(--accent); border-radius: 3px; padding: 2px 6px; margin-left: 8px; text-transform: uppercase; letter-spacing: 0.05em; }
+.rung.is-target { outline: 2px solid var(--accent); outline-offset: 1px; }
 </style>
 </head>
 <body>
@@ -489,9 +498,10 @@ footer .wrap { padding-block: 24px; display: flex; flex-direction: column; gap: 
   <div class="hero">
     <div class="wrap">
       <div class="hero-copy">
-        <span class="eyebrow">For civil engineers working towards CEng MICE</span>
-        <h1>Everything you need to get chartered, in one place.</h1>
+        <span class="eyebrow">For civil engineers working towards <span data-lv="title">CEng MICE</span></span>
+        <h1>Everything for your ICE professional review, in one place.</h1>
         <p class="lede">ICE's deadlines, a planner that works back from them, the attributes with graded examples, revision flashcards, review-day guidance and this week's industry news.</p>
+        <div class="level-pick" role="group" aria-label="Which level are you aiming for?"></div>
         <div class="hero-actions">
           <a class="btn" href="#planner">Plan my submission</a>
           <a class="btn ghost" href="#start-here" id="go-start">Start here</a>
@@ -516,7 +526,7 @@ footer .wrap { padding-block: 24px; display: flex; flex-direction: column; gap: 
       <div class="home-feature-copy">
         <span class="eyebrow">What the review assesses</span>
         <h2>Seven attributes, one bar</h2>
-        <p>ICE reviewers check your evidence against seven attributes. For CEng, each one asks for more than the IEng level: leading rather than assisting, improving rather than applying. Pick one to see the bar and graded example answers.</p>
+        <p data-lv="wheel-copy">ICE reviewers check your evidence against seven attributes. For CEng, each one asks for more than the IEng level: leading rather than assisting, improving rather than applying. Pick one to see the bar and graded example answers.</p>
         <a class="btn" href="#attributes">Explore the attributes</a>
       </div>
       <figure style="margin:0">
@@ -606,7 +616,11 @@ footer .wrap { padding-block: 24px; display: flex; flex-direction: column; gap: 
   <div class="view-head">
     <span class="eyebrow">The seven attributes</span>
     <h2>What reviewers are looking for</h2>
-    <p class="lede">Your report and review are assessed against seven attributes. For each one, here's what good evidence covers, where the chartered bar sits, and questions to test your own examples.</p>
+    <p class="lede">Your report and review are assessed against seven attributes. For each one, here's what good evidence covers, the bar for your level, and questions to test your own examples.</p>
+  </div>
+  <div class="panel level-banner">
+    <span>Showing what's needed for <strong data-lv="title">CEng MICE</strong>. The other level is shown alongside for comparison.</span>
+    <div class="level-pick" role="group" aria-label="Which level are you aiming for?"></div>
   </div>
   <div class="attr-tabs" id="attr-tabs" role="tablist" aria-label="Attributes"></div>
   <div id="attr-detail"></div>
@@ -997,10 +1011,10 @@ footer .wrap { padding-block: 24px; display: flex; flex-direction: column; gap: 
   </div>
 </footer>
 
-<script src="js/content.js?v=20261115q"></script>
-<script src="js/news-feed.js?v=20261115q"></script>
-<script src="js/config.js?v=20261115q"></script>
-<script src="js/pages.js?v=20261115q"></script>
-<script src="js/site.js?v=20261115q"></script>
+<script src="js/content.js?v=20261115r"></script>
+<script src="js/news-feed.js?v=20261115r"></script>
+<script src="js/config.js?v=20261115r"></script>
+<script src="js/pages.js?v=20261115r"></script>
+<script src="js/site.js?v=20261115r"></script>
 </body>
 </html>

@@ -7,6 +7,30 @@
   function $(id) { return document.getElementById(id); }
   function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
   function ext(url, text) { return '<a href="' + esc(url) + '" target="_blank" rel="noopener">' + esc(text) + "</a>"; }
+
+  /* Level the visitor is aiming for: IEng or CEng. Remembered in this browser; CEng by default. */
+  var LEVEL = (function () { try { return localStorage.getItem("cp-level") === "ieng" ? "ieng" : "ceng"; } catch (e) { return "ceng"; } })();
+  var levelHooks = [];
+  function lvName(l) { return (l || LEVEL) === "ieng" ? "IEng MICE" : "CEng MICE"; }
+  function drawLevelPickers() {
+    Array.prototype.forEach.call(document.querySelectorAll(".level-pick"), function (el) {
+      el.innerHTML = '<span class="lp-label">Aiming for</span>' + ["ieng", "ceng"].map(function (l) {
+        return '<button type="button" data-level="' + l + '" aria-pressed="' + (l === LEVEL) + '">' + (l === "ieng" ? "IEng" : "CEng") + "</button>";
+      }).join("");
+    });
+    Array.prototype.forEach.call(document.querySelectorAll('[data-lv="title"]'), function (el) { el.textContent = lvName(); });
+    var wc = document.querySelector('[data-lv="wheel-copy"]');
+    if (wc) wc.textContent = LEVEL === "ieng"
+      ? "ICE reviewers check your evidence against seven attributes. For IEng, you show you can maintain and manage current technology: managing teams and quality, applying sound methods and independent judgement. Pick one to see the IEng bar and graded example answers."
+      : "ICE reviewers check your evidence against seven attributes. For CEng, each one asks for more than the IEng level: leading rather than assisting, improving rather than applying. Pick one to see the CEng bar and graded example answers.";
+  }
+  function setLevel(l) {
+    LEVEL = l === "ieng" ? "ieng" : "ceng";
+    try { localStorage.setItem("cp-level", LEVEL); } catch (e) {}
+    drawLevelPickers(); levelHooks.forEach(function (f) { f(); });
+  }
+  document.addEventListener("click", function (e) { var b = e.target.closest("[data-level]"); if (b) setLevel(b.dataset.level); });
+  drawLevelPickers();
   function store(k, v) { try { if (v === undefined) return localStorage.getItem(k); localStorage.setItem(k, v); } catch (e) { return null; } }
 
   $("updated").textContent = S.updated;
@@ -138,7 +162,7 @@
     var pts = short.map(function (_, i) { var a = -Math.PI / 2 + i * 2 * Math.PI / 7; return [cx + r * Math.cos(a), cy + r * Math.sin(a), a]; });
     out += '<polygon points="' + pts.map(function (p) { return p[0].toFixed(1) + "," + p[1].toFixed(1); }).join(" ") + '" fill="none" stroke-dasharray="3 3" style="stroke:var(--line)"/>';
     pts.forEach(function (p) { out += '<line x1="' + cx + '" y1="' + cy + '" x2="' + p[0].toFixed(1) + '" y2="' + p[1].toFixed(1) + '" style="stroke:var(--line)"/>'; });
-    out += '<circle cx="' + cx + '" cy="' + cy + '" r="34" style="fill:var(--accent)"/><text x="' + cx + '" y="' + (cy - 2) + '" text-anchor="middle" font-weight="700" font-size="15" style="fill:var(--accent-ink)">CEng</text><text x="' + cx + '" y="' + (cy + 13) + '" text-anchor="middle" font-size="9" style="fill:var(--accent-ink)">MICE</text>';
+    out += '<circle cx="' + cx + '" cy="' + cy + '" r="34" style="fill:var(--accent)"/><text x="' + cx + '" y="' + (cy - 2) + '" text-anchor="middle" font-weight="700" font-size="15" style="fill:var(--accent-ink)" id="wheel-level">' + (LEVEL === "ieng" ? "IEng" : "CEng") + '</text><text x="' + cx + '" y="' + (cy + 13) + '" text-anchor="middle" font-size="9" style="fill:var(--accent-ink)">MICE</text>';
     pts.forEach(function (p, i) {
       var t = (window.ATTRIBUTES[i] || {}).title || short[i];
       var lx = cx + (r + 26) * Math.cos(p[2]), ly = cy + (r + 26) * Math.sin(p[2]);
@@ -147,6 +171,7 @@
         '<text class="wl" x="' + lx.toFixed(1) + '" y="' + (ly + 4).toFixed(1) + '" text-anchor="' + anchor + '" font-size="11" style="fill:var(--ink)">' + esc(short[i]) + "</text></a>";
     });
     $("home-wheel").innerHTML = out;
+    levelHooks.push(function () { var t = document.getElementById("wheel-level"); if (t) t.textContent = LEVEL === "ieng" ? "IEng" : "CEng"; });
     $("home-wheel-key").innerHTML = (window.ATTRIBUTES || []).map(function (a) { return "<li>" + esc(a.title) + "</li>"; }).join("");
   })();
 
@@ -170,12 +195,18 @@
     $("attr-examples").innerHTML =
       '<div class="panel" style="gap:14px"><div><span class="eyebrow">IEng or CEng?</span><h3 style="margin-top:4px">What ICE asks for at each level</h3></div>' +
       '<p>ICE\'s guidance lists what Incorporated candidates must show, then adds "And ..." requirements for Chartered candidates. UK-SPEC sums up the difference: Incorporated Engineers <em>' + esc((uk.ieng || "").replace(/\.$/, "").toLowerCase()) + '</em>; Chartered Engineers <em>' + esc((uk.ceng || "").replace(/\.$/, "").toLowerCase()) + "</em>.</p>" +
-      '<div class="levels"><div><span class="eyebrow">IEng must show</span><ul>' + x.ieng.map(function (l) { return "<li>" + esc(l) + "</li>"; }).join("") + '</ul></div><div class="ceng"><span class="eyebrow" style="color:var(--accent)">CEng also adds</span><ul>' + x.ceng.map(function (l) { return "<li>" + esc(l) + "</li>"; }).join("") + "</ul></div></div>" +
+      (function () {
+        var ie = x.ieng.map(function (l) { return "<li>" + esc(l) + "</li>"; }).join(""), ce = x.ceng.map(function (l) { return "<li>" + esc(l) + "</li>"; }).join("");
+        return LEVEL === "ieng"
+          ? '<div class="levels"><div class="mine"><span class="eyebrow" style="color:var(--accent)">Your level: IEng must show</span><ul>' + ie + '</ul></div><div class="other"><span class="eyebrow">The step up: CEng also adds</span><ul>' + ce + "</ul></div></div>"
+          : '<div class="levels"><div class="other"><span class="eyebrow">The baseline: IEng must show (CEng too)</span><ul>' + ie + '</ul></div><div class="mine"><span class="eyebrow" style="color:var(--accent)">Your level: CEng also adds</span><ul>' + ce + "</ul></div></div>";
+      })() +
       '<p class="small">Quoted from ' + ext(src, "ICE professional review guidance") + ", Appendix A, " + esc(x.page) + ", and " + ext(uk.url, "UK-SPEC") + ".</p></div>" +
       '<div class="panel" style="gap:14px"><div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;align-items:baseline"><div><span class="eyebrow">Example answers</span><h3 style="margin-top:4px">&ldquo;' + esc(x.q) + '&rdquo;</h3></div><span class="flag">Illustrative</span></div>' +
       '<p class="small">These answers are written for this site to show the difference between levels. They are not real candidates\' words, and the projects and figures are made up.</p>' +
-      '<div class="ladder">' + x.answers.map(function (r) { return '<div class="rung ' + r.g + '"><span class="grade">' + GR[r.g] + '</span><p class="ans">' + esc(r.a) + '</p><p class="why"><strong>Why:</strong> ' + esc(r.why) + "</p></div>"; }).join("") + "</div></div>";
+      '<div class="ladder">' + x.answers.map(function (r) { var tgt = (LEVEL === "ieng" && r.g === "good") || (LEVEL === "ceng" && r.g === "excellent"); return '<div class="rung ' + r.g + (tgt ? " is-target" : "") + '"><span class="grade">' + GR[r.g] + (tgt ? '<span class="target">Your target</span>' : "") + '</span><p class="ans">' + esc(r.a) + '</p><p class="why"><strong>Why:</strong> ' + esc(r.why) + "</p></div>"; }).join("") + "</div></div>";
   }
+  levelHooks.push(function () { renderAttr(); });
   function renderAttr() {
     setTimeout(renderExamples, 0);
     $("attr-tabs").innerHTML = A.map(function (a, i) {
@@ -186,7 +217,9 @@
       '<div class="panel" style="gap:18px"><div><span class="eyebrow">Attribute ' + a.n + "</span><h3 style=\"font-size:1.4rem;margin-top:4px\">" + esc(a.title) + "</h3></div>" +
       '<div class="attr-detail"><div style="display:flex;flex-direction:column;gap:8px"><span class="eyebrow">Good evidence covers</span><ul>' +
       a.look.map(function (l) { return "<li>" + esc(l) + "</li>"; }).join("") + "</ul></div>" +
-      '<div class="bar"><span class="eyebrow">The chartered bar</span><p style="margin-top:4px">' + esc(a.ceng) + "</p></div></div>" +
+      (LEVEL === "ieng"
+        ? '<div class="bar"><span class="eyebrow">The IEng bar</span><ul style="margin-top:4px">' + ((window.ATTR_EXAMPLES || [])[attrIdx] || { ieng: [] }).ieng.map(function (l) { return "<li>" + esc(l) + "</li>"; }).join("") + '</ul><p class="small" style="margin-top:6px">For CEng, ICE adds more: see the comparison below.</p></div></div>'
+        : '<div class="bar"><span class="eyebrow">The chartered bar</span><p style="margin-top:4px">' + esc(a.ceng) + "</p></div></div>") +
       '<div style="display:flex;flex-direction:column;gap:8px"><span class="eyebrow">Test your own examples</span><ul style="margin:0;padding-left:1.1em;display:flex;flex-direction:column;gap:4px">' +
       a.prompts.map(function (p) { return "<li>" + esc(p) + "</li>"; }).join("") + "</ul></div>" +
       '<a class="more" href="#questions" data-attr="' + (attrIdx + 1) + '">Practice questions for this attribute</a></div>';
