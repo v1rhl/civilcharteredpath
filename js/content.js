@@ -72,7 +72,7 @@ window.ROUTE = [
 
 /* Review-day advice, each with its source. */
 window.TIPS = [
-  { t: "Bring two sides of A4 for the communication task", d: "That is the limit on notes. You can't copy and paste from them, and the internet and AI tools aren't allowed. Practise writing a short piece from your notes in the time allowed, typed, with no internet.", src: "ICE professional review guidance, June 2026", url: "https://www.ice.org.uk/media/aj2gmts3/11-jun-26-professional-review-guidance.pdf" },
+  { t: "Bring two sides of A4 for the communication task", d: "That is the limit on notes, paper or on screen, in a normal readable font size. You can't copy and paste from them, and the internet and AI tools aren't allowed. Practise writing a short piece from your notes in the time allowed, typed, with no internet.", src: "ICE professional review guidance, June 2026", url: "https://www.ice.org.uk/media/aj2gmts3/11-jun-26-professional-review-guidance.pdf" },
   { t: "Aim for 13 minutes, not 15", d: "Reviewers may stop your presentation at 15 minutes. Leave a margin for nerves and the odd question.", src: "ICE professional review guidance, June 2026", url: "https://www.ice.org.uk/media/aj2gmts3/11-jun-26-professional-review-guidance.pdf" },
   { t: "Expect four kinds of question", d: "Factual (what is it?), analytical (compare, explain why), hypothetical (what would you do if?) and probing (why did you decide that?). Practise all four, not just the facts.", src: "ICE reviewer skills blog", url: "https://www.ice.org.uk/news-views-insights/inside-infrastructure/top-skills-every-professional-reviewer-needs" },
   { t: "Be ready to sketch", d: "A quick cross-section, section through a structure or long section of a channel often explains your decision faster than words. Practise two or three sketches of your own project.", src: "Civil Engineering Mentor", url: "https://www.civilengineeringmentor.com/professional-review-day" },
@@ -272,7 +272,7 @@ window.PLAN = {
 window.FACT_CARDS = [
   { deck: "Review format", q: "What are the three parts of the professional review?", a: "A presentation on your report, an interview with two reviewers, and a written communication task." },
   { deck: "Review format", q: "How long should your presentation run?", a: "Plan for about 13 minutes. Reviewers may stop you at 15." },
-  { deck: "Review format", q: "What can you take into the communication task?", a: "Up to two sides of A4 of notes. No copying and pasting from them, and no internet or AI tools." },
+  { deck: "Review format", q: "What can you take into the communication task?", a: "Two sides of A4 of reference notes, as paper or on screen, in the font size you use at work and easily readable if printed. No copying and pasting from them, and no internet or AI tools (ICE guidance p. 27)." },
   { deck: "Review format", q: "How long are the presentation and interview together?", a: "Up to 75 minutes for a Chartered review, 60 for Incorporated (ICE guidance p. 13)." },
   { deck: "Review format", q: "How long is the Chartered communication task, and what's the format?", a: "90 minutes, after the interview. Choose one of two scenarios on current industry issues, written in a given style such as a blog post. Upload within 15 minutes of the end." },
   { deck: "Review format", q: "What should the presentation cover, according to ICE?", a: "One aspect of your report, expanded. Not all the attributes, and not a summary of your CV or report." },

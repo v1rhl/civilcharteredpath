@@ -429,6 +429,42 @@
     drawTalk(); if (window.CPSectors) CPSectors.on(drawTalk);
     if (weeks[0]) $("cs-angle").innerHTML = "<strong>Angle:</strong> " + esc(weeks[0].angle);
     $("cs-print").addEventListener("click", function () { window.print(); });
+    /* Export as communication task notes: a clean A4 document in a hidden frame, measured before it prints */
+    function notesDoc() {
+      var size = +$("cs-notes-size").value, src = document.querySelector("#view-cheat-sheet .cs").cloneNode(true);
+      Array.prototype.forEach.call(src.querySelectorAll(".cs-off, .cs-empty, .cs-role, .cs-src, .no-print, textarea, " + (LEVEL === "ieng" ? ".only-ceng" : ".only-ieng")), function (el) { el.parentNode.removeChild(el); });
+      Array.prototype.forEach.call(src.querySelectorAll("[hidden]"), function (el) { el.parentNode.removeChild(el); });
+      var css = "@page{size:A4 portrait;margin:12mm}html,body{margin:0;padding:0;background:#fff}body{font-family:Arial,Helvetica,sans-serif;color:#111;font-size:" + size + "pt;line-height:1.25}" +
+        ".cs{columns:2;column-gap:6mm;width:186mm}.cs-block{break-inside:avoid;border:1px solid #9aa;border-radius:2px;padding:2mm 3mm;margin:0 0 3mm}" +
+        "h3{margin:0 0 1mm;font-size:" + (size + 1) + "pt;color:#0b5560}dl{display:grid;grid-template-columns:max-content minmax(0,1fr);gap:0.5mm 2.5mm;margin:0}dt{font-weight:700}dd{margin:0}" +
+        "ol,ul{margin:0;padding-left:4.5mm}p{margin:1mm 0 0}a{color:inherit;text-decoration:none}.cs-note-print{display:block;white-space:pre-wrap}.cs-key{font-size:" + size + "pt}" +
+        ".measure .cs{height:271mm;column-fill:auto}";
+      return '<!doctype html><html lang="en-GB"><head><meta charset="utf-8"><title>Communication task reference notes</title><style>' + css + "</style></head><body>" + src.outerHTML + "</body></html>";
+    }
+    var frame = null;
+    function withFrame(cb) {
+      if (frame) document.body.removeChild(frame);
+      frame = document.createElement("iframe"); frame.setAttribute("aria-hidden", "true"); frame.tabIndex = -1;
+      frame.style.cssText = "position:absolute;left:-10000px;top:0;width:210mm;height:297mm;border:0;visibility:hidden";
+      document.body.appendChild(frame);
+      var d = frame.contentWindow.document; d.open(); d.write(notesDoc()); d.close();
+      setTimeout(function () { cb(frame.contentWindow, d); }, 50);
+    }
+    function sidesIn(d) {
+      d.body.classList.add("measure"); var cs = d.querySelector(".cs"), w = cs.getBoundingClientRect().width, g = 6 * 96 / 25.4;
+      var cols = Math.max(1, Math.round((cs.scrollWidth + g) / ((w - g) / 2 + g))); d.body.classList.remove("measure");
+      return Math.ceil(cols / 2);
+    }
+    function report(n) {
+      var el = $("cs-notes-fit"); el.className = "small" + (n > 2 ? " cs-notes-fit-bad" : "");
+      el.textContent = n > 2 ? "Too long: about " + n + " sides. Turn off sections or shorten your notes under Customise, or pick a smaller size." : "Fits on " + n + " side" + (n === 1 ? "" : "s") + " of A4.";
+    }
+    function notesCheck() { withFrame(function (w, d) { report(sidesIn(d)); }); }
+    $("cs-notes-size").addEventListener("change", notesCheck);
+    $("cs-notes-btn").addEventListener("click", function () {
+      withFrame(function (w, d) { var n = sidesIn(d); report(n); if (n > 2) return; w.focus(); w.print(); });
+    });
+    window.CPNotesCheck = notesCheck; window.CPNotesDoc = notesDoc;
     function drawCsRole() {
       var r = window.CPRole && CPRole.role(), blk = document.querySelector('[data-cs="role"]');
       if (!r || r.id === "other") {
@@ -464,6 +500,7 @@
       }).join("");
       var on = cs.order.filter(function (k) { return !cs.off[k]; }).length;
       $("cs-fit").textContent = on + " of " + cs.order.length + " sections shown. Use Print to check it still fits one page.";
+      if (window.CPNotesCheck) setTimeout(window.CPNotesCheck, 0);
     }
     $("cs-pick").addEventListener("change", function (e) { var k = e.target.dataset.k; if (!k) return; cs.off[k] = !e.target.checked; saveCs(); applyCs(); });
     $("cs-pick").addEventListener("click", function (e) {
