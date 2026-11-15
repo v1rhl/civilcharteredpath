@@ -386,6 +386,14 @@ footer .wrap { padding-block: 24px; display: flex; flex-direction: column; gap: 
   .checklist input { accent-color: #0d6b78; }
   .forms a::after { content: " " attr(href); font-weight: 400; font-size: 0.75rem; color: #4a5667; word-break: break-all; }
 }
+.sector-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.sector-chips button { font: 500 0.85rem var(--font-body); color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 999px; padding: 5px 12px; cursor: pointer; }
+.sector-chips button:hover { border-color: var(--accent); }
+.sector-chips button[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.sector-chips .n { font: 500 0.72rem var(--font-mono); opacity: 0.75; }
+.feed-item { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.feed .tags { display: flex; flex-wrap: wrap; gap: 4px; }
+.feed .tag { font: 500 0.7rem var(--font-mono); color: var(--accent); background: var(--accent-soft); border-radius: 3px; padding: 2px 6px; }
 </style>
 </head>
 <body>
@@ -680,6 +688,7 @@ footer .wrap { padding-block: 24px; display: flex; flex-direction: column; gap: 
       <h3 style="font-size:1.3rem">Latest headlines</h3>
       <span class="small mono" id="feed-updated"></span>
     </div>
+    <div class="sector-chips" id="feed-sectors" role="group" aria-label="Filter by sector"></div>
     <div class="feed-tools">
       <label for="feed-src" class="small">Source</label>
       <select id="feed-src"></select>
@@ -821,10 +830,10 @@ footer .wrap { padding-block: 24px; display: flex; flex-direction: column; gap: 
   </div>
 </footer>
 
-<script src="js/content.js?v=20261115n"></script>
-<script src="js/news-feed.js?v=20261115n"></script>
-<script src="js/config.js?v=20261115n"></script>
-<script src="js/pages.js?v=20261115n"></script>
-<script src="js/site.js?v=20261115n"></script>
+<script src="js/content.js?v=20261115o"></script>
+<script src="js/news-feed.js?v=20261115o"></script>
+<script src="js/config.js?v=20261115o"></script>
+<script src="js/pages.js?v=20261115o"></script>
+<script src="js/site.js?v=20261115o"></script>
 </body>
 </html>

@@ -297,11 +297,23 @@
   var srcs = ["All sources"]; FEED.items.forEach(function (i) { if (srcs.indexOf(i.src) < 0) srcs.push(i.src); });
   $("feed-src").innerHTML = srcs.map(function (s) { return "<option>" + esc(s) + "</option>"; }).join("");
   $("feed-updated").textContent = FEED.generated ? "Updated " + fmt(parse(FEED.generated)) : "";
+  /* Sector tags come from tools/refresh_news.py; anything untagged counts as Other */
+  function tagsOf(i) { return i.tags && i.tags.length ? i.tags : ["Other"]; }
+  var sector = "All", sectorCount = {};
+  FEED.items.forEach(function (i) { tagsOf(i).forEach(function (t) { sectorCount[t] = (sectorCount[t] || 0) + 1; }); });
+  var sectors = Object.keys(sectorCount).sort(function (a, b) { return a === "Other" ? 1 : b === "Other" ? -1 : sectorCount[b] - sectorCount[a]; });
+  function renderSectors() {
+    $("feed-sectors").innerHTML = ["All"].concat(sectors).map(function (t) {
+      return '<button type="button" data-sector="' + esc(t) + '" aria-pressed="' + (t === sector) + '">' + esc(t) + ' <span class="n">' + (t === "All" ? FEED.items.length : sectorCount[t]) + "</span></button>";
+    }).join("");
+  }
+  $("feed-sectors").addEventListener("click", function (e) { var b = e.target.closest("[data-sector]"); if (!b) return; sector = b.dataset.sector; shown = 20; renderSectors(); renderFeed(); });
+  renderSectors();
   function renderFeed() {
     var s = $("feed-src").value, q = $("feed-search").value.trim().toLowerCase();
-    var list = FEED.items.filter(function (i) { return (s === "All sources" || i.src === s) && (!q || i.t.toLowerCase().indexOf(q) > -1); });
+    var list = FEED.items.filter(function (i) { return (s === "All sources" || i.src === s) && (sector === "All" || tagsOf(i).indexOf(sector) > -1) && (!q || i.t.toLowerCase().indexOf(q) > -1); });
     $("feed").innerHTML = list.slice(0, shown).map(function (i) {
-      return '<li><div style="display:flex;flex-direction:column;gap:2px"><span class="src">' + esc(i.src) + '</span><span class="date">' + (i.date ? fmt(parse(i.date)) : "") + '</span></div><a href="' + esc(i.url) + '" target="_blank" rel="noopener">' + esc(i.t) + "</a></li>";
+      return '<li><div style="display:flex;flex-direction:column;gap:2px"><span class="src">' + esc(i.src) + '</span><span class="date">' + (i.date ? fmt(parse(i.date)) : "") + '</span></div><div class="feed-item"><a href="' + esc(i.url) + '" target="_blank" rel="noopener">' + esc(i.t) + '</a><span class="tags">' + tagsOf(i).map(function (t) { return '<span class="tag">' + esc(t) + "</span>"; }).join("") + "</span></div></li>";
     }).join("") || '<li><span class="small">No headlines match.</span></li>';
     $("feed-more").hidden = list.length <= shown;
   }
