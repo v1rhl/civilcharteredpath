@@ -1,6 +1,9 @@
 # Chartered Path
 
 A static website for civil engineers working towards ICE chartership (CEng MICE).
+
+Live site: https://v1rhl.github.io/iceukchartership/
+
 Open `index.html` in a browser; no build step. To publish, upload the whole folder to any
 static host (GitHub Pages, Netlify, Cloudflare Pages).
 
