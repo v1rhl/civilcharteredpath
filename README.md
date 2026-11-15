@@ -1,4 +1,4 @@
-# Chartered Path
+# Civil Chartered Path
 
 A static website for civil engineers working towards ICE chartership (CEng MICE).
 
@@ -19,7 +19,7 @@ static host (GitHub Pages, Netlify, Cloudflare Pages).
 | Community | Forum and mock-review partners, design only, posting off | `FORUM_CATEGORIES`, `EXAMPLE_THREADS` |
 
 ## Things that need a decision or a service before going public
-1. **Name.** "Chartered Path" is a working name. Change `SITE.name` in `js/content.js` and the title in `index.html`.
+1. **Name.** The site is called "Civil Chartered Path". To rename it, change `SITE.name` in `js/content.js` and the title in `index.html`.
 2. **Report check.** Not live yet. Switching it on needs a small server holding an AI API key (kept out of this
    repository), then its address in `CRITIQUE_ENDPOINT` in `js/config.js`. Until then the page shows an example and sends nothing.
 3. **Forum.** Pick a service (GitHub Discussions via Giscus, or Discourse) and replace the example threads.

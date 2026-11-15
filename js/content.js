@@ -3,7 +3,7 @@
    Items marked headlineOnly come from a news headline alone: read the article before quoting figures. */
 
 window.SITE = {
-  name: "Chartered Path",
+  name: "Civil Chartered Path",
   updated: "15 November 2026"
 };
 
@@ -289,6 +289,33 @@ window.FACT_CARDS = [
   { deck: "Current affairs", q: "How much has the government committed to flood defences, and to when?", a: "At least £10.5bn to 2036, with £1.4bn in 2026/27. It cites about £8 of damage avoided per £1 spent." },
   { deck: "Current affairs", q: "Why is HS2 renegotiating its main works contracts?", a: "To move off cost-plus terms, which left risk with the client and gave weak incentives, onto terms that reward cost control. A new baseline is due in spring 2027." },
   { deck: "Current affairs", q: "What did the 2026 Autumn Budget do to carbon capture and hydrogen?", a: "Cut £700m: Acorn's £200m scrapped and £500m off hydrogen grants. £9.4bn for HyNet and the East Coast Cluster protected." }
+,
+  /* ICE Code of Professional Conduct, as modified 24 March 2026.
+     Source: https://www.ice.org.uk/media/usdi4cre/ice-code-of-professional-conduct-apr-26.pdf
+     Scenario answers are illustrative, written for this site and grounded in the rules quoted. */
+  { deck: "Code of Conduct", q: "Rule 1 of the ICE Code: what does it require?", a: "Discharge your professional duties with integrity and uphold the reputation and standing of ICE and the profession. Guidance covers conflicts of interest, respect without bias, confidentiality and AI." },
+  { deck: "Code of Conduct", q: "Rule 2 of the ICE Code: what does it require?", a: "Undertake only work you are competent to do. Anyone interpreting AI outputs must understand the tools' limitations and risks." },
+  { deck: "Code of Conduct", q: "Rule 3 of the ICE Code: what does it require?", a: "Full regard for the public interest, particularly health and safety, and the wellbeing of future generations." },
+  { deck: "Code of Conduct", q: "Rule 4 of the ICE Code: what does it require?", a: "Full regard for the environment and the sustainable management of natural resources: take all reasonable steps to minimise environmental harm over a project's lifetime." },
+  { deck: "Code of Conduct", q: "Rule 5 of the ICE Code: what does it require?", a: "Keep developing your knowledge, skills and competence, and give reasonable help to the education, training and CPD of others. Keep records of your development planning." },
+  { deck: "Code of Conduct", q: "Rule 6 of the ICE Code: what must you promptly tell ICE about?", a: "A criminal conviction or adverse civil judgement related to the Code; losing membership of another body through discipline; bankruptcy or disqualification as a director or trustee; and a significant breach of the Code by another member you believe in good faith has happened." },
+  { deck: "Code of Conduct", q: "Rule 6: what else does it ask of you beyond notifying ICE?", a: "Raise genuine concerns with your employer or the relevant authority where whistle-blowing law protects you, support colleagues who raise concerns in good faith, and engage fully with any disciplinary process against you." },
+  { deck: "Code of Conduct", q: "What does the 2026 Code say about AI?", a: "Accountability can't be delegated to AI. Disclose the level of your AI use, understand the tools' limits if you interpret their outputs, and make sure any use is justified, proportionate to risk and in the public interest." },
+  { deck: "Code of Conduct", q: "What was new in the 2026 Code, according to ICE?", a: "First redesign since 2008; clearer guidance on raising concerns; all members must give the environment full regard; bullying and harassment named for the first time; coverage of disruptive technologies such as AI." },
+  { deck: "Code of Conduct", q: "Scenario: your manager asks you to sign off a design check outside your expertise because the deadline is tomorrow. What do you do?", a: "Decline to sign (Rule 2: only work you're competent to do). Explain why, propose a competent checker or a short delay, and record the conversation. Mention the safety risk (Rule 3) if it applies." },
+  { deck: "Code of Conduct", q: "Scenario: on site you see an unsafe excavation with workers in it. It isn't your package. What do you do?", a: "Act now: stop the work or get it stopped through the site team, because Rule 3 covers everyone engaged in the project. Then report it through the proper channel and follow up. 'Not my package' isn't a defence." },
+  { deck: "Code of Conduct", q: "Scenario: a supplier offers you tickets to a big match while you're assessing their tender. What do you do?", a: "Decline and tell your manager. It creates at least a perceived conflict of interest, which Rule 1's guidance says to avoid, or declare where it can't be avoided. Follow your employer's gifts policy." },
+  { deck: "Code of Conduct", q: "Scenario: you used an AI tool to draft part of a design note. What does the Code expect?", a: "You stay accountable for every word and number. Check the output, understand the tool's limits, and disclose the level of AI use (Rule 1 guidance)." },
+  { deck: "Code of Conduct", q: "Scenario: a colleague raises a safety concern and the team starts freezing them out. What's your duty?", a: "Support them (Rule 6f) and don't ignore the behaviour: the Code names bullying and harassment, and asks you not to conceal wrongdoing. Raise it with your manager or HR." },
+  /* ICE history. Source: https://www.ice.org.uk/about-ice/our-history and
+     https://www.ice.org.uk/about-us/our-organisation/royal-charter (checked 15 Nov 2026). */
+  { deck: "ICE history", q: "When and where was ICE founded?", a: "1818, by a small group of young engineers meeting in a London coffee shop. ICE describes itself as the world's first professional engineering body." },
+  { deck: "ICE history", q: "Who was ICE's first president, and when was he appointed?", a: "Thomas Telford, appointed in 1820." },
+  { deck: "ICE history", q: "What was Thomas Telford's nickname, and why?", a: "'The Colossus of Roads'. He built over 1,000 miles of roads in his lifetime." },
+  { deck: "ICE history", q: "What does ICE call Telford's most important role for the Institution?", a: "Securing ICE's Royal Charter, in 1828." },
+  { deck: "ICE history", q: "When was ICE's charter updated, and when did the current Charter and By-laws take effect?", a: "Updated by Queen Elizabeth II in 1975. The current Royal Charter and By-laws took effect on 30 October 2023." },
+  { deck: "ICE history", q: "Name four engineers whose papers are in ICE's archives.", a: "James Brindley, John Smeaton, Thomas Telford and the Rennies. The archives also hold material on Brunel's Thames Tunnel and the Panama Canal." },
+  { deck: "ICE history", q: "Roughly how many members does ICE have today?", a: "Over 95,000 members around the world." }
 ];
 
 /* ICE Professional Review key dates, 2026-27. One table covers CPR, IPR, CPRP, TPR, TRR (Stage 2) and CEPR.

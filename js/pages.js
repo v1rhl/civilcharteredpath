@@ -149,7 +149,7 @@
     $("plan-list").innerHTML = rows.map(function (r) { return r.html; }).join("");
     renderPlan.rows = rows.map(function (r) { return r.x; });
     renderPlan.route = planRouteLabel();
-    $("plan-print-head").innerHTML = "<h2>My ICE chartership plan</h2><p>" + esc(renderPlan.route) + " &middot; Submit by " + fmt(p.submit) + " &middot; Review " + fmt(p.review) + (p.reviewAssumed ? " (assumed)" : "") + "</p><p class=\"small\">Made " + fmt(today) + " with Chartered Path. Durations are suggestions, not ICE requirements; confirm dates at " + esc(window.ICE_DATES_SOURCE || "") + "</p>";
+    $("plan-print-head").innerHTML = "<h2>My ICE chartership plan</h2><p>" + esc(renderPlan.route) + " &middot; Submit by " + fmt(p.submit) + " &middot; Review " + fmt(p.review) + (p.reviewAssumed ? " (assumed)" : "") + "</p><p class=\"small\">Made " + fmt(today) + " with Civil Chartered Path. Durations are suggestions, not ICE requirements; confirm dates at " + esc(window.ICE_DATES_SOURCE || "") + "</p>";
     renderPlan.text = "My CEng plan\n" + rows.map(function (r) { return "- " + r.txt; }).join("\n");
     save("cp-plan", { submit: $("plan-submit").value, review: $("plan-review").value, weeks: weeks, cycle: planCycle });
   }
@@ -191,10 +191,10 @@
     function t(v) { return String(v || "").replace(/\\/g, "\\\\").replace(/;/g, "\\;").replace(/,/g, "\\,").replace(/\n/g, "\\n"); }
     var stamp = new Date().toISOString().replace(/[-:]/g, "").replace(/\.\d+/, "");
     var ev = rows.map(function (r, i) {
-      return ["BEGIN:VEVENT", "UID:cp-" + d(r.s) + "-" + i + "@chartered-path", "DTSTAMP:" + stamp, "DTSTART;VALUE=DATE:" + d(r.s),
+      return ["BEGIN:VEVENT", "UID:cp-" + d(r.s) + "-" + i + "@civilcharteredpath", "DTSTAMP:" + stamp, "DTSTART;VALUE=DATE:" + d(r.s),
         "DTEND;VALUE=DATE:" + d(r.e && r.e > r.s ? r.e : addDays(r.s, 1)), "SUMMARY:" + t((r.e ? "" : "\u25C6 ") + r.t), "DESCRIPTION:" + t((r.n || "") + " (" + renderPlan.route + ")"), "END:VEVENT"].map(fold).join("\r\n");
     });
-    download("chartership-plan.ics", "text/calendar;charset=utf-8", ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Chartered Path//Planner//EN", "CALSCALE:GREGORIAN"].concat(ev).concat(["END:VCALENDAR"]).join("\r\n") + "\r\n");
+    download("chartership-plan.ics", "text/calendar;charset=utf-8", ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Civil Chartered Path//Planner//EN", "CALSCALE:GREGORIAN"].concat(ev).concat(["END:VCALENDAR"]).join("\r\n") + "\r\n");
     $("plan-copied").textContent = "Downloaded chartership-plan.ics. Open it to add the dates to your calendar.";
   });
   $("plan-pdf").addEventListener("click", function () {
