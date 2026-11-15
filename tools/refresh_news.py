@@ -30,11 +30,21 @@ FEEDS = [
     ("Environment Agency", "https://www.gov.uk/government/organisations/environment-agency.atom"),
     ("Department for Transport", "https://www.gov.uk/government/organisations/department-for-transport.atom"),
     ("NISTA", "https://www.gov.uk/government/organisations/national-infrastructure-and-service-transformation-authority.atom"),
+    # Reservoirs and flood defence. GOV.UK search feeds only filter on single-word keywords.
+    ("Environment Agency", "https://www.gov.uk/search/news-and-communications.atom?keywords=flood&organisations%5B%5D=environment-agency"),
+    ("GOV.UK", "https://www.gov.uk/search/news-and-communications.atom?keywords=reservoir"),
+    ("GOV.UK", "https://www.gov.uk/search/news-and-communications.atom?keywords=dam"),
+    ("Environment Agency blog", "https://environmentagency.blog.gov.uk/feed/"),
+    ("Defra", "https://www.gov.uk/government/organisations/department-for-environment-food-rural-affairs.atom"),
+    ("The Construction Index", "https://www.theconstructionindex.co.uk/news/rss"),
+    # Checked Nov 2026 and left out: Water Industry Journal (robots.txt disallows /feed/); SEPA, Natural Resources Wales,
+    # British Dam Society, CIWEM, Utility Week, Water Magazine and WWT had no readable feed. Add them if that changes.
 ]
 # A headline from a general source is kept only if it mentions one of these.
 KEYWORDS = ["infrastructure", "civil", "engineer", "bridge", "tunnel", "rail", "road", "highway", "flood",
             "water", "reservoir", "dam", "nuclear", "grid", "port", "construction", "contract", "hs2",
-            "net zero", "carbon", "sewer", "coastal", "geotech", "ice "]
+            "net zero", "carbon", "sewer", "coastal", "geotech", "ice ", "drought", "defence", "spillway",
+            "embankment", "erosion", "storm"]
 SPECIALIST = {"NCE", "ICE", "Construction Enquirer", "Infrastructure Intelligence"}
 AGENT = "CharteredPathNews/1.0 (headline list)"
 DAYS = 60
@@ -48,7 +58,7 @@ ATOM = "{http://www.w3.org/2005/Atom}"
 # Anything that matches none is tagged "Other", so nothing is hidden by the filter.
 SECTORS = [
     ("Reservoirs and dams", r"reservoirs?|dams?|spillways?|impounding|reservoirs act|toddbrook|havant thicket|sesro|abingdon reservoir|fens reservoir|lincolnshire reservoir"),
-    ("Flood and coastal", r"floods?|flooding|flood defences?|flood storage|flood risk|fcerm|coastal|coastline|erosion|sea walls?|sea defences?|storm surge|storms?|thames barrier|barriers?|embankments?|levees?|managed realignment|natural flood management|nfm"),
+    ("Flood and coastal", r"floods?|flooding|flood defences?|flood storage|flood risk|fcerm|coastal|coastline|erosion|sea walls?|sea defences?|defences?|rock defence|rock armour|groynes?|storm surge|storms?|thames barrier|barriers?|embankments?|levees?|managed realignment|natural flood management|nfm"),
     ("Water and wastewater", r"water|sewers?|sewage|wastewater|drainage|canal|ofwat|utilities|pr24|amp8|water companies|thames water|leakage|drought|desalination"),
     ("Rail", r"rail|railways?|hs2|metro|stations?|trains?|tram|npr|crossrail"),
     ("Roads", r"roads?|highways?|motorways?|junction|m\d+|roadworks|ltc"),

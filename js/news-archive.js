@@ -2,6 +2,26 @@
 window.NEWS_ARCHIVE = {
  "items": [
   {
+   "t": "£11m pumping station upgrade boosts Somerset flood resilience",
+   "url": "https://www.gov.uk/government/news/11m-pumping-station-upgrade-boosts-somerset-flood-resilience",
+   "src": "Environment Agency",
+   "date": "2026-11-12",
+   "tags": [
+    "Flood and coastal",
+    "Rail"
+   ]
+  },
+  {
+   "t": "England's reservoirs at 60.1% as 2026 drought incidents pass 2022 total",
+   "url": "https://smartwatermagazine.com/news/smart-water-magazine/englands-reservoirs-at-60-1-as-2026-drought-incidents-pass-2022-total",
+   "src": "Smart Water Magazine",
+   "date": "2026-11-10",
+   "tags": [
+    "Reservoirs and dams",
+    "Water and wastewater"
+   ]
+  },
+  {
    "t": "New infrastructure productivity standard aims to take a systemic approach to current obstacles",
    "url": "https://www.newcivilengineer.com/latest/new-infrastructure-productivity-standard-aims-to-take-system-approach-to-current-issues-09-11-2026/",
    "src": "NCE",
@@ -67,6 +87,15 @@ window.NEWS_ARCHIVE = {
    ]
   },
   {
+   "t": "Flood risk reduced for Severn Stoke ahead of winter months",
+   "url": "https://www.gov.uk/government/news/flood-risk-reduced-for-severn-stoke-ahead-of-winter-months",
+   "src": "Environment Agency",
+   "date": "2026-11-06",
+   "tags": [
+    "Flood and coastal"
+   ]
+  },
+  {
    "t": "National Grid sets out plans for its construction and maintenance supplier market",
    "url": "https://www.newcivilengineer.com/latest/national-grid-sets-out-plans-for-construction-and-maintenance-supplier-market-05-11-2026/",
    "src": "NCE",
@@ -92,6 +121,15 @@ window.NEWS_ARCHIVE = {
    "date": "2026-11-03",
    "tags": [
     "Industry and careers"
+   ]
+  },
+  {
+   "t": "Beyond the floodwater: the lasting impact of flooding and coastal change",
+   "url": "https://environmentagency.blog.gov.uk/2026/11/03/beyond-the-floodwater-the-lasting-impact-of-flooding-and-coastal-change/",
+   "src": "Environment Agency blog",
+   "date": "2026-11-03",
+   "tags": [
+    "Flood and coastal"
    ]
   },
   {
@@ -255,6 +293,16 @@ window.NEWS_ARCHIVE = {
    ]
   },
   {
+   "t": "Clancy wins £27m reservoir pipeline",
+   "url": "https://www.constructionenquirer.com/2026/10/22/clancy-wins-27m-reservoir-pipeline/",
+   "src": "Construction Enquirer",
+   "date": "2026-10-22",
+   "tags": [
+    "Reservoirs and dams",
+    "Policy and funding"
+   ]
+  },
+  {
    "t": "What has the government got planned for infrastructure?",
    "url": "https://www.newcivilengineer.com/ice/lighthouse-what-has-the-government-got-planned-for-infrastructure-21-10-2026/",
    "src": "NCE",
@@ -270,6 +318,25 @@ window.NEWS_ARCHIVE = {
    "date": "2026-10-21",
    "tags": [
     "Industry and careers"
+   ]
+  },
+  {
+   "t": "Securing water supplies for the future - Lincolnshire reservoir launches third public consultation",
+   "url": "https://www.lincsreservoir.co.uk/stay-informed/news/update-21-october-2026",
+   "src": "Anglian Water",
+   "date": "2026-10-21",
+   "tags": [
+    "Reservoirs and dams",
+    "Water and wastewater"
+   ]
+  },
+  {
+   "t": "Sussex coastal defence scheme powers ahead with electric trial",
+   "url": "https://www.gov.uk/government/news/sussex-coastal-defence-scheme-powers-ahead-with-electric-trial",
+   "src": "Environment Agency",
+   "date": "2026-10-21",
+   "tags": [
+    "Flood and coastal"
    ]
   },
   {
@@ -298,6 +365,15 @@ window.NEWS_ARCHIVE = {
    "tags": [
     "Water and wastewater",
     "Tunnels and structures"
+   ]
+  },
+  {
+   "t": "Helping communities stay ahead of flooding along the Great Ouse",
+   "url": "https://www.gov.uk/government/news/helping-communities-stay-ahead-of-flooding-along-the-great-ouse",
+   "src": "Environment Agency",
+   "date": "2026-10-19",
+   "tags": [
+    "Flood and coastal"
    ]
   },
   {
@@ -413,6 +489,24 @@ window.NEWS_ARCHIVE = {
    ]
   },
   {
+   "t": "Construction begins on £20m Torcross rock defence scheme",
+   "url": "https://www.gov.uk/government/news/construction-begins-on-20m-torcross-rock-defence-scheme",
+   "src": "Environment Agency",
+   "date": "2026-10-14",
+   "tags": [
+    "Flood and coastal"
+   ]
+  },
+  {
+   "t": "From condition to confidence: caring for flood defences in a changing climate",
+   "url": "https://environmentagency.blog.gov.uk/2026/10/14/from-condition-to-confidence-caring-for-flood-defences-in-a-changing-climate/",
+   "src": "Environment Agency blog",
+   "date": "2026-10-14",
+   "tags": [
+    "Flood and coastal"
+   ]
+  },
+  {
    "t": "Sixteen road schemes 'quietly' cancelled by Department of Transport",
    "url": "https://www.newcivilengineer.com/latest/sixteen-road-schemes-quietly-cancelled-by-department-of-transport-13-10-2026/",
    "src": "NCE",
@@ -441,12 +535,51 @@ window.NEWS_ARCHIVE = {
    ]
   },
   {
+   "t": "Major flood defence upgrade completed at Keyhaven ahead of winter",
+   "url": "https://www.gov.uk/government/news/major-flood-defence-upgrade-completed-at-keyhaven-ahead-of-winter",
+   "src": "Environment Agency",
+   "date": "2026-10-13",
+   "tags": [
+    "Flood and coastal"
+   ]
+  },
+  {
+   "t": "100 East Midlands homes benefit from flood resilience measures",
+   "url": "https://www.gov.uk/government/news/100-east-midlands-homes-benefit-from-flood-resilience-measures",
+   "src": "Environment Agency",
+   "date": "2026-10-13",
+   "tags": [
+    "Flood and coastal"
+   ]
+  },
+  {
    "t": "£10.5bn for flood defences as government launches new taskforce",
    "url": "https://www.newcivilengineer.com/latest/10-5bn-for-flood-defences-as-government-launches-new-taskforce-12-10-2026/",
    "src": "NCE",
    "date": "2026-10-12",
    "tags": [
     "Flood and coastal",
+    "Policy and funding"
+   ]
+  },
+  {
+   "t": "'Weather whiplash': Government announce plans to protect more homes from flooding",
+   "url": "https://www.channel4.com/news/weather-whiplash-government-announce-plans-to-protect-more-homes-from-flooding",
+   "src": "Channel 4 News",
+   "date": "2026-10-12",
+   "tags": [
+    "Flood and coastal",
+    "Policy and funding"
+   ]
+  },
+  {
+   "t": "New taskforce to boost Britain's resilience to flooding and drought",
+   "url": "https://www.gov.uk/government/news/new-taskforce-to-boost-britains-resilience-to-flooding-and-drought",
+   "src": "Defra",
+   "date": "2026-10-11",
+   "tags": [
+    "Flood and coastal",
+    "Water and wastewater",
     "Policy and funding"
    ]
   },
@@ -470,12 +603,87 @@ window.NEWS_ARCHIVE = {
    ]
   },
   {
+   "t": "Drought permit granted to support Wimbleball Reservoir",
+   "url": "https://www.gov.uk/government/news/drought-permit-granted-to-support-wimbleball-reservoir",
+   "src": "Environment Agency",
+   "date": "2026-10-08",
+   "tags": [
+    "Reservoirs and dams",
+    "Water and wastewater"
+   ]
+  },
+  {
+   "t": "Major improvements to Lymington flood defences completed",
+   "url": "https://www.gov.uk/government/news/major-improvements-to-lymington-flood-defences-completed",
+   "src": "Environment Agency",
+   "date": "2026-10-07",
+   "tags": [
+    "Flood and coastal"
+   ]
+  },
+  {
+   "t": "Getting winter ready: Northwich defences put to the test",
+   "url": "https://www.gov.uk/government/news/getting-winter-ready-northwich-defences-put-to-the-test",
+   "src": "Environment Agency",
+   "date": "2026-10-07",
+   "tags": [
+    "Flood and coastal"
+   ]
+  },
+  {
+   "t": "England's reservoirs continue to feel drought strain after sixth dry month of 2026",
+   "url": "https://www.gov.uk/government/news/englands-reservoirs-continue-to-feel-drought-strain-after-sixth-dry-month-of-2026",
+   "src": "Environment Agency",
+   "date": "2026-10-02",
+   "tags": [
+    "Reservoirs and dams",
+    "Water and wastewater"
+   ]
+  },
+  {
+   "t": "Drought permit granted to help Ardingly Reservoir",
+   "url": "https://www.gov.uk/government/news/drought-permit-granted-to-help-ardingly-reservoir",
+   "src": "Environment Agency",
+   "date": "2026-10-02",
+   "tags": [
+    "Reservoirs and dams",
+    "Water and wastewater"
+   ]
+  },
+  {
+   "t": "New flood scheme opens to protect Tonbridge and Hildenborough",
+   "url": "https://www.gov.uk/government/news/new-flood-scheme-opens-to-protect-tonbridge-and-hildenborough",
+   "src": "Environment Agency",
+   "date": "2026-09-30",
+   "tags": [
+    "Flood and coastal"
+   ]
+  },
+  {
+   "t": "Green light for £25m Greatham North East Flood Alleviation Scheme",
+   "url": "https://www.gov.uk/government/news/green-light-for-25m-greatham-north-east-flood-alleviation-scheme",
+   "src": "Environment Agency",
+   "date": "2026-09-29",
+   "tags": [
+    "Flood and coastal"
+   ]
+  },
+  {
    "t": "505km Scotland to England \"electricity superhighway",
    "url": "https://www.newcivilengineer.com/in-depth/insights-into-the-delivery-of-a-505km-electricity-superhighway-between-scotland-and-england-24-09-2026/",
    "src": "NCE",
    "date": "2026-09-24",
    "tags": [
     "Energy"
+   ]
+  },
+  {
+   "t": "Environment Agency submits Portreath flood defence plans",
+   "url": "https://www.gov.uk/government/news/environment-agency-submits-portreath-flood-defence-plans",
+   "src": "Environment Agency",
+   "date": "2026-09-24",
+   "tags": [
+    "Flood and coastal"
    ]
   },
   {
@@ -494,6 +702,26 @@ window.NEWS_ARCHIVE = {
    "date": "2026-09-14",
    "tags": [
     "Aviation and ports"
+   ]
+  },
+  {
+   "t": "Environment Secretary visits Havant Thicket reservoir as government strengthens water resilience amid ongoing drought",
+   "url": "https://www.gov.uk/government/news/environment-secretary-visits-havant-thicket-reservoir-as-government-strengthens-water-resilience-amid-ongoing-drought",
+   "src": "Defra",
+   "date": "2026-09-04",
+   "tags": [
+    "Reservoirs and dams",
+    "Water and wastewater",
+    "Policy and funding"
+   ]
+  },
+  {
+   "t": "Reservoir safety research strategy 2026",
+   "url": "https://www.gov.uk/government/publications/reservoir-safety-research-strategy-2026",
+   "src": "Environment Agency",
+   "date": "2026-09-04",
+   "tags": [
+    "Reservoirs and dams"
    ]
   },
   {
