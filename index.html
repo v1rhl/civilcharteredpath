@@ -626,6 +626,31 @@ html:not([data-level="ieng"]) .cmp-table .c-ceng, html[data-level="ieng"] .cmp-t
 .cs-role { border-color: var(--accent-2) !important; }
 .cs-role ul { margin: 0; padding-left: 14px; font-size: 0.88rem; display: flex; flex-direction: column; gap: 3px; }
 @media print { .cs-block.cs-role { display: none !important; } }
+/* Review day links and presentation tips */
+.part-link { display: flex; align-items: center; gap: 10px; margin-top: 4px; padding: 10px 12px; border: 1px solid var(--accent); border-radius: var(--radius); text-decoration: none; color: var(--accent); background: var(--surface); }
+.part-link:hover { background: var(--accent-soft); }
+.part-link > span { display: flex; flex-direction: column; gap: 1px; }
+.part-link > span span { color: var(--muted); font-size: 0.85rem; }
+.pres-spine { border-color: var(--accent-2) !important; }
+.pres-zoom { width: 100%; max-width: 640px; height: auto; display: block; }
+.pres-time { width: 100%; height: auto; display: block; }
+.pres-tests { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr)); gap: 10px 18px; }
+.pres-tests li { display: flex; gap: 10px; align-items: flex-start; font-size: 0.95rem; }
+.pt-n { flex: none; width: 26px; height: 26px; border-radius: 50%; background: var(--accent-2-soft); color: var(--accent-2); font: 700 0.85rem var(--font-mono); display: grid; place-items: center; }
+.pres-plan { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr)); gap: 12px 16px; }
+.pres-plan label { display: flex; flex-direction: column; gap: 4px; font-weight: 600; font-size: 0.9rem; }
+.pres-plan input, .pres-plan textarea { font: 400 0.92rem/1.4 var(--font-body); padding: 7px 9px; resize: vertical; }
+.slide-pairs { display: flex; flex-direction: column; gap: 22px; }
+.slide-pair { margin: 0; display: flex; flex-direction: column; gap: 8px; }
+.sp-row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+@media (max-width: 560px) { .sp-row { grid-template-columns: minmax(0, 1fr); } }
+.sp { position: relative; }
+.sp svg { width: 100%; height: auto; display: block; }
+.sp-tag { position: absolute; top: -9px; left: 10px; font: 600 0.7rem var(--font-mono); text-transform: uppercase; letter-spacing: 0.05em; padding: 1px 8px; border-radius: 999px; }
+.sp.bad .sp-tag { background: var(--accent-2-soft); color: var(--accent-2); border: 1px solid var(--accent-2); }
+.sp.good .sp-tag { background: var(--accent); color: var(--accent-ink); }
+.slide-pair figcaption { font-size: 0.92rem; }
+.pres-mistakes { margin: 0; padding-left: 1.1em; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr)); gap: 8px 22px; font-size: 0.93rem; }
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 .role-compare .linkish { margin-left: 0; }
 .fc-decks-mine { outline: 2px solid var(--accent-2); outline-offset: 1px; }
@@ -925,16 +950,7 @@ html:not([data-level="ieng"]) .cmp-table .c-ceng, html[data-level="ieng"] .cmp-t
     <p class="small" style="margin:0">Both levels: a 15-minute presentation and two peer reviewers, online on Teams or in person. You're assessed against the attributes at <strong data-lv="title">CEng MICE</strong> level (see <a href="#attributes">Attributes</a>). The sections below follow this choice.</p>
   </div>
 
-  <a class="panel fc-callout" href="#flashcards">
-    <svg viewBox="0 0 24 24" width="40" height="40" aria-hidden="true" fill="none" stroke-width="1.8" style="stroke:var(--accent)"><rect x="7" y="3" width="14" height="11" rx="1.5"/><path d="M4 7v11a2 2 0 0 0 2 2h11"/></svg>
-    <span><strong>Revise with flashcards</strong><span class="muted">Short decks on the attributes, Code of Conduct, ICE history, contracts, H&amp;S, sustainability and current affairs. Your progress is saved in this browser.</span></span>
-    <span class="btn">Open flashcards</span>
-  </a>
-  <a class="panel fc-callout" href="#cheat-sheet">
-    <svg viewBox="0 0 24 24" width="40" height="40" aria-hidden="true" fill="none" stroke-width="1.8" style="stroke:var(--accent)"><path d="M5 4h11a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3z"/><path d="M5 17a3 3 0 0 1 3-3h11"/><path d="M9 8h6"/></svg>
-    <span><strong>Cheat sheet</strong><span class="muted">One printable page of last-minute facts: your timings, the attributes, the Code, H&amp;S, sustainability, contracts and talking points.</span></span>
-    <span class="btn">Open cheat sheet</span>
-  </a>
+
 
 
   <div class="panel">
@@ -992,7 +1008,8 @@ html:not([data-level="ieng"]) .cmp-table .c-ceng, html[data-level="ieng"] .cmp-t
         <li>Aim for 13 minutes, so nerves or a question don't push you past 15.</li>
         <li>Use drawings, sections and photos rather than text-heavy slides. Show numbers you can talk to.</li>
         <li>Rehearse aloud with a timer at least five times, and once in front of someone who'll interrupt you.</li>
-      </ul></div>
+      </ul>
+      <a class="part-link" href="#presentation"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke-width="1.8" style="stroke:currentColor"><rect x="3" y="4" width="18" height="12" rx="1.5"/><path d="M12 16v4M8 20h8M7 12l3-3 2 2 4-4"/></svg><span><strong>Presentation tips</strong><span>Slides, timing and good vs poor examples</span></span></a></div>
     </article>
 
     <article class="panel part">
@@ -1013,8 +1030,9 @@ html:not([data-level="ieng"]) .cmp-table .c-ceng, html[data-level="ieng"] .cmp-t
         <li>Know every number in your report. If one is wrong, correct it before they find it.</li>
         <li>If you don't know, say so. Then say what you do know, how you'd find out, and how you'd keep things safe meanwhile. Never bluff.</li>
         <li>It's fine to pause, ask them to repeat a question, or sketch to explain.</li>
-        <li>Revise the Code of Conduct, CPD, H&amp;S and current affairs: the attributes cover them all. The <a href="#flashcards">flashcards</a> help.</li>
-      </ul></div>
+        <li>Revise the Code of Conduct, CPD, H&amp;S and current affairs: the attributes cover them all.</li>
+      </ul>
+      <a class="part-link" href="#flashcards"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke-width="1.8" style="stroke:currentColor"><rect x="7" y="3" width="14" height="11" rx="1.5"/><path d="M4 7v11a2 2 0 0 0 2 2h11"/></svg><span><strong>Revise with flashcards</strong><span>Attributes, Code of Conduct, contracts, H&amp;S and more</span></span></a></div>
     </article>
 
     <article class="panel part">
@@ -1040,7 +1058,8 @@ html:not([data-level="ieng"]) .cmp-table .c-ceng, html[data-level="ieng"] .cmp-t
         <li>Bring in a current example and, where it fits, sustainability, safety and cost.</li>
         <li>Fill your two A4 sides with facts and figures on likely topics (from the News page), not pre-written paragraphs.</li>
         <li>Practise at least three timed tasks (<span class="only-ceng">90</span><span class="only-ieng">60</span> minutes), typed, with no internet.</li>
-      </ul></div>
+      </ul>
+      <a class="part-link" href="#cheat-sheet"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke-width="1.8" style="stroke:currentColor"><path d="M5 4h11a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3z"/><path d="M5 17a3 3 0 0 1 3-3h11"/><path d="M9 8h6"/></svg><span><strong>Cheat sheet</strong><span>Facts and talking points to build your two A4 sides of notes</span></span></a></div>
     </article>
   </div>
 
@@ -1311,6 +1330,184 @@ html:not([data-level="ieng"]) .cmp-table .c-ceng, html[data-level="ieng"] .cmp-t
   </div>
 </section>
 
+<!-- PRESENTATION TIPS -->
+<section class="view wrap" id="view-presentation" data-view="presentation" hidden>
+  <div class="view-head">
+    <span class="eyebrow"><a href="#review">Review day</a> / Presentation tips</span>
+    <h2>Your 15 minutes, built on your report</h2>
+    <p class="lede">The presentation takes one aspect of a project you've already written about and goes deeper. Here's how to choose it, structure it, and design slides that help rather than get in the way.</p>
+  </div>
+
+  <div class="panel">
+    <span class="eyebrow">What ICE says</span>
+    <div class="ice-says">
+      <span class="tag-ice">ICE</span>
+      <ul>
+        <li>15 minutes, the same for IEng and CEng. Reviewers may stop you if you go over. <a href="https://www.ice.org.uk/media/aj2gmts3/11-jun-26-professional-review-guidance.pdf" target="_blank" rel="noopener">p. 13</a></li>
+        <li>It should expand on one aspect of your report. It should not cover all the attributes, or summarise your CV or report. <a href="https://www.ice.org.uk/media/aj2gmts3/11-jun-26-professional-review-guidance.pdf" target="_blank" rel="noopener">p. 13</a></li>
+        <li>Visual aids are encouraged. Online you share your screen on Teams; in person, visual aids can be up to A3 and you can bring a laptop, but no power supply is provided. <a href="https://www.ice.org.uk/media/aj2gmts3/11-jun-26-professional-review-guidance.pdf" target="_blank" rel="noopener">pp. 13, 26</a></li>
+      </ul>
+    </div>
+    <p class="small muted" style="margin:0">ICE doesn't set a number of slides or a structure. Everything else on this page is our advice.</p>
+  </div>
+
+  <div class="panel pres-spine">
+    <div><span class="eyebrow">The golden rule</span><h3 style="margin-top:4px">Go deeper into a project that's already in your report</h3></div>
+    <svg class="pres-zoom" viewBox="0 0 520 170" role="img" aria-labelledby="pz-t">
+      <title id="pz-t">Your report holds several projects. Pick one section of one project and expand it into the presentation.</title>
+      <rect x="10" y="14" width="120" height="146" rx="6" style="fill:var(--surface);stroke:var(--line)" stroke-width="2"/>
+      <text x="70" y="34" text-anchor="middle" font-size="12" font-weight="700" style="fill:var(--ink)">Your report</text>
+      <rect x="24" y="46" width="92" height="24" rx="3" style="fill:var(--paper);stroke:var(--line)"/><text x="70" y="62" text-anchor="middle" font-size="10" style="fill:var(--muted)">Project A</text>
+      <rect x="24" y="78" width="92" height="40" rx="3" style="fill:var(--accent-2-soft);stroke:var(--accent-2)" stroke-width="2"/><text x="70" y="94" text-anchor="middle" font-size="10" font-weight="700" style="fill:var(--accent-2)">Project B</text><text x="70" y="108" text-anchor="middle" font-size="9" style="fill:var(--accent-2)">your key decision</text>
+      <rect x="24" y="126" width="92" height="24" rx="3" style="fill:var(--paper);stroke:var(--line)"/><text x="70" y="142" text-anchor="middle" font-size="10" style="fill:var(--muted)">Project C</text>
+      <path d="M116 80 L232 22 M116 116 L232 158" stroke-dasharray="4 4" stroke-width="1.5" style="stroke:var(--accent-2)" fill="none"/>
+      <rect x="232" y="14" width="278" height="146" rx="6" style="fill:var(--surface);stroke:var(--accent)" stroke-width="2"/>
+      <text x="371" y="36" text-anchor="middle" font-size="12" font-weight="700" style="fill:var(--accent)">Your presentation</text>
+      <g font-size="10" style="fill:var(--ink)">
+        <rect x="248" y="48" width="246" height="18" rx="3" style="fill:var(--paper)"/><text x="256" y="61">1  The problem you faced</text>
+        <rect x="248" y="70" width="246" height="18" rx="3" style="fill:var(--paper)"/><text x="256" y="83">2  Options and constraints</text>
+        <rect x="248" y="92" width="246" height="18" rx="3" style="fill:var(--accent-soft)"/><text x="256" y="105" font-weight="700">3  What you decided, and why</text>
+        <rect x="248" y="114" width="246" height="18" rx="3" style="fill:var(--paper)"/><text x="256" y="127">4  The result, with numbers</text>
+        <rect x="248" y="136" width="246" height="18" rx="3" style="fill:var(--paper)"/><text x="256" y="149">5  What you learned</text>
+      </g>
+    </svg>
+    <div class="our-advice"><h4>Our advice</h4>
+    <ul class="advice-list">
+      <li><strong>Use a project from your report.</strong> Your reviewers have read it and will question you from it. A new project means claims they can't check against your written evidence, and time spent setting the scene.</li>
+      <li><strong>Go deeper, don't repeat.</strong> Pick one aspect, such as a decision, a problem you solved or an improvement you led, and add what the report had no room for: the options, the numbers, the drawings, the trade-offs.</li>
+      <li><strong>Make it yours.</strong> The reviewers are assessing you, not the project. Every slide should show something you did, decided or changed.</li>
+      <li><strong>Keep it consistent.</strong> Use the same facts and figures as your report. If something in the report was wrong, say so and correct it.</li>
+    </ul></div>
+  </div>
+
+  <div class="panel">
+    <div><span class="eyebrow">Choosing the aspect</span><h3 style="margin-top:4px">A good topic passes these tests</h3></div>
+    <ul class="pres-tests">
+      <li><span class="pt-n">1</span><span><strong>It's in your report.</strong> You can point to the section where you wrote about it.</span></li>
+      <li><span class="pt-n">2</span><span><strong>You made the call.</strong> You led the decision or the work, not just helped with it.</span></li>
+      <li><span class="pt-n">3</span><span><strong>There was a real choice.</strong> More than one option, with a trade-off you can explain.</span></li>
+      <li><span class="pt-n">4</span><span><strong>It has numbers.</strong> Cost, carbon, programme, risk or performance figures you can talk to.</span></li>
+      <li><span class="pt-n">5</span><span><strong>It can be shown.</strong> Drawings, sections, photos or a simple chart, not just words.</span></li>
+      <li><span class="pt-n">6</span><span><strong>It fits in 13 minutes.</strong> One story, told well, beats three told in a rush.</span></li>
+    </ul>
+    <p class="small muted" style="margin:0">Several attributes will come through naturally (engineering judgement, commercial, safety, communication). That's fine, but don't try to tour all seven: ICE says not to.</p>
+  </div>
+
+  <div class="panel">
+    <div><span class="eyebrow">Plan it</span><h3 style="margin-top:4px">Your presentation on one page</h3></div>
+    <p class="small" style="margin:0">Fill this in before you open your slide software. It's saved in this browser only.</p>
+    <div class="pres-plan" id="pres-plan">
+      <label>Project, and where it is in your report<input type="text" data-pk="project" placeholder="e.g. Project B, report section 3"></label>
+      <label>The aspect you'll expand<input type="text" data-pk="aspect" placeholder="e.g. choosing the outfall arrangement"></label>
+      <label>The problem, in one sentence<textarea rows="2" data-pk="problem"></textarea></label>
+      <label>The options you considered<textarea rows="2" data-pk="options"></textarea></label>
+      <label>What you decided, and why it was your call<textarea rows="2" data-pk="decision"></textarea></label>
+      <label>The result, with numbers<textarea rows="2" data-pk="result"></textarea></label>
+      <label>What you'd do differently, or have applied since<textarea rows="2" data-pk="learned"></textarea></label>
+      <label>Five questions you expect afterwards<textarea rows="3" data-pk="questions"></textarea></label>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"><button type="button" class="btn ghost" id="pres-clear">Clear the plan</button><span class="small muted" id="pres-saved" role="status"></span></div>
+  </div>
+
+  <div class="panel">
+    <div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;align-items:baseline"><div><span class="eyebrow">Structure and timing</span><h3 style="margin-top:4px">About 13 minutes and 8 to 12 slides</h3></div><span class="flag">Our advice</span></div>
+    <svg class="pres-time" viewBox="0 0 600 92" role="img" aria-labelledby="pt-t">
+      <title id="pt-t">A 15-minute slot: about 1 minute to introduce, 2 on the problem, 3 on options, 3 on your decision, 2 on the result, 1 to 2 on lessons, and 2 minutes spare.</title>
+      <g font-size="11">
+        <rect x="0" y="16" width="40" height="34" style="fill:var(--accent-soft)"/><text x="20" y="38" text-anchor="middle" style="fill:var(--ink)">Intro</text>
+        <rect x="40" y="16" width="80" height="34" style="fill:var(--accent);opacity:.35"/><text x="80" y="38" text-anchor="middle" style="fill:var(--ink)">Problem</text>
+        <rect x="120" y="16" width="120" height="34" style="fill:var(--accent-soft)"/><text x="180" y="38" text-anchor="middle" style="fill:var(--ink)">Options</text>
+        <rect x="240" y="16" width="120" height="34" style="fill:var(--accent)"/><text x="300" y="38" text-anchor="middle" font-weight="700" style="fill:var(--accent-ink)">Your decision</text>
+        <rect x="360" y="16" width="80" height="34" style="fill:var(--accent);opacity:.35"/><text x="400" y="38" text-anchor="middle" style="fill:var(--ink)">Result</text>
+        <rect x="440" y="16" width="80" height="34" style="fill:var(--accent-soft)"/><text x="480" y="38" text-anchor="middle" style="fill:var(--ink)">Lessons</text>
+        <rect x="520" y="16" width="80" height="34" style="fill:var(--flag-soft);stroke:var(--flag)" stroke-dasharray="4 3"/><text x="560" y="38" text-anchor="middle" style="fill:var(--flag)">Spare</text>
+      </g>
+      <g font-size="10" style="fill:var(--muted)" font-family="var(--font-mono)">
+        <text x="0" y="66">0</text><text x="120" y="66" text-anchor="middle">3</text><text x="240" y="66" text-anchor="middle">6</text><text x="360" y="66" text-anchor="middle">9</text><text x="440" y="66" text-anchor="middle">11</text><text x="520" y="66" text-anchor="middle">13</text><text x="600" y="66" text-anchor="end">15 min</text>
+      </g>
+      <text x="0" y="86" font-size="10" style="fill:var(--muted)">Slides: 1 title · 1-2 problem · 2-3 options · 2-3 decision · 1-2 result · 1 lessons · 1 summary left up for questions</text>
+    </svg>
+    <div class="fmt-grid">
+      <div class="our-advice"><h4>Our advice: slides</h4>
+      <ul class="advice-list">
+        <li>Roughly one slide per minute to a minute and a half: 8 to 12 slides in total. Fewer is fine; more than 15 usually means you're rushing.</li>
+        <li>One idea per slide, with a headline that says the point ("Option C saved 6 weeks"), not a label ("Options").</li>
+        <li>Mostly pictures: drawings, sections, site photos, a simple chart. Keep text to a few words you can talk around.</li>
+        <li>Put the key number on the slide, large. Reviewers remember numbers.</li>
+        <li>Keep backup slides after your summary for likely questions (calculations, a programme, a risk register extract). Don't present them unless asked.</li>
+      </ul></div>
+      <div class="our-advice"><h4>Our advice: delivery</h4>
+      <ul class="advice-list">
+        <li>Say "I" for what you did, and "we" only for the team. Be clear which is which.</li>
+        <li>Talk to the reviewers, not the slides. Notes are fine; reading a script isn't.</li>
+        <li>Spend the most time on your decision and why. That's where the attributes show.</li>
+        <li>Rehearse aloud with a timer at least five times, then once with someone who'll interrupt you.</li>
+        <li>Check what you can show: remove anything confidential, or get your employer's and client's agreement.</li>
+      </ul></div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;align-items:baseline"><div><span class="eyebrow">Slides that help, slides that don't</span><h3 style="margin-top:4px">Three common choices, side by side</h3></div><span class="flag">Illustrative</span></div>
+    <div class="slide-pairs">
+      <figure class="slide-pair">
+        <div class="sp-row">
+          <div class="sp bad"><span class="sp-tag">Avoid</span>
+            <svg viewBox="0 0 200 120" role="img" aria-label="A slide that is a wall of bullet points"><rect x="1" y="1" width="198" height="118" rx="4" style="fill:var(--surface);stroke:var(--line)" stroke-width="2"/><text x="12" y="18" font-size="10" font-weight="700" style="fill:var(--ink)">Design development</text><g stroke-width="3" stroke-linecap="round" style="stroke:var(--line)"><path d="M14 30h170M14 38h160M14 46h172M14 54h150M14 62h168M14 70h158M14 78h170M14 86h140M14 94h166M14 102h150M14 110h120"/></g></svg></div>
+          <div class="sp good"><span class="sp-tag">Do</span>
+            <svg viewBox="0 0 200 120" role="img" aria-label="A slide with one cross-section drawing, a labelled callout and one key number"><rect x="1" y="1" width="198" height="118" rx="4" style="fill:var(--surface);stroke:var(--accent)" stroke-width="2"/><text x="12" y="18" font-size="10" font-weight="700" style="fill:var(--ink)">Flatter slope: safer to maintain</text><path d="M20 96 L70 60 H110 L170 96 Z" style="fill:var(--accent-soft);stroke:var(--accent)" stroke-width="2"/><path d="M20 96 H180" stroke-width="2" style="stroke:var(--muted)"/><circle cx="145" cy="80" r="5" style="fill:var(--accent-2)"/><path d="M145 75 L150 46" stroke-width="1.5" style="stroke:var(--accent-2)"/><rect x="128" y="30" width="60" height="16" rx="3" style="fill:var(--accent-2-soft)"/><text x="158" y="41" text-anchor="middle" font-size="8" style="fill:var(--accent-2)">1 in 4, mowable</text><text x="14" y="112" font-size="11" font-weight="700" style="fill:var(--accent)">+£18k, -1 lane closure</text></svg></div>
+        </div>
+        <figcaption><strong>Words vs a drawing.</strong> A wall of bullets gets read aloud. One section with a callout and a number lets you explain your decision in your own words.</figcaption>
+      </figure>
+      <figure class="slide-pair">
+        <div class="sp-row">
+          <div class="sp bad"><span class="sp-tag">Avoid</span>
+            <svg viewBox="0 0 200 120" role="img" aria-label="A slide showing the project team organisation chart"><rect x="1" y="1" width="198" height="118" rx="4" style="fill:var(--surface);stroke:var(--line)" stroke-width="2"/><text x="12" y="18" font-size="10" font-weight="700" style="fill:var(--ink)">Project team</text><g style="fill:var(--paper);stroke:var(--line)" stroke-width="1.5"><rect x="80" y="26" width="40" height="14" rx="2"/><rect x="20" y="58" width="40" height="14" rx="2"/><rect x="80" y="58" width="40" height="14" rx="2"/><rect x="140" y="58" width="40" height="14" rx="2"/><rect x="10" y="90" width="34" height="14" rx="2"/><rect x="50" y="90" width="34" height="14" rx="2"/><rect x="116" y="90" width="34" height="14" rx="2"/><rect x="156" y="90" width="34" height="14" rx="2"/></g><path d="M100 40v10M40 50h120M40 50v8M100 50v8M160 50v8M40 72v10M27 82h40M27 82v8M67 82v8M160 72v10M133 82h40M133 82v8M173 82v8" fill="none" stroke-width="1.5" style="stroke:var(--line)"/></svg></div>
+          <div class="sp good"><span class="sp-tag">Do</span>
+            <svg viewBox="0 0 200 120" role="img" aria-label="A slide comparing three options in a table with the chosen option highlighted"><rect x="1" y="1" width="198" height="118" rx="4" style="fill:var(--surface);stroke:var(--accent)" stroke-width="2"/><text x="12" y="18" font-size="10" font-weight="700" style="fill:var(--ink)">I chose option C: why</text><g font-size="8" style="fill:var(--muted)"><text x="60" y="34">Cost</text><text x="98" y="34">Carbon</text><text x="142" y="34">Risk</text></g><g font-size="9" style="fill:var(--ink)"><text x="14" y="52">A</text><text x="14" y="72">B</text></g><rect x="8" y="80" width="184" height="20" rx="3" style="fill:var(--accent-soft);stroke:var(--accent)" stroke-width="1.5"/><text x="14" y="94" font-size="9" font-weight="700" style="fill:var(--accent)">C</text><g style="fill:var(--line)"><rect x="58" y="44" width="30" height="10" rx="2"/><rect x="98" y="44" width="34" height="10" rx="2"/><rect x="142" y="44" width="20" height="10" rx="2"/><rect x="58" y="64" width="22" height="10" rx="2"/><rect x="98" y="64" width="40" height="10" rx="2"/><rect x="142" y="64" width="34" height="10" rx="2"/></g><g style="fill:var(--accent)"><rect x="58" y="85" width="24" height="10" rx="2"/><rect x="98" y="85" width="16" height="10" rx="2"/><rect x="142" y="85" width="14" height="10" rx="2"/></g><text x="14" y="113" font-size="8" style="fill:var(--muted)">Shorter bar = better</text></svg></div>
+        </div>
+        <figcaption><strong>The project vs your contribution.</strong> An organisation chart describes the project. An options comparison shows your judgement, and gives the reviewers something to question you on.</figcaption>
+      </figure>
+      <figure class="slide-pair">
+        <div class="sp-row">
+          <div class="sp bad"><span class="sp-tag">Avoid</span>
+            <svg viewBox="0 0 200 120" role="img" aria-label="A busy chart with many overlapping lines and a dense legend"><rect x="1" y="1" width="198" height="118" rx="4" style="fill:var(--surface);stroke:var(--line)" stroke-width="2"/><text x="12" y="18" font-size="10" font-weight="700" style="fill:var(--ink)">Model results (all runs)</text><path d="M16 104H140M16 104V26" stroke-width="1.5" style="stroke:var(--muted)"/><g fill="none" stroke-width="1.2" style="stroke:var(--muted)"><path d="M16 90 C40 40 60 80 80 50 S120 70 140 40"/><path d="M16 95 C40 60 60 40 80 70 S120 50 140 60"/><path d="M16 80 C40 70 60 90 80 40 S120 80 140 50"/><path d="M16 100 C40 50 60 60 80 80 S120 40 140 70"/><path d="M16 70 C40 90 60 50 80 60 S120 90 140 45"/><path d="M16 85 C40 45 60 95 80 55 S120 60 140 80"/></g><g style="fill:var(--line)"><rect x="148" y="28" width="44" height="6"/><rect x="148" y="38" width="44" height="6"/><rect x="148" y="48" width="44" height="6"/><rect x="148" y="58" width="44" height="6"/><rect x="148" y="68" width="44" height="6"/><rect x="148" y="78" width="44" height="6"/></g></svg></div>
+          <div class="sp good"><span class="sp-tag">Do</span>
+            <svg viewBox="0 0 200 120" role="img" aria-label="A clear chart with one highlighted line, a threshold and a labelled peak"><rect x="1" y="1" width="198" height="118" rx="4" style="fill:var(--surface);stroke:var(--accent)" stroke-width="2"/><text x="12" y="18" font-size="10" font-weight="700" style="fill:var(--ink)">Peak flow cut by 40%</text><path d="M16 104H186M16 104V26" stroke-width="1.5" style="stroke:var(--muted)"/><path d="M16 100 C50 100 60 34 90 34 S130 100 186 100" fill="none" stroke-width="1.5" stroke-dasharray="4 3" style="stroke:var(--muted)"/><path d="M16 100 C55 100 70 62 100 62 S140 100 186 100" fill="none" stroke-width="3" style="stroke:var(--accent)"/><text x="92" y="30" font-size="8" style="fill:var(--muted)">before</text><text x="104" y="58" font-size="9" font-weight="700" style="fill:var(--accent)">after</text></svg></div>
+        </div>
+        <figcaption><strong>Every result vs the one that matters.</strong> Show the comparison that supports your decision. Keep the full results as a backup slide.</figcaption>
+      </figure>
+    </div>
+    <p class="small muted" style="margin:0">Drawn for this site. The projects and figures are made up.</p>
+  </div>
+
+  <div class="panel">
+    <div><span class="eyebrow">Common mistakes</span><h3 style="margin-top:4px">What trips candidates up</h3></div>
+    <ul class="pres-mistakes">
+      <li><strong>A new topic.</strong> Presenting work that isn't in your report, so reviewers can't link it to your written evidence.</li>
+      <li><strong>The project tour.</strong> Describing the scheme (location, client, team, programme) instead of what you did and decided.</li>
+      <li><strong>All seven attributes.</strong> Ticking off every attribute in turn. ICE says not to.</li>
+      <li><strong>Too many slides.</strong> 20 or more slides in 15 minutes means rushing and skipping.</li>
+      <li><strong>Reading the slides.</strong> If the slide says it all, the reviewers don't need you.</li>
+      <li><strong>"We" all the way through.</strong> Reviewers can't tell what was yours.</li>
+      <li><strong>Running over.</strong> Reviewers may stop you at 15 minutes, before your result and lessons.</li>
+      <li><strong>Numbers you can't explain.</strong> Every figure on a slide is a likely question.</li>
+    </ul>
+  </div>
+
+  <div class="panel">
+    <div><span class="eyebrow">Into the questions</span><h3 style="margin-top:4px">Finish cleanly and hand over</h3></div>
+    <div class="our-advice"><h4>Our advice</h4>
+    <ul class="advice-list">
+      <li>End on a summary slide with your decision, the result and one lesson, and leave it up. It gives the reviewers a starting point.</li>
+      <li>Close clearly: "That's the end of my presentation. I'm happy to take questions." Then stop talking.</li>
+      <li>Expect the first questions to come from your presentation. Prepare answers to the five questions in your plan, with backup slides where a picture helps.</li>
+      <li>If a question goes beyond what you did, say so, then say how you'd approach it. Don't bluff.</li>
+    </ul></div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap"><a class="btn" href="#review">Back to Review day</a><a class="btn ghost" href="#flashcards">Revise with flashcards</a></div>
+  </div>
+</section>
+
 <!-- COMMUNITY -->
 <section class="view wrap" id="view-community" data-view="community" hidden>
   <div class="view-head">
@@ -1388,12 +1585,12 @@ html:not([data-level="ieng"]) .cmp-table .c-ceng, html[data-level="ieng"] .cmp-t
   </div>
 </footer>
 
-<script src="js/content.js?v=20261116g"></script>
-<script src="js/role.js?v=20261116g"></script>
-<script src="js/news-feed.js?v=20261116g"></script>
-<script src="js/news-archive.js?v=20261116g"></script>
-<script src="js/config.js?v=20261116g"></script>
-<script src="js/pages.js?v=20261116g"></script>
-<script src="js/site.js?v=20261116g"></script>
+<script src="js/content.js?v=20261116h"></script>
+<script src="js/role.js?v=20261116h"></script>
+<script src="js/news-feed.js?v=20261116h"></script>
+<script src="js/news-archive.js?v=20261116h"></script>
+<script src="js/config.js?v=20261116h"></script>
+<script src="js/pages.js?v=20261116h"></script>
+<script src="js/site.js?v=20261116h"></script>
 </body>
 </html>

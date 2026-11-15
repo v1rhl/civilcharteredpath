@@ -402,6 +402,16 @@
     applyCs();
   })();
 
+  /* Presentation plan: saved in this browser */
+  (function () {
+    var box = $("pres-plan"); if (!box) return;
+    var d = store("cp-pres"); try { d = d ? JSON.parse(d) : {}; } catch (e) { d = {}; }
+    Array.prototype.forEach.call(box.querySelectorAll("[data-pk]"), function (el) { el.value = d[el.dataset.pk] || ""; });
+    var t;
+    box.addEventListener("input", function (e) { var k = e.target.dataset.pk; if (!k) return; d[k] = e.target.value; store("cp-pres", JSON.stringify(d)); clearTimeout(t); $("pres-saved").textContent = "Saved in this browser."; t = setTimeout(function () { $("pres-saved").textContent = ""; }, 2000); });
+    $("pres-clear").addEventListener("click", function () { d = {}; store("cp-pres", "{}"); Array.prototype.forEach.call(box.querySelectorAll("[data-pk]"), function (el) { el.value = ""; }); $("pres-saved").textContent = "Cleared."; });
+  })();
+
   /* Community (design only: posting disabled until a forum service is connected) */
   var catSel = -1;
   function renderForum() {
@@ -419,7 +429,7 @@
   renderForum();
 
   /* Routing on the hash */
-  var views = ["home", "route", "attributes", "planner", "flashcards", "review", "questions", "news", "check", "cheat-sheet", "community"];
+  var views = ["home", "route", "attributes", "planner", "flashcards", "review", "presentation", "questions", "news", "check", "cheat-sheet", "community"];
   function route() {
     var v = (location.hash || "#home").slice(1);
     if (v === "reference") { v = "cheat-sheet"; history.replaceState(null, "", "#cheat-sheet"); }
@@ -427,9 +437,9 @@
     document.body.classList.toggle("on-cheat", v === "cheat-sheet");
     views.forEach(function (name) { $("view-" + name).hidden = name !== v; });
     Array.prototype.forEach.call(document.querySelectorAll("#nav a"), function (a) {
-      if (a.getAttribute("href") === "#" + (v === "flashcards" ? "review" : v)) a.setAttribute("aria-current", "page"); else a.removeAttribute("aria-current");
+      if (a.getAttribute("href") === "#" + (v === "flashcards" || v === "presentation" ? "review" : v)) a.setAttribute("aria-current", "page"); else a.removeAttribute("aria-current");
     });
-    var withSources = ["route", "attributes", "review", "cheat-sheet", "planner"].indexOf(v) > -1;
+    var withSources = ["route", "attributes", "review", "presentation", "cheat-sheet", "planner"].indexOf(v) > -1;
     document.body.classList.toggle("on-planner", v === "planner");
     $("sources-box").hidden = v === "planner"; $("ice-res-box").hidden = v !== "planner";
     $("sources").setAttribute("aria-label", v === "planner" ? "ICE resources" : "Official sources");
