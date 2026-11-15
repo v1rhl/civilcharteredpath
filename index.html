@@ -417,6 +417,37 @@ footer .wrap { padding-block: 24px; display: flex; flex-direction: column; gap: 
 #view-review { display: flex; flex-direction: column; gap: 20px; }
 #view-review[hidden] { display: none !important; }
 @media (max-width: 600px) { .day-svg { min-width: 560px; } .day-glance { overflow-x: auto; } }
+.deadline-card { gap: 10px; }
+.deadline-card .big { font: 700 2.6rem/1 var(--font-display); color: var(--accent); }
+.deadline-card .big small { font: 500 1rem var(--font-body); color: var(--muted); margin-left: 6px; }
+.deadline-card dl { display: grid; grid-template-columns: auto 1fr; gap: 4px 14px; margin: 0; font-size: 0.92rem; }
+.deadline-card dt { color: var(--muted); }
+.deadline-card dd { margin: 0; font-weight: 600; font-variant-numeric: tabular-nums; }
+.start-here { gap: 14px; }
+.start-here h2 { margin: 4px 0 0; }
+.stage-tabs { display: flex; flex-wrap: wrap; gap: 6px; }
+.stage-tabs button { font: 600 0.9rem var(--font-body); color: var(--ink); background: var(--paper); border: 1px solid var(--line); border-radius: 999px; padding: 7px 14px; cursor: pointer; }
+.stage-tabs button[aria-selected="true"] { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.stage-steps { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr)); gap: 12px; counter-reset: st; }
+.stage-steps li { counter-increment: st; border: 1px solid var(--line); border-radius: var(--radius); padding: 14px; display: flex; flex-direction: column; gap: 6px; background: var(--surface); }
+.stage-steps li::before { content: "Step " counter(st); font: 600 0.7rem var(--font-mono); color: var(--accent); letter-spacing: 0.05em; text-transform: uppercase; }
+.stage-steps strong { font-size: 1rem; }
+.stage-steps p { margin: 0; color: var(--muted); font-size: 0.9rem; }
+.stage-steps a { font-weight: 600; margin-top: auto; }
+.progress-strip { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr)); gap: 12px; }
+.progress-strip a { display: flex; flex-direction: column; gap: 6px; text-decoration: none; color: inherit; }
+.progress-strip .lbl { font: 600 0.72rem var(--font-mono); color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; }
+.progress-strip .val { font: 700 1.15rem var(--font-display); }
+.progress-strip .bar { height: 6px; border-radius: 3px; background: var(--paper); overflow: hidden; }
+.progress-strip .bar span { display: block; height: 100%; background: var(--accent); }
+.progress-strip .hint { font-size: 0.85rem; color: var(--muted); }
+.try-card { gap: 12px; }
+.flip { text-align: left; font: inherit; color: var(--ink); background: var(--paper); border: 1px dashed var(--line); border-radius: var(--radius); padding: 16px; min-height: 130px; cursor: pointer; display: flex; flex-direction: column; gap: 8px; }
+.flip:hover { border-color: var(--accent); }
+.flip .deck { font: 600 0.7rem var(--font-mono); color: var(--accent); text-transform: uppercase; letter-spacing: 0.05em; }
+.flip .q { font-weight: 600; font-size: 1.05rem; }
+.flip .a { color: var(--muted); white-space: pre-line; }
+.flip .hint { font-size: 0.8rem; color: var(--muted); margin-top: auto; }
 </style>
 </head>
 <body>
@@ -459,38 +490,28 @@ footer .wrap { padding-block: 24px; display: flex; flex-direction: column; gap: 
     <div class="wrap">
       <div class="hero-copy">
         <span class="eyebrow">For civil engineers working towards CEng MICE</span>
-        <h1>Get from graduate to chartered, with people who are doing the same.</h1>
-        <p class="lede">A plain-English guide to the ICE professional review, a bank of practice questions, a weekly current-affairs briefing, and a place to find study partners and compare notes.</p>
+        <h1>Everything you need to get chartered, in one place.</h1>
+        <p class="lede">ICE's deadlines, a planner that works back from them, the attributes with graded examples, revision flashcards, review-day guidance and this week's industry news.</p>
         <div class="hero-actions">
-          <a class="btn" href="#route">Start with the route</a>
-          <a class="btn ghost" href="#community">Join the community</a>
+          <a class="btn" href="#planner">Plan my submission</a>
+          <a class="btn ghost" href="#start-here" id="go-start">Start here</a>
         </div>
       </div>
-      <figure class="hero-figure" style="margin:0">
-        <svg viewBox="0 0 360 200" role="img" aria-label="Long section showing the chartership route as chainages from graduate member to CEng">
-          <g font-family="IBM Plex Mono, monospace" font-size="9" style="fill:var(--muted)">
-            <line x1="20" y1="160" x2="340" y2="160" stroke-width="1" style="stroke:var(--line)"/>
-            <path d="M20 150 C 80 146, 110 128, 150 116 S 230 82, 270 60 S 320 34, 340 30" fill="none" stroke-width="2.5" style="stroke:var(--accent)"/>
-            <g>
-              <line x1="20" y1="150" x2="20" y2="166" style="stroke:var(--muted)"/><text x="20" y="180" text-anchor="middle">0+000</text>
-              <line x1="100" y1="138" x2="100" y2="166" stroke-dasharray="2 2" style="stroke:var(--muted)"/><text x="100" y="180" text-anchor="middle">IPD</text>
-              <line x1="190" y1="104" x2="190" y2="166" stroke-dasharray="2 2" style="stroke:var(--muted)"/><text x="190" y="180" text-anchor="middle">REPORT</text>
-              <line x1="270" y1="60" x2="270" y2="166" stroke-dasharray="2 2" style="stroke:var(--muted)"/><text x="270" y="180" text-anchor="middle">REVIEW</text>
-              <line x1="340" y1="30" x2="340" y2="166" style="stroke:var(--muted)"/><text x="336" y="180" text-anchor="end">CEng</text>
-            </g>
-            <circle cx="20" cy="150" r="4" stroke-width="2" style="fill:var(--surface);stroke:var(--accent)"/>
-            <circle cx="100" cy="138" r="4" stroke-width="2" style="fill:var(--surface);stroke:var(--accent)"/>
-            <circle cx="190" cy="104" r="4" stroke-width="2" style="fill:var(--surface);stroke:var(--accent)"/>
-            <circle cx="270" cy="60" r="4" stroke-width="2" style="fill:var(--surface);stroke:var(--accent)"/>
-            <circle cx="340" cy="30" r="5" style="fill:var(--accent)"/>
-            <text x="300" y="22">MICE</text>
-          </g>
-        </svg>
-        <figcaption>LONG SECTION · NOT TO SCALE · YOUR TIMELINE WILL VARY</figcaption>
-      </figure>
+      <div class="panel deadline-card" id="home-deadline" aria-live="polite"></div>
     </div>
   </div>
-  <div class="wrap" style="display:flex;flex-direction:column;gap:32px">
+  <div class="wrap" style="display:flex;flex-direction:column;gap:28px">
+    <div class="panel start-here" id="start-here">
+      <div>
+        <span class="eyebrow">Start here</span>
+        <h2>Where are you on the journey?</h2>
+      </div>
+      <div class="stage-tabs" role="tablist" id="stage-tabs"></div>
+      <ol class="stage-steps" id="stage-steps"></ol>
+    </div>
+
+    <div class="progress-strip" id="home-progress"></div>
+
     <div class="panel home-feature">
       <div class="home-feature-copy">
         <span class="eyebrow">What the review assesses</span>
@@ -503,7 +524,26 @@ footer .wrap { padding-block: 24px; display: flex; flex-direction: column; gap: 
         <ol class="wheel-key" id="home-wheel-key"></ol>
       </figure>
     </div>
-    <div class="grid" id="home-cards"></div>
+    <div class="grid two">
+      <div class="panel try-card">
+        <span class="eyebrow">Try a flashcard</span>
+        <button type="button" class="flip" id="home-card" aria-live="polite"></button>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button type="button" class="btn ghost" id="home-card-next">Another card</button>
+          <a class="btn ghost" href="#flashcards">All flashcards</a>
+        </div>
+      </div>
+      <div class="panel">
+        <span class="eyebrow">This week in current affairs</span>
+        <div id="home-news" style="display:flex;flex-direction:column;gap:10px"></div>
+        <a class="more" href="#news">All news and briefings</a>
+      </div>
+    </div>
+
+    <div>
+      <span class="eyebrow">All tools</span>
+      <div class="grid" id="home-cards" style="margin-top:10px"></div>
+    </div>
     <div class="panel home-feature community-band">
       <figure style="margin:0" aria-hidden="true">
         <svg viewBox="0 0 320 170" class="people">
@@ -526,11 +566,6 @@ footer .wrap { padding-block: 24px; display: flex; flex-direction: column; gap: 
         <p>A forum for questions, and a way to find a mock review partner in your region. Opening soon.</p>
         <a class="btn ghost" href="#community">See the plans</a>
       </div>
-    </div>
-    <div class="panel">
-      <span class="eyebrow">This week in current affairs</span>
-      <div id="home-news" style="display:flex;flex-direction:column;gap:10px"></div>
-      <a class="more" href="#news">All briefings</a>
     </div>
   </div>
 </section>
@@ -962,10 +997,10 @@ footer .wrap { padding-block: 24px; display: flex; flex-direction: column; gap: 
   </div>
 </footer>
 
-<script src="js/content.js?v=20261115p"></script>
-<script src="js/news-feed.js?v=20261115p"></script>
-<script src="js/config.js?v=20261115p"></script>
-<script src="js/pages.js?v=20261115p"></script>
-<script src="js/site.js?v=20261115p"></script>
+<script src="js/content.js?v=20261115q"></script>
+<script src="js/news-feed.js?v=20261115q"></script>
+<script src="js/config.js?v=20261115q"></script>
+<script src="js/pages.js?v=20261115q"></script>
+<script src="js/site.js?v=20261115q"></script>
 </body>
 </html>

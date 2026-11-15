@@ -53,6 +53,84 @@
     return '<a class="panel home-card" href="#' + c[2] + '">' + icon(c[2]) + "<h3>" + esc(c[0]) + "</h3><p>" + esc(c[1]) + '</p><span class="more">Open</span></a>';
   }).join("");
 
+  /* ---------- Home: one-stop shop ---------- */
+  function hload(k, d) { try { var v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch (e) { return d; } }
+  function hsave(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+  var MON = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  function pd(v) { var p = v.split("-"); return new Date(+p[0], +p[1] - 1, +p[2]); }
+  function fd(d) { return d.getDate() + " " + MON[d.getMonth()] + " " + d.getFullYear(); }
+  var now = new Date(); now = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+  /* Next open ICE deadline */
+  (function () {
+    var c = (window.ICE_CYCLES || []).filter(function (x) { return pd(x.application) >= now; })[0];
+    if (!c) { $("home-deadline").innerHTML = '<span class="eyebrow">Next ICE deadline</span><p>ICE hasn\'t published the next review dates yet.</p><a class="more" href="' + esc(window.ICE_DATES_SOURCE || "#") + '" target="_blank" rel="noopener">Check ICE key dates</a>'; return; }
+    var days = Math.round((pd(c.application) - now) / 864e5), wks = Math.floor(days / 7), rem = days % 7;
+    $("home-deadline").innerHTML = '<span class="eyebrow">Next ICE application deadline</span>' +
+      '<div class="big">' + wks + '<small>week' + (wks === 1 ? "" : "s") + (rem ? " " + rem + " day" + (rem === 1 ? "" : "s") : "") + " to go</small></div>" +
+      '<strong>' + esc(c.label) + " (Professional Review)</strong>" +
+      "<dl><dt>Sponsors sign off by</dt><dd>" + fd(pd(c.sponsors)) + "</dd><dt>Application closes</dt><dd>" + fd(pd(c.application)) + "</dd><dt>In-person reviews from</dt><dd>" + fd(pd(c.review)) + "</dd></dl>" +
+      '<div style="display:flex;gap:8px;flex-wrap:wrap"><a class="btn" href="#planner">Plan back from this date</a><a class="btn ghost" href="#route">Other ICE dates</a></div>';
+  })();
+
+  /* Start here: next steps by stage (this site's suggestions) */
+  var STAGES = [
+    { id: "deciding", t: "Thinking about it", steps: [
+      ["Understand the route", "The six stages from graduate member to CEng MICE, and how long they usually take.", "#route", "See the route"],
+      ["Learn the seven attributes", "What reviewers look for, and how CEng differs from IEng, with graded example answers.", "#attributes", "Explore the attributes"],
+      ["Talk to your supervisor or mentor", "Agree how you'll complete your IPD and when you might aim to apply. ICE's forms and guidance are linked in the planner.", "#planner", "ICE forms and guidance"] ] },
+    { id: "evidence", t: "Building my evidence", steps: [
+      ["Map your experience to the attributes", "Find your best example for each attribute and spot the gaps early.", "#attributes", "Check the attributes"],
+      ["Keep your CPD current", "Cover ICE's three mandatory themes and record what you learned.", "#flashcards", "Revise with flashcards"],
+      ["Follow the industry", "Reviewers expect current awareness. Ten minutes a week is enough.", "#news", "Read this week's news"] ] },
+    { id: "writing", t: "Writing my report", steps: [
+      ["Pick your deadline and plan back", "The planner dates every stage from ICE's deadline, with PDF and calendar downloads.", "#planner", "Open the planner"],
+      ["Write to the attributes", "Use 'I', give numbers, and show judgement. Compare your draft with the graded examples.", "#attributes", "See example answers"],
+      ["Line up sign-off", "Sponsors, MDO meeting and IPD completion take weeks. Tick them off in the submission checklist.", "#planner", "Submission checklist"] ] },
+    { id: "review", t: "My review is booked", steps: [
+      ["Know the format", "Presentation, interview and the written communication task: ICE's rules and our advice.", "#review", "Review day guide"],
+      ["Practise questions out loud", "The questions reviewers ask, with what a good answer covers.", "#questions", "Practice questions"],
+      ["Revise little and often", "Code of Conduct, H&S, contracts, sustainability and current affairs.", "#flashcards", "Flashcards"] ] }
+  ];
+  var stage = hload("cp-stage", "deciding");
+  if (!STAGES.some(function (x) { return x.id === stage; })) stage = "deciding";
+  function renderStage() {
+    $("stage-tabs").innerHTML = STAGES.map(function (x) { return '<button type="button" role="tab" data-stage="' + x.id + '" aria-selected="' + (x.id === stage) + '">' + esc(x.t) + "</button>"; }).join("");
+    var st = STAGES.filter(function (x) { return x.id === stage; })[0];
+    $("stage-steps").innerHTML = st.steps.map(function (k) { return "<li><strong>" + esc(k[0]) + "</strong><p>" + esc(k[1]) + '</p><a href="' + k[2] + '">' + esc(k[3]) + " &rarr;</a></li>"; }).join("");
+  }
+  $("stage-tabs").addEventListener("click", function (e) { var b = e.target.closest("[data-stage]"); if (!b) return; stage = b.dataset.stage; hsave("cp-stage", stage); renderStage(); });
+  renderStage();
+  $("go-start").addEventListener("click", function (e) { e.preventDefault(); $("start-here").scrollIntoView({ behavior: "smooth", block: "start" }); });
+
+  /* Your progress, from what this browser has saved */
+  function renderProgress() {
+    var plan = hload("cp-plan", {}), ticks = hload("cp-checklist", {}), marks = hload("cp-cards", {});
+    var chkTotal = (window.SUBMIT_CHECKLIST || []).length, chkDone = (window.SUBMIT_CHECKLIST || []).filter(function (c) { return ticks[c.id]; }).length;
+    var cardTotal = (window.QUESTIONS || []).length + (window.FACT_CARDS || []).length, known = Object.keys(marks).filter(function (k) { return marks[k] === "known"; }).length;
+    function tile(href, lbl, val, pct, hint) {
+      return '<a class="panel" href="' + href + '"><span class="lbl">' + lbl + '</span><span class="val">' + val + "</span>" + (pct != null ? '<span class="bar"><span style="width:' + Math.round(pct * 100) + '%"></span></span>' : "") + '<span class="hint">' + hint + "</span></a>";
+    }
+    $("home-progress").innerHTML =
+      tile("#planner", "Your plan", plan.submit ? "Submit by " + fd(pd(plan.submit)) : "Not set yet", null, plan.submit ? "Open the planner to see this week's stage." : "Pick an ICE deadline and get a dated plan.") +
+      tile("#planner", "Submission checklist", chkDone + " of " + chkTotal + " done", chkTotal ? chkDone / chkTotal : 0, chkDone ? "Keep going." : "Tick items off as you get them in place.") +
+      tile("#flashcards", "Flashcards", known + " of " + cardTotal + " known", cardTotal ? known / cardTotal : 0, "Saved in this browser only.");
+  }
+  renderProgress();
+  window.addEventListener("hashchange", function () { if (location.hash === "" || location.hash === "#home") renderProgress(); });
+
+  /* A flashcard to try */
+  var POOL = (window.FACT_CARDS || []).map(function (c) { return { deck: c.deck, q: c.q, a: c.a }; });
+  var cur = null, shown = false;
+  function nextCard() { cur = POOL[Math.floor(Math.random() * POOL.length)]; shown = false; drawCard(); }
+  function drawCard() {
+    if (!cur) return;
+    $("home-card").innerHTML = '<span class="deck">' + esc(cur.deck) + '</span><span class="q">' + esc(cur.q) + "</span>" + (shown ? '<span class="a">' + esc(cur.a) + "</span>" : "") + '<span class="hint">' + (shown ? "Tap for the question only" : "Tap to see the answer") + "</span>";
+  }
+  $("home-card").addEventListener("click", function () { shown = !shown; drawCard(); });
+  $("home-card-next").addEventListener("click", nextCard);
+  if (POOL.length) nextCard();
+
   /* Seven attributes wheel */
   (function () {
     var short = ["Engineering", "Management and leadership", "Commercial", "Health, safety and welfare", "Sustainable development", "Communication", "Professional commitment"];
