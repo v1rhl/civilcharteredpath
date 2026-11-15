@@ -40,7 +40,21 @@
 
   /* Attributes */
   var attrIdx = 0;
+  var GR = { weak: "Weak", ok: "OK, but thin", good: "Good: IEng level", excellent: "Excellent: CEng level" };
+  function renderExamples() {
+    var x = (window.ATTR_EXAMPLES || [])[attrIdx]; if (!x) { $("attr-examples").innerHTML = ""; return; }
+    var src = window.ICE_GUIDANCE_URL, uk = window.UKSPEC || {};
+    $("attr-examples").innerHTML =
+      '<div class="panel" style="gap:14px"><div><span class="eyebrow">IEng or CEng?</span><h3 style="margin-top:4px">What ICE asks for at each level</h3></div>' +
+      '<p>ICE\'s guidance lists what Incorporated candidates must show, then adds "And ..." requirements for Chartered candidates. UK-SPEC sums up the difference: Incorporated Engineers <em>' + esc((uk.ieng || "").replace(/\.$/, "").toLowerCase()) + '</em>; Chartered Engineers <em>' + esc((uk.ceng || "").replace(/\.$/, "").toLowerCase()) + "</em>.</p>" +
+      '<div class="levels"><div><span class="eyebrow">IEng must show</span><ul>' + x.ieng.map(function (l) { return "<li>" + esc(l) + "</li>"; }).join("") + '</ul></div><div class="ceng"><span class="eyebrow" style="color:var(--accent)">CEng also adds</span><ul>' + x.ceng.map(function (l) { return "<li>" + esc(l) + "</li>"; }).join("") + "</ul></div></div>" +
+      '<p class="small">Quoted from ' + ext(src, "ICE professional review guidance") + ", Appendix A, " + esc(x.page) + ", and " + ext(uk.url, "UK-SPEC") + ".</p></div>" +
+      '<div class="panel" style="gap:14px"><div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;align-items:baseline"><div><span class="eyebrow">Example answers</span><h3 style="margin-top:4px">&ldquo;' + esc(x.q) + '&rdquo;</h3></div><span class="flag">Illustrative</span></div>' +
+      '<p class="small">These answers are written for this site to show the difference between levels. They are not real candidates\' words, and the projects and figures are made up.</p>' +
+      '<div class="ladder">' + x.answers.map(function (r) { return '<div class="rung ' + r.g + '"><span class="grade">' + GR[r.g] + '</span><p class="ans">' + esc(r.a) + '</p><p class="why"><strong>Why:</strong> ' + esc(r.why) + "</p></div>"; }).join("") + "</div></div>";
+  }
   function renderAttr() {
+    setTimeout(renderExamples, 0);
     $("attr-tabs").innerHTML = A.map(function (a, i) {
       return '<button type="button" role="tab" id="attr-tab-' + i + '" aria-selected="' + (i === attrIdx) + '" data-i="' + i + '"><span class="n">' + a.n + "</span>" + esc(a.short) + "</button>";
     }).join("");
@@ -63,6 +77,7 @@
     var l = e.target.closest("[data-attr]"); if (l) { $("q-filter").value = l.dataset.attr; renderQ(); }
   });
   renderAttr();
+  if (window.matchMedia && window.matchMedia("(max-width: 1000px)").matches) $("sources-box").open = false;
 
   /* Tips */
   $("tips").innerHTML = T.map(function (t, i) {
@@ -128,6 +143,9 @@
     Array.prototype.forEach.call(document.querySelectorAll("#nav a"), function (a) {
       if (a.getAttribute("href") === "#" + v) a.setAttribute("aria-current", "page"); else a.removeAttribute("aria-current");
     });
+    var withSources = ["route", "attributes", "review", "reference"].indexOf(v) > -1;
+    document.body.classList.toggle("with-sources", withSources);
+    $("sources").hidden = !withSources;
     store("cp-last", v);
     window.scrollTo(0, 0);
   }

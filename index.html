@@ -262,6 +262,41 @@ input[type="date"], input[type="number"] { font: 400 0.95rem var(--font-body); p
 .issues .fix { background: var(--accent-soft); border-radius: var(--radius); padding: 8px 10px; }
 @media (max-width: 820px) { .check { grid-template-columns: 1fr; } }
 
+/* Shell with pinned official sources */
+.shell { display: block; }
+body.with-sources .shell { display: grid; grid-template-columns: minmax(0, 1fr) 260px; gap: 32px; max-width: 1240px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); align-items: start; }
+body.with-sources .shell .view.wrap { padding-left: 0; padding-right: 0; max-width: none; }
+.sources { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 76px); margin-top: 40px; }
+.sources details { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 14px 16px; }
+.sources summary { cursor: pointer; list-style: none; }
+.sources summary::-webkit-details-marker { display: none; }
+.sources ul { list-style: none; margin: 10px 0; padding: 0; display: flex; flex-direction: column; }
+.sources li a { display: flex; flex-direction: column; gap: 2px; padding: 9px 0; border-top: 1px solid var(--line); text-decoration: none; color: var(--ink); font-size: 0.9rem; }
+.sources li a strong { color: var(--accent); font-weight: 600; }
+.sources li a span { color: var(--muted); font-size: 0.82rem; line-height: 1.4; }
+.sources li a:hover strong { text-decoration: underline; }
+@media (max-width: 1000px) {
+  body.with-sources .shell { grid-template-columns: minmax(0, 1fr); gap: 0; }
+  .sources { position: static; margin-top: 24px; margin-bottom: 40px; }
+  .sources summary .eyebrow::after { content: " (tap to open)"; text-transform: none; letter-spacing: 0; }
+}
+
+/* Graded example answers */
+.levels { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px; }
+.levels > div { border: 1px solid var(--line); border-radius: var(--radius); padding: 12px 14px; display: flex; flex-direction: column; gap: 6px; }
+.levels ul { margin: 0; padding-left: 1.1em; font-size: 0.9rem; color: var(--muted); display: flex; flex-direction: column; gap: 3px; }
+.levels .ceng { border-color: var(--accent); background: var(--accent-soft); }
+.ladder { display: flex; flex-direction: column; gap: 10px; }
+.rung { border: 1px solid var(--line); border-left-width: 4px; border-radius: var(--radius); padding: 12px 14px; display: flex; flex-direction: column; gap: 6px; }
+.rung .grade { font: 500 0.74rem var(--font-mono); text-transform: uppercase; letter-spacing: 0.06em; }
+.rung p.ans { color: var(--ink); max-width: 72ch; }
+.rung p.why { color: var(--muted); font-size: 0.9rem; max-width: 72ch; }
+.rung.weak { border-left-color: var(--flag); } .rung.weak .grade { color: var(--flag); }
+.rung.ok { border-left-color: var(--line); } .rung.ok .grade { color: var(--muted); }
+.rung.good { border-left-color: var(--s-blue); } .rung.good .grade { color: var(--s-blue); }
+.rung.excellent { border-left-color: var(--accent); background: var(--accent-soft); } .rung.excellent .grade { color: var(--accent); }
+@media (max-width: 640px) { .levels { grid-template-columns: 1fr; } }
+
 footer { border-top: 1px solid var(--line); background: var(--surface); }
 footer .wrap { padding-block: 24px; display: flex; flex-direction: column; gap: 6px; font-size: 0.88rem; color: var(--muted); }
 
@@ -294,6 +329,7 @@ footer .wrap { padding-block: 24px; display: flex; flex-direction: column; gap: 
   </div>
 </header>
 
+<div class="shell">
 <main>
 
 <!-- HOME -->
@@ -366,15 +402,6 @@ footer .wrap { padding-block: 24px; display: flex; flex-direction: column; gap: 
     </div>
   </div>
   <ol class="route" id="route-list"></ol>
-  <div class="panel">
-    <h3>Official sources</h3>
-    <p>Always work from ICE's own documents for the version that applies to your review.</p>
-    <ul style="margin:0;padding-left:1.1em;display:flex;flex-direction:column;gap:4px">
-      <li><a href="https://www.ice.org.uk/media/aj2gmts3/11-jun-26-professional-review-guidance.pdf" target="_blank" rel="noopener">Professional review guidance (June 2026, PDF)</a></li>
-      <li><a href="https://www.ice.org.uk/your-career/professional-qualification-support/professional-review-preparation/incorporated-and-chartered-professional-review-resources" target="_blank" rel="noopener">Incorporated and chartered professional review resources</a></li>
-      <li><a href="https://ice.org.uk/news-views-insights/latest-news/ice-introduces-mandatory-cpd-themes" target="_blank" rel="noopener">Mandatory CPD themes</a></li>
-    </ul>
-  </div>
 </section>
 
 <!-- ATTRIBUTES -->
@@ -386,6 +413,7 @@ footer .wrap { padding-block: 24px; display: flex; flex-direction: column; gap: 
   </div>
   <div class="attr-tabs" id="attr-tabs" role="tablist" aria-label="Attributes"></div>
   <div id="attr-detail"></div>
+  <div id="attr-examples"></div>
 </section>
 
 <!-- PLANNER -->
@@ -612,6 +640,22 @@ footer .wrap { padding-block: 24px; display: flex; flex-direction: column; gap: 
 
 </main>
 
+<aside class="sources" id="sources" aria-label="Official sources" hidden>
+  <details open id="sources-box">
+    <summary><span class="eyebrow">Official sources</span></summary>
+    <ul>
+      <li><a href="https://www.ice.org.uk/media/aj2gmts3/11-jun-26-professional-review-guidance.pdf" target="_blank" rel="noopener"><strong>ICE professional review guidance</strong><span>June 2026 PDF. The attributes, review format and rules.</span></a></li>
+      <li><a href="https://www.ice.org.uk/join-ice/key-membership-dates" target="_blank" rel="noopener"><strong>ICE key membership dates</strong><span>Application deadlines and review dates.</span></a></li>
+      <li><a href="https://www.ice.org.uk/your-career/professional-qualification-support/professional-review-preparation/incorporated-and-chartered-professional-review-resources" target="_blank" rel="noopener"><strong>ICE review resources</strong><span>Videos and preparation material.</span></a></li>
+      <li><a href="https://www.ice.org.uk/download-centre/code-of-conduct" target="_blank" rel="noopener"><strong>ICE Code of Professional Conduct</strong><span>The rules every member must follow.</span></a></li>
+      <li><a href="https://ice.org.uk/news-views-insights/latest-news/ice-introduces-mandatory-cpd-themes" target="_blank" rel="noopener"><strong>ICE mandatory CPD themes</strong><span>Ethics, safety and risk, sustainability.</span></a></li>
+      <li><a href="https://www.engc.org.uk/our-role-as-regulator/setting-standards/uk-spec-professional-engineering-competence-and-commitment/" target="_blank" rel="noopener"><strong>UK-SPEC (Engineering Council)</strong><span>The standard behind IEng and CEng.</span></a></li>
+    </ul>
+    <p class="small">Always check the current version on ICE's site before you rely on anything here.</p>
+  </details>
+</aside>
+</div>
+
 <footer>
   <div class="wrap">
     <span>Chartered Path is an independent community resource. It is not affiliated with or endorsed by the Institution of Civil Engineers.</span>
@@ -619,10 +663,10 @@ footer .wrap { padding-block: 24px; display: flex; flex-direction: column; gap: 
   </div>
 </footer>
 
-<script src="js/content.js"></script>
-<script src="js/news-feed.js"></script>
-<script src="js/config.js"></script>
-<script src="js/pages.js"></script>
-<script src="js/site.js"></script>
+<script src="js/content.js?v=20261115b"></script>
+<script src="js/news-feed.js?v=20261115b"></script>
+<script src="js/config.js?v=20261115b"></script>
+<script src="js/pages.js?v=20261115b"></script>
+<script src="js/site.js?v=20261115b"></script>
 </body>
 </html>

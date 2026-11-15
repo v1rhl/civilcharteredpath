@@ -10,52 +10,52 @@ window.SITE = {
 /* The seven ICE attributes, with what reviewers look for and the CEng-level bar. */
 window.ATTRIBUTES = [
   {
-    n: 1, title: "Knowledge and understanding of engineering",
+    n: 1, title: "Understanding and practical application of engineering",
     short: "Engineering",
     look: ["Apply sound theory and judgement to real problems", "Evaluate options and choose a solution for good reasons", "Understand risk, uncertainty and the limits of your methods", "Think about the whole life of the asset"],
-    ceng: "Develop solutions to complex or unfamiliar problems, and show you have introduced a new or improved technique, method or tool.",
+    ceng: "Define the requirements, risks and opportunities yourself, design and implement the solution, and show you have introduced a new or improved technique or technology.",
     prompts: ["Which decision on your project needed judgement because the guidance didn't settle it?", "What did you assume, and how did you check it?", "What would you change if you designed it again?"]
   },
   {
-    n: 2, title: "Leadership and management",
+    n: 2, title: "Management and leadership",
     short: "Leadership",
     look: ["Plan, organise and monitor work", "Lead and develop people", "Manage quality, and improve how things are done", "Adapt your style to the person and situation"],
-    ceng: "Lead teams and tasks with real responsibility for outcomes, and show continuous improvement you led, not just took part in.",
+    ceng: "Organise, direct and control tasks and resources, develop others, know the limits of your competence, and show continuous quality improvement you led.",
     prompts: ["When did a plan go wrong, and what did you change?", "How have you helped someone else develop?", "What's the difference between quality assurance and quality control on your job?"]
   },
   {
     n: 3, title: "Commercial ability",
     short: "Commercial",
     look: ["Understand how your work is procured and paid for", "Know the contract you work under", "Prepare and track budgets and programmes", "Manage change, early warnings and claims"],
-    ceng: "Control costs and budgets, not just prepare them, and use commercial judgement on contractual issues.",
+    ceng: "Control the costs and budget of a significant task or project, and show sound judgement on statutory, contractual and commercial issues.",
     prompts: ["What contract were you working under, and what did it require of you?", "Tell us about a time your work was going over budget.", "Who carried the risk on your project, and why?"]
   },
   {
     n: 4, title: "Health, safety and welfare",
     short: "H&S",
     look: ["Know the law: HSWA 1974, CDM 2015 and the regulations you work under", "Understand your duties and everyone else's", "Apply the hierarchy of control", "Promote good practice in others"],
-    ceng: "Lead on safety: show that others changed what they did because of you, and that you designed risk out rather than managing it on site.",
+    ceng: "Show leadership by promoting good practice and improvements in health, safety and welfare, so others change what they do because of you.",
     prompts: ["What are your duties under CDM 2015, and who were the other duty holders?", "Give an example of eliminating a hazard through design.", "When have you stopped or challenged unsafe work?"]
   },
   {
     n: 5, title: "Sustainable development",
     short: "Sustainability",
     look: ["Carbon: PAS 2080 and the carbon reduction hierarchy", "Biodiversity net gain and nature-positive design", "Social value and the wider community", "Climate adaptation and resilience"],
-    ceng: "Show decisions where sustainability changed the outcome, backed with numbers you can explain.",
+    ceng: "Take a responsible role in improvements that reduce resource demand over the whole project life cycle, backed with numbers you can explain.",
     prompts: ["How did you reduce carbon on your project, and by how much?", "Did biodiversity net gain apply? What was done?", "How is climate change affecting your designs?"]
   },
   {
     n: 6, title: "Interpersonal skills and communication",
     short: "Communication",
     look: ["Write and speak clearly for different audiences", "Explain technical ideas to non-technical people", "Handle disagreement and negotiate", "Work inclusively with diverse teams"],
-    ceng: "Influence decisions: show that how you communicated changed what someone else decided.",
+    ceng: "Communicate new concepts and ideas to technical and non-technical stakeholders, and proactively manage diversity and inclusion.",
     prompts: ["Tell us about explaining something technical to a member of the public or a client.", "Describe a disagreement with a contractor or client and how it ended.", "What have you done to make your workplace more inclusive?"]
   },
   {
     n: 7, title: "Professional commitment",
     short: "Professional",
     look: ["Know and live the ICE Code of Professional Conduct", "Plan and record CPD", "Take responsibility for your judgement and your limits", "Contribute to the profession and the public"],
-    ceng: "Exercise independent judgement and accept responsibility, including for mistakes, with the public interest first.",
+    ceng: "Exercise sound, holistic, independent judgement and accept responsibility, with the public interest first.",
     prompts: ["Which rule of the Code matters most to you, and why?", "What would you do if asked to sign off work outside your competence?", "Have you used AI in your work or submission, and how did you stay accountable?"]
   }
 ];
@@ -265,9 +265,10 @@ window.FACT_CARDS = [
   { deck: "Review format", q: "How long should your presentation run?", a: "Plan for about 13 minutes. Reviewers may stop you at 15." },
   { deck: "Review format", q: "What can you take into the communication task?", a: "Up to two sides of A4 of notes. No copying and pasting from them, and no internet or AI tools." },
   { deck: "Review format", q: "What four kinds of question do reviewers ask?", a: "Factual, analytical (compare or explain), hypothetical (what would you do if) and probing (why did you decide that)." },
-  { deck: "Review format", q: "Name the seven ICE attributes.", a: "1 Knowledge and understanding of engineering\n2 Leadership and management\n3 Commercial ability\n4 Health, safety and welfare\n5 Sustainable development\n6 Interpersonal skills and communication\n7 Professional commitment" },
-  { deck: "Review format", q: "What extra does attribute 1 ask of a Chartered Engineer?", a: "Developing solutions to complex problems, and evidence that you introduced a new or improved technique, method or tool." },
-  { deck: "Review format", q: "What extra does attribute 3 ask of a Chartered Engineer?", a: "Controlling costs and budgets, not just preparing them, and commercial judgement on contractual issues." },
+  { deck: "Review format", q: "Name the seven ICE attributes.", a: "1 Understanding and practical application of engineering\n2 Management and leadership\n3 Commercial ability\n4 Health, safety and welfare\n5 Sustainable development\n6 Interpersonal skills and communication\n7 Professional commitment" },
+  { deck: "Review format", q: "What extra does attribute 1 ask of a Chartered Engineer?", a: "Taking an active role in defining requirements, risks and opportunities; designing and implementing solutions; and engaging in the creation or introduction of new or improved techniques and technology." },
+  { deck: "Review format", q: "What extra does attribute 3 ask of a Chartered Engineer?", a: "Controlling the costs and budget of a significant task or project, and sound judgement on statutory, contractual and commercial issues. IEng candidates also control budgets, for engineering tasks." },
+  { deck: "Review format", q: "How does UK-SPEC distinguish Incorporated from Chartered Engineers?", a: "IEng: maintains and manages applications of current and developing technology.\nCEng: develops solutions to engineering problems using new or existing technologies, through innovation, creativity and change." },
   { deck: "Professional", q: "When did the current ICE Code of Professional Conduct come into force?", a: "24 March 2026. It adds that accountability can't be delegated to AI and that you should disclose your use of it." },
   { deck: "Professional", q: "What are ICE's three mandatory CPD themes?", a: "Ethics and professional behaviours; safety and risk management; sustainable development. At least one a year, all three over a rolling three years." },
   { deck: "Professional", q: "Who is ICE President for 2026-27, and what are her priorities?", a: "Julie Wood. Connected, outcome-focused thinking; smarter delivery; social mobility across careers." },
@@ -300,4 +301,102 @@ window.ICE_CYCLES = [
     window: "Online in February 2027, possibly into the first two weeks of March", inPerson: "London 3-5 Feb, Birmingham 16-17 Feb, Glasgow 23-24 Feb" },
   { id: "2027-06", label: "June 2027 reviews", sponsors: "2027-03-12", application: "2027-03-19", review: "2027-06-07",
     window: "Online in June 2027, possibly into the first two weeks of July", inPerson: "London 7-9 Jun, York 16-17 Jun, Cardiff 29 Jun" }
+];
+
+/* IEng and CEng requirements per attribute, quoted from ICE's professional review guidance
+   (Version 3 Revision 14, 11 June 2026, Appendix A: IPR pp. 17-18, CPR pp. 19-21).
+   CEng repeats the IEng requirements and adds the "And ..." clauses quoted here. */
+window.ICE_GUIDANCE_URL = "https://www.ice.org.uk/media/aj2gmts3/11-jun-26-professional-review-guidance.pdf";
+window.UKSPEC = {
+  url: "https://www.engc.org.uk/our-role-as-regulator/setting-standards/uk-spec-professional-engineering-competence-and-commitment/",
+  ieng: "Maintains and manages applications of current and developing technology.",
+  ceng: "Develops solutions to engineering problems using new or existing technologies, through innovation, creativity and change."
+};
+
+/* Illustrative example answers. Fictional scenarios written for this site: not real candidates' words. */
+window.ATTR_EXAMPLES = [
+  {
+    ice: "Understanding and practical application of engineering", page: "p. 17 and p. 19",
+    ieng: ["Solve engineering problems using a sound theoretical approach, based on evidence, and contribute to continuous improvement", "Exercise sound independent engineering judgement"],
+    ceng: ["And engage in the creation and/or introduction of new, advancing or improved techniques and technology", "And take an active role in the identification and definition of requirements, challenges, risks, and opportunities", "And undertake the design, development and implementation of engineering solutions"],
+    q: "Tell us about a technical decision you made where the standard approach didn't fit.",
+    answers: [
+      { g: "weak", a: "We had to design a retaining wall and the ground was quite poor, so the team decided to use sheet piles. The design was checked and it all worked out fine on site.", why: "'We' and 'the team' hide the candidate. No options, no reasoning, no evidence. A reviewer learns nothing about their judgement." },
+      { g: "ok", a: "I designed a retaining wall where the ground investigation showed soft clay. I chose sheet piles because they were quicker to install than a gravity wall, and I checked the design to Eurocode 7.", why: "Uses 'I' and names a standard, but there's one option and one reason. It doesn't show judgement or what made the problem hard." },
+      { g: "good", a: "I compared a gravity wall, an embedded sheet pile wall and a king post wall for a 3 m retained height in soft clay. I ran the sheet pile design in our software, checked it by hand with a simple limit equilibrium calculation, and chose sheet piles because they avoided a deep excavation next to a live road. I recorded the decision in the design log and the checker accepted it.", why: "IEng level: a sound, evidence-based solution with options, a check and independent judgement. It applies existing methods well but doesn't change them." },
+      { g: "excellent", a: "The ground investigation showed softer clay than our standard design assumed, so I defined the real constraints first: a live road, a 2-week possession and a tight carbon budget. I compared three wall types and recommended a reused sheet pile section, which met the loads with a 20% lower carbon figure. Because our in-house spreadsheet couldn't model staged excavation, I built and verified a staged check against hand calculations and a software run. The team now uses it on similar walls, and I briefed two graduates on its limits.", why: "CEng level: identifies and defines the requirements and risks, designs and implements the solution, and introduces an improved technique that others now use, with numbers." }
+    ]
+  },
+  {
+    ice: "Management and leadership", page: "p. 17 and p. 19",
+    ieng: ["Manage teams or technical specialisms", "Assist others to meet changing technical and managerial needs", "Manage quality processes and contribute to quality improvements"],
+    ceng: ["And manage (organise, direct and control), programme or schedule, tasks and resources", "And lead or influence teams / technical specialisms, understanding the limits of their skills and knowledge", "And develop others to meet changing technical and managerial needs", "And demonstrate continuous quality improvement and promote best practice"],
+    q: "Tell us about a time a piece of work was slipping behind programme. What did you do?",
+    answers: [
+      { g: "weak", a: "The drawings were running late, so we all worked extra hours and got them out on time in the end.", why: "No diagnosis, no decision, no leadership. Working harder isn't management, and 'we' hides the candidate's role." },
+      { g: "ok", a: "I noticed the drawing package was a week behind, so I told the project manager and we agreed to push the issue date back.", why: "Spots the problem and escalates it, which is the minimum. It doesn't show managing people, resources or quality." },
+      { g: "good", a: "I led a team of three on a drainage design package. When the survey arrived late, I re-sequenced the work so the layouts that didn't depend on the survey went first, moved a technician onto drawing checks, and held a short daily catch-up for a fortnight. We issued two days late instead of two weeks, with no comments from the checker.", why: "IEng level: manages a team and its quality process, with a clear result. The step to CEng is wider direction of resources and developing people." },
+      { g: "excellent", a: "As package lead for four engineers across two offices, I saw from our earned-value tracking that we'd slip three weeks. I re-planned the critical path, agreed a reduced first issue with the client so construction could start on time, and asked a senior colleague to cover the structural checks I wasn't competent to sign off. I paired a graduate with a technician so she learned the drawing standards and could run checks herself. Afterwards I added a survey-dependency check to our project start-up template, which the team now uses.", why: "CEng level: organises, directs and controls programme and resources, knows the limits of their competence, develops someone, and leaves a lasting quality improvement." }
+    ]
+  },
+  {
+    ice: "Commercial ability", page: "p. 17 and p. 19",
+    ieng: ["Manage, prepare and control costs/budgets of engineering tasks or projects", "Use sound knowledge of statutory and commercial frameworks within their own area of responsibility"],
+    ceng: ["And manage, prepare and control costs/budgets of a significant engineering task or project", "And demonstrate sound judgement on statutory, contractual and commercial issues in relation to own area of responsibility"],
+    q: "Give an example of controlling a budget.",
+    answers: [
+      { g: "weak", a: "The project was delivered within budget. I always keep an eye on costs.", why: "A claim with no figure and no action. Reviewers hear this often and will probe until there's nothing left." },
+      { g: "ok", a: "I prepared the fee estimate for a small design job, about £25k, and tracked hours each month. We finished close to budget.", why: "Shows preparing and tracking, but not what was controlled or decided when it went off track." },
+      { g: "good", a: "I prepared and ran the £60k fee for a culvert replacement design. Each fortnight I compared hours booked against progress. When the ecology surveys doubled, I showed the project manager the forecast overrun and the reason, and we raised it as a change with the client, which they approved. We finished at £61k against a revised £68k budget.", why: "IEng level: prepares and controls a task budget with real numbers, and uses the commercial framework correctly within their own area." },
+      { g: "excellent", a: "I controlled the £400k design budget on a flood scheme under an NEC4 professional services contract (Option E). By month three, my forecast showed a £35k overrun from extra modelling the client had asked for informally. I judged that it was a change in scope, gave an early warning, and prepared the compensation event quotation, which was accepted. I also cut £15k by re-using an existing hydraulic model instead of building a new one. We finished at £395k, and I now set clear scope assumptions at the start of each job.", why: "CEng level: controls a significant budget, and shows judgement on a contractual issue under the contract actually used." }
+    ]
+  },
+  {
+    ice: "Health, safety and welfare", page: "p. 17 and p. 20",
+    ieng: ["Demonstrate a sound knowledge of legislation, hazards and safe systems of work", "Manage risks", "Manage health, safety and welfare within their own area of responsibility", "Contribute to improvements in health, safety and welfare"],
+    ceng: ["And demonstrate leadership by promoting good practice and improvements in health, safety and welfare"],
+    q: "How have you managed health and safety risks through your design?",
+    answers: [
+      { g: "weak", a: "Safety is our number one priority. I always follow the company's procedures and wear the right PPE on site.", why: "A slogan. PPE is the bottom of the hierarchy of control, and nothing here is about design or the candidate's own duties." },
+      { g: "ok", a: "As a designer under CDM 2015 I completed the designer's risk assessment and added safety notes to the drawings.", why: "Correct duty holder and process, but no example of a risk being reduced, or how." },
+      { g: "good", a: "As designer under CDM 2015 I changed an outfall from an in-situ headwall in a 3 m excavation next to a footpath to a precast unit lifted in from the bank. That removed work in a deep excavation and cut time on site from two weeks to two days. I recorded the residual risks, the lift and the edge protection on the drawings and in the pre-construction information.", why: "IEng level: knows the law and their duties, and manages a real risk in their own area by designing it out." },
+      { g: "excellent", a: "On a culvert design I replaced confined space entry for future maintenance with a removable grille and an access chamber at ground level, so the asset can be cleared from the surface. I then wrote a one-page note on designing out confined space entry for our team's design checklist, presented it at our safety stand-down, and two other schemes have used it since. I also challenged a contractor's temporary works proposal that left an unprotected edge, and it was changed before work started.", why: "CEng level: everything above, plus leadership that changed what others do. That's the 'promoting good practice and improvements' clause." }
+    ]
+  },
+  {
+    ice: "Sustainable development", page: "p. 18 and p. 20",
+    ieng: ["Understand the principles of sustainable development and apply them in work", "Manage engineering activities that contribute to sustainable development and the United Nations Sustainable Development Goals (UNSDGs)"],
+    ceng: ["And take a professional and responsible role in improvements that support sustainable development and reduce resource demand, set in the context of a whole project life cycle"],
+    q: "How did you reduce carbon or resource use on your project?",
+    answers: [
+      { g: "weak", a: "Sustainability was really important on the project and we tried to be as green as possible.", why: "No action, no number, no decision. It could be from any report." },
+      { g: "ok", a: "I specified concrete with GGBS to reduce embodied carbon, which is better for the environment.", why: "A real action, but no figure, no comparison and no sense of the whole life." },
+      { g: "good", a: "I balanced the cut and fill on an attenuation basin so no material left site. That avoided around 900 lorry movements, and I calculated about 120 tCO2e saved using our carbon tool. It also supports SDG 13 on climate action.", why: "IEng level: applies the principles in their own work and quantifies the result." },
+      { g: "excellent", a: "Following PAS 2080's 'build nothing, build less' steps, I first asked whether a new culvert was needed at all. A condition survey showed the existing one could be relined, which cut embodied carbon by about 70% and avoided a road closure. Over the 60-year life I set out a maintenance regime in the health and safety file so the liner is inspected and not replaced early. I presented the comparison to the client's board, and they now ask for a reline option on every culvert scheme.", why: "CEng level: drives an improvement that reduces resource demand over the whole life cycle, and influences the client's future decisions." }
+    ]
+  },
+  {
+    ice: "Interpersonal skills and communication", page: "p. 18 and p. 20",
+    ieng: ["Communicate well with others at all levels including effective use of English orally and in writing", "Discuss ideas and plans competently and with confidence", "Demonstrate effective personal and social skills", "Demonstrate awareness of diversity and inclusion"],
+    ceng: ["And communicate new concepts and ideas to technical and non-technical stakeholders", "And proactively manage diversity and inclusion"],
+    q: "Tell us about explaining something technical to a non-technical audience.",
+    answers: [
+      { g: "weak", a: "I'm a good communicator and I get on well with everyone, including clients and the public.", why: "Self-description with no example. Reviewers need evidence, not adjectives." },
+      { g: "ok", a: "I went to a public drop-in event and answered residents' questions about the flood scheme.", why: "Attendance, not communication. What did they ask, and what changed because of the answer?" },
+      { g: "good", a: "At a public drop-in, residents worried that a flood storage area would leave standing water next to a playground. I used a simple cross-section and a photo of a similar site to show it would only fill about once in 30 years and drain within a day. Several residents who'd objected said they were reassured, and there were no objections on that point at planning.", why: "IEng level: communicates clearly at all levels and with confidence, with a result." },
+      { g: "excellent", a: "The client's councillors needed to choose between two schemes, and the appraisal was full of BCRs and return periods. I rewrote it as 'how many homes are protected, how often, for how much', with one map per option. That was a new way of presenting it for them. They chose the higher-cost option because they could see it protected a care home. I also set up our team's meetings with colleagues in another country to suit their working hours and shared notes afterwards, so they weren't left out of decisions.", why: "CEng level: communicates a new concept to non-technical decision-makers so it changes their decision, and proactively manages inclusion in the team." }
+    ]
+  },
+  {
+    ice: "Professional commitment", page: "p. 18 and pp. 20-21",
+    ieng: ["Understand and comply with the ICE Code of Conduct", "Understand the ethical issues that may arise in their role and exercise responsibilities in an ethical manner", "Plan, carry out and record Continuing Professional Development", "Identify the limits of their personal knowledge and skills", "Engage with ICE activities"],
+    ceng: ["Carry out their responsibilities in an ethical manner", "And exercise sound holistic independent judgement and accept responsibility"],
+    q: "Tell us about a time you made a mistake, or found one. What did you do?",
+    answers: [
+      { g: "weak", a: "I can't think of a real mistake. I'm very careful and always check my work.", why: "Reviewers don't believe it, and it suggests the candidate can't reflect. Everyone has an example." },
+      { g: "ok", a: "I once sent a drawing with the wrong revision. My checker spotted it and I reissued it the same day.", why: "Honest, but trivial, and the checker found it. It doesn't show judgement or responsibility." },
+      { g: "good", a: "I found that a level on one of my drawings was 300 mm out after it had gone to the contractor. I told my manager straight away, issued a corrected drawing with a note explaining the change, and checked the other drawings in the set. I now check levels against the survey before every issue.", why: "IEng level: acts ethically, knows their limits, puts it right and learns from it." },
+      { g: "excellent", a: "While reviewing a colleague's design I found the overflow had been sized for the wrong return period, which could have flooded properties. It was our firm's error and the client hadn't noticed. I raised it with the project director the same day, recommended we tell the client openly, and led the redesign. It cost us two weeks of unpaid time, but the Code puts the public interest first. I also proposed adding the design standard to our check sheet, which the team adopted.", why: "CEng level: holistic, independent judgement, putting public safety ahead of commercial interest, and accepting responsibility for the outcome." }
+    ]
+  }
 ];
