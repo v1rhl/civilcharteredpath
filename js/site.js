@@ -73,7 +73,7 @@
     ["Practice questions", Q.length + " questions reviewers ask, with what a good answer covers.", "questions"],
     ["Submission planner", "Enter your deadline and get a dated plan worked back from it, with PDF, Excel and calendar downloads.", "planner"],
     ["Flashcards", "Revise the attributes, the Code of Conduct, ICE history, contracts, H&S and current affairs.", "flashcards"],
-    ["Latest news", "Headlines from NCE, ICE and other sources, plus a weekly briefing.", "news"]
+    ["Latest news", "Headlines from NCE, ICE and other sources, plus a monthly briefing by sector.", "news"]
   ];
   $("home-cards").innerHTML = homeCards.map(function (c) {
     return '<a class="panel home-card" href="#' + c[2] + '">' + icon(c[2]) + "<h3>" + esc(c[0]) + "</h3><p>" + esc(c[1]) + '</p><span class="more">Open</span></a>';
@@ -280,6 +280,36 @@
           "</div><h3>" + ext(i.url, i.t) + "</h3><p>" + esc(i.d) + "</p></div>";
       }).join("") + '</div><div class="bar"><span class="eyebrow">Using it in your review</span><p style="margin-top:4px">' + esc(w.angle) + "</p></div></div>";
   }).join("");
+
+  /* Monthly briefing: the month's headlines grouped by sector (no generated summaries) */
+  (function () {
+    var seen = {}, all = [];
+    ((window.NEWS_ARCHIVE || {}).items || []).concat(((window.NEWS_FEED || {}).items) || []).forEach(function (i) { if (i.date && !seen[i.url]) { seen[i.url] = 1; all.push(i); } });
+    var MN = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+    var months = []; all.forEach(function (i) { var m = i.date.slice(0, 7); if (months.indexOf(m) < 0) months.push(m); });
+    var perMonth = {}; all.forEach(function (i) { var m = i.date.slice(0, 7); perMonth[m] = (perMonth[m] || 0) + 1; });
+    months = months.filter(function (m) { return perMonth[m] >= 3; }); /* skip months with only a stray older story */
+    months.sort().reverse();
+    var cur = months[0], openSec = {};
+    function label(m) { return MN[+m.slice(5, 7) - 1] + " " + m.slice(0, 4); }
+    function draw() {
+      $("month-pick").innerHTML = months.map(function (m) { return '<button type="button" data-m="' + m + '" aria-pressed="' + (m === cur) + '">' + label(m) + "</button>"; }).join("");
+      var list = all.filter(function (i) { return i.date.slice(0, 7) === cur; }).sort(function (a, b) { return b.date.localeCompare(a.date); });
+      var by = {}; list.forEach(function (i) { (i.tags && i.tags.length ? i.tags : ["Other"]).forEach(function (t) { (by[t] = by[t] || []).push(i); }); });
+      var secs = Object.keys(by).sort(function (a, b) { return a === "Other" ? 1 : b === "Other" ? -1 : by[b].length - by[a].length; });
+      var partial = cur === months[0] && window.NEWS_FEED && window.NEWS_FEED.generated && window.NEWS_FEED.generated.slice(0, 7) === cur;
+      $("month-body").innerHTML = '<p class="month-lead"><strong>' + label(cur) + ":</strong> " + list.length + " stor" + (list.length === 1 ? "y" : "ies") + " across " + secs.length + " sectors" + (partial ? ", so far this month" : "") + ". A story can appear under more than one sector.</p>" +
+        secs.map(function (sec) {
+          var items = by[sec], open = openSec[cur + sec], show = open ? items : items.slice(0, 5);
+          return '<section class="month-sec"><h4>' + esc(sec) + '<span class="n">' + items.length + "</span></h4><ul>" + show.map(function (i) {
+            var d = i.date.split("-"); return '<li><span class="meta">' + (+d[2]) + " " + MN[+d[1] - 1].slice(0, 3) + " · " + esc(i.src) + "</span>" + ext(i.url, i.t) + "</li>";
+          }).join("") + "</ul>" + (items.length > 5 ? '<button type="button" class="more-btn" data-sec="' + esc(sec) + '">' + (open ? "Show fewer" : "Show all " + items.length) + "</button>" : "") + "</section>";
+        }).join("");
+    }
+    $("month-pick").addEventListener("click", function (e) { var b = e.target.closest("[data-m]"); if (!b) return; cur = b.dataset.m; draw(); });
+    $("month-body").addEventListener("click", function (e) { var b = e.target.closest("[data-sec]"); if (!b) return; var k = cur + b.dataset.sec; openSec[k] = !openSec[k]; draw(); });
+    if (cur) draw(); else $("monthly").hidden = true;
+  })();
 
   /* Cheat sheet: talking points from the latest news weeks */
   (function () {

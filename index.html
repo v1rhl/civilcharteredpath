@@ -232,6 +232,17 @@ nav a:hover { color: var(--accent-2); }
   .cs-block.cs-empty { display: none !important; }
 }
 
+.month-body { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr)); gap: 14px; }
+.month-sec { border: 1px solid var(--line); border-top: 3px solid var(--accent); border-radius: var(--radius); padding: 12px 14px; display: flex; flex-direction: column; gap: 6px; background: var(--surface); }
+.month-sec:nth-child(even) { border-top-color: var(--accent-2); }
+.month-sec h4 { margin: 0; font-size: 1rem; display: flex; justify-content: space-between; gap: 8px; }
+.month-sec h4 .n { font: 500 0.75rem var(--font-mono); color: var(--muted); }
+.month-sec ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.month-sec li { font-size: 0.9rem; line-height: 1.4; }
+.month-sec li .meta { display: block; font: 500 0.72rem var(--font-mono); color: var(--muted); }
+.month-sec .more-btn { align-self: flex-start; background: none; border: 0; color: var(--accent); font: 600 0.85rem var(--font-body); cursor: pointer; padding: 0; }
+.month-lead { grid-column: 1 / -1; margin: 0; font-size: 0.95rem; }
+#weekly-archive summary { cursor: pointer; display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: baseline; }
 /* Reference tables */
 .table-wrap { overflow-x: auto; }
 table { width: 100%; border-collapse: collapse; font-size: 0.93rem; }
@@ -1043,7 +1054,7 @@ html:not([data-level="ieng"]) .cmp-table .c-ceng, html[data-level="ieng"] .cmp-t
   <div class="view-head">
     <span class="eyebrow">News</span>
     <h2>Latest civil engineering news</h2>
-    <p class="lede">Reviewers expect you to follow the industry. Scan the latest headlines from NCE, ICE and other engineering and government sources, then read the weekly briefing for the stories most likely to come up and how to use them in an answer.</p>
+    <p class="lede">Reviewers expect you to follow the industry. Scan the latest headlines from NCE, ICE and other engineering and government sources, then read the monthly briefing for each sector's stories, and the weekly archive for how to use them in an answer.</p>
     <p class="small">Items marked <span class="flag">Headline only</span> come from a headline alone. Read the full article before quoting figures.</p>
   </div>
   <div class="panel" style="gap:14px">
@@ -1065,8 +1076,18 @@ html:not([data-level="ieng"]) .cmp-table .c-ceng, html[data-level="ieng"] .cmp-t
     </div>
     <p class="small">Headlines link to the original article on the publisher's site. Some, including NCE, may need a subscription.</p>
   </div>
-  <h3 style="font-size:1.3rem;margin-top:8px">Weekly briefing</h3>
-  <div id="news-list" style="display:flex;flex-direction:column;gap:28px"></div>
+  <div class="panel" style="gap:14px" id="monthly">
+    <div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;align-items:center">
+      <h3 style="font-size:1.3rem">Monthly briefing by sector</h3>
+      <div class="sector-chips" id="month-pick" role="group" aria-label="Choose a month"></div>
+    </div>
+    <p class="small" style="margin:0">Built automatically from the month's headlines and grouped by sector, so it stays current without anyone writing it. It lists and links the stories; it doesn't summarise them, so open the articles for the detail.</p>
+    <div id="month-body" class="month-body"></div>
+  </div>
+  <details class="panel" id="weekly-archive">
+    <summary><strong>Weekly briefings archive</strong> <span class="small">October to November 2026: written summaries with how to use each story in your review.</span></summary>
+    <div id="news-list" style="display:flex;flex-direction:column;gap:28px;margin-top:14px"></div>
+  </details>
 </section>
 
 <!-- REPORT CHECK -->
@@ -1324,10 +1345,11 @@ html:not([data-level="ieng"]) .cmp-table .c-ceng, html[data-level="ieng"] .cmp-t
   </div>
 </footer>
 
-<script src="js/content.js?v=20261116c"></script>
-<script src="js/news-feed.js?v=20261116c"></script>
-<script src="js/config.js?v=20261116c"></script>
-<script src="js/pages.js?v=20261116c"></script>
-<script src="js/site.js?v=20261116c"></script>
+<script src="js/content.js?v=20261116d"></script>
+<script src="js/news-feed.js?v=20261116d"></script>
+<script src="js/news-archive.js?v=20261116d"></script>
+<script src="js/config.js?v=20261116d"></script>
+<script src="js/pages.js?v=20261116d"></script>
+<script src="js/site.js?v=20261116d"></script>
 </body>
 </html>

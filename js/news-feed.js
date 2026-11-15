@@ -46,7 +46,7 @@ window.NEWS_FEED = {
    "src": "NCE",
    "date": "2026-11-06",
    "tags": [
-    "Water and flood",
+    "Water and wastewater",
     "Policy and funding"
    ]
   },
@@ -56,7 +56,7 @@ window.NEWS_FEED = {
    "src": "NCE",
    "date": "2026-11-06",
    "tags": [
-    "Water and flood"
+    "Water and wastewater"
    ]
   },
   {
@@ -97,12 +97,13 @@ window.NEWS_FEED = {
    ]
   },
   {
-   "t": "Water Magazine's 2 November headline",
+   "t": "Thames Water creditors approve 16th set of funding proposals",
    "url": "https://www.watermagazine.co.uk/2026/11/02/thames-water-creditors-approve-16th-set-of-funding-proposals/",
    "src": "Water Magazine",
    "date": "2026-11-02",
    "tags": [
-    "Water and flood"
+    "Water and wastewater",
+    "Policy and funding"
    ]
   },
   {
@@ -151,12 +152,12 @@ window.NEWS_FEED = {
    ]
   },
   {
-   "t": "downgraded Thames Water again",
+   "t": "S&P downgrades Thames Water further as restructuring talks continue",
    "url": "https://watermagazine.co.uk/2026/10/28/sp-downgrades-thames-water-further-as-restructuring-talks-continue",
    "src": "Water Magazine",
    "date": "2026-10-28",
    "tags": [
-    "Water and flood"
+    "Water and wastewater"
    ]
   },
   {
@@ -211,7 +212,7 @@ window.NEWS_FEED = {
    "src": "NCE",
    "date": "2026-10-22",
    "tags": [
-    "Water and flood",
+    "Water and wastewater",
     "Industry and careers"
    ]
   },
@@ -283,12 +284,12 @@ window.NEWS_FEED = {
    ]
   },
   {
-   "t": "Water Magazine, 19 October",
+   "t": "EFRA chair urges decisive action over Thames Water's future",
    "url": "https://www.watermagazine.co.uk/2026/10/19/efra-chair-urges-decisive-action-over-thames-waters-future/",
    "src": "Water Magazine",
    "date": "2026-10-19",
    "tags": [
-    "Water and flood"
+    "Water and wastewater"
    ]
   },
   {
@@ -297,7 +298,7 @@ window.NEWS_FEED = {
    "src": "NCE",
    "date": "2026-10-19",
    "tags": [
-    "Water and flood",
+    "Water and wastewater",
     "Tunnels and structures"
    ]
   },
@@ -307,7 +308,7 @@ window.NEWS_FEED = {
    "src": "NCE",
    "date": "2026-10-16",
    "tags": [
-    "Water and flood",
+    "Water and wastewater",
     "Roads",
     "Industry and careers"
    ]
@@ -447,7 +448,7 @@ window.NEWS_FEED = {
    "src": "NCE",
    "date": "2026-10-12",
    "tags": [
-    "Water and flood",
+    "Flood and coastal",
     "Policy and funding"
    ]
   },
@@ -503,7 +504,7 @@ window.NEWS_FEED = {
    "src": "NCE",
    "date": "2026-08-24",
    "tags": [
-    "Water and flood",
+    "Water and wastewater",
     "Industry and careers"
    ]
   },
@@ -622,7 +623,7 @@ window.NEWS_FEED = {
    "src": "NCE",
    "date": "2026-07-15",
    "tags": [
-    "Water and flood"
+    "Water and wastewater"
    ]
   },
   {
@@ -659,7 +660,7 @@ window.NEWS_FEED = {
    "src": "NCE",
    "date": "2026-03-20",
    "tags": [
-    "Water and flood"
+    "Water and wastewater"
    ]
   },
   {
@@ -668,7 +669,7 @@ window.NEWS_FEED = {
    "src": "NCE",
    "date": "2026-01-20",
    "tags": [
-    "Water and flood",
+    "Water and wastewater",
     "Policy and funding"
    ]
   },
