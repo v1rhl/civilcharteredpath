@@ -651,6 +651,25 @@ html:not([data-level="ieng"]) .cmp-table .c-ceng, html[data-level="ieng"] .cmp-t
 .sp.good .sp-tag { background: var(--accent); color: var(--accent-ink); }
 .slide-pair figcaption { font-size: 0.92rem; }
 .pres-mistakes { margin: 0; padding-left: 1.1em; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr)); gap: 8px 22px; font-size: 0.93rem; }
+/* Home page welcome step */
+.welcome { display: flex; flex-direction: column; gap: 12px; }
+.welcome .wl-card { background: var(--surface); border: 1px solid var(--accent-2); border-radius: var(--radius); padding: 14px 16px; display: flex; flex-direction: column; gap: 12px; box-shadow: 0 1px 0 var(--line); }
+.welcome .wl-head { display: flex; justify-content: space-between; gap: 8px; align-items: baseline; flex-wrap: wrap; }
+.welcome .wl-head strong { font-size: 1.05rem; }
+.welcome .wl-q { display: flex; flex-direction: column; gap: 6px; }
+.welcome .wl-q > span { font: 600 0.88rem var(--font-body); }
+.welcome .wl-q > span .n { font: 700 0.75rem var(--font-mono); color: var(--accent-2); margin-right: 6px; }
+.wl-opts { display: flex; flex-wrap: wrap; gap: 6px; }
+.wl-opts button { font: 600 0.86rem var(--font-body); border: 1px solid var(--line); border-radius: 999px; padding: 6px 12px; background: var(--paper); color: var(--ink); cursor: pointer; }
+.wl-opts button[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.wl-opts button small { font-weight: 400; color: inherit; opacity: 0.8; margin-left: 4px; }
+.welcome .wl-actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.wl-summary { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; font-size: 0.92rem; background: var(--surface); border: 1px solid var(--line); border-radius: 999px; padding: 6px 8px 6px 14px; align-self: flex-start; }
+.wl-summary .chip { font: 600 0.8rem var(--font-body); background: var(--accent-soft); color: var(--ink); border-radius: 999px; padding: 2px 10px; }
+.wl-summary .chip.r { background: var(--accent-2-soft); }
+.wl-summary .chip.s { background: var(--paper); border: 1px solid var(--line); }
+#feed-sectors .my-sec { border-color: var(--accent-2); }
+.wl-summary .linkish { margin-left: 0; }
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 .role-compare .linkish { margin-left: 0; }
 .fc-decks-mine { outline: 2px solid var(--accent-2); outline-offset: 1px; }
@@ -697,9 +716,7 @@ html:not([data-level="ieng"]) .cmp-table .c-ceng, html[data-level="ieng"] .cmp-t
         <span class="eyebrow">For civil engineers working towards <span data-lv="title">CEng MICE</span></span>
         <h1>Everything for your ICE professional review, <span class="hl">in one place.</span></h1>
         <p class="lede">ICE's deadlines, a planner that works back from them, the attributes with graded examples, revision flashcards, review-day guidance and this week's industry news.</p>
-        <div class="level-pick" role="group" aria-label="Which level are you aiming for?"></div>
-        <div class="role-pick" role="group" aria-label="What's your role?"></div>
-        <p class="small role-note">Your role puts the most relevant attribute advice, cheat sheet notes and flashcard decks first. Nothing is hidden, and you can change it any time.</p>
+        <div class="welcome" id="welcome" aria-live="polite"></div>
         <div class="hero-actions">
           <a class="btn" href="#planner">Plan my submission</a>
           <a class="btn ghost" href="#start-here" id="go-start">Start here</a>
@@ -1585,12 +1602,12 @@ html:not([data-level="ieng"]) .cmp-table .c-ceng, html[data-level="ieng"] .cmp-t
   </div>
 </footer>
 
-<script src="js/content.js?v=20261116h"></script>
-<script src="js/role.js?v=20261116h"></script>
-<script src="js/news-feed.js?v=20261116h"></script>
-<script src="js/news-archive.js?v=20261116h"></script>
-<script src="js/config.js?v=20261116h"></script>
-<script src="js/pages.js?v=20261116h"></script>
-<script src="js/site.js?v=20261116h"></script>
+<script src="js/content.js?v=20261116k"></script>
+<script src="js/role.js?v=20261116k"></script>
+<script src="js/news-feed.js?v=20261116k"></script>
+<script src="js/news-archive.js?v=20261116k"></script>
+<script src="js/config.js?v=20261116k"></script>
+<script src="js/pages.js?v=20261116k"></script>
+<script src="js/site.js?v=20261116k"></script>
 </body>
 </html>

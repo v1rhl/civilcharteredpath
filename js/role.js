@@ -183,6 +183,28 @@
   }
   document.addEventListener("click", function (e) { var b = e.target.closest(".role-pick [data-role]"); if (b) set(b.dataset.role); });
 
+  /* Sector of specialism: same names as the News page's sector tags (tools/refresh_news.py), more than one allowed */
+  var SECTORS = [
+    { id: "Water and wastewater", label: "Water", decks: ["Flood and water"] },
+    { id: "Reservoirs and dams", label: "Dams and reservoirs", decks: ["Reservoir safety", "Dams and hydraulics"] },
+    { id: "Flood and coastal", label: "Flood and coastal", decks: ["Flood and water", "Dams and hydraulics"] },
+    { id: "Roads", label: "Highways", decks: ["Design standards"] },
+    { id: "Rail", label: "Rail", decks: ["Design standards"] },
+    { id: "Tunnels and structures", label: "Structures and tunnels", decks: ["Design standards"] },
+    { id: "Energy", label: "Energy", decks: [] },
+    { id: "Aviation and ports", label: "Aviation and ports", decks: [] }
+  ];
+  var MYSEC = (function () { try { var v = JSON.parse(localStorage.getItem("cp-sectors") || "[]"); return Array.isArray(v) ? v.filter(function (x) { return SECTORS.some(function (s) { return s.id === x; }); }) : []; } catch (e) { return []; } })();
+  var secHooks = [];
+  window.SECTORS = SECTORS;
+  window.CPSectors = {
+    get: function () { return MYSEC.slice(); },
+    set: function (list) { MYSEC = (list || []).filter(function (x) { return SECTORS.some(function (s) { return s.id === x; }); }); try { localStorage.setItem("cp-sectors", JSON.stringify(MYSEC)); } catch (e) {} secHooks.forEach(function (f) { try { f(MYSEC.slice()); } catch (e) {} }); },
+    label: function (id) { for (var i = 0; i < SECTORS.length; i++) if (SECTORS[i].id === id) return SECTORS[i].label; return id; },
+    decks: function () { var d = []; SECTORS.forEach(function (s) { if (MYSEC.indexOf(s.id) > -1) s.decks.forEach(function (x) { if (d.indexOf(x) < 0) d.push(x); }); }); return d; },
+    on: function (f) { secHooks.push(f); }
+  };
+
   window.ROLES = ROLES;
   window.ROLE_TIPS = GENERAL_TIPS;
   window.CPRole = {

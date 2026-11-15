@@ -262,6 +262,11 @@
     window.print(); setTimeout(function () { document.title = old; }, 1000);
   });
   renderPlan();
+  /* Used by the home page welcome step to set the target cycle */
+  window.CPPlan = {
+    setCycle: function (id) { var c = cycById(id); if (!c) return; $("plan-cycle").value = id; applyCycle(id); renderPlan(); },
+    cycle: function () { return planCycle; }
+  };
 
   $("plan-list").addEventListener("change", function (e) { var id = e.target.dataset && e.target.dataset.chk; if (!id) return; chkTicks[id] = e.target.checked; save("cp-checklist", chkTicks); renderPlan(); });
 
@@ -281,10 +286,11 @@
   /* Decks that suit the visitor's role come straight after "All" (nothing is hidden) */
   function orderDecks() {
     var r = window.CPRole && CPRole.role();
-    MINE = r ? r.decks.filter(function (d) { return DECKS0.indexOf(d) > -1; }) : [];
+    var sd = window.CPSectors ? CPSectors.decks() : [];
+    MINE = (r ? r.decks : []).concat(sd).filter(function (d, i, arr) { return DECKS0.indexOf(d) > -1 && arr.indexOf(d) === i; });
     DECKS = ["All"].concat(MINE).concat(DECKS0.filter(function (d) { return d !== "All" && MINE.indexOf(d) < 0; }));
     var n = $("fc-role-note");
-    if (n) n.innerHTML = MINE.length ? "Decks outlined in coral suit your role (" + esc(r.label.toLowerCase()) + ') and come first. <a href="#attributes">Change your role</a>.' : r ? "" : 'Tip: <a href="#">choose your role on the home page</a> to put the decks that suit it first.';
+    if (n) n.innerHTML = MINE.length ? "Decks outlined in coral suit your " + (r ? "role (" + esc(r.label.toLowerCase()) + ")" + (sd.length ? " and sector" : "") : "sector") + ' and come first. <a href="#">Change on the home page</a>.' : r ? "" : 'Tip: <a href="#">set your role and sector on the home page</a> to put the decks that suit you first.';
   }
   orderDecks();
   var marks = load("cp-cards", {}), deck = "All", order = [], pos = 0, flipped = false;
@@ -325,6 +331,7 @@
   });
   renderDecks(); build();
   if (window.CPRole) CPRole.on(function () { orderDecks(); renderDecks(); });
+  if (window.CPSectors) CPSectors.on(function () { orderDecks(); renderDecks(); });
 
   /* ---------- Latest news feed ---------- */
   var PAGE = 10, FEED = window.NEWS_FEED || { items: [] }, shown = PAGE;
@@ -334,19 +341,22 @@
   $("feed-updated").textContent = FEED.generated ? "Updated " + fmt(parse(FEED.generated)) : "";
   /* Sector tags come from tools/refresh_news.py; anything untagged counts as Other */
   function tagsOf(i) { return i.tags && i.tags.length ? i.tags : ["Other"]; }
-  var sector = "All", sectorCount = {};
+  var MYS = window.CPSectors ? CPSectors.get() : [];
+  function inMine(i) { return tagsOf(i).some(function (t) { return MYS.indexOf(t) > -1; }); }
+  var sector = MYS.length ? "My sectors" : "All", sectorCount = {};
   FEED.items.forEach(function (i) { tagsOf(i).forEach(function (t) { sectorCount[t] = (sectorCount[t] || 0) + 1; }); });
   var sectors = Object.keys(sectorCount).sort(function (a, b) { return a === "Other" ? 1 : b === "Other" ? -1 : sectorCount[b] - sectorCount[a]; });
   function renderSectors() {
-    $("feed-sectors").innerHTML = ["All"].concat(sectors).map(function (t) {
-      return '<button type="button" data-sector="' + esc(t) + '" aria-pressed="' + (t === sector) + '">' + esc(t) + ' <span class="n">' + (t === "All" ? FEED.items.length : sectorCount[t]) + "</span></button>";
+    var mineN = FEED.items.filter(inMine).length;
+    $("feed-sectors").innerHTML = ["All"].concat(MYS.length ? ["My sectors"] : []).concat(sectors).map(function (t) {
+      return '<button type="button" data-sector="' + esc(t) + '" aria-pressed="' + (t === sector) + '"' + (t === "My sectors" ? ' class="my-sec" title="' + esc(MYS.join(", ")) + '"' : "") + ">" + esc(t) + ' <span class="n">' + (t === "All" ? FEED.items.length : t === "My sectors" ? mineN : sectorCount[t]) + "</span></button>";
     }).join("");
   }
   $("feed-sectors").addEventListener("click", function (e) { var b = e.target.closest("[data-sector]"); if (!b) return; sector = b.dataset.sector; shown = PAGE; renderSectors(); renderFeed(); });
   renderSectors();
   function renderFeed() {
     var s = $("feed-src").value, q = $("feed-search").value.trim().toLowerCase();
-    var list = FEED.items.filter(function (i) { return (s === "All sources" || i.src === s) && (sector === "All" || tagsOf(i).indexOf(sector) > -1) && (!q || i.t.toLowerCase().indexOf(q) > -1); });
+    var list = FEED.items.filter(function (i) { return (s === "All sources" || i.src === s) && (sector === "All" || (sector === "My sectors" ? inMine(i) : tagsOf(i).indexOf(sector) > -1)) && (!q || i.t.toLowerCase().indexOf(q) > -1); });
     $("feed").innerHTML = list.slice(0, shown).map(function (i) {
       return '<li><div style="display:flex;flex-direction:column;gap:2px"><span class="src">' + esc(i.src) + '</span><span class="date">' + (i.date ? fmt(parse(i.date)) : "") + '</span></div><div class="feed-item"><a href="' + esc(i.url) + '" target="_blank" rel="noopener">' + esc(i.t) + '</a><span class="tags">' + tagsOf(i).map(function (t) { return '<span class="tag">' + esc(t) + "</span>"; }).join("") + "</span></div></li>";
     }).join("") || '<li><span class="small">No headlines match.</span></li>';
@@ -361,6 +371,7 @@
   $("feed-more").addEventListener("click", function () { shown += PAGE; renderFeed(); });
   $("feed-less").addEventListener("click", function () { shown = PAGE; renderFeed(); $("feed").scrollIntoView({ block: "start" }); });
   renderFeed();
+  if (window.CPSectors) CPSectors.on(function (l) { MYS = l; sector = MYS.length ? "My sectors" : sector === "My sectors" ? "All" : sector; shown = PAGE; renderSectors(); renderFeed(); });
 
   /* ---------- Report check ---------- */
   var ENDPOINT = (window.CONFIG && window.CONFIG.CRITIQUE_ENDPOINT) || "";

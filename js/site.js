@@ -87,9 +87,10 @@
   function fd(d) { return d.getDate() + " " + MON[d.getMonth()] + " " + d.getFullYear(); }
   var now = new Date(); now = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
-  /* Next open ICE deadline */
-  (function () {
-    var c = (window.ICE_CYCLES || []).filter(function (x) { return pd(x.application) >= now; })[0];
+  /* Next open ICE deadline (or the visitor's chosen cycle) */
+  function drawDeadline() {
+    var open = (window.ICE_CYCLES || []).filter(function (x) { return pd(x.application) >= now; });
+    var mine = window.CPPlan && CPPlan.cycle(), c = open.filter(function (x) { return x.id === mine; })[0] || open[0], isMine = c && c.id === mine && open.length > 1;
     if (!c) { $("home-deadline").innerHTML = '<span class="eyebrow">Next ICE deadline</span><p>ICE hasn\'t published the next review dates yet.</p><a class="more" href="' + esc(window.ICE_DATES_SOURCE || "#") + '" target="_blank" rel="noopener">Check ICE key dates</a>'; return; }
     var days = Math.round((pd(c.application) - now) / 864e5), wks = Math.floor(days / 7), rem = days % 7;
     $("home-deadline").innerHTML = '<span class="eyebrow">Next ICE application deadline</span>' +
@@ -97,6 +98,65 @@
       '<strong>' + esc(c.label) + " (Professional Review)</strong>" +
       "<dl><dt>Sponsors sign off by</dt><dd>" + fd(pd(c.sponsors)) + "</dd><dt>Application closes</dt><dd>" + fd(pd(c.application)) + "</dd><dt>In-person reviews from</dt><dd>" + fd(pd(c.review)) + "</dd></dl>" +
       '<div style="display:flex;gap:8px;flex-wrap:wrap"><a class="btn" href="#planner">Plan back from this date</a><a class="btn ghost" href="#route">Other ICE dates</a></div>';
+    if (isMine) $("home-deadline").querySelector(".eyebrow").textContent = "Your target: application deadline";
+  }
+  drawDeadline();
+
+  /* Welcome step: route, role and target cycle. Shown until answered or skipped; never required. */
+  (function () {
+    var el = $("welcome"); if (!el) return;
+    var state = store("cp-welcome"), editing = !state;
+    var open = (window.ICE_CYCLES || []).filter(function (x) { return pd(x.application) >= now; }).slice(0, 4);
+    var pick = { level: store("cp-level") ? LEVEL : "", role: window.CPRole ? CPRole.get() : "", cycle: store("cp-wl-cycle") || "" };
+    function secs() { return window.CPSectors ? CPSectors.get() : []; }
+    function opts(name, items) {
+      return '<div class="wl-opts" role="group" aria-label="' + esc(name) + '">' + items.map(function (it) {
+        return '<button type="button" data-wk="' + it[0] + '" data-wv="' + esc(it[1]) + '" aria-pressed="' + (pick[it[0]] === it[1]) + '">' + it[2] + "</button>";
+      }).join("") + "</div>";
+    }
+    function draw() {
+      if (!editing) {
+        var r = window.CPRole && CPRole.role(), cy = window.CPPlan && CPPlan.cycle(), c = store("cp-wl-cycle") === cy ? open.filter(function (x) { return x.id === cy; })[0] : null;
+        if (store("cp-welcome") === "skipped" && !r && !secs().length) { el.innerHTML = '<div class="wl-summary"><span>Using the defaults (' + (LEVEL === "ieng" ? "IEng" : "CEng") + ', no role)</span><button type="button" class="linkish" id="wl-change">Set the site up for you</button></div>'; return; }
+        el.innerHTML = '<div class="wl-summary"><span>Set up for</span><span class="chip">' + (LEVEL === "ieng" ? "IEng" : "CEng") + "</span>" +
+          (r ? '<span class="chip r">' + esc(r.label) + "</span>" : "") + secs().map(function (x) { return '<span class="chip s">' + esc(CPSectors.label(x)) + "</span>"; }).join("") + (c ? '<span class="chip">' + esc(c.label) + "</span>" : "") +
+          '<button type="button" class="linkish" id="wl-change">Change</button></div>';
+        return;
+      }
+      var R = window.ROLES || [];
+      el.innerHTML = '<div class="wl-card"><div class="wl-head"><strong>Set the site up for you</strong><span class="small muted">Four quick questions, all optional. Saved in this browser only.</span></div>' +
+        '<div class="wl-q"><span><span class="n">1</span>Which route are you on?</span>' + opts("Route", [["level", "ceng", "Chartered (CEng)"], ["level", "ieng", "Incorporated (IEng)"]]) + '<a class="small" href="#route">Not sure? Compare the routes</a></div>' +
+        '<div class="wl-q"><span><span class="n">2</span>What\'s your role?</span>' + opts("Role", R.map(function (x) { return ["role", x.id, esc(x.label)]; })) + "</div>" +
+        '<div class="wl-q"><span><span class="n">3</span>When do you want your review?</span>' + opts("Review cycle", open.map(function (c) { return ["cycle", c.id, esc(c.label) + "<small>apply by " + fd(pd(c.application)) + "</small>"]; }).concat([["cycle", "later", "Not decided yet"]])) + "</div>" +
+        '<div class="wl-q"><span><span class="n">4</span>Your sector? <span class="small muted" style="font-weight:400">Pick any that apply</span></span><div class="wl-opts" role="group" aria-label="Sector">' +
+          (window.SECTORS || []).map(function (x) { return '<button type="button" data-ws="' + esc(x.id) + '" aria-pressed="' + (secs().indexOf(x.id) > -1) + '">' + esc(x.label) + "</button>"; }).join("") +
+          '<button type="button" data-ws="" aria-pressed="' + (!secs().length) + '">General or mixed</button></div></div>' +
+        '<div class="wl-actions"><button type="button" class="btn" id="wl-done">Done</button><button type="button" class="linkish" id="wl-skip" style="margin-left:0">Skip for now</button></div>' +
+        '<p class="small muted" style="margin:0">This tailors the attributes, review day timings, planner, news, cheat sheet and flashcards. Nothing is hidden, and you can change it any time.</p></div>';
+    }
+    el.addEventListener("click", function (e) {
+      var sb = e.target.closest("[data-ws]");
+      if (sb) {
+        var id = sb.dataset.ws, cur = secs();
+        if (!id) cur = []; else if (cur.indexOf(id) > -1) cur.splice(cur.indexOf(id), 1); else cur.push(id);
+        CPSectors.set(cur); draw(); var fb = el.querySelector('[data-ws="' + id + '"]'); if (fb) fb.focus(); return;
+      }
+      var b = e.target.closest("[data-wk]");
+      if (b) {
+        var k = b.dataset.wk, v = b.dataset.wv; pick[k] = v;
+        if (k === "level") setLevel(v);
+        if (k === "role" && window.CPRole) CPRole.set(v);
+        if (k === "cycle") { store("cp-wl-cycle", v); if (v !== "later" && window.CPPlan) { CPPlan.setCycle(v); drawDeadline(); } }
+        draw(); var nb = el.querySelector('[data-wk="' + k + '"][data-wv="' + v + '"]'); if (nb) nb.focus();
+        return;
+      }
+      if (e.target.closest("#wl-done")) { store("cp-welcome", "done"); if (!store("cp-level")) setLevel(LEVEL); editing = false; draw(); var c = $("wl-change"); if (c) c.focus(); return; }
+      if (e.target.closest("#wl-skip")) { store("cp-welcome", "skipped"); editing = false; draw(); return; }
+      if (e.target.closest("#wl-change")) { editing = true; pick.level = LEVEL; pick.role = window.CPRole ? CPRole.get() : ""; pick.cycle = store("cp-wl-cycle") || ""; draw(); var f = el.querySelector("[data-wk]"); if (f) f.focus(); }
+    });
+    levelHooks.push(function () { if (!editing) draw(); });
+    if (window.CPRole) CPRole.on(function () { if (!editing) draw(); });
+    draw();
   })();
 
   /* Start here: next steps by stage (this site's suggestions) */
@@ -348,9 +408,16 @@
 
   /* Cheat sheet: talking points from the latest news weeks */
   (function () {
-    var weeks = (window.NEWS || []).slice(0, 2), items = [];
-    weeks.forEach(function (w) { w.items.forEach(function (it) { if (items.length < 6) items.push(it); }); });
-    $("cs-news").innerHTML = items.map(function (it) { return "<li><strong>" + esc(it.tag) + ":</strong> " + ext(it.url, it.t) + "</li>"; }).join("");
+    var weeks = (window.NEWS || []).slice(0, 2);
+    function drawTalk() {
+      var items = [], mine = window.CPSectors ? CPSectors.get() : [];
+      if (mine.length) ((window.NEWS_FEED || {}).items || []).slice().sort(function (a, b) { return a.date < b.date ? 1 : -1; }).forEach(function (it) {
+        if (items.length < 3 && (it.tags || []).some(function (t) { return mine.indexOf(t) > -1; })) items.push({ tag: CPSectors.label((it.tags || []).filter(function (t) { return mine.indexOf(t) > -1; })[0]), url: it.url, t: it.t });
+      });
+      weeks.forEach(function (w) { w.items.forEach(function (it) { if (items.length < 6 && !items.some(function (x) { return x.url === it.url; })) items.push(it); }); });
+      $("cs-news").innerHTML = items.map(function (it) { return "<li><strong>" + esc(it.tag) + ":</strong> " + ext(it.url, it.t) + "</li>"; }).join("");
+    }
+    drawTalk(); if (window.CPSectors) CPSectors.on(drawTalk);
     if (weeks[0]) $("cs-angle").innerHTML = "<strong>Angle:</strong> " + esc(weeks[0].angle);
     $("cs-print").addEventListener("click", function () { window.print(); });
     function drawCsRole() {
