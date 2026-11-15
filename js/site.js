@@ -19,6 +19,8 @@
       }).join("");
     });
     Array.prototype.forEach.call(document.querySelectorAll('[data-lv="title"]'), function (el) { el.textContent = lvName(); });
+    document.documentElement.setAttribute("data-level", LEVEL);
+    Array.prototype.forEach.call(document.querySelectorAll('[data-lv="rv"]'), function (el) { el.textContent = LEVEL === "ieng" ? "Incorporated" : "Chartered"; });
     var wc = document.querySelector('[data-lv="wheel-copy"]');
     if (wc) wc.textContent = LEVEL === "ieng"
       ? "ICE reviewers check your evidence against seven attributes. For IEng, you show you can maintain and manage current technology: managing teams and quality, applying sound methods and independent judgement. Pick one to see the IEng bar and graded example answers."
@@ -309,7 +311,7 @@
     if (views.indexOf(v) < 0) v = "home";
     views.forEach(function (name) { $("view-" + name).hidden = name !== v; });
     Array.prototype.forEach.call(document.querySelectorAll("#nav a"), function (a) {
-      if (a.getAttribute("href") === "#" + v) a.setAttribute("aria-current", "page"); else a.removeAttribute("aria-current");
+      if (a.getAttribute("href") === "#" + (v === "flashcards" ? "review" : v)) a.setAttribute("aria-current", "page"); else a.removeAttribute("aria-current");
     });
     var withSources = ["route", "attributes", "review", "reference"].indexOf(v) > -1;
     document.body.classList.toggle("with-sources", withSources);

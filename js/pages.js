@@ -134,13 +134,13 @@
     var stepM = span / DAY > 400 ? 3 : span / DAY > 200 ? 2 : 1;
     while (t <= hi) { ticks.push(t); t = new Date(t.getFullYear(), t.getMonth() + stepM, 1); }
     var reviewName = reviewKind === "own" ? "Review day" : reviewKind === "cycle" ? "First in-person review" : "Review (assumed)";
-    var lines = (win ? '<span class="g-window" style="left:' + pct(win[0]) + ";width:calc(" + pct(win[1]) + " - " + pct(win[0]) + ')" title="ICE review window"></span>' : "") +
+    var lines =
       '<span class="g-line" style="left:' + pct(p.submit) + '" title="Submission"></span><span class="g-line review" style="left:' + pct(p.review) + '" title="' + reviewName + '"></span>' +
       (today >= lo && today <= hi ? '<span class="g-line today" style="left:' + pct(today) + '" title="Today"></span>' : "");
     var flagLeft = (p.review - lo) / span < 0.35;
     function rowHtml(it, open) {
-      var ad = advice(it.s);
-      return '<div class="g-row g-child' + (open ? "" : " shut") + '"><span class="g-label" title="' + esc(it.s.t + " " + ad.short) + '"><span class="g-name">' + esc(it.s.t) + '</span><span class="g-wk' + (weeks[it.s.id] !== defaults[it.s.id] ? " changed" : "") + '">' + esc(ad.short) + '</span></span><div class="g-track"><span class="g-bar" style="left:' + pct(it.start) + ";width:calc(" + pct(it.end) + " - " + pct(it.start) + ");background:" + it.s.c + '"></span>' + lines + "</div></div>";
+      var ad = advice(it.s), changed = weeks[it.s.id] !== defaults[it.s.id];
+      return '<div class="g-row g-child' + (open ? "" : " shut") + '"><span class="g-label" title="' + esc(it.s.t + " " + ad.short + ". " + fmt(it.start) + " to " + fmt(it.end)) + '"><span class="g-name">' + esc(it.s.t) + (changed ? ' <span class="g-dot" aria-label="duration changed from the suggestion"></span>' : "") + '</span></span><div class="g-track"><span class="g-bar" title="' + esc(fmt(it.start) + " to " + fmt(it.end)) + '" style="left:' + pct(it.start) + ";width:calc(" + pct(it.end) + " - " + pct(it.start) + ");background:" + it.s.c + '"></span>' + lines + "</div></div>";
     }
     $("plan-gantt").innerHTML = '<div class="g-row"><span></span><div class="g-axis"><span class="g-flag' + (flagLeft ? " left" : "") + '" style="left:' + pct(p.review) + '">' + esc(reviewName) + " " + fmt(p.review) + "</span></div></div>" +
       '<div class="g-row"><span></span><div class="g-axis">'  + ticks.map(function (d) { return '<span class="g-tick" style="left:' + pct(d) + '">' + MONTHS[d.getMonth()] + (d.getMonth() === 0 ? " " + d.getFullYear() : "") + "</span>"; }).join("") + "</div></div>" +
@@ -149,22 +149,27 @@
         if (!kids.length) return "";
         var st = new Date(Math.min.apply(null, kids.map(function (k) { return k.start; }))), en = new Date(Math.max.apply(null, kids.map(function (k) { return k.end; })));
         var open = !!openPh[ph.id];
-        return '<div class="g-row g-sum-row"><button type="button" class="g-label g-toggle" data-ph="' + ph.id + '" aria-expanded="' + open + '"><span class="g-name"><span class="caret" aria-hidden="true">' + (open ? "\u25BE" : "\u25B8") + "</span> " + esc(ph.t) + '</span><span class="g-wk">(' + wk(Math.round((en - st) / DAY / 7)) + ", " + kids.length + " tasks)</span></button>" +
+        return '<div class="g-row g-sum-row"><button type="button" class="g-label g-toggle" data-ph="' + ph.id + '" aria-expanded="' + open + '" title="' + esc(ph.t + ": " + wk(Math.round((en - st) / DAY / 7)) + ", " + kids.length + " tasks. Click to " + (open ? "hide" : "show") + " them.") + '"><span class="g-name"><span class="caret" aria-hidden="true">' + (open ? "\u25BE" : "\u25B8") + "</span> " + esc(ph.t) + '</span><span class="g-wk">' + fmt(st).replace(/ \d{4}$/, "") + " to " + fmt(en).replace(/ \d{4}$/, "") + "</span></button>" +
           '<div class="g-track"><span class="g-sum" style="left:' + pct(st) + ";width:calc(" + pct(en) + " - " + pct(st) + ')"></span>' + lines + "</div></div>" +
           kids.map(function (it) { return rowHtml(it, open); }).join("");
       }).join("") +
-      '<div class="legend"><span><span class="sw" style="background:var(--ink)"></span>Submission</span><span><span class="sw dash"></span>' + esc(reviewName) + (reviewKind === "cycle" ? " (enter your own date when ICE confirms it)" : "") + "</span>" +
-      (win ? '<span><span class="sw band"></span>ICE review window, online reviews may run into the next month</span>' : "") +
-      '<span><span class="sw" style="background:var(--flag)"></span>Today (dashed)</span></div>';
+      '<div class="legend"><span><span class="sw" style="background:var(--ink)"></span>Submission</span><span><span class="sw dash"></span>' + esc(reviewName) + '</span><span><span class="sw" style="background:var(--flag)"></span>Today</span></div>';
 
-    var rows = p.items.map(function (it) { return { d: it.start, x: { t: it.s.t + " " + advice(it.s).short, k: "Stage", s: it.start, e: it.end, n: it.s.d + " " + advice(it.s).long }, html: '<li class="' + (it.end < today ? "past" : "") + '"><span class="sw" style="background:' + it.s.c + '"></span><strong>' + esc(it.s.t) + '</strong><span class="when">' + fmt(it.start) + " to " + fmt(it.end) + '</span><span class="what">' + esc(it.s.d) + ' <em class="advice">' + esc(advice(it.s).long) + "</em></span></li>", txt: fmt(it.start) + " to " + fmt(it.end) + ": " + it.s.t + " " + advice(it.s).short }; });
+    var rows = p.items.map(function (it) { return { d: it.start, x: { t: it.s.t + " " + advice(it.s).short, name: it.s.t, c: it.s.c, past: it.end < today, k: "Stage", s: it.start, e: it.end, n: it.s.d + " " + advice(it.s).long }, html: '<li class="' + (it.end < today ? "past" : "") + '"><span class="sw" style="background:' + it.s.c + '"></span><strong>' + esc(it.s.t) + '</strong><span class="when">' + fmt(it.start) + " to " + fmt(it.end) + '</span><span class="what">' + esc(it.s.d) + ' <em class="advice">' + esc(advice(it.s).long) + "</em></span></li>", txt: fmt(it.start) + " to " + fmt(it.end) + ": " + it.s.t + " " + advice(it.s).short }; });
     var cy = cycById(planCycle);
     if (cy && cy.result) rows.push({ d: parse(cy.result), x: { t: "ICE results issued by", k: "ICE date", s: parse(cy.result), n: cy.label }, html: '<li class="milestone"><span class="sw" style="background:var(--ink)"></span><strong>ICE results issued by</strong><span class="when">' + fmt(parse(cy.result)) + '</span><span class="what">' + esc(cy.label) + ".</span></li>", txt: fmt(parse(cy.result)) + ": " + cy.label + " results (ICE)" });
     if (cy && cy.sponsors) rows.push({ d: parse(cy.sponsors), x: { t: "Supervisor or sponsor sign-off deadline", k: "ICE date", s: parse(cy.sponsors), n: "ICE's sponsors closing date for the " + cy.label + "." }, html: '<li class="milestone"><span class="sw" style="background:var(--ink)"></span><strong>Supervisor or sponsor sign-off deadline</strong><span class="when">' + fmt(parse(cy.sponsors)) + '</span><span class="what">ICE\'s sponsors closing date for the ' + esc(cy.label) + ".</span></li>", txt: fmt(parse(cy.sponsors)) + ": Sponsor sign-off deadline (ICE)" });
     rows.push({ d: p.submit, x: { t: "Submit your application", k: cy ? "ICE date" : "Milestone", s: p.submit, n: cy ? "Application closing date" : "Your own date" }, html: '<li class="milestone"><span class="sw" style="background:var(--ink)"></span><strong>Submit your application</strong><span class="when">' + fmt(p.submit) + "</span></li>", txt: fmt(p.submit) + ": Submit your application" });
     rows.push({ d: p.review, x: { t: "Professional review", k: p.reviewAssumed ? "Milestone (assumed)" : "Milestone", s: p.review, n: p.reviewAssumed ? "Assumed date: no review date entered." : cy && !cy.group ? "First in-person date; online dates vary." : "" }, html: '<li class="milestone"><span class="sw" style="background:var(--ink)"></span><strong>Professional review' + (p.reviewAssumed ? " (assumed date)" : cy ? " (first in-person date; online dates vary)" : "") + '</strong><span class="when">' + fmt(p.review) + "</span></li>", txt: fmt(p.review) + ": Professional review" + (p.reviewAssumed ? " (assumed)" : "") });
     rows.sort(function (a, b) { return a.d - b.d; });
-    $("plan-list").innerHTML = rows.map(function (r) { return r.html; }).join("");
+    function li(x) {
+      var stage = x.k === "Stage";
+      var note = x.n || "";
+      if (x.t === "Professional review" && win) note += (note ? " " : "") + "ICE's review window runs from " + fmt(win[0]) + " to " + fmt(win[1]) + ". Enter your own date in the form once ICE confirms it.";
+      return '<li class="' + (stage ? (x.past ? "past" : "") : "milestone") + '"><span class="sw" style="background:' + (stage ? x.c : "var(--ink)") + '"></span><strong>' + esc(stage ? x.name : x.t) + '</strong><span class="when">' + fmt(x.s) + (x.e ? " to " + fmt(x.e) : "") + "</span>" +
+        (note ? '<details class="more-info"><summary>Details</summary><p>' + esc(note) + "</p></details>" : "") + "</li>";
+    }
+    $("plan-list").innerHTML = rows.map(function (r) { return li(r.x); }).join("");
     $("plan-expand").textContent = PLAN.phases.every(function (ph) { return openPh[ph.id]; }) ? "Collapse all" : "Expand all";
     renderPlan.rows = rows.map(function (r) { return r.x; });
     renderPlan.route = planRouteLabel();
@@ -224,6 +229,8 @@
     download("chartership-plan.ics", "text/calendar;charset=utf-8", ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Civil Chartered Path//Planner//EN", "CALSCALE:GREGORIAN"].concat(ev).concat(["END:VCALENDAR"]).join("\r\n") + "\r\n");
     $("plan-copied").textContent = "Downloaded chartership-plan.ics. Open it to add the dates to your calendar.";
   });
+  window.addEventListener("beforeprint", function () { Array.prototype.forEach.call(document.querySelectorAll("#plan-list details"), function (d) { d.dataset.wasOpen = d.open ? "1" : ""; d.open = true; }); });
+  window.addEventListener("afterprint", function () { Array.prototype.forEach.call(document.querySelectorAll("#plan-list details"), function (d) { d.open = !!d.dataset.wasOpen; }); });
   $("plan-pdf").addEventListener("click", function () {
     var old = document.title; document.title = "chartership-plan";
     window.print(); setTimeout(function () { document.title = old; }, 1000);
