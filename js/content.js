@@ -246,15 +246,20 @@ window.FORUM_CATEGORIES = [
 window.PLAN = {
   gapWeeks: 12,
   phases: [
-    { id: "ipd", t: "Complete and sign off IPD online", steps: ["ipd"] },
-    { id: "report", t: "Write your report", steps: ["report"] },
-    { id: "submit", t: "Sign off and submit", steps: ["signoff"] },
+    { id: "ipd", t: "Complete and sign off IPD online", steps: ["ipdrec", "ipdsign"] },
+    { id: "report", t: "Write your report", steps: ["map", "draft", "sce", "revise"] },
+    { id: "signoff", t: "Sign off and submit", steps: ["final", "sponsors"] },
     { id: "prep", t: "Prepare for review day", steps: ["revision", "pres", "mock"] }
   ],
   before: [
-    { id: "ipd", t: "Complete and sign off IPD online", d: "Finish your Initial Professional Development record online and get it signed off by your supervisor or mentor, then by your regional ICE Membership Development Officer (or Membership Manager or ICE representative), who signs off your IPD and CPD. Have your training record or other IPD evidence, your CPD record and development action plan, and a draft CV ready. ICE says to allow 8 weeks for its staff to complete IPD, so contact your regional team (ice.org.uk/nearyou) early.", w: 8, src: "ICE guidance: allow 8 weeks", c: "var(--s-violet)" },
-    { id: "report", t: "Write your report", d: "All the report work in one stage. 1) Map your best evidence against each attribute and mark the gaps (about 4 weeks). 2) Write the first draft in the first person, one example per decision, within ICE's word limit (about 8 weeks). 3) Send it to your Supervising Civil Engineer, Delegated Engineer or mentor, booking their time first (about 3 weeks). 4) Act on the comments, check every number, and make sure it matches your CPD record and CV (about 3 weeks).", w: 18, c: "var(--accent)" },
-    { id: "signoff", t: "Supervisor and sponsor sign-off", d: "Final sign-off of your report by your supervisor or mentor. Confirm your two sponsors will support you and upload their statements by ICE's sponsor deadline. Then finish and upload your application.", w: 2, c: "var(--flag)" }
+    { id: "ipdrec", t: "Finish your IPD record online", d: "Bring your Initial Professional Development record up to date online, with your training record or other IPD evidence, your CPD record, development action plan and a draft CV. Get your supervisor or mentor to sign off their part.", w: 2, c: "var(--s-violet)" },
+    { id: "ipdsign", t: "IPD and CPD sign-off with your MDO", d: "Your regional ICE Membership Development Officer (or Membership Manager or ICE representative) reviews and signs off your IPD and CPD. ICE says to allow 8 weeks for its staff to complete IPD, so contact your regional team (ice.org.uk/nearyou) early.", w: 8, src: "ICE guidance: allow 8 weeks", c: "var(--s-violet)" },
+    { id: "map", t: "Map your evidence", d: "List your best example for each attribute and mark the gaps. Agree with your supervisor or mentor how you'll close any gap.", w: 4, c: "var(--s-blue)" },
+    { id: "draft", t: "First draft", d: "Write in the first person, one example per decision, within ICE's word limit.", w: 8, c: "var(--accent)" },
+    { id: "sce", t: "Supervisor or mentor review", d: "Send the draft to your Supervising Civil Engineer, Delegated Engineer or mentor. Book their time before you send it.", w: 3, c: "var(--flag)" },
+    { id: "revise", t: "Revise and final check", d: "Act on the comments. Check every number, the word count, and that the report matches your CPD record and CV.", w: 3, c: "var(--accent)" },
+    { id: "final", t: "Supervisor sign-off of your report", d: "Final sign-off of your report by your supervisor or mentor.", w: 1, c: "var(--flag)" },
+    { id: "sponsors", t: "Sponsor statements and upload", d: "Your two sponsors upload their statements by ICE's sponsor deadline. Then finish the application form and upload your application.", w: 1, c: "var(--flag)" }
   ],
   after: [
     { id: "revision", t: "Revise topics and current affairs", d: "Flashcards, the Code of Conduct, the contract you work under, CDM, and the news. Little and often.", w: 10, c: "var(--s-blue)" },
@@ -577,8 +582,8 @@ window.SUBMIT_CHECKLIST = [
   { id: "cpd", at: "ipd", t: "CPD record up to date, covering ICE's three mandatory CPD themes" },
   { id: "report", at: "report", t: "Report finished, within the word limit, and signed off by your supervisor or mentor" },
   { id: "statements", at: "signoff", t: "Both sponsors have uploaded their statements to ICE's sponsor portal by the sponsor deadline", src: "ICE" },
-  { id: "form", at: "submit", t: "Application form completed" },
-  { id: "upload", at: "submit", t: "Application uploaded through ICE's Professional Reviews upload portal before the closing date" }
+  { id: "form", at: "apply", t: "Application form completed" },
+  { id: "upload", at: "apply", t: "Application uploaded through ICE's Professional Reviews upload portal before the closing date" }
 ];
 
 /* ICE forms and documents. Each link checked on 15 Nov 2026. */

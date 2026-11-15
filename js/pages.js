@@ -173,7 +173,7 @@
     var cy = cycById(planCycle);
     if (cy && cy.result) rows.push({ d: parse(cy.result), x: { t: "ICE results issued by", k: "ICE date", s: parse(cy.result), n: cy.label }, html: '<li class="milestone"><span class="sw" style="background:var(--ink)"></span><strong>ICE results issued by</strong><span class="when">' + fmt(parse(cy.result)) + '</span><span class="what">' + esc(cy.label) + ".</span></li>", txt: fmt(parse(cy.result)) + ": " + cy.label + " results (ICE)" });
     if (cy && cy.sponsors) rows.push({ d: parse(cy.sponsors), x: { t: "Supervisor or sponsor sign-off deadline", k: "ICE date", s: parse(cy.sponsors), n: "ICE's sponsors closing date for the " + cy.label + "." }, html: '<li class="milestone"><span class="sw" style="background:var(--ink)"></span><strong>Supervisor or sponsor sign-off deadline</strong><span class="when">' + fmt(parse(cy.sponsors)) + '</span><span class="what">ICE\'s sponsors closing date for the ' + esc(cy.label) + ".</span></li>", txt: fmt(parse(cy.sponsors)) + ": Sponsor sign-off deadline (ICE)" });
-    rows.push({ d: p.submit, x: { at: "submit", t: "Submit your application", k: cy ? "ICE date" : "Milestone", s: p.submit, n: cy ? "Application closing date" : "Your own date" }, html: '<li class="milestone"><span class="sw" style="background:var(--ink)"></span><strong>Submit your application</strong><span class="when">' + fmt(p.submit) + "</span></li>", txt: fmt(p.submit) + ": Submit your application" });
+    rows.push({ d: p.submit, x: { at: "apply", t: "Submit your application", k: cy ? "ICE date" : "Milestone", s: p.submit, n: cy ? "Application closing date" : "Your own date" }, html: '<li class="milestone"><span class="sw" style="background:var(--ink)"></span><strong>Submit your application</strong><span class="when">' + fmt(p.submit) + "</span></li>", txt: fmt(p.submit) + ": Submit your application" });
     rows.push({ d: p.review, x: { t: "Professional review", k: p.reviewAssumed ? "Milestone (assumed)" : "Milestone", s: p.review, n: p.reviewAssumed ? "Assumed date: no review date entered." : cy && !cy.group ? "First in-person date; online dates vary." : "" }, html: '<li class="milestone"><span class="sw" style="background:var(--ink)"></span><strong>Professional review' + (p.reviewAssumed ? " (assumed date)" : cy ? " (first in-person date; online dates vary)" : "") + '</strong><span class="when">' + fmt(p.review) + "</span></li>", txt: fmt(p.review) + ": Professional review" + (p.reviewAssumed ? " (assumed)" : "") });
     rows.sort(function (a, b) { return a.d - b.d; });
     function li(x) {
@@ -183,7 +183,18 @@
       return '<li class="' + (stage ? (x.past ? "past" : "") : "milestone") + '"><span class="sw" style="background:' + (stage ? x.c : "var(--ink)") + '"></span><strong>' + esc(stage ? x.name : x.t) + '</strong><span class="when">' + fmt(x.s) + (x.e ? " to " + fmt(x.e) : "") + "</span>" +
         (note ? '<details class="more-info"><summary>Details</summary><p>' + esc(note) + "</p></details>" : "") + (x.at ? chkHtml(x.at) : "") + "</li>";
     }
-    $("plan-list").innerHTML = rows.map(function (r) { return li(r.x); }).join("");
+    /* The visible list is rolled up by phase; exports keep every sub-stage */
+    var listRows = rows.filter(function (r) { return r.x.k !== "Stage"; }).map(function (r) { return { d: r.d, html: li(r.x) }; });
+    PLAN.phases.forEach(function (ph) {
+      var kids = p.items.filter(function (it) { return ph.steps.indexOf(it.s.id) >= 0; }); if (!kids.length) return;
+      var st = new Date(Math.min.apply(null, kids.map(function (k) { return k.start; }))), en = new Date(Math.max.apply(null, kids.map(function (k) { return k.end; })));
+      var sub = '<ol class="sub-stages">' + kids.map(function (it) {
+        return '<li><span class="sw" style="background:' + it.s.c + '"></span><span><strong>' + esc(it.s.t) + '</strong> <span class="when">' + fmt(it.start) + " to " + fmt(it.end) + "</span><br><span class=\"what\">" + esc(it.s.d) + " " + esc(advice(it.s).long) + "</span></span></li>";
+      }).join("") + "</ol>";
+      listRows.push({ d: st, html: '<li class="' + (en < today ? "past" : "") + '"><span class="sw" style="background:' + kids[0].s.c + '"></span><strong>' + esc(ph.t) + '</strong><span class="when">' + fmt(st) + " to " + fmt(en) + '</span><details class="more-info"><summary>' + kids.length + " sub-stages</summary>" + sub + "</details>" + chkHtml(ph.id) + "</li>" });
+    });
+    listRows.sort(function (a, b) { return a.d - b.d; });
+    $("plan-list").innerHTML = listRows.map(function (r) { return r.html; }).join("");
     $("chk-count").textContent = CHK.filter(function (c) { return chkTicks[c.id]; }).length + " of " + CHK.length + " checklist items done";
     $("plan-expand").textContent = PLAN.phases.filter(function (ph) { return ph.steps.length > 1; }).every(function (ph) { return openPh[ph.id]; }) ? "Collapse all" : "Expand all";
     renderPlan.rows = rows.map(function (r) { return r.x; });

@@ -560,6 +560,11 @@ html:not([data-level="ieng"]) .cmp-table .c-ceng, html[data-level="ieng"] .cmp-t
 .rung.is-target { outline: 2px solid var(--accent); outline-offset: 1px; }
 .g-dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--flag); vertical-align: middle; }
 .plan-list .more-info { grid-column: 2 / -1; }
+.plan-list .sub-stages { list-style: none; margin: 6px 0 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.plan-list .sub-stages li { display: grid; grid-template-columns: 10px minmax(0, 1fr); gap: 10px; padding: 0; border: 0; font-size: 0.9rem; align-items: start; }
+.plan-list .sub-stages .sw { width: 10px; height: 10px; margin-top: 7px; align-self: start !important; }
+.plan-list .sub-stages .when { font-size: 0.78rem; margin-left: 4px; }
+.plan-list .sub-stages .what { color: var(--muted); font-size: 0.86rem; }
 .plan-list .more-info summary { cursor: pointer; font-size: 0.82rem; color: var(--accent); font-weight: 600; width: fit-content; }
 .plan-list .more-info p { margin: 4px 0 0; color: var(--muted); font-size: 0.88rem; }
 .plan-list li.milestone .more-info summary { color: var(--muted); }
@@ -778,7 +783,7 @@ html:not([data-level="ieng"]) .cmp-table .c-ceng, html[data-level="ieng"] .cmp-t
       </div>
       <div class="print-head" id="plan-print-head"></div>
       <div class="no-print" style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;align-items:center">
-        <span class="small">Click a phase marked ▸ to see its tasks. Below the chart, tick off the submission checklist under each stage; ticks stay in this browser. Items marked ICE come from ICE's guidance.</span>
+        <span class="small">Click a phase to open its sub-stages, each with its own bar and dates. Below the chart, tick off the submission checklist under each stage; ticks stay in this browser. Items marked ICE come from ICE's guidance.</span>
         <button type="button" class="btn ghost" id="plan-expand">Expand all</button>
       </div>
       <div class="gantt-wrap"><div class="gantt" id="plan-gantt"></div></div>
@@ -1284,10 +1289,10 @@ html:not([data-level="ieng"]) .cmp-table .c-ceng, html[data-level="ieng"] .cmp-t
   </div>
 </footer>
 
-<script src="js/content.js?v=20261116a"></script>
-<script src="js/news-feed.js?v=20261116a"></script>
-<script src="js/config.js?v=20261116a"></script>
-<script src="js/pages.js?v=20261116a"></script>
-<script src="js/site.js?v=20261116a"></script>
+<script src="js/content.js?v=20261116b"></script>
+<script src="js/news-feed.js?v=20261116b"></script>
+<script src="js/config.js?v=20261116b"></script>
+<script src="js/pages.js?v=20261116b"></script>
+<script src="js/site.js?v=20261116b"></script>
 </body>
 </html>
