@@ -214,6 +214,24 @@ nav a:hover { color: var(--accent-2); }
   .cs-src a { color: var(--muted); }
 }
 
+.cs-custom summary { cursor: pointer; display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: baseline; }
+.cs-pick { list-style: none; margin: 8px 0 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 1fr)); gap: 6px 16px; }
+.cs-pick li { display: flex; align-items: center; gap: 6px; border-bottom: 1px solid var(--line); padding: 4px 0; font-size: 0.92rem; }
+.cs-pick label { flex: 1; display: flex; gap: 8px; align-items: center; cursor: pointer; }
+.cs-pick input { width: 17px; height: 17px; accent-color: var(--accent); }
+.cs-pick button { border: 1px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 4px; width: 28px; height: 26px; cursor: pointer; font-size: 0.8rem; }
+.cs-pick button:disabled { opacity: 0.35; cursor: default; }
+.cs-mine { border-color: var(--accent-2) !important; }
+.cs-mine h3 { color: var(--accent-2) !important; }
+.cs-note { width: 100%; font: 400 0.88rem/1.45 var(--font-body); resize: vertical; padding: 6px 8px; }
+.cs-note-print { display: none; white-space: pre-wrap; }
+.cs-block.cs-off { display: none !important; }
+@media print {
+  .cs-note { display: none !important; }
+  .cs-note-print { display: block; font-size: 0.66rem; line-height: 1.3; }
+  .cs-block.cs-empty { display: none !important; }
+}
+
 /* Reference tables */
 .table-wrap { overflow-x: auto; }
 table { width: 100%; border-collapse: collapse; font-size: 0.93rem; }
@@ -1110,10 +1128,27 @@ html:not([data-level="ieng"]) .cmp-table .c-ceng, html[data-level="ieng"] .cmp-t
     <span>Timings shown for the <strong data-lv="rv">Chartered</strong> review (<span data-lv="title">CEng MICE</span>).</span>
     <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"><div class="level-pick" role="group" aria-label="Which level are you aiming for?"></div><button type="button" class="btn" id="cs-print">Print or save as PDF</button></div>
   </div>
+  <details class="panel cs-custom no-print" id="cs-custom">
+    <summary><strong>Customise your cheat sheet</strong> <span class="small">Choose sections, reorder them and add your own notes. Saved in this browser only.</span></summary>
+    <ul class="cs-pick" id="cs-pick"></ul>
+    <div style="display:flex;gap:8px;flex-wrap:wrap"><button type="button" class="btn ghost" id="cs-reset">Reset to the full sheet</button><span class="small" id="cs-fit" role="status"></span></div>
+  </details>
   <div class="cs-print-head"><strong>Civil Chartered Path: cheat sheet (<span data-lv="title">CEng MICE</span>)</strong> <span>civilcharteredpath.co.uk. Check facts against the linked sources.</span></div>
 
   <div class="cs">
-    <div class="cs-block cs-day">
+    <div class="cs-block cs-mine" data-cs="examples">
+      <h3>My project examples</h3>
+      <textarea class="cs-note" data-note="examples" rows="5" placeholder="One line per example: the project, your decision, the number. e.g. Retaining wall, A-road: chose sheet piles over RC, about 30% less carbon."></textarea>
+      <div class="cs-note-print" data-note-print="examples"></div>
+    </div>
+
+    <div class="cs-block cs-mine" data-cs="facts">
+      <h3>Facts I keep forgetting</h3>
+      <textarea class="cs-note" data-note="facts" rows="4" placeholder="The figures, clauses or names you want in front of you."></textarea>
+      <div class="cs-note-print" data-note-print="facts"></div>
+    </div>
+
+    <div class="cs-block cs-day" data-cs="day">
       <h3>Your review day</h3>
       <dl>
         <dt>Presentation</dt><dd>15 min on one aspect of your report. Not a CV or report summary. Aim for 13.</dd>
@@ -1125,7 +1160,7 @@ html:not([data-level="ieng"]) .cmp-table .c-ceng, html[data-level="ieng"] .cmp-t
       <p class="cs-src"><a href="https://www.ice.org.uk/media/aj2gmts3/11-jun-26-professional-review-guidance.pdf" target="_blank" rel="noopener">ICE guidance pp. 12-14, 24, 27</a></p>
     </div>
 
-    <div class="cs-block">
+    <div class="cs-block" data-cs="attrs">
       <h3>The seven attributes</h3>
       <ol class="cs-attrs">
         <li><strong>Engineering:</strong> sound theory and judgement on real problems; options, risk, whole life.</li>
@@ -1140,7 +1175,7 @@ html:not([data-level="ieng"]) .cmp-table .c-ceng, html[data-level="ieng"] .cmp-t
       <p class="cs-src"><a href="https://www.engc.org.uk/our-role-as-regulator/setting-standards/uk-spec-professional-engineering-competence-and-commitment/" target="_blank" rel="noopener">UK-SPEC</a> · <a href="#attributes">Attributes page</a></p>
     </div>
 
-    <div class="cs-block">
+    <div class="cs-block" data-cs="code">
       <h3>ICE Code of Professional Conduct (24 Mar 2026)</h3>
       <ol class="cs-attrs">
         <li>Integrity; uphold the reputation of ICE and the profession. Avoid or declare conflicts.</li>
@@ -1154,7 +1189,7 @@ html:not([data-level="ieng"]) .cmp-table .c-ceng, html[data-level="ieng"] .cmp-t
       <p class="cs-src"><a href="https://www.ice.org.uk/media/usdi4cre/ice-code-of-professional-conduct-apr-26.pdf" target="_blank" rel="noopener">ICE Code (PDF)</a></p>
     </div>
 
-    <div class="cs-block">
+    <div class="cs-block" data-cs="hs">
       <h3>Health and safety</h3>
       <dl>
         <dt>HSWA 1974</dt><dd>s2 employer to employees; s3 to others (the public); s7 employees. All "so far as is reasonably practicable".</dd>
@@ -1168,7 +1203,7 @@ html:not([data-level="ieng"]) .cmp-table .c-ceng, html[data-level="ieng"] .cmp-t
       <p class="cs-src"><a href="https://www.hse.gov.uk/construction/cdm/2015/summary.htm" target="_blank" rel="noopener">HSE CDM summary</a> · <a href="https://www.hse.gov.uk/pubns/books/l153.htm" target="_blank" rel="noopener">HSE L153</a></p>
     </div>
 
-    <div class="cs-block">
+    <div class="cs-block" data-cs="sus">
       <h3>Sustainability</h3>
       <dl>
         <dt>Net zero</dt><dd>Climate Change Act 2008: at least 100% below 1990 by 2050 (raised from 80% in 2019).</dd>
@@ -1181,7 +1216,7 @@ html:not([data-level="ieng"]) .cmp-table .c-ceng, html[data-level="ieng"] .cmp-t
       <p class="cs-src"><a href="https://www.legislation.gov.uk/ukpga/2008/27/section/1" target="_blank" rel="noopener">Climate Change Act s1</a> · <a href="https://www.gov.uk/guidance/understanding-biodiversity-net-gain" target="_blank" rel="noopener">gov.uk BNG</a></p>
     </div>
 
-    <div class="cs-block">
+    <div class="cs-block" data-cs="contracts">
       <h3>Contracts</h3>
       <dl>
         <dt>NEC4 ECC</dt><dd>A priced, activity schedule (Contractor takes cost risk). B priced, bill of quantities (Client takes quantity risk). C/D target, pain/gain share. E cost reimbursable (Client risk). F management.</dd>
@@ -1193,7 +1228,7 @@ html:not([data-level="ieng"]) .cmp-table .c-ceng, html[data-level="ieng"] .cmp-t
       <p class="cs-src"><a href="https://www.ceca.co.uk/wp-content/uploads/2022/01/CECA-NEC4-Bulletin-No.13-Notifying-early-warnings-and-notifying-compensation-events-January-2022.pdf" target="_blank" rel="noopener">CECA NEC4 bulletin</a> · check clauses against the contract</p>
     </div>
 
-    <div class="cs-block">
+    <div class="cs-block" data-cs="ice">
       <h3>ICE</h3>
       <dl>
         <dt>Founded</dt><dd>1818, London. Telford first President 1820; Royal Charter 1828. Current Charter and By-laws from 30 Oct 2023. Over 95,000 members.</dd>
@@ -1203,7 +1238,7 @@ html:not([data-level="ieng"]) .cmp-table .c-ceng, html[data-level="ieng"] .cmp-t
       <p class="cs-src"><a href="https://www.ice.org.uk/about-ice/our-history" target="_blank" rel="noopener">ICE history</a> · <a href="https://www.ice.org.uk/news-views-insights/latest-news/julie-wood-confirmed-as-ice-president-2026-2027" target="_blank" rel="noopener">President</a> · <a href="https://ice.org.uk/news-views-insights/latest-news/ice-introduces-mandatory-cpd-themes" target="_blank" rel="noopener">CPD themes</a></p>
     </div>
 
-    <div class="cs-block">
+    <div class="cs-block" data-cs="talk">
       <h3>Talking points this month</h3>
       <ul class="cs-news" id="cs-news"></ul>
       <p class="cs-key" id="cs-angle"></p>
@@ -1289,10 +1324,10 @@ html:not([data-level="ieng"]) .cmp-table .c-ceng, html[data-level="ieng"] .cmp-t
   </div>
 </footer>
 
-<script src="js/content.js?v=20261116b"></script>
-<script src="js/news-feed.js?v=20261116b"></script>
-<script src="js/config.js?v=20261116b"></script>
-<script src="js/pages.js?v=20261116b"></script>
-<script src="js/site.js?v=20261116b"></script>
+<script src="js/content.js?v=20261116c"></script>
+<script src="js/news-feed.js?v=20261116c"></script>
+<script src="js/config.js?v=20261116c"></script>
+<script src="js/pages.js?v=20261116c"></script>
+<script src="js/site.js?v=20261116c"></script>
 </body>
 </html>

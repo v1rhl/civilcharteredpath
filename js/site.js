@@ -288,6 +288,41 @@
     $("cs-news").innerHTML = items.map(function (it) { return "<li><strong>" + esc(it.tag) + ":</strong> " + ext(it.url, it.t) + "</li>"; }).join("");
     if (weeks[0]) $("cs-angle").innerHTML = "<strong>Angle:</strong> " + esc(weeks[0].angle);
     $("cs-print").addEventListener("click", function () { window.print(); });
+    /* Customisable: section choice, order and own notes, saved in this browser */
+    var wrap = document.querySelector("#view-cheat-sheet .cs");
+    var blocks = {}; Array.prototype.forEach.call(wrap.querySelectorAll("[data-cs]"), function (b) { blocks[b.dataset.cs] = b; });
+    var NAMES = { examples: "My project examples", facts: "Facts I keep forgetting" };
+    Object.keys(blocks).forEach(function (k) { if (!NAMES[k]) NAMES[k] = blocks[k].querySelector("h3").textContent; });
+    var DEFAULT = Object.keys(blocks).filter(function (k) { return k !== "examples" && k !== "facts"; }).concat(["examples", "facts"]);
+    var cs = store("cp-cs"); try { cs = cs ? JSON.parse(cs) : null; } catch (e) { cs = null; }
+    if (!cs || !cs.order) cs = { order: DEFAULT.slice(), off: {}, notes: {} };
+    DEFAULT.forEach(function (k) { if (cs.order.indexOf(k) < 0) cs.order.push(k); });
+    cs.order = cs.order.filter(function (k) { return blocks[k]; });
+    function saveCs() { store("cp-cs", JSON.stringify(cs)); }
+    function applyCs() {
+      cs.order.forEach(function (k) { wrap.appendChild(blocks[k]); blocks[k].classList.toggle("cs-off", !!cs.off[k]); });
+      ["examples", "facts"].forEach(function (k) {
+        var v = cs.notes[k] || ""; var ta = blocks[k].querySelector("textarea");
+        if (document.activeElement !== ta) ta.value = v;
+        blocks[k].querySelector(".cs-note-print").textContent = v; blocks[k].classList.toggle("cs-empty", !v.trim());
+      });
+      $("cs-pick").innerHTML = cs.order.map(function (k, i) {
+        return '<li><label><input type="checkbox" data-k="' + k + '"' + (cs.off[k] ? "" : " checked") + "> " + esc(NAMES[k]) + '</label><button type="button" data-up="' + i + '" aria-label="Move ' + esc(NAMES[k]) + ' up"' + (i === 0 ? " disabled" : "") + '>&uarr;</button><button type="button" data-down="' + i + '" aria-label="Move ' + esc(NAMES[k]) + ' down"' + (i === cs.order.length - 1 ? " disabled" : "") + ">&darr;</button></li>";
+      }).join("");
+      var on = cs.order.filter(function (k) { return !cs.off[k]; }).length;
+      $("cs-fit").textContent = on + " of " + cs.order.length + " sections shown. Use Print to check it still fits one page.";
+    }
+    $("cs-pick").addEventListener("change", function (e) { var k = e.target.dataset.k; if (!k) return; cs.off[k] = !e.target.checked; saveCs(); applyCs(); });
+    $("cs-pick").addEventListener("click", function (e) {
+      var b = e.target.closest("button"); if (!b) return;
+      var i = +(b.dataset.up || b.dataset.down), j = b.dataset.up !== undefined ? i - 1 : i + 1;
+      if (j < 0 || j >= cs.order.length) return;
+      var tmp = cs.order[i]; cs.order[i] = cs.order[j]; cs.order[j] = tmp; saveCs(); applyCs();
+      var nb = $("cs-pick").querySelector('[data-' + (b.dataset.up !== undefined ? "up" : "down") + '="' + j + '"]'); if (nb && !nb.disabled) nb.focus();
+    });
+    wrap.addEventListener("input", function (e) { var k = e.target.dataset && e.target.dataset.note; if (!k) return; cs.notes[k] = e.target.value; saveCs(); applyCs(); });
+    $("cs-reset").addEventListener("click", function () { cs = { order: DEFAULT.slice(), off: {}, notes: cs.notes }; saveCs(); applyCs(); });
+    applyCs();
   })();
 
   /* Community (design only: posting disabled until a forum service is connected) */
