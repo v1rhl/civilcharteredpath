@@ -205,8 +205,8 @@
 
   /* ---------- Flashcards ---------- */
   var labels = ["Opening"].concat(window.ATTRIBUTES.map(function (a) { return a.title; })).concat(["Current affairs"]);
-  var deckOf = function (a) { return a === 0 ? "Review format" : a === 8 ? "Current affairs" : "Attribute " + a; };
-  var CARDS = window.QUESTIONS.map(function (q, i) { return { id: "q" + i, deck: deckOf(q.a), sub: labels[q.a], q: q.q, a: q.p }; })
+  var deckOf = function (a) { return a === 0 ? "Review format" : a === 8 ? "Current affairs" : a + ". " + labels[a]; };
+  var CARDS = window.QUESTIONS.map(function (q, i) { return { id: "q" + i, deck: deckOf(q.a), sub: q.a > 0 && q.a < 8 ? "Attribute " + q.a + ": " + labels[q.a] : labels[q.a], q: q.q, a: q.p }; })
     .concat(window.FACT_CARDS.map(function (c, i) { return { id: "f" + i, deck: c.deck, sub: c.deck, q: c.q, a: c.a }; }));
   var DECKS = ["All"]; CARDS.forEach(function (c) { if (DECKS.indexOf(c.deck) < 0) DECKS.push(c.deck); });
   DECKS = ["All", "Review format"].concat(DECKS.filter(function (d) { return /^Attribute/.test(d); }).sort()).concat(DECKS.filter(function (d) { return d !== "All" && d !== "Review format" && !/^Attribute/.test(d); }));
