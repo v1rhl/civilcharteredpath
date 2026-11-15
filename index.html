@@ -215,6 +215,14 @@ td:last-child { color: var(--muted); }
 .field { display: flex; flex-direction: column; gap: 4px; }
 .field label { font-weight: 600; font-size: 0.92rem; }
 input[type="date"], input[type="number"] { font: 400 0.95rem var(--font-body); padding: 8px 10px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); color: var(--ink); }
+.dur-box { border-top: 1px solid var(--line); padding-top: 10px; display: flex; flex-direction: column; }
+.dur-box summary { cursor: pointer; font-weight: 600; color: var(--accent); }
+.dur-box[open] { gap: 4px; }
+.plan-tools { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.plan-list .plan-chk { grid-column: 2 / -1; margin-top: 4px; }
+.plan-chk label { padding: 5px 0 !important; font-size: 0.88rem; }
+.plan-list .plan-chk li { display: block; padding: 0; border-top: 1px solid var(--line); }
+.plan-list .plan-chk li:first-child { border-top: 0; }
 .durations { display: flex; flex-direction: column; border-top: 1px solid var(--line); }
 .dur { display: grid; grid-template-columns: 12px minmax(0, 1fr) 72px; gap: 10px; align-items: center; padding: 7px 0; border-bottom: 1px solid var(--line); font-size: 0.9rem; }
 .dur input { width: 100%; text-align: right; font-family: var(--font-mono); padding: 5px 8px; }
@@ -702,27 +710,28 @@ html:not([data-level="ieng"]) .cmp-table .c-ceng, html[data-level="ieng"] .cmp-t
         <input type="date" id="plan-review">
         <span class="small">Enter your actual interview date once ICE confirms it. Leave blank and the planner uses the cycle's first in-person date, or the gap set below.</span>
       </div>
-      <div class="durations" id="plan-durations"></div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap">
-        <button type="button" class="btn ghost" id="plan-reset">Reset durations</button>
-        <button type="button" class="btn ghost" id="plan-copy">Copy as text</button>
-      </div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap">
-        <button type="button" class="btn" id="plan-pdf">Download PDF</button>
-        <button type="button" class="btn" id="plan-csv">Download Excel (CSV)</button>
-        <button type="button" class="btn ghost" id="plan-ics">Add to calendar</button>
-      </div>
-      <span class="small">PDF opens your browser's print window: choose "Save as PDF".</span>
-      <span class="small" id="plan-copied" role="status"></span>
+      <details class="dur-box" id="dur-box">
+        <summary>Adjust how long each stage takes</summary>
+        <p class="small" style="margin:6px 0 0">Optional. The suggested lengths suit most people; change them to fit your workload and your supervisor's diary.</p>
+        <div class="durations" id="plan-durations"></div>
+        <button type="button" class="btn ghost" id="plan-reset" style="align-self:flex-start;margin-top:8px">Reset to suggested lengths</button>
+      </details>
     </form>
     <div class="panel" style="gap:16px">
       <div class="no-print" style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;align-items:baseline">
         <h3>Your plan</h3>
-        <span class="small mono" id="plan-summary"></span>
+        <span class="small mono"><span id="plan-summary"></span> &middot; <span id="chk-count"></span></span>
+      </div>
+      <div class="no-print plan-tools">
+        <button type="button" class="btn" id="plan-pdf">Download PDF</button>
+        <button type="button" class="btn ghost" id="plan-csv">Excel (CSV)</button>
+        <button type="button" class="btn ghost" id="plan-ics">Add to calendar</button>
+        <button type="button" class="btn ghost" id="plan-copy">Copy as text</button>
+        <span class="small" id="plan-copied" role="status"></span>
       </div>
       <div class="print-head" id="plan-print-head"></div>
       <div class="no-print" style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;align-items:center">
-        <span class="small">Click a phase marked ▸ to see its tasks. Hover any bar or name for its dates and suggested length.</span>
+        <span class="small">Click a phase marked ▸ to see its tasks. Below the chart, tick off the submission checklist under each stage; ticks stay in this browser. Items marked ICE come from ICE's guidance.</span>
         <button type="button" class="btn ghost" id="plan-expand">Expand all</button>
       </div>
       <div class="gantt-wrap"><div class="gantt" id="plan-gantt"></div></div>
@@ -731,15 +740,6 @@ html:not([data-level="ieng"]) .cmp-table .c-ceng, html[data-level="ieng"] .cmp-t
     </div>
   </div>
   <div class="planner-extra">
-    <div class="panel" style="gap:12px">
-      <div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;align-items:baseline">
-        <h3>Submission checklist</h3>
-        <span class="small mono" id="chk-count"></span>
-      </div>
-      <p class="small" style="margin:0">Tick items off as you go. Your ticks stay in this browser only. Items marked ICE come from ICE's Professional Review guidance; the rest are our suggestions.</p>
-      <ul class="checklist" id="chk-list"></ul>
-      <button type="button" class="btn ghost no-print" id="chk-reset" style="align-self:flex-start">Clear ticks</button>
-    </div>
     <div class="panel" style="gap:12px">
       <h3>ICE forms and documents</h3>
       <p class="small" style="margin:0">Straight from ICE's website. ICE updates these, so download them fresh when you apply.</p>
@@ -1248,10 +1248,10 @@ html:not([data-level="ieng"]) .cmp-table .c-ceng, html[data-level="ieng"] .cmp-t
   </div>
 </footer>
 
-<script src="js/content.js?v=20261115u"></script>
-<script src="js/news-feed.js?v=20261115u"></script>
-<script src="js/config.js?v=20261115u"></script>
-<script src="js/pages.js?v=20261115u"></script>
-<script src="js/site.js?v=20261115u"></script>
+<script src="js/content.js?v=20261115v"></script>
+<script src="js/news-feed.js?v=20261115v"></script>
+<script src="js/config.js?v=20261115v"></script>
+<script src="js/pages.js?v=20261115v"></script>
+<script src="js/site.js?v=20261115v"></script>
 </body>
 </html>

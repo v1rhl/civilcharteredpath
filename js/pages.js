@@ -19,6 +19,15 @@
   var today = new Date(); today = new Date(today.getFullYear(), today.getMonth(), today.getDate());
 
   var defaults = {}; PLAN.before.concat(PLAN.after).forEach(function (s) { defaults[s.id] = s.w; }); defaults.gap = PLAN.gapWeeks;
+  var CHK = window.SUBMIT_CHECKLIST || [], chkTicks = load("cp-checklist", {});
+  function chkHtml(at) {
+    var list = CHK.filter(function (c) { return c.at === at; });
+    if (!list.length) return "";
+    return '<ul class="checklist plan-chk">' + list.map(function (c) {
+      var on = !!chkTicks[c.id];
+      return '<li><label class="' + (on ? "done" : "") + '"><input type="checkbox" data-chk="' + c.id + '"' + (on ? " checked" : "") + '><span class="t">' + esc(c.t) + "</span>" + (c.src ? '<span class="src">ICE</span>' : "<span></span>") + "</label></li>";
+    }).join("") + "</ul>";
+  }
   var saved = load("cp-plan", {});
   var weeks = Object.assign({}, defaults, saved.weeks || {});
   $("plan-submit").value = saved.submit || iso(addDays(today, 7 * 26));
@@ -160,11 +169,11 @@
       }).join("") +
       '<div class="legend"><span><span class="sw" style="background:var(--ink)"></span>Submission</span><span><span class="sw dash"></span>' + esc(reviewName) + '</span><span><span class="sw" style="background:var(--flag)"></span>Today</span></div>';
 
-    var rows = p.items.map(function (it) { return { d: it.start, x: { t: it.s.t + " " + advice(it.s).short, name: it.s.t, c: it.s.c, past: it.end < today, k: "Stage", s: it.start, e: it.end, n: it.s.d + " " + advice(it.s).long }, html: '<li class="' + (it.end < today ? "past" : "") + '"><span class="sw" style="background:' + it.s.c + '"></span><strong>' + esc(it.s.t) + '</strong><span class="when">' + fmt(it.start) + " to " + fmt(it.end) + '</span><span class="what">' + esc(it.s.d) + ' <em class="advice">' + esc(advice(it.s).long) + "</em></span></li>", txt: fmt(it.start) + " to " + fmt(it.end) + ": " + it.s.t + " " + advice(it.s).short }; });
+    var rows = p.items.map(function (it) { return { d: it.start, x: { t: it.s.t + " " + advice(it.s).short, at: it.s.id, name: it.s.t, c: it.s.c, past: it.end < today, k: "Stage", s: it.start, e: it.end, n: it.s.d + " " + advice(it.s).long }, html: '<li class="' + (it.end < today ? "past" : "") + '"><span class="sw" style="background:' + it.s.c + '"></span><strong>' + esc(it.s.t) + '</strong><span class="when">' + fmt(it.start) + " to " + fmt(it.end) + '</span><span class="what">' + esc(it.s.d) + ' <em class="advice">' + esc(advice(it.s).long) + "</em></span></li>", txt: fmt(it.start) + " to " + fmt(it.end) + ": " + it.s.t + " " + advice(it.s).short }; });
     var cy = cycById(planCycle);
     if (cy && cy.result) rows.push({ d: parse(cy.result), x: { t: "ICE results issued by", k: "ICE date", s: parse(cy.result), n: cy.label }, html: '<li class="milestone"><span class="sw" style="background:var(--ink)"></span><strong>ICE results issued by</strong><span class="when">' + fmt(parse(cy.result)) + '</span><span class="what">' + esc(cy.label) + ".</span></li>", txt: fmt(parse(cy.result)) + ": " + cy.label + " results (ICE)" });
     if (cy && cy.sponsors) rows.push({ d: parse(cy.sponsors), x: { t: "Supervisor or sponsor sign-off deadline", k: "ICE date", s: parse(cy.sponsors), n: "ICE's sponsors closing date for the " + cy.label + "." }, html: '<li class="milestone"><span class="sw" style="background:var(--ink)"></span><strong>Supervisor or sponsor sign-off deadline</strong><span class="when">' + fmt(parse(cy.sponsors)) + '</span><span class="what">ICE\'s sponsors closing date for the ' + esc(cy.label) + ".</span></li>", txt: fmt(parse(cy.sponsors)) + ": Sponsor sign-off deadline (ICE)" });
-    rows.push({ d: p.submit, x: { t: "Submit your application", k: cy ? "ICE date" : "Milestone", s: p.submit, n: cy ? "Application closing date" : "Your own date" }, html: '<li class="milestone"><span class="sw" style="background:var(--ink)"></span><strong>Submit your application</strong><span class="when">' + fmt(p.submit) + "</span></li>", txt: fmt(p.submit) + ": Submit your application" });
+    rows.push({ d: p.submit, x: { at: "submit", t: "Submit your application", k: cy ? "ICE date" : "Milestone", s: p.submit, n: cy ? "Application closing date" : "Your own date" }, html: '<li class="milestone"><span class="sw" style="background:var(--ink)"></span><strong>Submit your application</strong><span class="when">' + fmt(p.submit) + "</span></li>", txt: fmt(p.submit) + ": Submit your application" });
     rows.push({ d: p.review, x: { t: "Professional review", k: p.reviewAssumed ? "Milestone (assumed)" : "Milestone", s: p.review, n: p.reviewAssumed ? "Assumed date: no review date entered." : cy && !cy.group ? "First in-person date; online dates vary." : "" }, html: '<li class="milestone"><span class="sw" style="background:var(--ink)"></span><strong>Professional review' + (p.reviewAssumed ? " (assumed date)" : cy ? " (first in-person date; online dates vary)" : "") + '</strong><span class="when">' + fmt(p.review) + "</span></li>", txt: fmt(p.review) + ": Professional review" + (p.reviewAssumed ? " (assumed)" : "") });
     rows.sort(function (a, b) { return a.d - b.d; });
     function li(x) {
@@ -172,9 +181,10 @@
       var note = x.n || "";
       if (x.t === "Professional review" && win) note += (note ? " " : "") + "ICE's review window runs from " + fmt(win[0]) + " to " + fmt(win[1]) + ". Enter your own date in the form once ICE confirms it.";
       return '<li class="' + (stage ? (x.past ? "past" : "") : "milestone") + '"><span class="sw" style="background:' + (stage ? x.c : "var(--ink)") + '"></span><strong>' + esc(stage ? x.name : x.t) + '</strong><span class="when">' + fmt(x.s) + (x.e ? " to " + fmt(x.e) : "") + "</span>" +
-        (note ? '<details class="more-info"><summary>Details</summary><p>' + esc(note) + "</p></details>" : "") + "</li>";
+        (note ? '<details class="more-info"><summary>Details</summary><p>' + esc(note) + "</p></details>" : "") + (x.at ? chkHtml(x.at) : "") + "</li>";
     }
     $("plan-list").innerHTML = rows.map(function (r) { return li(r.x); }).join("");
+    $("chk-count").textContent = CHK.filter(function (c) { return chkTicks[c.id]; }).length + " of " + CHK.length + " checklist items done";
     $("plan-expand").textContent = PLAN.phases.filter(function (ph) { return ph.steps.length > 1; }).every(function (ph) { return openPh[ph.id]; }) ? "Collapse all" : "Expand all";
     renderPlan.rows = rows.map(function (r) { return r.x; });
     renderPlan.route = planRouteLabel();
@@ -242,19 +252,9 @@
   });
   renderPlan();
 
-  /* Submission checklist and ICE forms */
-  var CHK = window.SUBMIT_CHECKLIST || [], ticks = load("cp-checklist", {});
-  function renderChecklist() {
-    $("chk-list").innerHTML = CHK.map(function (c) {
-      var on = !!ticks[c.id];
-      return '<li><label class="' + (on ? "done" : "") + '"><input type="checkbox" data-chk="' + c.id + '"' + (on ? " checked" : "") + '><span class="t">' + esc(c.t) + "</span>" + (c.src ? '<span class="src">ICE</span>' : "<span></span>") + "</label></li>";
-    }).join("");
-    var n = CHK.filter(function (c) { return ticks[c.id]; }).length;
-    $("chk-count").textContent = n + " of " + CHK.length + " done";
-  }
-  $("chk-list").addEventListener("change", function (e) { var id = e.target.dataset.chk; if (!id) return; ticks[id] = e.target.checked; save("cp-checklist", ticks); renderChecklist(); });
-  $("chk-reset").addEventListener("click", function () { ticks = {}; save("cp-checklist", ticks); renderChecklist(); });
-  renderChecklist();
+  $("plan-list").addEventListener("change", function (e) { var id = e.target.dataset && e.target.dataset.chk; if (!id) return; chkTicks[id] = e.target.checked; save("cp-checklist", chkTicks); renderPlan(); });
+
+  /* ICE forms */
   $("forms-list").innerHTML = (window.ICE_FORMS || []).map(function (f) {
     return '<li><a href="' + esc(f.url) + '" target="_blank" rel="noopener">' + esc(f.t) + "</a><span>" + esc(f.d) + "</span></li>";
   }).join("");

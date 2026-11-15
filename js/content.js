@@ -517,19 +517,19 @@ window.ATTR_EXAMPLES = [
 /* Submission checklist. Items marked ICE come from ICE's Professional Review guidance
    (v3 r14, 11 June 2026, pp. 10-12 and Appendix B pp. 22-23); the others are this site's suggestions. */
 window.SUBMIT_CHECKLIST = [
-  { id: "guidance", t: "Read the current Professional Review guidance", src: "ICE" },
-  { id: "ipd", t: "IPD formally complete, or equivalent evidence ready (for example a Training Agreement completion form, mentor-supported training completion form, or Career Appraisal decision letter)", src: "ICE" },
-  { id: "ipd8", t: "Allowed 8 weeks for ICE staff to complete your IPD before the application deadline", src: "ICE" },
-  { id: "mdo", t: "IPD signed off online, including your regional MDO's sign-off of your IPD and CPD" },
-  { id: "schedule", t: "Made a schedule of your and your sponsors' actions and deadlines", src: "ICE" },
-  { id: "sponsors", t: "Talked to your two proposed sponsors about your plans", src: "ICE" },
-  { id: "cv", t: "CV drafted", src: "ICE" },
-  { id: "dap", t: "Development action plan with objectives for the next 12 months", src: "ICE" },
-  { id: "cpd", t: "CPD record up to date, covering ICE's three mandatory CPD themes" },
-  { id: "report", t: "Report finished, within the word limit, and signed off by your supervisor or mentor" },
-  { id: "statements", t: "Both sponsors have uploaded their statements to ICE's sponsor portal by the sponsor deadline", src: "ICE" },
-  { id: "form", t: "Application form completed" },
-  { id: "upload", t: "Application uploaded through ICE's Professional Reviews upload portal before the closing date" }
+  { id: "guidance", at: "ipd", t: "Read the current Professional Review guidance", src: "ICE" },
+  { id: "ipd", at: "ipd", t: "IPD formally complete, or equivalent evidence ready (for example a Training Agreement completion form, mentor-supported training completion form, or Career Appraisal decision letter)", src: "ICE" },
+  { id: "ipd8", at: "ipd", t: "Allowed 8 weeks for ICE staff to complete your IPD before the application deadline", src: "ICE" },
+  { id: "mdo", at: "ipd", t: "IPD signed off online, including your regional MDO's sign-off of your IPD and CPD" },
+  { id: "schedule", at: "ipd", t: "Made a schedule of your and your sponsors' actions and deadlines", src: "ICE" },
+  { id: "sponsors", at: "report", t: "Talked to your two proposed sponsors about your plans", src: "ICE" },
+  { id: "cv", at: "ipd", t: "CV drafted", src: "ICE" },
+  { id: "dap", at: "ipd", t: "Development action plan with objectives for the next 12 months", src: "ICE" },
+  { id: "cpd", at: "ipd", t: "CPD record up to date, covering ICE's three mandatory CPD themes" },
+  { id: "report", at: "report", t: "Report finished, within the word limit, and signed off by your supervisor or mentor" },
+  { id: "statements", at: "signoff", t: "Both sponsors have uploaded their statements to ICE's sponsor portal by the sponsor deadline", src: "ICE" },
+  { id: "form", at: "submit", t: "Application form completed" },
+  { id: "upload", at: "submit", t: "Application uploaded through ICE's Professional Reviews upload portal before the closing date" }
 ];
 
 /* ICE forms and documents. Each link checked on 15 Nov 2026. */
