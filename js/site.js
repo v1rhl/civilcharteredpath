@@ -31,7 +31,7 @@
     try { localStorage.setItem("cp-level", LEVEL); } catch (e) {}
     drawLevelPickers(); levelHooks.forEach(function (f) { f(); });
   }
-  document.addEventListener("click", function (e) { var b = e.target.closest("[data-level]"); if (b) setLevel(b.dataset.level); });
+  document.addEventListener("click", function (e) { var b = e.target.closest("button[data-level]"); if (b) setLevel(b.dataset.level); });
   drawLevelPickers();
   function store(k, v) { try { if (v === undefined) return localStorage.getItem(k); localStorage.setItem(k, v); } catch (e) { return null; } }
 
@@ -212,7 +212,8 @@
   function renderAttr() {
     setTimeout(renderExamples, 0);
     $("attr-tabs").innerHTML = A.map(function (a, i) {
-      return '<button type="button" role="tab" id="attr-tab-' + i + '" aria-selected="' + (i === attrIdx) + '" data-i="' + i + '"><span class="n">' + a.n + "</span>" + esc(a.short) + "</button>";
+      var rl = window.CPRole && CPRole.role(), wk = rl && rl.weak.indexOf(a.n) > -1;
+      return '<button type="button" role="tab" id="attr-tab-' + i + '" aria-selected="' + (i === attrIdx) + '" data-i="' + i + '"><span class="n">' + a.n + "</span>" + esc(a.short) + (wk ? '<span class="weak-dot" title="Often harder to evidence as a ' + esc(rl.short.toLowerCase()) + '"></span><span class="sr-only"> (often harder to evidence in your role)</span>' : "") + "</button>";
     }).join("");
     var a = A[attrIdx];
     $("attr-detail").innerHTML =
@@ -224,8 +225,42 @@
         : '<div class="bar"><span class="eyebrow">The chartered bar</span><p style="margin-top:4px">' + esc(a.ceng) + "</p></div></div>") +
       '<div style="display:flex;flex-direction:column;gap:8px"><span class="eyebrow">Test your own examples</span><ul style="margin:0;padding-left:1.1em;display:flex;flex-direction:column;gap:4px">' +
       a.prompts.map(function (p) { return "<li>" + esc(p) + "</li>"; }).join("") + "</ul></div>" +
+      roleBox(a) +
       '<a class="more" href="#questions" data-attr="' + (attrIdx + 1) + '">Practice questions for this attribute</a></div>';
+    renderRolePanel();
   }
+  /* Role-tailored advice (our judgement, not ICE guidance) */
+  function roleBox(a) {
+    var r = window.CPRole && CPRole.role();
+    if (!r || r.id === "other") return "";
+    var weak = r.weak.indexOf(a.n) > -1, ev = r.evidence[a.n], tips = r.build[a.n] || [];
+    return '<div class="role-box' + (weak ? " is-weak" : "") + '"><h4>' + (weak ? "Often harder to evidence as a " : "As a ") + esc(r.short.toLowerCase()) + "</h4>" +
+      (ev ? "<p>" + esc(ev) + "</p>" : "") +
+      (tips.length ? '<span class="eyebrow" style="color:var(--accent-2)">Ways to get the experience</span><ul>' + tips.map(function (t) { return "<li>" + esc(t) + "</li>"; }).join("") + "</ul>" : "") +
+      '<p class="small">Our judgement from how roles usually work, not ICE guidance. Your own job may differ.</p></div>';
+  }
+  function renderRolePanel() {
+    var el = $("role-panel"); if (!el) return;
+    var r = window.CPRole && CPRole.role(), R = window.ROLES || [];
+    var head = '<div class="rp-head"><div><span class="eyebrow">Your role</span><h3 style="margin-top:4px">' +
+      (r && r.id !== "other" ? "What a " + esc(r.short.toLowerCase()) + " often finds harder to evidence" : r ? "A mix of roles" : "Tailor this page to your role") + '</h3></div><span class="flag">Our judgement</span></div>';
+    var body;
+    if (!r) body = "<p>Pick your role and each attribute will show what good evidence looks like from your seat, plus the attributes people in your role often struggle to evidence and practical ways to get that experience.</p>";
+    else if (r.id === "other") body = "<p>With a mixed role, check yourself against every attribute. Commercial ability, health and safety and sustainability are the ones candidates most often find thin. The table below shows each role's view.</p>";
+    else body = "<p>" + esc(r.label) + " roles usually give plenty of evidence for some attributes and less for others. Start early on the ones marked here: experience takes months to build, and thin attributes are a common reason for a deferral.</p>" +
+      '<ul class="weak-chips">' + r.weak.map(function (n) { var a = A[n - 1]; return '<li><button type="button" data-goattr="' + (n - 1) + '">' + n + ". " + esc(a.short) + "</button></li>"; }).join("") + "</ul>";
+    var tips = '<details class="role-compare"><summary>General ways to fill a gap</summary><ul style="margin:6px 0 0;padding-left:1.1em">' + (window.ROLE_TIPS || []).map(function (t) { return "<li>" + esc(t) + "</li>"; }).join("") + "</ul></details>";
+    var table = '<details class="role-compare"><summary>Compare every role</summary><table><thead><tr><th>Role</th><th>Often harder to evidence</th></tr></thead><tbody>' +
+      R.filter(function (x) { return x.id !== "other"; }).map(function (x) { return '<tr' + (r && r.id === x.id ? ' class="is-mine"' : "") + '><td><button type="button" class="linkish" data-role-view="' + x.id + '">' + esc(x.label) + "</button></td><td>" + x.weak.map(function (n) { return n + ". " + esc(A[n - 1].short); }).join(", ") + "</td></tr>"; }).join("") +
+      '</tbody></table><p class="small" style="margin-top:6px">Choosing a role in the table switches this page to that role\'s view.</p></details>';
+    el.innerHTML = head + '<div class="role-pick" role="group" aria-label="What\'s your role?"></div>' + body + tips + table;
+    if (window.CPRole) CPRole.draw();
+  }
+  $("role-panel").addEventListener("click", function (e) {
+    var g = e.target.closest("[data-goattr]"); if (g) { attrIdx = +g.dataset.goattr; renderAttr(); var t = $("attr-tab-" + attrIdx); if (t) t.focus(); return; }
+    var v = e.target.closest("[data-role-view]"); if (v) CPRole.set(v.dataset.roleView);
+  });
+  if (window.CPRole) CPRole.on(function () { renderAttr(); });
   $("attr-tabs").addEventListener("click", function (e) {
     var b = e.target.closest("button"); if (!b) return;
     attrIdx = +b.dataset.i; renderAttr();
@@ -318,6 +353,18 @@
     $("cs-news").innerHTML = items.map(function (it) { return "<li><strong>" + esc(it.tag) + ":</strong> " + ext(it.url, it.t) + "</li>"; }).join("");
     if (weeks[0]) $("cs-angle").innerHTML = "<strong>Angle:</strong> " + esc(weeks[0].angle);
     $("cs-print").addEventListener("click", function () { window.print(); });
+    function drawCsRole() {
+      var r = window.CPRole && CPRole.role(), blk = document.querySelector('[data-cs="role"]');
+      if (!r || r.id === "other") {
+        $("cs-role-body").innerHTML = '<p class="small no-print">' + (r ? "With a mixed role, be ready on every attribute; commercial, H&amp;S and sustainability are most often thin." : "Pick your role above to add the attributes your role often finds harder, and what to have ready.") + "</p>";
+        blk.classList.add("cs-empty"); $("cs-role-line").hidden = true; return;
+      }
+      blk.classList.remove("cs-empty");
+      var ln = $("cs-role-line"); ln.hidden = false; ln.innerHTML = "<strong>" + esc(r.short) + ":</strong> have strong examples ready for " + r.weak.map(function (n) { return esc(A[n - 1].short); }).join(", ").replace(/, ([^,]*)$/, " and $1") + ", often thin in your role.";
+      $("cs-role-body").innerHTML = "<p><strong>" + esc(r.label) + ":</strong> expect probing on " + r.weak.map(function (n) { return n + ". " + esc(A[n - 1].short); }).join(", ").replace(/, ([^,]*)$/, " and $1") + ".</p><ul>" +
+        r.weak.map(function (n) { return "<li><strong>" + esc(A[n - 1].short) + ":</strong> " + esc(r.evidence[n].split(/[.:] /)[0].replace(/\.$/, "")) + ".</li>"; }).join("") + "</ul>";
+    }
+    drawCsRole(); if (window.CPRole) CPRole.on(drawCsRole);
     /* Customisable: section choice, order and own notes, saved in this browser */
     var wrap = document.querySelector("#view-cheat-sheet .cs");
     var blocks = {}; Array.prototype.forEach.call(wrap.querySelectorAll("[data-cs]"), function (b) { blocks[b.dataset.cs] = b; });

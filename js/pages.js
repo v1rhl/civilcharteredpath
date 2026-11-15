@@ -275,8 +275,18 @@
   var deckOf = function (a) { return a === 0 ? "Review format" : a === 8 ? "Current affairs" : a + ". " + labels[a]; };
   var CARDS = window.QUESTIONS.map(function (q, i) { return { id: "q" + i, deck: deckOf(q.a), sub: q.a > 0 && q.a < 8 ? "Attribute " + q.a + ": " + labels[q.a] : labels[q.a], q: q.q, a: q.p }; })
     .concat(window.FACT_CARDS.map(function (c, i) { return { id: "f" + i, deck: c.deck, sub: c.deck, q: c.q, a: c.a }; }));
-  var DECKS = ["All"]; CARDS.forEach(function (c) { if (DECKS.indexOf(c.deck) < 0) DECKS.push(c.deck); });
-  DECKS = ["All", "Review format"].concat(DECKS.filter(function (d) { return /^Attribute/.test(d); }).sort()).concat(DECKS.filter(function (d) { return d !== "All" && d !== "Review format" && !/^Attribute/.test(d); }));
+  var DECKS0 = ["All"]; CARDS.forEach(function (c) { if (DECKS0.indexOf(c.deck) < 0) DECKS0.push(c.deck); });
+  DECKS0 = ["All", "Review format"].concat(DECKS0.filter(function (d) { return /^Attribute/.test(d); }).sort()).concat(DECKS0.filter(function (d) { return d !== "All" && d !== "Review format" && !/^Attribute/.test(d); }));
+  var DECKS = DECKS0, MINE = [];
+  /* Decks that suit the visitor's role come straight after "All" (nothing is hidden) */
+  function orderDecks() {
+    var r = window.CPRole && CPRole.role();
+    MINE = r ? r.decks.filter(function (d) { return DECKS0.indexOf(d) > -1; }) : [];
+    DECKS = ["All"].concat(MINE).concat(DECKS0.filter(function (d) { return d !== "All" && MINE.indexOf(d) < 0; }));
+    var n = $("fc-role-note");
+    if (n) n.innerHTML = MINE.length ? "Decks outlined in coral suit your role (" + esc(r.label.toLowerCase()) + ') and come first. <a href="#attributes">Change your role</a>.' : r ? "" : 'Tip: <a href="#">choose your role on the home page</a> to put the decks that suit it first.';
+  }
+  orderDecks();
   var marks = load("cp-cards", {}), deck = "All", order = [], pos = 0, flipped = false;
 
   function build() {
@@ -285,7 +295,7 @@
     order = list; pos = 0; flipped = false; renderCard();
   }
   function renderDecks() {
-    $("fc-decks").innerHTML = DECKS.map(function (d) { var n = d === "All" ? CARDS.length : CARDS.filter(function (c) { return c.deck === d; }).length; return '<button type="button" aria-pressed="' + (d === deck) + '" data-d="' + esc(d) + '">' + esc(d) + '<span class="c">' + n + "</span></button>"; }).join("");
+    $("fc-decks").innerHTML = DECKS.map(function (d) { var n = d === "All" ? CARDS.length : CARDS.filter(function (c) { return c.deck === d; }).length; return '<button type="button" aria-pressed="' + (d === deck) + '"' + (MINE.indexOf(d) > -1 ? ' class="fc-decks-mine"' : "") + ' data-d="' + esc(d) + '">' + esc(d) + '<span class="c">' + n + "</span></button>"; }).join("");
   }
   function renderCard() {
     var known = CARDS.filter(function (c) { return marks[c.id] === "known"; }).length, again = CARDS.filter(function (c) { return marks[c.id] === "review"; }).length;
@@ -314,6 +324,7 @@
     else if (e.key === "k" || e.key === "K") mark("known"); else if (e.key === "r" || e.key === "R") mark("review");
   });
   renderDecks(); build();
+  if (window.CPRole) CPRole.on(function () { orderDecks(); renderDecks(); });
 
   /* ---------- Latest news feed ---------- */
   var PAGE = 10, FEED = window.NEWS_FEED || { items: [] }, shown = PAGE;

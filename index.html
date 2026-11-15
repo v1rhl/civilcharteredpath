@@ -207,7 +207,7 @@ nav a:hover { color: var(--accent-2); }
   .cs { columns: 2; column-gap: 8px; }
   .cs-block { padding: 5px 7px; margin-bottom: 6px; gap: 2px; border-radius: 3px; }
   .cs-block h3 { font-size: 0.8rem; }
-  .cs-block dl, .cs-attrs, .cs-news { font-size: 0.66rem; gap: 1px 6px; line-height: 1.3; }
+  .cs-block dl, .cs-attrs, .cs-news { font-size: 0.64rem; gap: 1px 6px; line-height: 1.28; }
   .cs-attrs, .cs-news { gap: 0; padding-left: 14px; }
   .cs-key { font-size: 0.64rem; padding: 2px 5px; line-height: 1.3; }
   .cs-src { font-size: 0.56rem; }
@@ -598,6 +598,37 @@ html:not([data-level="ieng"]) .cmp-table .c-ceng, html[data-level="ieng"] .cmp-t
 .plan-list .more-info p { margin: 4px 0 0; color: var(--muted); font-size: 0.88rem; }
 .plan-list li.milestone .more-info summary { color: var(--muted); }
 @media print { .plan-list .more-info summary { display: none; } }
+
+/* Role picker and role-tailored advice */
+.role-pick { display: inline-flex; align-items: center; gap: 4px; padding: 3px; border: 1px solid var(--line); border-radius: 18px; background: var(--surface); align-self: flex-start; flex-wrap: wrap; }
+.role-pick .lp-label { font: 600 0.8rem var(--font-body); color: var(--muted); padding: 0 6px 0 8px; }
+.role-pick button { font: 600 0.85rem var(--font-body); border: 0; border-radius: 999px; padding: 6px 12px; background: none; color: var(--ink); cursor: pointer; }
+.role-pick button[aria-pressed="true"] { background: var(--accent-2); color: var(--accent-2-ink); }
+.role-pick .role-clear { color: var(--muted); font-weight: 500; text-decoration: underline; }
+.role-note { margin: -4px 0 0; max-width: 52ch; }
+.role-banner { padding: 10px 14px !important; }
+.role-panel { gap: 12px; border-color: var(--accent-2) !important; }
+.role-panel .rp-head { display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; align-items: baseline; }
+.role-panel .eyebrow { color: var(--accent-2); }
+.weak-chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.weak-chips button { font: 600 0.85rem var(--font-body); border: 1px solid var(--accent-2); color: var(--accent-2); background: var(--accent-2-soft); border-radius: 999px; padding: 4px 12px; cursor: pointer; }
+.role-compare { font-size: 0.9rem; }
+.role-compare summary { cursor: pointer; font-weight: 600; color: var(--accent); }
+.role-compare table { border-collapse: collapse; width: 100%; margin-top: 8px; }
+.role-compare th, .role-compare td { text-align: left; border-bottom: 1px solid var(--line); padding: 6px 8px; vertical-align: top; }
+.role-compare tr.is-mine td { background: var(--accent-2-soft); }
+.role-box { border: 1px solid var(--line); border-left: 4px solid var(--accent-2); border-radius: var(--radius); padding: 12px 14px; display: flex; flex-direction: column; gap: 6px; background: var(--paper); }
+.role-box.is-weak { background: var(--accent-2-soft); }
+.role-box h4 { margin: 0; font-size: 0.98rem; }
+.role-box ul { margin: 0; padding-left: 1.1em; display: flex; flex-direction: column; gap: 4px; }
+.attr-tabs button .weak-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--accent-2); margin-left: 6px; vertical-align: middle; }
+.cs-role h3 { color: var(--accent-2) !important; }
+.cs-role { border-color: var(--accent-2) !important; }
+.cs-role ul { margin: 0; padding-left: 14px; font-size: 0.88rem; display: flex; flex-direction: column; gap: 3px; }
+@media print { .cs-block.cs-role { display: none !important; } }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.role-compare .linkish { margin-left: 0; }
+.fc-decks-mine { outline: 2px solid var(--accent-2); outline-offset: 1px; }
 </style>
 </head>
 <body>
@@ -642,6 +673,8 @@ html:not([data-level="ieng"]) .cmp-table .c-ceng, html[data-level="ieng"] .cmp-t
         <h1>Everything for your ICE professional review, <span class="hl">in one place.</span></h1>
         <p class="lede">ICE's deadlines, a planner that works back from them, the attributes with graded examples, revision flashcards, review-day guidance and this week's industry news.</p>
         <div class="level-pick" role="group" aria-label="Which level are you aiming for?"></div>
+        <div class="role-pick" role="group" aria-label="What's your role?"></div>
+        <p class="small role-note">Your role puts the most relevant attribute advice, cheat sheet notes and flashcard decks first. Nothing is hidden, and you can change it any time.</p>
         <div class="hero-actions">
           <a class="btn" href="#planner">Plan my submission</a>
           <a class="btn ghost" href="#start-here" id="go-start">Start here</a>
@@ -762,6 +795,7 @@ html:not([data-level="ieng"]) .cmp-table .c-ceng, html[data-level="ieng"] .cmp-t
     <span>Showing what's needed for <strong data-lv="title">CEng MICE</strong>. The other level is shown alongside for comparison.</span>
     <div class="level-pick" role="group" aria-label="Which level are you aiming for?"></div>
   </div>
+  <div class="panel role-panel" id="role-panel"></div>
   <div class="attr-tabs" id="attr-tabs" role="tablist" aria-label="Attributes"></div>
   <div id="attr-detail"></div>
   <div id="attr-examples"></div>
@@ -830,6 +864,7 @@ html:not([data-level="ieng"]) .cmp-table .c-ceng, html[data-level="ieng"] .cmp-t
     <p class="lede">Pick a deck, answer out loud, then flip. Mark each card so the ones you don't know come back. Your progress stays in this browser only.</p>
   </div>
   <div class="chips-row" id="fc-decks" role="group" aria-label="Decks"></div>
+  <p class="small" id="fc-role-note"></p>
   <div class="fc-toolbar">
     <label><input type="checkbox" id="fc-only"> Only cards to review</label>
     <label><input type="checkbox" id="fc-shuffle"> Shuffle</label>
@@ -1149,6 +1184,7 @@ html:not([data-level="ieng"]) .cmp-table .c-ceng, html[data-level="ieng"] .cmp-t
     <span>Timings shown for the <strong data-lv="rv">Chartered</strong> review (<span data-lv="title">CEng MICE</span>).</span>
     <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"><div class="level-pick" role="group" aria-label="Which level are you aiming for?"></div><button type="button" class="btn" id="cs-print">Print or save as PDF</button></div>
   </div>
+  <div class="panel role-banner no-print"><div class="role-pick" role="group" aria-label="What's your role?"></div></div>
   <details class="panel cs-custom no-print" id="cs-custom">
     <summary><strong>Customise your cheat sheet</strong> <span class="small">Choose sections, reorder them and add your own notes. Saved in this browser only.</span></summary>
     <ul class="cs-pick" id="cs-pick"></ul>
@@ -1192,8 +1228,15 @@ html:not([data-level="ieng"]) .cmp-table .c-ceng, html[data-level="ieng"] .cmp-t
         <li><strong>Communication:</strong> different audiences, non-technical explanation, disagreement, inclusion.</li>
         <li><strong>Professional:</strong> the Code, CPD, judgement within your limits, public interest.</li>
       </ol>
+      <p class="cs-key" id="cs-role-line" hidden></p>
       <p class="cs-key"><span class="only-ceng"><strong>CEng:</strong> develops solutions to engineering problems using new or existing technologies, through innovation, creativity and change.</span><span class="only-ieng"><strong>IEng:</strong> maintains and manages applications of current and developing technology.</span></p>
       <p class="cs-src"><a href="https://www.engc.org.uk/our-role-as-regulator/setting-standards/uk-spec-professional-engineering-competence-and-commitment/" target="_blank" rel="noopener">UK-SPEC</a> · <a href="#attributes">Attributes page</a></p>
+    </div>
+
+    <div class="cs-block cs-role" data-cs="role">
+      <h3>For your role</h3>
+      <div id="cs-role-body"></div>
+      <p class="cs-src">Our judgement, not ICE guidance · <a href="#attributes">Attributes page</a></p>
     </div>
 
     <div class="cs-block" data-cs="code">
@@ -1345,11 +1388,12 @@ html:not([data-level="ieng"]) .cmp-table .c-ceng, html[data-level="ieng"] .cmp-t
   </div>
 </footer>
 
-<script src="js/content.js?v=20261116f"></script>
-<script src="js/news-feed.js?v=20261116f"></script>
-<script src="js/news-archive.js?v=20261116f"></script>
-<script src="js/config.js?v=20261116f"></script>
-<script src="js/pages.js?v=20261116f"></script>
-<script src="js/site.js?v=20261116f"></script>
+<script src="js/content.js?v=20261116g"></script>
+<script src="js/role.js?v=20261116g"></script>
+<script src="js/news-feed.js?v=20261116g"></script>
+<script src="js/news-archive.js?v=20261116g"></script>
+<script src="js/config.js?v=20261116g"></script>
+<script src="js/pages.js?v=20261116g"></script>
+<script src="js/site.js?v=20261116g"></script>
 </body>
 </html>
