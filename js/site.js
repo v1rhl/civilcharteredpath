@@ -11,6 +11,23 @@
 
   $("updated").textContent = S.updated;
 
+  /* Light / dark mode: follows the system until the visitor picks one */
+  var root = document.documentElement, mq = window.matchMedia ? window.matchMedia("(prefers-color-scheme: dark)") : null;
+  function isDark() { var t = root.getAttribute("data-theme"); return t ? t === "dark" : !!(mq && mq.matches); }
+  function syncToggle() {
+    var d = isDark(), b = $("theme-toggle");
+    root.classList.toggle("is-dark", d);
+    var next = d ? "light" : "dark";
+    b.setAttribute("aria-label", "Switch to " + next + " mode"); b.title = "Switch to " + next + " mode";
+    b.querySelector(".tt-label").textContent = d ? "Light" : "Dark";
+  }
+  $("theme-toggle").addEventListener("click", function () {
+    var t = isDark() ? "light" : "dark";
+    root.setAttribute("data-theme", t); store("cp-theme", t); syncToggle();
+  });
+  if (mq && mq.addEventListener) mq.addEventListener("change", syncToggle);
+  syncToggle();
+
   /* Home cards, each with a small line drawing */
   var ICONS = {
     route: '<path d="M3 19h18"/><path d="M4 16c4-1 6-4 9-7s5-4 7-5"/><circle cx="4" cy="16" r="1.6"/><circle cx="12" cy="10" r="1.6"/><circle cx="20" cy="4" r="1.6"/>',

@@ -245,13 +245,18 @@ window.FORUM_CATEGORIES = [
    after: stages counted back from the review date. */
 window.PLAN = {
   gapWeeks: 12,
+  phases: [
+    { id: "report", t: "Write your report", steps: ["map", "draft", "sce", "revise"] },
+    { id: "submit", t: "Sign off and submit", steps: ["signoff", "mdo"] },
+    { id: "prep", t: "Prepare for review day", steps: ["revision", "pres", "mock"] }
+  ],
   before: [
     { id: "map", t: "Map your evidence against the attributes", d: "List your best example for each attribute and mark the gaps. Agree with your supervisor or mentor how you'll close any gap.", w: 4, c: "var(--s-blue)" },
     { id: "draft", t: "Write the first draft of your report", d: "Write in the first person, one example per decision, and keep to ICE's word limit.", w: 8, c: "var(--accent)" },
     { id: "sce", t: "First draft with your supervisor or mentor", d: "Send it to your Supervising Civil Engineer, Delegated Engineer or mentor. Book the time in their diary before you send it.", w: 3, c: "var(--flag)" },
     { id: "revise", t: "Revise to a second draft", d: "Act on the comments. Check every number and that the report matches your CPD record and CV.", w: 3, c: "var(--accent)" },
     { id: "signoff", t: "Supervisor and sponsor sign-off", d: "Final check and sign-off of your report and training record by your supervisor or mentor. Confirm your two sponsors will support you and know ICE's sponsor deadline.", w: 2, c: "var(--s-violet)" },
-    { id: "mdo", t: "Regional MDO meeting: IPD and CPD sign-off", d: "Meet your regional ICE Membership Development Officer (or Membership Manager or ICE representative) to sign off your IPD and CPD. Bring your signed-off training record or other IPD evidence, your CPD record and development action plan, and a draft CV. ICE says to allow 8 weeks for its staff to complete IPD, so book through your regional team (ice.org.uk/nearyou) early. Then finish and upload your application.", w: 8, c: "var(--flag)" }
+    { id: "mdo", t: "Regional MDO meeting: IPD and CPD sign-off", d: "Meet your regional ICE Membership Development Officer (or Membership Manager or ICE representative) to sign off your IPD and CPD. Bring your signed-off training record or other IPD evidence, your CPD record and development action plan, and a draft CV. ICE says to allow 8 weeks for its staff to complete IPD, so book through your regional team (ice.org.uk/nearyou) early. Then finish and upload your application.", w: 8, src: "ICE guidance: allow 8 weeks", c: "var(--flag)" }
   ],
   after: [
     { id: "revision", t: "Revise topics and current affairs", d: "Flashcards, the Code of Conduct, the contract you work under, CDM, and the news. Little and often.", w: 10, c: "var(--s-blue)" },
@@ -455,4 +460,35 @@ window.ATTR_EXAMPLES = [
       { g: "excellent", a: "While reviewing a colleague's design I found the overflow had been sized for the wrong return period, which could have flooded properties. It was our firm's error and the client hadn't noticed. I raised it with the project director the same day, recommended we tell the client openly, and led the redesign. It cost us two weeks of unpaid time, but the Code puts the public interest first. I also proposed adding the design standard to our check sheet, which the team adopted.", why: "CEng level: holistic, independent judgement, putting public safety ahead of commercial interest, and accepting responsibility for the outcome." }
     ]
   }
+];
+
+/* Submission checklist. Items marked ICE come from ICE's Professional Review guidance
+   (v3 r14, 11 June 2026, pp. 10-12 and Appendix B pp. 22-23); the others are this site's suggestions. */
+window.SUBMIT_CHECKLIST = [
+  { id: "guidance", t: "Read the current Professional Review guidance", src: "ICE" },
+  { id: "ipd", t: "IPD formally complete, or equivalent evidence ready (for example a Training Agreement completion form, mentor-supported training completion form, or Career Appraisal decision letter)", src: "ICE" },
+  { id: "ipd8", t: "Allowed 8 weeks for ICE staff to complete your IPD before the application deadline", src: "ICE" },
+  { id: "schedule", t: "Made a schedule of your and your sponsors' actions and deadlines", src: "ICE" },
+  { id: "sponsors", t: "Talked to your two proposed sponsors about your plans", src: "ICE" },
+  { id: "cv", t: "CV drafted", src: "ICE" },
+  { id: "dap", t: "Development action plan with objectives for the next 12 months", src: "ICE" },
+  { id: "cpd", t: "CPD record up to date, covering ICE's three mandatory CPD themes" },
+  { id: "report", t: "Report finished, within the word limit, and signed off by your supervisor or mentor" },
+  { id: "mdo", t: "Met your regional MDO to sign off your IPD and CPD" },
+  { id: "statements", t: "Both sponsors have uploaded their statements to ICE's sponsor portal by the sponsor deadline", src: "ICE" },
+  { id: "form", t: "Application form completed" },
+  { id: "upload", t: "Application uploaded through ICE's Professional Reviews upload portal before the closing date" }
+];
+
+/* ICE forms and documents. Each link checked on 15 Nov 2026. */
+window.ICE_FORMS = [
+  { t: "Professional Review application form", d: "For the Chartered and Incorporated Professional Review.", url: "https://www.ice.org.uk/download-centre/professional-review-application-form" },
+  { t: "Sponsor's statement of support", d: "Completed by each of your sponsors.", url: "https://www.ice.org.uk/download-centre/sponsors-statement-of-support" },
+  { t: "Professional Review guidance (PDF)", d: "Version 3 Revision 14, 11 June 2026.", url: "https://www.ice.org.uk/media/aj2gmts3/11-jun-26-professional-review-guidance.pdf" },
+  { t: "Chartered Professional Review progressive guidance", d: "For MICE and IEng MICE members moving to CEng.", url: "https://www.ice.org.uk/download-centre/chartered-professional-review-progressive-guidance" },
+  { t: "CPD guidance", d: "ICE's guide to continuing professional development.", url: "https://www.ice.org.uk/download-centre/continuing-professional-development-cpd-guidance" },
+  { t: "Career Appraisal guidance", d: "If you're using a Career Appraisal as IPD evidence.", url: "https://www.ice.org.uk/download-centre/career-appraisal-guidance" },
+  { t: "Incorporated and Chartered review resources", d: "ICE's preparation videos and resources.", url: "https://www.ice.org.uk/your-career/professional-qualification-support/professional-review-preparation/incorporated-and-chartered-professional-review-resources" },
+  { t: "Key membership dates", d: "Application and sponsor deadlines.", url: "https://www.ice.org.uk/join-ice/key-membership-dates" },
+  { t: "Professional Reviews upload portal", d: "Where you upload your submission.", url: "https://reviews.ice.org.uk/upload/UploadApplication" }
 ];

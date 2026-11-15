@@ -94,6 +94,14 @@
       '<div class="dur"><span class="sw" style="background:var(--line)"></span><label for="w-gap">Submission to review, if you don\'t have a date yet</label><input type="number" min="1" max="52" step="1" id="w-gap" data-id="gap" value="' + weeks.gap + '"></div>';
   }
 
+  var openPh = load("cp-phases", {});
+  function wk(n) { return n + (n === 1 ? " wk" : " wks"); }
+  function advice(s) {
+    var mine = weeks[s.id], sug = defaults[s.id], before = s.id === "mock" ? " before review" : "";
+    var basis = s.src ? "ICE" : "suggested";
+    return { short: "(" + wk(mine) + before + (mine !== sug ? "; " + basis + " " + sug : s.src ? ", ICE guidance" : "") + ")",
+      long: (mine !== sug ? "Your plan: " + wk(mine) + before + ". " : "") + (s.src ? s.src + "." : "Suggested: " + wk(sug) + before + " (our guide, not an ICE requirement).") };
+  }
   function buildPlan() {
     var submit = parse($("plan-submit").value); if (!submit) return null;
     var review = parse($("plan-review").value);
@@ -130,16 +138,26 @@
       '<span class="g-line" style="left:' + pct(p.submit) + '" title="Submission"></span><span class="g-line review" style="left:' + pct(p.review) + '" title="' + reviewName + '"></span>' +
       (today >= lo && today <= hi ? '<span class="g-line today" style="left:' + pct(today) + '" title="Today"></span>' : "");
     var flagLeft = (p.review - lo) / span < 0.35;
+    function rowHtml(it, open) {
+      var ad = advice(it.s);
+      return '<div class="g-row g-child' + (open ? "" : " shut") + '"><span class="g-label" title="' + esc(it.s.t + " " + ad.short) + '"><span class="g-name">' + esc(it.s.t) + '</span><span class="g-wk' + (weeks[it.s.id] !== defaults[it.s.id] ? " changed" : "") + '">' + esc(ad.short) + '</span></span><div class="g-track"><span class="g-bar" style="left:' + pct(it.start) + ";width:calc(" + pct(it.end) + " - " + pct(it.start) + ");background:" + it.s.c + '"></span>' + lines + "</div></div>";
+    }
     $("plan-gantt").innerHTML = '<div class="g-row"><span></span><div class="g-axis"><span class="g-flag' + (flagLeft ? " left" : "") + '" style="left:' + pct(p.review) + '">' + esc(reviewName) + " " + fmt(p.review) + "</span></div></div>" +
       '<div class="g-row"><span></span><div class="g-axis">'  + ticks.map(function (d) { return '<span class="g-tick" style="left:' + pct(d) + '">' + MONTHS[d.getMonth()] + (d.getMonth() === 0 ? " " + d.getFullYear() : "") + "</span>"; }).join("") + "</div></div>" +
-      p.items.map(function (it) {
-        return '<div class="g-row"><span class="g-label" title="' + esc(it.s.t) + '">' + esc(it.s.t) + '</span><div class="g-track"><span class="g-bar" style="left:' + pct(it.start) + ";width:calc(" + pct(it.end) + " - " + pct(it.start) + ");background:" + it.s.c + '"></span>' + lines + "</div></div>";
+      PLAN.phases.map(function (ph) {
+        var kids = p.items.filter(function (it) { return ph.steps.indexOf(it.s.id) >= 0; });
+        if (!kids.length) return "";
+        var st = new Date(Math.min.apply(null, kids.map(function (k) { return k.start; }))), en = new Date(Math.max.apply(null, kids.map(function (k) { return k.end; })));
+        var open = !!openPh[ph.id];
+        return '<div class="g-row g-sum-row"><button type="button" class="g-label g-toggle" data-ph="' + ph.id + '" aria-expanded="' + open + '"><span class="g-name"><span class="caret" aria-hidden="true">' + (open ? "\u25BE" : "\u25B8") + "</span> " + esc(ph.t) + '</span><span class="g-wk">(' + wk(Math.round((en - st) / DAY / 7)) + ", " + kids.length + " tasks)</span></button>" +
+          '<div class="g-track"><span class="g-sum" style="left:' + pct(st) + ";width:calc(" + pct(en) + " - " + pct(st) + ')"></span>' + lines + "</div></div>" +
+          kids.map(function (it) { return rowHtml(it, open); }).join("");
       }).join("") +
       '<div class="legend"><span><span class="sw" style="background:var(--ink)"></span>Submission</span><span><span class="sw dash"></span>' + esc(reviewName) + (reviewKind === "cycle" ? " (enter your own date when ICE confirms it)" : "") + "</span>" +
       (win ? '<span><span class="sw band"></span>ICE review window, online reviews may run into the next month</span>' : "") +
       '<span><span class="sw" style="background:var(--flag)"></span>Today (dashed)</span></div>';
 
-    var rows = p.items.map(function (it) { return { d: it.start, x: { t: it.s.t, k: "Stage", s: it.start, e: it.end, n: it.s.d }, html: '<li class="' + (it.end < today ? "past" : "") + '"><span class="sw" style="background:' + it.s.c + '"></span><strong>' + esc(it.s.t) + '</strong><span class="when">' + fmt(it.start) + " to " + fmt(it.end) + '</span><span class="what">' + esc(it.s.d) + "</span></li>", txt: fmt(it.start) + " to " + fmt(it.end) + ": " + it.s.t }; });
+    var rows = p.items.map(function (it) { return { d: it.start, x: { t: it.s.t + " " + advice(it.s).short, k: "Stage", s: it.start, e: it.end, n: it.s.d + " " + advice(it.s).long }, html: '<li class="' + (it.end < today ? "past" : "") + '"><span class="sw" style="background:' + it.s.c + '"></span><strong>' + esc(it.s.t) + '</strong><span class="when">' + fmt(it.start) + " to " + fmt(it.end) + '</span><span class="what">' + esc(it.s.d) + ' <em class="advice">' + esc(advice(it.s).long) + "</em></span></li>", txt: fmt(it.start) + " to " + fmt(it.end) + ": " + it.s.t + " " + advice(it.s).short }; });
     var cy = cycById(planCycle);
     if (cy && cy.result) rows.push({ d: parse(cy.result), x: { t: "ICE results issued by", k: "ICE date", s: parse(cy.result), n: cy.label }, html: '<li class="milestone"><span class="sw" style="background:var(--ink)"></span><strong>ICE results issued by</strong><span class="when">' + fmt(parse(cy.result)) + '</span><span class="what">' + esc(cy.label) + ".</span></li>", txt: fmt(parse(cy.result)) + ": " + cy.label + " results (ICE)" });
     if (cy && cy.sponsors) rows.push({ d: parse(cy.sponsors), x: { t: "Supervisor or sponsor sign-off deadline", k: "ICE date", s: parse(cy.sponsors), n: "ICE's sponsors closing date for the " + cy.label + "." }, html: '<li class="milestone"><span class="sw" style="background:var(--ink)"></span><strong>Supervisor or sponsor sign-off deadline</strong><span class="when">' + fmt(parse(cy.sponsors)) + '</span><span class="what">ICE\'s sponsors closing date for the ' + esc(cy.label) + ".</span></li>", txt: fmt(parse(cy.sponsors)) + ": Sponsor sign-off deadline (ICE)" });
@@ -147,6 +165,7 @@
     rows.push({ d: p.review, x: { t: "Professional review", k: p.reviewAssumed ? "Milestone (assumed)" : "Milestone", s: p.review, n: p.reviewAssumed ? "Assumed date: no review date entered." : cy && !cy.group ? "First in-person date; online dates vary." : "" }, html: '<li class="milestone"><span class="sw" style="background:var(--ink)"></span><strong>Professional review' + (p.reviewAssumed ? " (assumed date)" : cy ? " (first in-person date; online dates vary)" : "") + '</strong><span class="when">' + fmt(p.review) + "</span></li>", txt: fmt(p.review) + ": Professional review" + (p.reviewAssumed ? " (assumed)" : "") });
     rows.sort(function (a, b) { return a.d - b.d; });
     $("plan-list").innerHTML = rows.map(function (r) { return r.html; }).join("");
+    $("plan-expand").textContent = PLAN.phases.every(function (ph) { return openPh[ph.id]; }) ? "Collapse all" : "Expand all";
     renderPlan.rows = rows.map(function (r) { return r.x; });
     renderPlan.route = planRouteLabel();
     $("plan-print-head").innerHTML = "<h2>My ICE chartership plan</h2><p>" + esc(renderPlan.route) + " &middot; Submit by " + fmt(p.submit) + " &middot; Review " + fmt(p.review) + (p.reviewAssumed ? " (assumed)" : "") + "</p><p class=\"small\">Made " + fmt(today) + " with Civil Chartered Path. Durations are suggestions, not ICE requirements; confirm dates at " + esc(window.ICE_DATES_SOURCE || "") + "</p>";
@@ -162,6 +181,14 @@
   });
   $("plan-form").addEventListener("submit", function (e) { e.preventDefault(); });
   $("plan-reset").addEventListener("click", function () { weeks = Object.assign({}, defaults); renderDurations(); renderPlan(); });
+  $("plan-gantt").addEventListener("click", function (e) {
+    var b = e.target.closest("[data-ph]"); if (!b) return;
+    openPh[b.dataset.ph] = !openPh[b.dataset.ph]; save("cp-phases", openPh); renderPlan();
+  });
+  $("plan-expand").addEventListener("click", function () {
+    var all = PLAN.phases.every(function (ph) { return openPh[ph.id]; });
+    PLAN.phases.forEach(function (ph) { openPh[ph.id] = !all; }); save("cp-phases", openPh); renderPlan();
+  });
   $("plan-copy").addEventListener("click", function () { copyText(renderPlan.text || "", $("plan-copied")); });
   function planRouteLabel() {
     var c = cycById(planCycle);
@@ -202,6 +229,23 @@
     window.print(); setTimeout(function () { document.title = old; }, 1000);
   });
   renderPlan();
+
+  /* Submission checklist and ICE forms */
+  var CHK = window.SUBMIT_CHECKLIST || [], ticks = load("cp-checklist", {});
+  function renderChecklist() {
+    $("chk-list").innerHTML = CHK.map(function (c) {
+      var on = !!ticks[c.id];
+      return '<li><label class="' + (on ? "done" : "") + '"><input type="checkbox" data-chk="' + c.id + '"' + (on ? " checked" : "") + '><span class="t">' + esc(c.t) + "</span>" + (c.src ? '<span class="src">ICE</span>' : "<span></span>") + "</label></li>";
+    }).join("");
+    var n = CHK.filter(function (c) { return ticks[c.id]; }).length;
+    $("chk-count").textContent = n + " of " + CHK.length + " done";
+  }
+  $("chk-list").addEventListener("change", function (e) { var id = e.target.dataset.chk; if (!id) return; ticks[id] = e.target.checked; save("cp-checklist", ticks); renderChecklist(); });
+  $("chk-reset").addEventListener("click", function () { ticks = {}; save("cp-checklist", ticks); renderChecklist(); });
+  renderChecklist();
+  $("forms-list").innerHTML = (window.ICE_FORMS || []).map(function (f) {
+    return '<li><a href="' + esc(f.url) + '" target="_blank" rel="noopener">' + esc(f.t) + "</a><span>" + esc(f.d) + "</span></li>";
+  }).join("");
 
   /* ---------- Flashcards ---------- */
   var labels = ["Opening"].concat(window.ATTRIBUTES.map(function (a) { return a.title; })).concat(["Current affairs"]);
