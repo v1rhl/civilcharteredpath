@@ -305,7 +305,8 @@
   renderDecks(); build();
 
   /* ---------- Latest news feed ---------- */
-  var FEED = window.NEWS_FEED || { items: [] }, shown = 20;
+  var PAGE = 10, FEED = window.NEWS_FEED || { items: [] }, shown = PAGE;
+  FEED.items = FEED.items.slice().sort(function (a, b) { return (b.date || "").localeCompare(a.date || ""); });
   var srcs = ["All sources"]; FEED.items.forEach(function (i) { if (srcs.indexOf(i.src) < 0) srcs.push(i.src); });
   $("feed-src").innerHTML = srcs.map(function (s) { return "<option>" + esc(s) + "</option>"; }).join("");
   $("feed-updated").textContent = FEED.generated ? "Updated " + fmt(parse(FEED.generated)) : "";
@@ -319,7 +320,7 @@
       return '<button type="button" data-sector="' + esc(t) + '" aria-pressed="' + (t === sector) + '">' + esc(t) + ' <span class="n">' + (t === "All" ? FEED.items.length : sectorCount[t]) + "</span></button>";
     }).join("");
   }
-  $("feed-sectors").addEventListener("click", function (e) { var b = e.target.closest("[data-sector]"); if (!b) return; sector = b.dataset.sector; shown = 20; renderSectors(); renderFeed(); });
+  $("feed-sectors").addEventListener("click", function (e) { var b = e.target.closest("[data-sector]"); if (!b) return; sector = b.dataset.sector; shown = PAGE; renderSectors(); renderFeed(); });
   renderSectors();
   function renderFeed() {
     var s = $("feed-src").value, q = $("feed-search").value.trim().toLowerCase();
@@ -327,11 +328,16 @@
     $("feed").innerHTML = list.slice(0, shown).map(function (i) {
       return '<li><div style="display:flex;flex-direction:column;gap:2px"><span class="src">' + esc(i.src) + '</span><span class="date">' + (i.date ? fmt(parse(i.date)) : "") + '</span></div><div class="feed-item"><a href="' + esc(i.url) + '" target="_blank" rel="noopener">' + esc(i.t) + '</a><span class="tags">' + tagsOf(i).map(function (t) { return '<span class="tag">' + esc(t) + "</span>"; }).join("") + "</span></div></li>";
     }).join("") || '<li><span class="small">No headlines match.</span></li>';
-    $("feed-more").hidden = list.length <= shown;
+    var left = list.length - Math.min(shown, list.length);
+    $("feed-more").hidden = left <= 0;
+    $("feed-more").textContent = "Show " + Math.min(PAGE, left) + " older headline" + (Math.min(PAGE, left) === 1 ? "" : "s");
+    $("feed-count").textContent = list.length ? "Showing " + Math.min(shown, list.length) + " of " + list.length + (sector !== "All" || s !== "All sources" || q ? " matching" : "") : "";
+    $("feed-less").hidden = shown <= PAGE;
   }
-  $("feed-src").addEventListener("change", function () { shown = 20; renderFeed(); });
-  $("feed-search").addEventListener("input", function () { shown = 20; renderFeed(); });
-  $("feed-more").addEventListener("click", function () { shown += 20; renderFeed(); });
+  $("feed-src").addEventListener("change", function () { shown = PAGE; renderFeed(); });
+  $("feed-search").addEventListener("input", function () { shown = PAGE; renderFeed(); });
+  $("feed-more").addEventListener("click", function () { shown += PAGE; renderFeed(); });
+  $("feed-less").addEventListener("click", function () { shown = PAGE; renderFeed(); $("feed").scrollIntoView({ block: "start" }); });
   renderFeed();
 
   /* ---------- Report check ---------- */

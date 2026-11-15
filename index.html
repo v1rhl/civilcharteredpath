@@ -1035,7 +1035,11 @@ html:not([data-level="ieng"]) .cmp-table .c-ceng, html[data-level="ieng"] .cmp-t
       <input id="feed-search" type="search" placeholder="Search headlines" aria-label="Search headlines">
     </div>
     <ul class="feed" id="feed"></ul>
-    <button type="button" class="btn ghost" id="feed-more" style="align-self:flex-start">Show more</button>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+      <button type="button" class="btn ghost" id="feed-more">Show older headlines</button>
+      <button type="button" class="btn ghost" id="feed-less" hidden>Back to the latest 10</button>
+      <span class="small mono" id="feed-count"></span>
+    </div>
     <p class="small">Headlines link to the original article on the publisher's site. Some, including NCE, may need a subscription.</p>
   </div>
   <h3 style="font-size:1.3rem;margin-top:8px">Weekly briefing</h3>
@@ -1278,10 +1282,10 @@ html:not([data-level="ieng"]) .cmp-table .c-ceng, html[data-level="ieng"] .cmp-t
   </div>
 </footer>
 
-<script src="js/content.js?v=20261115y"></script>
-<script src="js/news-feed.js?v=20261115y"></script>
-<script src="js/config.js?v=20261115y"></script>
-<script src="js/pages.js?v=20261115y"></script>
-<script src="js/site.js?v=20261115y"></script>
+<script src="js/content.js?v=20261115z"></script>
+<script src="js/news-feed.js?v=20261115z"></script>
+<script src="js/config.js?v=20261115z"></script>
+<script src="js/pages.js?v=20261115z"></script>
+<script src="js/site.js?v=20261115z"></script>
 </body>
 </html>
