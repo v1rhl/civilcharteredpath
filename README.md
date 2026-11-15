@@ -2,7 +2,7 @@
 
 A static website for civil engineers working towards ICE chartership (CEng MICE).
 
-Live site: https://v1rhl.github.io/civilcharteredpath/
+Live site: https://civilcharteredpath.co.uk (also https://v1rhl.github.io/civilcharteredpath/, which redirects there once the domain is set up)
 
 Open `index.html` in a browser; no build step. To publish, upload the whole folder to any
 static host (GitHub Pages, Netlify, Cloudflare Pages).
@@ -30,4 +30,18 @@ static host (GitHub Pages, Netlify, Cloudflare Pages).
 6. **Privacy page**, if the report check goes live.
 
 ## Custom domain
-Buy a domain, add it under Settings > Pages > Custom domain in this repository, and point a CNAME record at `<username>.github.io`. GitHub provides the HTTPS certificate.
+The site uses civilcharteredpath.co.uk. The `CNAME` file in this repository tells GitHub Pages the domain;
+check it also shows under Settings > Pages > Custom domain.
+
+DNS records at the domain registrar:
+
+| Type | Name / host | Value |
+|---|---|---|
+| A | @ (the bare domain) | 185.199.108.153 |
+| A | @ | 185.199.109.153 |
+| A | @ | 185.199.110.153 |
+| A | @ | 185.199.111.153 |
+| CNAME | www | v1rhl.github.io |
+
+Optional IPv6 (AAAA, name @): 2606:50c0:8000::153, 2606:50c0:8001::153, 2606:50c0:8002::153, 2606:50c0:8003::153.
+After DNS resolves, GitHub issues the HTTPS certificate (can take up to a day); then tick Enforce HTTPS.
