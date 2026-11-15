@@ -24,6 +24,44 @@
   $("plan-submit").value = saved.submit || iso(addDays(today, 7 * 26));
   $("plan-review").value = saved.review || "";
 
+  /* ICE review cycles: shared by the Route page and the planner */
+  var CYC = window.ICE_CYCLES || [];
+  function cycOptions(sel) {
+    return '<option value="">My own dates</option>' + CYC.map(function (c) {
+      var closed = parse(c.application) < today;
+      return '<option value="' + c.id + '"' + (closed ? " disabled" : "") + (c.id === sel ? " selected" : "") + ">" + esc(c.label) + " (apply by " + fmt(parse(c.application)) + (closed ? ", closed" : "") + ")</option>";
+    }).join("");
+  }
+  function cycById(id) { return CYC.filter(function (c) { return c.id === id; })[0]; }
+  var firstOpen = (CYC.filter(function (c) { return parse(c.application) >= today; })[0] || {}).id || "";
+  var planCycle = saved.cycle !== undefined ? saved.cycle : firstOpen;
+  if (planCycle && (!cycById(planCycle) || parse(cycById(planCycle).application) < today)) planCycle = firstOpen;
+  $("plan-cycle").innerHTML = cycOptions(planCycle);
+  function applyCycle(id) {
+    planCycle = id; var c = cycById(id);
+    if (c) { $("plan-submit").value = c.application; $("plan-review").value = c.review; }
+  }
+  if (planCycle && saved.cycle === undefined) applyCycle(planCycle);
+  $("plan-cycle").addEventListener("change", function () { applyCycle(this.value); renderPlan(); });
+  $("plan-submit").addEventListener("input", function () { var c = cycById(planCycle); if (c && this.value !== c.application) { planCycle = ""; $("plan-cycle").value = ""; } });
+
+  /* Route page key dates */
+  $("key-dates-src").href = window.ICE_DATES_SOURCE || "#";
+  var routeCycle = firstOpen;
+  $("route-cycle").innerHTML = cycOptions(routeCycle).replace('<option value="">My own dates</option>', "");
+  function renderRouteCycle() {
+    var c = cycById($("route-cycle").value); if (!c) { $("route-cycle-table").innerHTML = ""; return; }
+    var rows = [["Supervisor or sponsor sign-off by", fmt(parse(c.sponsors))], ["Application closes", fmt(parse(c.application))], ["Online reviews", c.window], ["In-person reviews", c.inPerson]];
+    var weeksLeft = Math.round((parse(c.application) - today) / DAY / 7);
+    rows.push(["Time until the application closes", weeksLeft > 0 ? weeksLeft + " weeks" : "Closed"]);
+    $("route-cycle-table").innerHTML = rows.map(function (r) { return "<tr><td>" + esc(r[0]) + "</td><td>" + esc(r[1]) + "</td></tr>"; }).join("");
+  }
+  $("route-cycle").addEventListener("change", renderRouteCycle);
+  $("route-plan").addEventListener("click", function () {
+    var id = $("route-cycle").value; $("plan-cycle").value = id; applyCycle(id); renderPlan();
+  });
+  renderRouteCycle();
+
   function renderDurations() {
     function row(s) { return '<div class="dur"><span class="sw" style="background:' + s.c + '"></span><label for="w-' + s.id + '">' + esc(s.t) + '</label><input type="number" min="0" max="52" step="1" id="w-' + s.id + '" data-id="' + s.id + '" value="' + weeks[s.id] + '" aria-label="' + esc(s.t) + ', weeks"></div>'; }
     $("plan-durations").innerHTML = '<div class="dur"><span class="grp">Before you submit, in weeks</span></div>' + PLAN.before.map(row).join("") +
@@ -68,12 +106,14 @@
       '<div class="legend"><span><span class="sw" style="background:var(--ink)"></span>Submission and review</span><span><span class="sw" style="background:var(--flag)"></span>Today (dashed)</span></div>';
 
     var rows = p.items.map(function (it) { return { d: it.start, html: '<li class="' + (it.end < today ? "past" : "") + '"><span class="sw" style="background:' + it.s.c + '"></span><strong>' + esc(it.s.t) + '</strong><span class="when">' + fmt(it.start) + " to " + fmt(it.end) + '</span><span class="what">' + esc(it.s.d) + "</span></li>", txt: fmt(it.start) + " to " + fmt(it.end) + ": " + it.s.t }; });
+    var cy = cycById(planCycle);
+    if (cy) rows.push({ d: parse(cy.sponsors), html: '<li class="milestone"><span class="sw" style="background:var(--ink)"></span><strong>Supervisor or sponsor sign-off deadline</strong><span class="when">' + fmt(parse(cy.sponsors)) + '</span><span class="what">ICE\'s sponsors closing date for the ' + esc(cy.label) + ".</span></li>", txt: fmt(parse(cy.sponsors)) + ": Sponsor sign-off deadline (ICE)" });
     rows.push({ d: p.submit, html: '<li class="milestone"><span class="sw" style="background:var(--ink)"></span><strong>Submit your application</strong><span class="when">' + fmt(p.submit) + "</span></li>", txt: fmt(p.submit) + ": Submit your application" });
-    rows.push({ d: p.review, html: '<li class="milestone"><span class="sw" style="background:var(--ink)"></span><strong>Professional review' + (p.reviewAssumed ? " (assumed date)" : "") + '</strong><span class="when">' + fmt(p.review) + "</span></li>", txt: fmt(p.review) + ": Professional review" + (p.reviewAssumed ? " (assumed)" : "") });
+    rows.push({ d: p.review, html: '<li class="milestone"><span class="sw" style="background:var(--ink)"></span><strong>Professional review' + (p.reviewAssumed ? " (assumed date)" : cy ? " (first in-person date; online dates vary)" : "") + '</strong><span class="when">' + fmt(p.review) + "</span></li>", txt: fmt(p.review) + ": Professional review" + (p.reviewAssumed ? " (assumed)" : "") });
     rows.sort(function (a, b) { return a.d - b.d; });
     $("plan-list").innerHTML = rows.map(function (r) { return r.html; }).join("");
     renderPlan.text = "My CEng plan\n" + rows.map(function (r) { return "- " + r.txt; }).join("\n");
-    save("cp-plan", { submit: $("plan-submit").value, review: $("plan-review").value, weeks: weeks });
+    save("cp-plan", { submit: $("plan-submit").value, review: $("plan-review").value, weeks: weeks, cycle: planCycle });
   }
 
   renderDurations();

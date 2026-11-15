@@ -350,6 +350,21 @@ footer .wrap { padding-block: 24px; display: flex; flex-direction: column; gap: 
     <h2>Six stages from graduate member to chartered</h2>
     <p class="lede">The order is fixed; the pace is yours. Check ICE's current guidance for forms, word limits and fees, because they change.</p>
   </div>
+  <div class="panel" id="key-dates" style="gap:14px">
+    <div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;align-items:baseline">
+      <h3>Which review are you aiming for?</h3>
+      <a class="small" id="key-dates-src" target="_blank" rel="noopener">ICE key dates</a>
+    </div>
+    <div class="field">
+      <label for="route-cycle">Review cycle</label>
+      <select id="route-cycle"></select>
+    </div>
+    <div class="table-wrap"><table><tbody id="route-cycle-table"></tbody></table></div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+      <a class="btn" href="#planner" id="route-plan">Plan back from this deadline</a>
+      <span class="small">Dates from ICE's key dates page. Always confirm them there before you commit.</span>
+    </div>
+  </div>
   <ol class="route" id="route-list"></ol>
   <div class="panel">
     <h3>Official sources</h3>
@@ -383,9 +398,14 @@ footer .wrap { padding-block: 24px; display: flex; flex-direction: column; gap: 
   <div class="planner">
     <form class="panel" id="plan-form" autocomplete="off">
       <div class="field">
+        <label for="plan-cycle">ICE review cycle</label>
+        <select id="plan-cycle"></select>
+        <span class="small">Picks ICE's application deadline and review dates for you. Choose "My own dates" to type them in.</span>
+      </div>
+      <div class="field">
         <label for="plan-submit">Submission deadline</label>
         <input type="date" id="plan-submit" required>
-        <span class="small">Check ICE's current application deadlines and review dates before you fix this.</span>
+        <span class="small">ICE's application closing date, or your own earlier target.</span>
       </div>
       <div class="field">
         <label for="plan-review">Professional review date <span class="small">(optional)</span></label>
