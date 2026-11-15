@@ -236,6 +236,7 @@
   });
   renderAttr();
   if (window.matchMedia && window.matchMedia("(max-width: 1000px)").matches) $("sources-box").open = false;
+  if (window.matchMedia && window.matchMedia("(max-width: 1200px)").matches) $("ice-res-box").open = false;
 
   /* Tips, each with a small line drawing */
   var TIP_ICONS = [
@@ -316,7 +317,10 @@
     Array.prototype.forEach.call(document.querySelectorAll("#nav a"), function (a) {
       if (a.getAttribute("href") === "#" + (v === "flashcards" ? "review" : v)) a.setAttribute("aria-current", "page"); else a.removeAttribute("aria-current");
     });
-    var withSources = ["route", "attributes", "review", "cheat-sheet"].indexOf(v) > -1;
+    var withSources = ["route", "attributes", "review", "cheat-sheet", "planner"].indexOf(v) > -1;
+    document.body.classList.toggle("on-planner", v === "planner");
+    $("sources-box").hidden = v === "planner"; $("ice-res-box").hidden = v !== "planner";
+    $("sources").setAttribute("aria-label", v === "planner" ? "ICE resources" : "Official sources");
     document.body.classList.toggle("with-sources", withSources);
     $("sources").hidden = !withSources;
     store("cp-last", v);

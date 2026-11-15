@@ -22,6 +22,9 @@
   --accent: #0d6b78;
   --accent-ink: #ffffff;
   --accent-soft: #dcecee;
+  --accent-2: #b84a32;
+  --accent-2-ink: #ffffff;
+  --accent-2-soft: #f8e5de;
   --flag: #b07a06;
   --flag-soft: #f7edcf;
   --grid: rgba(13,107,120,0.07);
@@ -36,11 +39,11 @@
 }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
   --paper: #0f1824; --surface: #162232; --ink: #e6ecf2; --muted: #9aa8b8; --line: #2a3a4e;
-  --accent: #5fc2cf; --accent-ink: #0f1824; --accent-soft: #173a44; --flag: #e7bd52; --flag-soft: #3a3016;
+  --accent: #5fc2cf; --accent-ink: #0f1824; --accent-soft: #173a44; --accent-2: #f08a6c; --accent-2-ink: #0f1824; --accent-2-soft: #3b241c; --flag: #e7bd52; --flag-soft: #3a3016;
   --grid: rgba(95,194,207,0.07); --s-blue: #86a8f0; --s-violet: #b49cf0; --review: #f2849b; --review-soft: rgba(242,132,155,0.14); color-scheme: dark } }
 :root[data-theme="dark"] {
   --paper: #0f1824; --surface: #162232; --ink: #e6ecf2; --muted: #9aa8b8; --line: #2a3a4e;
-  --accent: #5fc2cf; --accent-ink: #0f1824; --accent-soft: #173a44; --flag: #e7bd52; --flag-soft: #3a3016;
+  --accent: #5fc2cf; --accent-ink: #0f1824; --accent-soft: #173a44; --accent-2: #f08a6c; --accent-2-ink: #0f1824; --accent-2-soft: #3b241c; --flag: #e7bd52; --flag-soft: #3a3016;
   --grid: rgba(95,194,207,0.07); --s-blue: #86a8f0; --s-violet: #b49cf0; --review: #f2849b; --review-soft: rgba(242,132,155,0.14); color-scheme: dark }
 
 * { box-sizing: border-box; }
@@ -55,7 +58,7 @@ h2 { font-size: clamp(1.5rem, 3vw, 2rem); font-weight: 700; letter-spacing: -0.0
 h3 { font-size: 1.12rem; font-weight: 700; }
 p { margin: 0; }
 .wrap { width: 100%; max-width: 1080px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
-.eyebrow { font: 500 0.74rem var(--font-mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+.eyebrow { font: 500 0.74rem var(--font-mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent-2); }
 .lede { font-size: 1.12rem; color: var(--muted); max-width: 62ch; }
 .mono { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
 
@@ -153,6 +156,33 @@ details.q .pointer { padding: 0 16px 16px; color: var(--muted); max-width: 72ch;
 .flag { font: 500 0.7rem var(--font-mono); color: var(--flag); background: var(--flag-soft); border-radius: 999px; padding: 1px 8px; text-transform: uppercase; letter-spacing: 0.05em; }
 .news-item h3 a { color: var(--ink); text-decoration: none; }
 .news-item h3 a:hover { color: var(--accent); text-decoration: underline; }
+
+/* Secondary colour (coral): decorative accents only, never state */
+.hero { background-image: radial-gradient(circle at 92% 8%, var(--accent-2-soft) 0, transparent 34%), radial-gradient(circle at 4% 100%, var(--accent-soft) 0, transparent 30%), linear-gradient(var(--grid) 1px, transparent 1px), linear-gradient(90deg, var(--grid) 1px, transparent 1px); background-size: auto, auto, 24px 24px, 24px 24px; }
+.hero h1 .hl { color: var(--accent-2); }
+.deadline-card { border-top: 4px solid var(--accent-2) !important; }
+.start-here { border-top: 4px solid var(--accent) !important; }
+.stage-steps li::before { color: var(--accent-2) !important; }
+.stage-steps li:nth-child(even) { border-top: 3px solid var(--accent-2); }
+.stage-steps li:nth-child(odd) { border-top: 3px solid var(--accent); }
+.progress-strip > a:nth-child(1) { border-left: 4px solid var(--accent); }
+.progress-strip > a:nth-child(2) { border-left: 4px solid var(--accent-2); }
+.progress-strip > a:nth-child(3) { border-left: 4px solid var(--s-blue); }
+.home-feature:not(.community-band) { background: linear-gradient(135deg, var(--surface) 55%, var(--accent-2-soft)); }
+.wheel a circle { stroke: var(--accent-2) !important; }
+.wheel a:hover circle { fill: var(--accent-2-soft) !important; }
+.flip .deck { color: var(--accent-2) !important; }
+.home-card { border-top: 3px solid var(--accent); }
+.home-card:nth-child(even) { border-top-color: var(--accent-2); }
+.home-card:nth-child(even) .card-icon { background: var(--accent-2-soft); stroke: var(--accent-2) !important; }
+.home-card:hover, .home-card:focus-visible { border-color: var(--accent-2) !important; }
+.community-band { background: linear-gradient(120deg, var(--accent-soft), var(--accent-2-soft)) !important; border-color: transparent !important; }
+.community-band .people g[style*="--flag"], .community-band .people path[style*="--flag"] { stroke: var(--accent-2) !important; }
+.community-band .people g[style*="fill:var(--flag)"] { fill: var(--accent-2) !important; }
+nav a:hover { color: var(--accent-2); }
+.view-head h2 { position: relative; padding-bottom: 8px; }
+.view-head h2::after { content: ""; position: absolute; left: 0; bottom: 0; width: 56px; height: 4px; border-radius: 2px; background: linear-gradient(90deg, var(--accent) 50%, var(--accent-2) 50%); }
+@media print { .view-head h2::after { display: none; } }
 
 /* Cheat sheet */
 .cs { columns: 2 340px; column-gap: 16px; }
@@ -314,6 +344,22 @@ input[type="date"], input[type="number"] { font: 400 0.95rem var(--font-body); p
 @media (max-width: 820px) { .check { grid-template-columns: 1fr; } }
 
 /* Shell with pinned official sources */
+@media (max-width: 1200px) {
+  body.on-planner.with-sources .shell { grid-template-columns: minmax(0, 1fr); gap: 0; }
+  body.on-planner .sources { position: static; margin-top: 24px; margin-bottom: 40px; }
+  body.on-planner .sources summary .eyebrow::after { content: " (tap to open)"; text-transform: none; letter-spacing: 0; }
+}
+.res-list li { border-top: 1px solid var(--line); padding: 9px 0; font-size: 0.9rem; display: flex; flex-direction: column; gap: 2px; }
+.sources .res-list li a { font-weight: 600; display: inline; border-top: 0; padding: 0; color: var(--accent); font-size: 0.9rem; }
+/* Planner with the pinned resources pane: settings across the top, plan full width below */
+body.on-planner .planner { grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 821px) {
+  body.on-planner #plan-form { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px 16px; align-items: start; }
+  body.on-planner #plan-form .dur-box { grid-column: 1 / -1; }
+  body.on-planner #plan-form .durations { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); column-gap: 20px; }
+}
+.res-list li span { color: var(--muted); font-size: 0.82rem; line-height: 1.4; }
+.sources { max-height: calc(100vh - 100px); overflow-y: auto; }
 .shell { display: block; }
 body.with-sources .shell { display: grid; grid-template-columns: minmax(0, 1fr) 260px; gap: 32px; max-width: 1240px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); align-items: start; }
 body.with-sources .shell .view.wrap { padding-left: 0; padding-right: 0; max-width: none; }
@@ -356,7 +402,7 @@ footer .wrap { padding-block: 24px; display: flex; flex-direction: column; gap: 
 @media print {
   :root, :root[data-theme="dark"], :root:not([data-theme="light"]) {
     --paper: #ffffff; --surface: #ffffff; --ink: #15233a; --muted: #4a5667; --line: #c9d0ce;
-    --accent: #0d6b78; --accent-ink: #ffffff; --accent-soft: #dcecee; --flag: #b07a06; --flag-soft: #f7edcf;
+    --accent: #0d6b78; --accent-ink: #ffffff; --accent-soft: #dcecee; --accent-2: #b84a32; --accent-2-ink: #ffffff; --accent-2-soft: #f8e5de; --flag: #b07a06; --flag-soft: #f7edcf;
     --s-blue: #3f6fd1; --s-violet: #7553c4; --review: #c0304f; --review-soft: rgba(192,48,79,0.10); color-scheme: light; }
   @page { size: A4 landscape; margin: 12mm; }
   * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
@@ -437,6 +483,7 @@ footer .wrap { padding-block: 24px; display: flex; flex-direction: column; gap: 
 .feed .tag { font: 500 0.7rem var(--font-mono); color: var(--accent); background: var(--accent-soft); border-radius: 3px; padding: 2px 6px; }
 .tag-ice { display: inline-block; font: 600 0.68rem var(--font-mono); color: var(--accent); background: var(--accent-soft); border-radius: 3px; padding: 2px 6px; letter-spacing: 0.04em; vertical-align: middle; }
 .day-glance { gap: 10px; }
+.glance-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
 .fc-callout { flex-direction: row !important; align-items: center; gap: 14px !important; text-decoration: none; color: var(--ink); border-color: var(--accent) !important; }
 .fc-callout > span:nth-child(2) { display: flex; flex-direction: column; gap: 2px; flex: 1; font-size: 0.95rem; }
 .fc-callout:hover { background: var(--accent-soft); }
@@ -558,7 +605,7 @@ html:not([data-level="ieng"]) .cmp-table .c-ceng, html[data-level="ieng"] .cmp-t
     <div class="wrap">
       <div class="hero-copy">
         <span class="eyebrow">For civil engineers working towards <span data-lv="title">CEng MICE</span></span>
-        <h1>Everything for your ICE professional review, in one place.</h1>
+        <h1>Everything for your ICE professional review, <span class="hl">in one place.</span></h1>
         <p class="lede">ICE's deadlines, a planner that works back from them, the attributes with graded examples, revision flashcards, review-day guidance and this week's industry news.</p>
         <div class="level-pick" role="group" aria-label="Which level are you aiming for?"></div>
         <div class="hero-actions">
@@ -739,13 +786,6 @@ html:not([data-level="ieng"]) .cmp-table .c-ceng, html[data-level="ieng"] .cmp-t
       <p class="small">Durations are suggestions based on how candidates commonly plan, not ICE requirements. The stages follow ICE's process: evidence against the attributes, report reviewed and signed off by your supervisor or mentor, submission, then a review with a presentation, interview and communication task.</p>
     </div>
   </div>
-  <div class="planner-extra">
-    <div class="panel" style="gap:12px">
-      <h3>ICE forms and documents</h3>
-      <p class="small" style="margin:0">Straight from ICE's website. ICE updates these, so download them fresh when you apply.</p>
-      <ul class="forms" id="forms-list"></ul>
-    </div>
-  </div>
 </section>
 
 <!-- FLASHCARDS -->
@@ -780,39 +820,11 @@ html:not([data-level="ieng"]) .cmp-table .c-ceng, html[data-level="ieng"] .cmp-t
     <p class="lede">What happens on the day, what ICE says about each part, and practical advice. Facts from ICE's guidance are marked <span class="tag-ice">ICE</span> with a page number; everything under "Our advice" is our own suggestion.</p>
   </div>
 
-  <div class="panel level-banner">
-    <span>Showing the <strong data-lv="rv">Chartered</strong> review (<span data-lv="title">CEng MICE</span>). Parts that are the same for both levels are marked as such.</span>
-    <div class="level-pick" role="group" aria-label="Which level are you aiming for?"></div>
-  </div>
-
-  <div class="panel">
-    <span class="eyebrow">Incorporated and Chartered reviews compared <span class="tag-ice">ICE</span> <a href="https://www.ice.org.uk/media/aj2gmts3/11-jun-26-professional-review-guidance.pdf" target="_blank" rel="noopener">pp. 4, 12-14</a></span>
-    <div class="table-scroll"><table class="cmp-table">
-      <tr><th></th><th class="c-ieng">IEng (Incorporated)</th><th class="c-ceng">CEng (Chartered)</th></tr>
-      <tr><td>Presentation</td><td colspan="2" class="both">Same for both: 15 minutes, expanding on one aspect of your report.</td></tr>
-      <tr><td>Presentation and interview together</td><td class="c-ieng">Up to 60 minutes</td><td class="c-ceng">Up to 75 minutes</td></tr>
-      <tr><td>Communication task</td><td class="c-ieng">60 minutes. Answer one of two questions as a technical memo or note.</td><td class="c-ceng">90 minutes. Choose one of two scenarios and write in a set style, such as a blog post.</td></tr>
-      <tr><td>What the task tests</td><td class="c-ieng">Producing straightforward documents without help and reporting facts clearly.</td><td class="c-ceng">Digesting an issue, organising your thoughts and presenting them logically and clearly.</td></tr>
-      <tr><td>Reviewers</td><td colspan="2" class="both">Same for both: two peer reviewers, sometimes a third for specialist knowledge.</td></tr>
-      <tr><td>In person or online</td><td colspan="2" class="both">Same for both: online on Teams unless you're allocated an in-person review (see below).</td></tr>
-      <tr><td>The standard</td><td class="c-ieng">The attributes at IEng level</td><td class="c-ceng">The attributes at CEng level</td></tr>
-    </table></div>
-    <p class="small muted" style="margin:0">The bar for each attribute is on the <a href="#attributes">Attributes</a> page. ICE's guidance doesn't give a different presentation length, number of reviewers or slide limit for either level.</p>
-  </div>
-
-  <a class="panel fc-callout" href="#flashcards">
-    <svg viewBox="0 0 24 24" width="40" height="40" aria-hidden="true" fill="none" stroke-width="1.8" style="stroke:var(--accent)"><rect x="7" y="3" width="14" height="11" rx="1.5"/><path d="M4 7v11a2 2 0 0 0 2 2h11"/></svg>
-    <span><strong>Revise with flashcards</strong><span class="muted">Short decks on the attributes, Code of Conduct, ICE history, contracts, H&amp;S, sustainability and current affairs. Your progress is saved in this browser.</span></span>
-    <span class="btn">Open flashcards</span>
-  </a>
-  <a class="panel fc-callout" href="#cheat-sheet">
-    <svg viewBox="0 0 24 24" width="40" height="40" aria-hidden="true" fill="none" stroke-width="1.8" style="stroke:var(--accent)"><path d="M5 4h11a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3z"/><path d="M5 17a3 3 0 0 1 3-3h11"/><path d="M9 8h6"/></svg>
-    <span><strong>Cheat sheet</strong><span class="muted">One printable page of last-minute facts: your timings, the attributes, the Code, H&amp;S, sustainability, contracts and talking points.</span></span>
-    <span class="btn">Open cheat sheet</span>
-  </a>
-
   <div class="panel day-glance">
-    <span class="eyebrow">The day at a glance (<span data-lv="rv">Chartered</span> review)</span>
+    <div class="glance-head">
+      <span class="eyebrow">The day at a glance: <span data-lv="rv">Chartered</span> review</span>
+      <div class="level-pick" role="group" aria-label="Which review: IEng or CEng?"></div>
+    </div>
     <svg viewBox="0 0 720 150" class="day-svg only-ceng" role="img" aria-label="Timeline: 15-minute presentation and interview within 75 minutes, then a 90-minute written communication task" font-family="IBM Plex Sans, Arial, sans-serif">
       <rect x="10" y="40" width="96" height="44" rx="6" style="fill:var(--accent)"/>
       <text x="58" y="60" text-anchor="middle" font-size="13" font-weight="700" style="fill:var(--accent-ink)">Presentation</text>
@@ -841,7 +853,20 @@ html:not([data-level="ieng"]) .cmp-table .c-ceng, html[data-level="ieng"] .cmp-t
       <text x="546" y="60" text-anchor="middle" font-size="13" font-weight="700" style="fill:var(--ink)">Communication task</text>
       <text x="546" y="76" text-anchor="middle" font-size="11" style="fill:var(--muted)">60 min, after the interview</text>
     </svg>
+    <p class="small" style="margin:0">Both levels: a 15-minute presentation and two peer reviewers, online on Teams or in person. You're assessed against the attributes at <strong data-lv="title">CEng MICE</strong> level (see <a href="#attributes">Attributes</a>). The sections below follow this choice.</p>
   </div>
+
+  <a class="panel fc-callout" href="#flashcards">
+    <svg viewBox="0 0 24 24" width="40" height="40" aria-hidden="true" fill="none" stroke-width="1.8" style="stroke:var(--accent)"><rect x="7" y="3" width="14" height="11" rx="1.5"/><path d="M4 7v11a2 2 0 0 0 2 2h11"/></svg>
+    <span><strong>Revise with flashcards</strong><span class="muted">Short decks on the attributes, Code of Conduct, ICE history, contracts, H&amp;S, sustainability and current affairs. Your progress is saved in this browser.</span></span>
+    <span class="btn">Open flashcards</span>
+  </a>
+  <a class="panel fc-callout" href="#cheat-sheet">
+    <svg viewBox="0 0 24 24" width="40" height="40" aria-hidden="true" fill="none" stroke-width="1.8" style="stroke:var(--accent)"><path d="M5 4h11a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3z"/><path d="M5 17a3 3 0 0 1 3-3h11"/><path d="M9 8h6"/></svg>
+    <span><strong>Cheat sheet</strong><span class="muted">One printable page of last-minute facts: your timings, the attributes, the Code, H&amp;S, sustainability, contracts and talking points.</span></span>
+    <span class="btn">Open cheat sheet</span>
+  </a>
+
 
   <div class="panel">
     <span class="eyebrow">In person or online over Teams</span>
@@ -1238,6 +1263,11 @@ html:not([data-level="ieng"]) .cmp-table .c-ceng, html[data-level="ieng"] .cmp-t
     </ul>
     <p class="small">Always check the current version on ICE's site before you rely on anything here.</p>
   </details>
+  <details open id="ice-res-box" hidden>
+    <summary><span class="eyebrow">ICE resources</span></summary>
+    <p class="small" style="margin:6px 0 0">Forms and documents straight from ICE's website. ICE updates these, so download them fresh when you apply.</p>
+    <ul class="res-list" id="forms-list"></ul>
+  </details>
 </aside>
 </div>
 
@@ -1248,10 +1278,10 @@ html:not([data-level="ieng"]) .cmp-table .c-ceng, html[data-level="ieng"] .cmp-t
   </div>
 </footer>
 
-<script src="js/content.js?v=20261115w"></script>
-<script src="js/news-feed.js?v=20261115w"></script>
-<script src="js/config.js?v=20261115w"></script>
-<script src="js/pages.js?v=20261115w"></script>
-<script src="js/site.js?v=20261115w"></script>
+<script src="js/content.js?v=20261115y"></script>
+<script src="js/news-feed.js?v=20261115y"></script>
+<script src="js/config.js?v=20261115y"></script>
+<script src="js/pages.js?v=20261115y"></script>
+<script src="js/site.js?v=20261115y"></script>
 </body>
 </html>
