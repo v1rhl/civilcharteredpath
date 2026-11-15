@@ -250,7 +250,8 @@ window.PLAN = {
     { id: "draft", t: "Write the first draft of your report", d: "Write in the first person, one example per decision, and keep to ICE's word limit.", w: 8, c: "var(--accent)" },
     { id: "sce", t: "First draft with your supervisor or mentor", d: "Send it to your Supervising Civil Engineer, Delegated Engineer or mentor. Book the time in their diary before you send it.", w: 3, c: "var(--flag)" },
     { id: "revise", t: "Revise to a second draft", d: "Act on the comments. Check every number and that the report matches your CPD record and CV.", w: 3, c: "var(--accent)" },
-    { id: "signoff", t: "Final read, sign-off and application", d: "Final check by your supervisor or mentor, proofread, then complete the application and supporting documents.", w: 2, c: "var(--s-violet)" }
+    { id: "signoff", t: "Supervisor and sponsor sign-off", d: "Final check and sign-off of your report and training record by your supervisor or mentor. Confirm your two sponsors will support you and know ICE's sponsor deadline.", w: 2, c: "var(--s-violet)" },
+    { id: "mdo", t: "Regional MDO meeting: IPD and CPD sign-off", d: "Meet your regional ICE Membership Development Officer (or Membership Manager or ICE representative) to sign off your IPD and CPD. Bring your signed-off training record or other IPD evidence, your CPD record and development action plan, and a draft CV. ICE says to allow 8 weeks for its staff to complete IPD, so book through your regional team (ice.org.uk/nearyou) early. Then finish and upload your application.", w: 8, c: "var(--flag)" }
   ],
   after: [
     { id: "revision", t: "Revise topics and current affairs", d: "Flashcards, the Code of Conduct, the contract you work under, CDM, and the news. Little and often.", w: 10, c: "var(--s-blue)" },
@@ -305,11 +306,11 @@ window.ICE_CYCLES = [
 
 /* Other ICE deadlines on the same key dates page (checked 15 Nov 2026). Only published dates: nothing projected. */
 window.ICE_OTHER_GROUPS = [
-  { g: "trr", label: "Technical Report Route, Stage 1", note: "ICE doesn't list separate Stage 2 dates. Check this result date if you're aiming at a particular Stage 2 deadline." },
-  { g: "ela", label: "Experiential Learning Assessment", note: "Closing dates cover new applications and resubmissions." },
-  { g: "aa", label: "Academic Assessment", note: "For candidates whose qualifications don't automatically meet the grade they want. ICE hasn't published dates after 9 November 2026." },
-  { g: "ca", label: "Career Appraisal", note: "Assessed monthly. ICE hasn't published dates after 11 November 2026." },
-  { g: "fle", label: "ICE Further Learning Exam", note: "Technical submission upload by 11 September 2026; results published 3 February 2027." }
+  { g: "trr", label: "Technical Report Route, Stage 1", note: "ICE doesn't list separate Stage 2 dates. Check this result date if you're aiming at a particular Stage 2 deadline.", desc: "Stage 1 of the Technical Report Route. Stage 2 is a Professional Review, so its dates are under Professional Review." },
+  { g: "ela", label: "Experiential Learning Assessment", note: "Closing dates cover new applications and resubmissions.", desc: "ICE's assessment of learning gained through experience. Check ICE's guidance to see whether it applies to you." },
+  { g: "aa", label: "Academic Assessment", note: "ICE hasn't published dates after 9 November 2026.", desc: "For candidates who don't have the qualifications to apply for a grade automatically." },
+  { g: "ca", label: "Career Appraisal", note: "Assessed monthly. ICE hasn't published dates after 11 November 2026.", desc: "Assessed once a month. ICE accepts a Career Appraisal decision letter as one form of evidence that you have completed your IPD." },
+  { g: "fle", label: "ICE Further Learning Exam", note: "Technical submission upload by 11 September 2026; results published 3 February 2027.", desc: "An online exam with a technical submission. Check ICE's guidance to see whether it applies to you." }
 ];
 window.ICE_OTHER_DATES = [
   { g: "trr", application: "2026-11-27", result: "2027-01-29" },

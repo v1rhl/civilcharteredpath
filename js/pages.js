@@ -58,10 +58,20 @@
   $("plan-cycle").addEventListener("change", function () { applyCycle(this.value); renderPlan(); });
   $("plan-submit").addEventListener("input", function () { var c = cycById(planCycle); if (c && this.value !== c.application) { planCycle = ""; $("plan-cycle").value = ""; } });
 
-  /* Route page key dates */
+  /* Route page key dates: pick a review type, then a date for it */
   $("key-dates-src").href = window.ICE_DATES_SOURCE || "#";
-  var routeCycle = firstOpen;
-  $("route-cycle").innerHTML = cycOptions(routeCycle).replace('<option value="">My own dates</option>', "");
+  var TYPES = [{ g: "pr", label: "Professional Review (CPR, IPR, CPRP, TPR, TRR Stage 2, CEPR)", desc: "The review itself, for Chartered (CPR) or Incorporated (IPR) membership and ICE's other review types. ICE uses one set of dates for all of them." }].concat(GROUPS);
+  function itemsOf(g) { return g === "pr" ? CYC : OTHER.filter(function (c) { return c.g === g; }); }
+  $("route-type").innerHTML = TYPES.map(function (t) { return '<option value="' + t.g + '">' + esc(t.label) + "</option>"; }).join("");
+  function fillRouteDates() {
+    var g = $("route-type").value, t = TYPES.filter(function (x) { return x.g === g; })[0] || {};
+    $("route-type-desc").textContent = t.desc || "";
+    var items = itemsOf(g), open = items.filter(function (c) { return parse(c.application) >= today; });
+    var sel = (open[0] || {}).id || "";
+    $("route-cycle").innerHTML = (open.length ? "" : '<option value="">No open deadlines published</option>') + items.map(function (c) { return opt(c, sel, g === "pr" ? c.label : "Results by " + fmt(parse(c.result))); }).join("");
+    $("route-plan").hidden = !open.length;
+    renderRouteCycle();
+  }
   function renderRouteCycle() {
     var c = cycById($("route-cycle").value); if (!c) { $("route-cycle-table").innerHTML = ""; return; }
     var rows = c.group ? [["Assessment", c.label], ["Application closes", fmt(parse(c.application))]].concat(c.exam ? [["Exam", c.exam]] : []).concat([["Results issued by", fmt(parse(c.result))], ["Note", c.group.note || ""]])
@@ -70,11 +80,12 @@
     rows.push(["Time until the application closes", weeksLeft > 0 ? weeksLeft + " weeks" : "Closed"]);
     $("route-cycle-table").innerHTML = rows.map(function (r) { return "<tr><td>" + esc(r[0]) + "</td><td>" + esc(r[1]) + "</td></tr>"; }).join("");
   }
+  $("route-type").addEventListener("change", fillRouteDates);
   $("route-cycle").addEventListener("change", renderRouteCycle);
   $("route-plan").addEventListener("click", function () {
     var id = $("route-cycle").value; $("plan-cycle").value = id; applyCycle(id); renderPlan();
   });
-  renderRouteCycle();
+  fillRouteDates();
 
   function renderDurations() {
     function row(s) { return '<div class="dur"><span class="sw" style="background:' + s.c + '"></span><label for="w-' + s.id + '">' + esc(s.t) + '</label><input type="number" min="0" max="52" step="1" id="w-' + s.id + '" data-id="' + s.id + '" value="' + weeks[s.id] + '" aria-label="' + esc(s.t) + ', weeks"></div>'; }
