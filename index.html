@@ -301,6 +301,27 @@ footer { border-top: 1px solid var(--line); background: var(--surface); }
 footer .wrap { padding-block: 24px; display: flex; flex-direction: column; gap: 6px; font-size: 0.88rem; color: var(--muted); }
 
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+.print-head { display: none; }
+@media print {
+  :root, :root[data-theme="dark"], :root:not([data-theme="light"]) {
+    --paper: #ffffff; --surface: #ffffff; --ink: #15233a; --muted: #4a5667; --line: #c9d0ce;
+    --accent: #0d6b78; --accent-ink: #ffffff; --accent-soft: #dcecee; --flag: #b07a06; --flag-soft: #f7edcf;
+    --s-blue: #3f6fd1; --s-violet: #7553c4; color-scheme: light; }
+  @page { size: A4 landscape; margin: 12mm; }
+  * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  body { background: #fff !important; }
+  .topbar, footer, .sources, #plan-form, .view-head, .view:not(#view-planner) { display: none !important; }
+  #view-planner { display: block !important; padding: 0 !important; }
+  .planner { display: block !important; }
+  .planner > .panel { border: 0 !important; padding: 0 !important; box-shadow: none !important; }
+  .print-head { display: block; margin-bottom: 8px; }
+  .no-print { display: none !important; }
+  .print-head h2 { margin: 0 0 4px; font-size: 1.4rem; }
+  .print-head p { margin: 0 0 2px; }
+  .gantt-wrap { overflow: visible !important; }
+  .plan-list li { break-inside: avoid; }
+  .plan-list li.past { opacity: 1 !important; }
+}
 </style>
 </head>
 <body>
@@ -449,15 +470,22 @@ footer .wrap { padding-block: 24px; display: flex; flex-direction: column; gap: 
       <div class="durations" id="plan-durations"></div>
       <div style="display:flex;gap:8px;flex-wrap:wrap">
         <button type="button" class="btn ghost" id="plan-reset">Reset durations</button>
-        <button type="button" class="btn" id="plan-copy">Copy plan as text</button>
+        <button type="button" class="btn ghost" id="plan-copy">Copy as text</button>
       </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button type="button" class="btn" id="plan-pdf">Download PDF</button>
+        <button type="button" class="btn" id="plan-csv">Download Excel (CSV)</button>
+        <button type="button" class="btn ghost" id="plan-ics">Add to calendar</button>
+      </div>
+      <span class="small">PDF opens your browser's print window: choose "Save as PDF".</span>
       <span class="small" id="plan-copied" role="status"></span>
     </form>
     <div class="panel" style="gap:16px">
-      <div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;align-items:baseline">
+      <div class="no-print" style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;align-items:baseline">
         <h3>Your plan</h3>
         <span class="small mono" id="plan-summary"></span>
       </div>
+      <div class="print-head" id="plan-print-head"></div>
       <div class="gantt-wrap"><div class="gantt" id="plan-gantt"></div></div>
       <ol class="plan-list" id="plan-list"></ol>
       <p class="small">Durations are suggestions based on how candidates commonly plan, not ICE requirements. The stages follow ICE's process: evidence against the attributes, report reviewed and signed off by your supervisor or mentor, submission, then a review with a presentation, interview and communication task.</p>
@@ -669,10 +697,10 @@ footer .wrap { padding-block: 24px; display: flex; flex-direction: column; gap: 
   </div>
 </footer>
 
-<script src="js/content.js?v=20261115d"></script>
-<script src="js/news-feed.js?v=20261115d"></script>
-<script src="js/config.js?v=20261115d"></script>
-<script src="js/pages.js?v=20261115d"></script>
-<script src="js/site.js?v=20261115d"></script>
+<script src="js/content.js?v=20261115e"></script>
+<script src="js/news-feed.js?v=20261115e"></script>
+<script src="js/config.js?v=20261115e"></script>
+<script src="js/pages.js?v=20261115e"></script>
+<script src="js/site.js?v=20261115e"></script>
 </body>
 </html>

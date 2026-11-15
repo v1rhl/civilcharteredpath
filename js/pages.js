@@ -130,14 +130,17 @@
       }).join("") +
       '<div class="legend"><span><span class="sw" style="background:var(--ink)"></span>Submission and review</span><span><span class="sw" style="background:var(--flag)"></span>Today (dashed)</span></div>';
 
-    var rows = p.items.map(function (it) { return { d: it.start, html: '<li class="' + (it.end < today ? "past" : "") + '"><span class="sw" style="background:' + it.s.c + '"></span><strong>' + esc(it.s.t) + '</strong><span class="when">' + fmt(it.start) + " to " + fmt(it.end) + '</span><span class="what">' + esc(it.s.d) + "</span></li>", txt: fmt(it.start) + " to " + fmt(it.end) + ": " + it.s.t }; });
+    var rows = p.items.map(function (it) { return { d: it.start, x: { t: it.s.t, k: "Stage", s: it.start, e: it.end, n: it.s.d }, html: '<li class="' + (it.end < today ? "past" : "") + '"><span class="sw" style="background:' + it.s.c + '"></span><strong>' + esc(it.s.t) + '</strong><span class="when">' + fmt(it.start) + " to " + fmt(it.end) + '</span><span class="what">' + esc(it.s.d) + "</span></li>", txt: fmt(it.start) + " to " + fmt(it.end) + ": " + it.s.t }; });
     var cy = cycById(planCycle);
-    if (cy && cy.result) rows.push({ d: parse(cy.result), html: '<li class="milestone"><span class="sw" style="background:var(--ink)"></span><strong>ICE results issued by</strong><span class="when">' + fmt(parse(cy.result)) + '</span><span class="what">' + esc(cy.label) + ".</span></li>", txt: fmt(parse(cy.result)) + ": " + cy.label + " results (ICE)" });
-    if (cy && cy.sponsors) rows.push({ d: parse(cy.sponsors), html: '<li class="milestone"><span class="sw" style="background:var(--ink)"></span><strong>Supervisor or sponsor sign-off deadline</strong><span class="when">' + fmt(parse(cy.sponsors)) + '</span><span class="what">ICE\'s sponsors closing date for the ' + esc(cy.label) + ".</span></li>", txt: fmt(parse(cy.sponsors)) + ": Sponsor sign-off deadline (ICE)" });
-    rows.push({ d: p.submit, html: '<li class="milestone"><span class="sw" style="background:var(--ink)"></span><strong>Submit your application</strong><span class="when">' + fmt(p.submit) + "</span></li>", txt: fmt(p.submit) + ": Submit your application" });
-    rows.push({ d: p.review, html: '<li class="milestone"><span class="sw" style="background:var(--ink)"></span><strong>Professional review' + (p.reviewAssumed ? " (assumed date)" : cy ? " (first in-person date; online dates vary)" : "") + '</strong><span class="when">' + fmt(p.review) + "</span></li>", txt: fmt(p.review) + ": Professional review" + (p.reviewAssumed ? " (assumed)" : "") });
+    if (cy && cy.result) rows.push({ d: parse(cy.result), x: { t: "ICE results issued by", k: "ICE date", s: parse(cy.result), n: cy.label }, html: '<li class="milestone"><span class="sw" style="background:var(--ink)"></span><strong>ICE results issued by</strong><span class="when">' + fmt(parse(cy.result)) + '</span><span class="what">' + esc(cy.label) + ".</span></li>", txt: fmt(parse(cy.result)) + ": " + cy.label + " results (ICE)" });
+    if (cy && cy.sponsors) rows.push({ d: parse(cy.sponsors), x: { t: "Supervisor or sponsor sign-off deadline", k: "ICE date", s: parse(cy.sponsors), n: "ICE's sponsors closing date for the " + cy.label + "." }, html: '<li class="milestone"><span class="sw" style="background:var(--ink)"></span><strong>Supervisor or sponsor sign-off deadline</strong><span class="when">' + fmt(parse(cy.sponsors)) + '</span><span class="what">ICE\'s sponsors closing date for the ' + esc(cy.label) + ".</span></li>", txt: fmt(parse(cy.sponsors)) + ": Sponsor sign-off deadline (ICE)" });
+    rows.push({ d: p.submit, x: { t: "Submit your application", k: cy ? "ICE date" : "Milestone", s: p.submit, n: cy ? "Application closing date" : "Your own date" }, html: '<li class="milestone"><span class="sw" style="background:var(--ink)"></span><strong>Submit your application</strong><span class="when">' + fmt(p.submit) + "</span></li>", txt: fmt(p.submit) + ": Submit your application" });
+    rows.push({ d: p.review, x: { t: "Professional review", k: p.reviewAssumed ? "Milestone (assumed)" : "Milestone", s: p.review, n: p.reviewAssumed ? "Assumed date: no review date entered." : cy && !cy.group ? "First in-person date; online dates vary." : "" }, html: '<li class="milestone"><span class="sw" style="background:var(--ink)"></span><strong>Professional review' + (p.reviewAssumed ? " (assumed date)" : cy ? " (first in-person date; online dates vary)" : "") + '</strong><span class="when">' + fmt(p.review) + "</span></li>", txt: fmt(p.review) + ": Professional review" + (p.reviewAssumed ? " (assumed)" : "") });
     rows.sort(function (a, b) { return a.d - b.d; });
     $("plan-list").innerHTML = rows.map(function (r) { return r.html; }).join("");
+    renderPlan.rows = rows.map(function (r) { return r.x; });
+    renderPlan.route = planRouteLabel();
+    $("plan-print-head").innerHTML = "<h2>My ICE chartership plan</h2><p>" + esc(renderPlan.route) + " &middot; Submit by " + fmt(p.submit) + " &middot; Review " + fmt(p.review) + (p.reviewAssumed ? " (assumed)" : "") + "</p><p class=\"small\">Made " + fmt(today) + " with Chartered Path. Durations are suggestions, not ICE requirements; confirm dates at " + esc(window.ICE_DATES_SOURCE || "") + "</p>";
     renderPlan.text = "My CEng plan\n" + rows.map(function (r) { return "- " + r.txt; }).join("\n");
     save("cp-plan", { submit: $("plan-submit").value, review: $("plan-review").value, weeks: weeks, cycle: planCycle });
   }
@@ -151,6 +154,44 @@
   $("plan-form").addEventListener("submit", function (e) { e.preventDefault(); });
   $("plan-reset").addEventListener("click", function () { weeks = Object.assign({}, defaults); renderDurations(); renderPlan(); });
   $("plan-copy").addEventListener("click", function () { copyText(renderPlan.text || "", $("plan-copied")); });
+  function planRouteLabel() {
+    var c = cycById(planCycle);
+    if (!c) return "My own dates";
+    return c.group ? c.label + ", apply by " + fmt(parse(c.application)) : "Professional Review, " + c.label;
+  }
+  function download(name, type, text) {
+    var blob = new Blob([text], { type: type }), a = document.createElement("a");
+    a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click();
+    setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 500);
+  }
+  function weeksBetween(a, b) { return Math.round((b - a) / DAY / 7); }
+  $("plan-csv").addEventListener("click", function () {
+    var rows = renderPlan.rows || []; if (!rows.length) return;
+    function cell(v) { v = String(v == null ? "" : v); return /[",\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; }
+    var lines = [["My ICE chartership plan"], ["Route", renderPlan.route], ["Made", iso(today)], [],
+      ["Step", "Type", "Start", "End", "Weeks", "Details"]].concat(rows.map(function (r) {
+      return [r.t, r.k, iso(r.s), r.e ? iso(r.e) : "", r.e ? weeksBetween(r.s, r.e) : "", r.n || ""];
+    }));
+    download("chartership-plan.csv", "text/csv;charset=utf-8", "\ufeff" + lines.map(function (l) { return l.map(cell).join(","); }).join("\r\n"));
+    $("plan-copied").textContent = "Downloaded chartership-plan.csv. It opens in Excel.";
+  });
+  $("plan-ics").addEventListener("click", function () {
+    var rows = renderPlan.rows || []; if (!rows.length) return;
+    function d(x) { return iso(x).replace(/-/g, ""); }
+    function fold(l) { var out = []; while (l.length > 70) { out.push(l.slice(0, 70)); l = l.slice(70); } out.push(l); return out.join("\r\n "); }
+    function t(v) { return String(v || "").replace(/\\/g, "\\\\").replace(/;/g, "\\;").replace(/,/g, "\\,").replace(/\n/g, "\\n"); }
+    var stamp = new Date().toISOString().replace(/[-:]/g, "").replace(/\.\d+/, "");
+    var ev = rows.map(function (r, i) {
+      return ["BEGIN:VEVENT", "UID:cp-" + d(r.s) + "-" + i + "@chartered-path", "DTSTAMP:" + stamp, "DTSTART;VALUE=DATE:" + d(r.s),
+        "DTEND;VALUE=DATE:" + d(r.e && r.e > r.s ? r.e : addDays(r.s, 1)), "SUMMARY:" + t((r.e ? "" : "\u25C6 ") + r.t), "DESCRIPTION:" + t((r.n || "") + " (" + renderPlan.route + ")"), "END:VEVENT"].map(fold).join("\r\n");
+    });
+    download("chartership-plan.ics", "text/calendar;charset=utf-8", ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Chartered Path//Planner//EN", "CALSCALE:GREGORIAN"].concat(ev).concat(["END:VCALENDAR"]).join("\r\n") + "\r\n");
+    $("plan-copied").textContent = "Downloaded chartership-plan.ics. Open it to add the dates to your calendar.";
+  });
+  $("plan-pdf").addEventListener("click", function () {
+    var old = document.title; document.title = "chartership-plan";
+    window.print(); setTimeout(function () { document.title = old; }, 1000);
+  });
   renderPlan();
 
   /* ---------- Flashcards ---------- */
