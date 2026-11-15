@@ -290,7 +290,7 @@ window.FACT_CARDS = [
   { deck: "Current affairs", q: "What did the 2026 Autumn Budget do to carbon capture and hydrogen?", a: "Cut £700m: Acorn's £200m scrapped and £500m off hydrogen grants. £9.4bn for HyNet and the East Coast Cluster protected." }
 ];
 
-/* ICE Professional Review key dates (Chartered and Incorporated), 2026-27.
+/* ICE Professional Review key dates, 2026-27. One table covers CPR, IPR, CPRP, TPR, TRR (Stage 2) and CEPR.
    Source: https://www.ice.org.uk/join-ice/key-membership-dates (checked 15 Nov 2026).
    Add the 2027-28 dates here when ICE publishes them. */
 window.ICE_DATES_SOURCE = "https://www.ice.org.uk/join-ice/key-membership-dates";
@@ -301,6 +301,34 @@ window.ICE_CYCLES = [
     window: "Online in February 2027, possibly into the first two weeks of March", inPerson: "London 3-5 Feb, Birmingham 16-17 Feb, Glasgow 23-24 Feb" },
   { id: "2027-06", label: "June 2027 reviews", sponsors: "2027-03-12", application: "2027-03-19", review: "2027-06-07",
     window: "Online in June 2027, possibly into the first two weeks of July", inPerson: "London 7-9 Jun, York 16-17 Jun, Cardiff 29 Jun" }
+];
+
+/* Other ICE deadlines on the same key dates page (checked 15 Nov 2026). Only published dates: nothing projected. */
+window.ICE_OTHER_GROUPS = [
+  { g: "trr", label: "Technical Report Route, Stage 1", note: "ICE doesn't list separate Stage 2 dates. Check this result date if you're aiming at a particular Stage 2 deadline." },
+  { g: "ela", label: "Experiential Learning Assessment", note: "Closing dates cover new applications and resubmissions." },
+  { g: "aa", label: "Academic Assessment", note: "For candidates whose qualifications don't automatically meet the grade they want. ICE hasn't published dates after 9 November 2026." },
+  { g: "ca", label: "Career Appraisal", note: "Assessed monthly. ICE hasn't published dates after 11 November 2026." },
+  { g: "fle", label: "ICE Further Learning Exam", note: "Technical submission upload by 11 September 2026; results published 3 February 2027." }
+];
+window.ICE_OTHER_DATES = [
+  { g: "trr", application: "2026-11-27", result: "2027-01-29" },
+  { g: "trr", application: "2027-03-26", result: "2027-07-16" },
+  { g: "trr", application: "2027-06-25", result: "2027-08-27" },
+  { g: "trr", application: "2027-11-26", result: "2028-01-28" },
+  { g: "trr", application: "2028-03-24", result: "2028-07-14" },
+  { g: "trr", application: "2028-06-23", result: "2028-08-25" },
+  { g: "ela", application: "2026-08-10", result: "2026-10-02" },
+  { g: "ela", application: "2026-10-12", result: "2026-12-04" },
+  { g: "ela", application: "2026-12-07", result: "2027-02-05" },
+  { g: "aa", application: "2026-08-17", result: "2026-10-07" },
+  { g: "aa", application: "2026-09-28", result: "2026-11-18" },
+  { g: "aa", application: "2026-11-09", result: "2027-01-20" },
+  { g: "ca", application: "2026-08-05", result: "2026-09-25" },
+  { g: "ca", application: "2026-09-09", result: "2026-11-04" },
+  { g: "ca", application: "2026-10-07", result: "2026-11-27" },
+  { g: "ca", application: "2026-11-11", result: "2027-01-15" },
+  { g: "fle", application: "2026-08-17", result: "2027-02-03", exam: "13 October 2026 (online, UK time)" }
 ];
 
 /* IEng and CEng requirements per attribute, quoted from ICE's professional review guidance

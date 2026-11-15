@@ -26,20 +26,33 @@
 
   /* ICE review cycles: shared by the Route page and the planner */
   var CYC = window.ICE_CYCLES || [];
-  function cycOptions(sel) {
-    return '<option value="">My own dates</option>' + CYC.map(function (c) {
-      var closed = parse(c.application) < today;
-      return '<option value="' + c.id + '"' + (closed ? " disabled" : "") + (c.id === sel ? " selected" : "") + ">" + esc(c.label) + " (apply by " + fmt(parse(c.application)) + (closed ? ", closed" : "") + ")</option>";
-    }).join("");
+  var GROUPS = window.ICE_OTHER_GROUPS || [];
+  var OTHER = (window.ICE_OTHER_DATES || []).map(function (d) {
+    var grp = GROUPS.filter(function (x) { return x.g === d.g; })[0] || { label: d.g };
+    return Object.assign({ id: d.g + "-" + d.application, label: grp.label, group: grp }, d);
+  });
+  var ALL = CYC.concat(OTHER);
+  function opt(c, sel, text) {
+    var closed = parse(c.application) < today;
+    return '<option value="' + c.id + '"' + (closed ? " disabled" : "") + (c.id === sel ? " selected" : "") + ">" + esc(text) + " (apply by " + fmt(parse(c.application)) + (closed ? ", closed" : "") + ")</option>";
   }
-  function cycById(id) { return CYC.filter(function (c) { return c.id === id; })[0]; }
+  function cycOptions(sel) {
+    var html = '<option value="">My own dates</option>' +
+      '<optgroup label="Professional Review (CPR, IPR, CPRP, TPR, TRR Stage 2, CEPR)">' + CYC.map(function (c) { return opt(c, sel, c.label); }).join("") + "</optgroup>";
+    GROUPS.forEach(function (grp) {
+      var items = OTHER.filter(function (c) { return c.g === grp.g; });
+      if (items.length) html += '<optgroup label="' + esc(grp.label) + '">' + items.map(function (c) { return opt(c, sel, grp.label + ", results by " + fmt(parse(c.result))); }).join("") + "</optgroup>";
+    });
+    return html;
+  }
+  function cycById(id) { return ALL.filter(function (c) { return c.id === id; })[0]; }
   var firstOpen = (CYC.filter(function (c) { return parse(c.application) >= today; })[0] || {}).id || "";
   var planCycle = saved.cycle !== undefined ? saved.cycle : firstOpen;
   if (planCycle && (!cycById(planCycle) || parse(cycById(planCycle).application) < today)) planCycle = firstOpen;
   $("plan-cycle").innerHTML = cycOptions(planCycle);
   function applyCycle(id) {
     planCycle = id; var c = cycById(id);
-    if (c) { $("plan-submit").value = c.application; $("plan-review").value = c.review; }
+    if (c) { $("plan-submit").value = c.application; $("plan-review").value = c.review || ""; }
   }
   if (planCycle && saved.cycle === undefined) applyCycle(planCycle);
   $("plan-cycle").addEventListener("change", function () { applyCycle(this.value); renderPlan(); });
@@ -51,7 +64,8 @@
   $("route-cycle").innerHTML = cycOptions(routeCycle).replace('<option value="">My own dates</option>', "");
   function renderRouteCycle() {
     var c = cycById($("route-cycle").value); if (!c) { $("route-cycle-table").innerHTML = ""; return; }
-    var rows = [["Supervisor or sponsor sign-off by", fmt(parse(c.sponsors))], ["Application closes", fmt(parse(c.application))], ["Online reviews", c.window], ["In-person reviews", c.inPerson]];
+    var rows = c.group ? [["Assessment", c.label], ["Application closes", fmt(parse(c.application))]].concat(c.exam ? [["Exam", c.exam]] : []).concat([["Results issued by", fmt(parse(c.result))], ["Note", c.group.note || ""]])
+      : [["Supervisor or sponsor sign-off by", fmt(parse(c.sponsors))], ["Application closes", fmt(parse(c.application))], ["Online reviews", c.window], ["In-person reviews", c.inPerson]];
     var weeksLeft = Math.round((parse(c.application) - today) / DAY / 7);
     rows.push(["Time until the application closes", weeksLeft > 0 ? weeksLeft + " weeks" : "Closed"]);
     $("route-cycle-table").innerHTML = rows.map(function (r) { return "<tr><td>" + esc(r[0]) + "</td><td>" + esc(r[1]) + "</td></tr>"; }).join("");
@@ -107,7 +121,8 @@
 
     var rows = p.items.map(function (it) { return { d: it.start, html: '<li class="' + (it.end < today ? "past" : "") + '"><span class="sw" style="background:' + it.s.c + '"></span><strong>' + esc(it.s.t) + '</strong><span class="when">' + fmt(it.start) + " to " + fmt(it.end) + '</span><span class="what">' + esc(it.s.d) + "</span></li>", txt: fmt(it.start) + " to " + fmt(it.end) + ": " + it.s.t }; });
     var cy = cycById(planCycle);
-    if (cy) rows.push({ d: parse(cy.sponsors), html: '<li class="milestone"><span class="sw" style="background:var(--ink)"></span><strong>Supervisor or sponsor sign-off deadline</strong><span class="when">' + fmt(parse(cy.sponsors)) + '</span><span class="what">ICE\'s sponsors closing date for the ' + esc(cy.label) + ".</span></li>", txt: fmt(parse(cy.sponsors)) + ": Sponsor sign-off deadline (ICE)" });
+    if (cy && cy.result) rows.push({ d: parse(cy.result), html: '<li class="milestone"><span class="sw" style="background:var(--ink)"></span><strong>ICE results issued by</strong><span class="when">' + fmt(parse(cy.result)) + '</span><span class="what">' + esc(cy.label) + ".</span></li>", txt: fmt(parse(cy.result)) + ": " + cy.label + " results (ICE)" });
+    if (cy && cy.sponsors) rows.push({ d: parse(cy.sponsors), html: '<li class="milestone"><span class="sw" style="background:var(--ink)"></span><strong>Supervisor or sponsor sign-off deadline</strong><span class="when">' + fmt(parse(cy.sponsors)) + '</span><span class="what">ICE\'s sponsors closing date for the ' + esc(cy.label) + ".</span></li>", txt: fmt(parse(cy.sponsors)) + ": Sponsor sign-off deadline (ICE)" });
     rows.push({ d: p.submit, html: '<li class="milestone"><span class="sw" style="background:var(--ink)"></span><strong>Submit your application</strong><span class="when">' + fmt(p.submit) + "</span></li>", txt: fmt(p.submit) + ": Submit your application" });
     rows.push({ d: p.review, html: '<li class="milestone"><span class="sw" style="background:var(--ink)"></span><strong>Professional review' + (p.reviewAssumed ? " (assumed date)" : cy ? " (first in-person date; online dates vary)" : "") + '</strong><span class="when">' + fmt(p.review) + "</span></li>", txt: fmt(p.review) + ": Professional review" + (p.reviewAssumed ? " (assumed)" : "") });
     rows.sort(function (a, b) { return a.d - b.d; });
