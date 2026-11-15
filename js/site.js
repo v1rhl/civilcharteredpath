@@ -280,13 +280,14 @@
       }).join("") + '</div><div class="bar"><span class="eyebrow">Using it in your review</span><p style="margin-top:4px">' + esc(w.angle) + "</p></div></div>";
   }).join("");
 
-  /* Reference */
-  $("ref-list").innerHTML = REF.map(function (r) {
-    return '<div class="panel"><h3>' + esc(r.t) + '</h3><div class="table-wrap"><table><tbody>' +
-      r.rows.map(function (row) { return "<tr><td>" + esc(row[0]) + "</td><td>" + esc(row[1]) + "</td></tr>"; }).join("") +
-      '</tbody></table></div><p class="small">' + esc(r.note) + "</p>" +
-      '<p class="small">' + r.links.map(function (l) { return ext(l[1], l[0]); }).join(" · ") + "</p></div>";
-  }).join("");
+  /* Cheat sheet: talking points from the latest news weeks */
+  (function () {
+    var weeks = (window.NEWS || []).slice(0, 2), items = [];
+    weeks.forEach(function (w) { w.items.forEach(function (it) { if (items.length < 6) items.push(it); }); });
+    $("cs-news").innerHTML = items.map(function (it) { return "<li><strong>" + esc(it.tag) + ":</strong> " + ext(it.url, it.t) + "</li>"; }).join("");
+    if (weeks[0]) $("cs-angle").innerHTML = "<strong>Angle:</strong> " + esc(weeks[0].angle);
+    $("cs-print").addEventListener("click", function () { window.print(); });
+  })();
 
   /* Community (design only: posting disabled until a forum service is connected) */
   var catSel = -1;
@@ -305,15 +306,17 @@
   renderForum();
 
   /* Routing on the hash */
-  var views = ["home", "route", "attributes", "planner", "flashcards", "review", "questions", "news", "check", "reference", "community"];
+  var views = ["home", "route", "attributes", "planner", "flashcards", "review", "questions", "news", "check", "cheat-sheet", "community"];
   function route() {
     var v = (location.hash || "#home").slice(1);
+    if (v === "reference") { v = "cheat-sheet"; history.replaceState(null, "", "#cheat-sheet"); }
     if (views.indexOf(v) < 0) v = "home";
+    document.body.classList.toggle("on-cheat", v === "cheat-sheet");
     views.forEach(function (name) { $("view-" + name).hidden = name !== v; });
     Array.prototype.forEach.call(document.querySelectorAll("#nav a"), function (a) {
       if (a.getAttribute("href") === "#" + (v === "flashcards" ? "review" : v)) a.setAttribute("aria-current", "page"); else a.removeAttribute("aria-current");
     });
-    var withSources = ["route", "attributes", "review", "reference"].indexOf(v) > -1;
+    var withSources = ["route", "attributes", "review", "cheat-sheet"].indexOf(v) > -1;
     document.body.classList.toggle("with-sources", withSources);
     $("sources").hidden = !withSources;
     store("cp-last", v);

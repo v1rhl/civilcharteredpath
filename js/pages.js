@@ -148,6 +148,11 @@
         var kids = p.items.filter(function (it) { return ph.steps.indexOf(it.s.id) >= 0; });
         if (!kids.length) return "";
         var st = new Date(Math.min.apply(null, kids.map(function (k) { return k.start; }))), en = new Date(Math.max.apply(null, kids.map(function (k) { return k.end; })));
+        if (ph.steps.length === 1) {
+          var it1 = kids[0], ad1 = advice(it1.s);
+          return '<div class="g-row g-sum-row"><span class="g-label" title="' + esc(it1.s.t + " " + ad1.short + ". " + fmt(it1.start) + " to " + fmt(it1.end)) + '"><span class="g-name"><span class="caret" aria-hidden="true"></span> ' + esc(ph.t) + (weeks[it1.s.id] !== defaults[it1.s.id] ? ' <span class="g-dot" aria-label="duration changed from the suggestion"></span>' : "") + '</span><span class="g-wk">' + fmt(st).replace(/ \d{4}$/, "") + " to " + fmt(en).replace(/ \d{4}$/, "") + "</span></span>" +
+            '<div class="g-track"><span class="g-sum" style="left:' + pct(st) + ";width:calc(" + pct(en) + " - " + pct(st) + ')"></span>' + lines + "</div></div>";
+        }
         var open = !!openPh[ph.id];
         return '<div class="g-row g-sum-row"><button type="button" class="g-label g-toggle" data-ph="' + ph.id + '" aria-expanded="' + open + '" title="' + esc(ph.t + ": " + wk(Math.round((en - st) / DAY / 7)) + ", " + kids.length + " tasks. Click to " + (open ? "hide" : "show") + " them.") + '"><span class="g-name"><span class="caret" aria-hidden="true">' + (open ? "\u25BE" : "\u25B8") + "</span> " + esc(ph.t) + '</span><span class="g-wk">' + fmt(st).replace(/ \d{4}$/, "") + " to " + fmt(en).replace(/ \d{4}$/, "") + "</span></button>" +
           '<div class="g-track"><span class="g-sum" style="left:' + pct(st) + ";width:calc(" + pct(en) + " - " + pct(st) + ')"></span>' + lines + "</div></div>" +
@@ -170,7 +175,7 @@
         (note ? '<details class="more-info"><summary>Details</summary><p>' + esc(note) + "</p></details>" : "") + "</li>";
     }
     $("plan-list").innerHTML = rows.map(function (r) { return li(r.x); }).join("");
-    $("plan-expand").textContent = PLAN.phases.every(function (ph) { return openPh[ph.id]; }) ? "Collapse all" : "Expand all";
+    $("plan-expand").textContent = PLAN.phases.filter(function (ph) { return ph.steps.length > 1; }).every(function (ph) { return openPh[ph.id]; }) ? "Collapse all" : "Expand all";
     renderPlan.rows = rows.map(function (r) { return r.x; });
     renderPlan.route = planRouteLabel();
     $("plan-print-head").innerHTML = "<h2>My ICE chartership plan</h2><p>" + esc(renderPlan.route) + " &middot; Submit by " + fmt(p.submit) + " &middot; Review " + fmt(p.review) + (p.reviewAssumed ? " (assumed)" : "") + "</p><p class=\"small\">Made " + fmt(today) + " with Civil Chartered Path. Durations are suggestions, not ICE requirements; confirm dates at " + esc(window.ICE_DATES_SOURCE || "") + "</p>";
@@ -191,7 +196,7 @@
     openPh[b.dataset.ph] = !openPh[b.dataset.ph]; save("cp-phases", openPh); renderPlan();
   });
   $("plan-expand").addEventListener("click", function () {
-    var all = PLAN.phases.every(function (ph) { return openPh[ph.id]; });
+    var all = PLAN.phases.filter(function (ph) { return ph.steps.length > 1; }).every(function (ph) { return openPh[ph.id]; });
     PLAN.phases.forEach(function (ph) { openPh[ph.id] = !all; }); save("cp-phases", openPh); renderPlan();
   });
   $("plan-copy").addEventListener("click", function () { copyText(renderPlan.text || "", $("plan-copied")); });
