@@ -330,6 +330,21 @@ footer .wrap { padding-block: 24px; display: flex; flex-direction: column; gap: 
   .plan-list li { break-inside: avoid; }
   .plan-list li.past { opacity: 1 !important; }
 }
+.home-card { display: flex; flex-direction: column; gap: 8px; color: inherit; text-decoration: none; transition: border-color .15s, transform .15s; }
+.home-card:hover, .home-card:focus-visible { border-color: var(--accent); transform: translateY(-2px); }
+.home-card .more { margin-top: auto; color: var(--accent); font-weight: 600; }
+.card-icon { width: 36px; height: 36px; padding: 6px; border-radius: var(--radius); background: var(--accent-soft); }
+.home-feature { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); gap: 24px; align-items: center; }
+.home-feature-copy { display: flex; flex-direction: column; gap: 12px; align-items: flex-start; }
+.home-feature-copy h2 { margin: 0; }
+.home-feature-copy p { margin: 0; color: var(--muted); }
+.community-band { grid-template-columns: minmax(0, 0.8fr) minmax(0, 1fr); background: var(--surface); }
+.wheel, .people { width: 100%; height: auto; display: block; }
+.wheel a { cursor: pointer; }
+.wheel a:hover circle { fill: var(--accent-soft) !important; }
+.wheel-key { display: none; margin: 8px 0 0; padding-left: 22px; color: var(--muted); font-size: 0.9rem; }
+@media (max-width: 600px) { .wheel .wl { display: none; } .wheel { max-width: 340px; margin: -20px auto; } .wheel-key { display: block; } }
+@media (max-width: 820px) { .home-feature, .community-band { grid-template-columns: 1fr; } .community-band figure { max-width: 320px; } }
 </style>
 </head>
 <body>
@@ -399,7 +414,42 @@ footer .wrap { padding-block: 24px; display: flex; flex-direction: column; gap: 
     </div>
   </div>
   <div class="wrap" style="display:flex;flex-direction:column;gap:32px">
+    <div class="panel home-feature">
+      <div class="home-feature-copy">
+        <span class="eyebrow">What the review assesses</span>
+        <h2>Seven attributes, one bar</h2>
+        <p>ICE reviewers check your evidence against seven attributes. For CEng, each one asks for more than the IEng level: leading rather than assisting, improving rather than applying. Pick one to see the bar and graded example answers.</p>
+        <a class="btn" href="#attributes">Explore the attributes</a>
+      </div>
+      <figure style="margin:0">
+        <svg viewBox="-30 0 520 300" class="wheel" role="img" aria-label="The seven ICE attributes arranged around CEng MICE" font-family="IBM Plex Sans, Arial, sans-serif" id="home-wheel"></svg>
+        <ol class="wheel-key" id="home-wheel-key"></ol>
+      </figure>
+    </div>
     <div class="grid" id="home-cards"></div>
+    <div class="panel home-feature community-band">
+      <figure style="margin:0" aria-hidden="true">
+        <svg viewBox="0 0 320 170" class="people">
+          <ellipse cx="160" cy="138" rx="128" ry="16" style="fill:var(--accent-soft)"/>
+          <g stroke-width="2" style="stroke:var(--accent)">
+            <circle cx="70" cy="62" r="17" style="fill:var(--surface)"/><path d="M38 132c2-26 15-40 32-40s30 14 32 40" style="fill:var(--surface)"/>
+            <circle cx="250" cy="62" r="17" style="fill:var(--surface)"/><path d="M218 132c2-26 15-40 32-40s30 14 32 40" style="fill:var(--surface)"/>
+            <circle cx="160" cy="52" r="19" style="fill:var(--accent)"/><path d="M124 134c2-30 17-46 36-46s34 16 36 46" style="fill:var(--accent)"/>
+          </g>
+          <g stroke-width="1.6" style="fill:var(--surface);stroke:var(--flag)">
+            <path d="M92 18h50v24h-30l-10 9v-9H92z"/><path d="M178 10h52v24h-10v9l-10-9h-32z"/>
+          </g>
+          <g style="fill:var(--flag)"><circle cx="107" cy="30" r="2.2"/><circle cx="117" cy="30" r="2.2"/><circle cx="127" cy="30" r="2.2"/></g>
+          <path d="M190 22h28" stroke-width="2" stroke-linecap="round" style="stroke:var(--flag)"/>
+        </svg>
+      </figure>
+      <div class="home-feature-copy">
+        <span class="eyebrow">Community</span>
+        <h2>Revise with people on the same path</h2>
+        <p>A forum for questions, and a way to find a mock review partner in your region. Opening soon.</p>
+        <a class="btn ghost" href="#community">See the plans</a>
+      </div>
+    </div>
     <div class="panel">
       <span class="eyebrow">This week in current affairs</span>
       <div id="home-news" style="display:flex;flex-direction:column;gap:10px"></div>
@@ -705,10 +755,10 @@ footer .wrap { padding-block: 24px; display: flex; flex-direction: column; gap: 
   </div>
 </footer>
 
-<script src="js/content.js?v=20261115h"></script>
-<script src="js/news-feed.js?v=20261115h"></script>
-<script src="js/config.js?v=20261115h"></script>
-<script src="js/pages.js?v=20261115h"></script>
-<script src="js/site.js?v=20261115h"></script>
+<script src="js/content.js?v=20261115j"></script>
+<script src="js/news-feed.js?v=20261115j"></script>
+<script src="js/config.js?v=20261115j"></script>
+<script src="js/pages.js?v=20261115j"></script>
+<script src="js/site.js?v=20261115j"></script>
 </body>
 </html>

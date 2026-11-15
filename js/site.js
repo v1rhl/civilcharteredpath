@@ -11,22 +11,50 @@
 
   $("updated").textContent = S.updated;
 
-  /* Home cards */
+  /* Home cards, each with a small line drawing */
+  var ICONS = {
+    route: '<path d="M3 19h18"/><path d="M4 16c4-1 6-4 9-7s5-4 7-5"/><circle cx="4" cy="16" r="1.6"/><circle cx="12" cy="10" r="1.6"/><circle cx="20" cy="4" r="1.6"/>',
+    attributes: '<path d="M12 3l7.8 3.8 1.9 8.4-5.4 6.8H8.7l-5.4-6.8 1.9-8.4z"/><circle cx="12" cy="12" r="2.2"/>',
+    review: '<rect x="3" y="4" width="18" height="11" rx="1.5"/><path d="M8 20h8M12 15v5"/><path d="M7 11l3-3 2 2 4-4"/>',
+    questions: '<path d="M4 5h16v11H9l-5 4z"/><path d="M10 9a2 2 0 1 1 2.8 1.8c-.5.3-.8.7-.8 1.2"/><path d="M12 14.2h.01"/>',
+    reference: '<path d="M5 4h11a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3z"/><path d="M5 17a3 3 0 0 1 3-3h11"/><path d="M9 8h6"/>',
+    planner: '<rect x="3" y="4" width="18" height="16" rx="1.5"/><path d="M6 9h6M9 13h7M13 17h5"/>',
+    flashcards: '<rect x="7" y="3" width="14" height="11" rx="1.5"/><path d="M4 7v11a2 2 0 0 0 2 2h11"/>',
+    check: '<path d="M6 3h9l4 4v14H6z"/><path d="M15 3v4h4"/><path d="M9 14l2 2 4-4"/>',
+    news: '<rect x="3" y="5" width="15" height="15" rx="1.5"/><path d="M18 9h3v9a2 2 0 0 1-2 2"/><path d="M6 9h9M6 13h9M6 17h6"/>'
+  };
+  function icon(k) { return '<svg class="card-icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="stroke:var(--accent)">' + (ICONS[k] || "") + "</svg>"; }
   var homeCards = [
     ["The route", "Six stages from graduate member to CEng MICE, and where people usually get stuck.", "route"],
-    ["The seven attributes", "What reviewers look for under each one, and the chartered-level bar.", "attributes"],
     ["Review day", "Practical advice on the presentation, interview and communication task.", "review"],
     ["Practice questions", Q.length + " questions reviewers ask, with what a good answer covers.", "questions"],
-    ["Reference", "NEC4 timescales, CDM duty holders, CPD themes and ICE Presidents.", "reference"],
-    ["Submission planner", "Enter your deadline and get a dated plan worked back from it.", "planner"],
-    ["Flashcards", "Revise the attributes, review format, contracts, H&S and current affairs.", "flashcards"],
-    ["Report check", "Coming soon: paste a section of your report and get feedback against the attributes.", "check"],
-    ["Latest news", "Headlines from NCE, ICE and other sources, plus a weekly briefing.", "news"],
-    ["Community", "A forum and mock review partners. Opening soon.", "community"]
+    ["Submission planner", "Enter your deadline and get a dated plan worked back from it, with PDF, Excel and calendar downloads.", "planner"],
+    ["Flashcards", "Revise the attributes, the Code of Conduct, ICE history, contracts, H&S and current affairs.", "flashcards"],
+    ["Latest news", "Headlines from NCE, ICE and other sources, plus a weekly briefing.", "news"]
   ];
   $("home-cards").innerHTML = homeCards.map(function (c) {
-    return '<div class="panel"><h3>' + esc(c[0]) + "</h3><p>" + esc(c[1]) + '</p><a class="more" href="#' + c[2] + '">Open</a></div>';
+    return '<a class="panel home-card" href="#' + c[2] + '">' + icon(c[2]) + "<h3>" + esc(c[0]) + "</h3><p>" + esc(c[1]) + '</p><span class="more">Open</span></a>';
   }).join("");
+
+  /* Seven attributes wheel */
+  (function () {
+    var short = ["Engineering", "Management and leadership", "Commercial", "Health, safety and welfare", "Sustainable development", "Communication", "Professional commitment"];
+    var cx = 230, cy = 150, r = 100, out = "";
+    var pts = short.map(function (_, i) { var a = -Math.PI / 2 + i * 2 * Math.PI / 7; return [cx + r * Math.cos(a), cy + r * Math.sin(a), a]; });
+    out += '<polygon points="' + pts.map(function (p) { return p[0].toFixed(1) + "," + p[1].toFixed(1); }).join(" ") + '" fill="none" stroke-dasharray="3 3" style="stroke:var(--line)"/>';
+    pts.forEach(function (p) { out += '<line x1="' + cx + '" y1="' + cy + '" x2="' + p[0].toFixed(1) + '" y2="' + p[1].toFixed(1) + '" style="stroke:var(--line)"/>'; });
+    out += '<circle cx="' + cx + '" cy="' + cy + '" r="34" style="fill:var(--accent)"/><text x="' + cx + '" y="' + (cy - 2) + '" text-anchor="middle" font-weight="700" font-size="15" style="fill:var(--accent-ink)">CEng</text><text x="' + cx + '" y="' + (cy + 13) + '" text-anchor="middle" font-size="9" style="fill:var(--accent-ink)">MICE</text>';
+    pts.forEach(function (p, i) {
+      var t = (window.ATTRIBUTES[i] || {}).title || short[i];
+      var lx = cx + (r + 26) * Math.cos(p[2]), ly = cy + (r + 26) * Math.sin(p[2]);
+      var anchor = Math.abs(Math.cos(p[2])) < 0.2 ? "middle" : Math.cos(p[2]) > 0 ? "start" : "end";
+      out += '<a href="#attributes" data-attr="' + i + '"><title>' + esc(t) + '</title><circle cx="' + p[0].toFixed(1) + '" cy="' + p[1].toFixed(1) + '" r="15" stroke-width="2" style="fill:var(--surface);stroke:var(--accent)"/><text x="' + p[0].toFixed(1) + '" y="' + (p[1] + 4.5).toFixed(1) + '" text-anchor="middle" font-weight="700" font-size="13" style="fill:var(--accent)">' + (i + 1) + "</text>" +
+        '<text class="wl" x="' + lx.toFixed(1) + '" y="' + (ly + 4).toFixed(1) + '" text-anchor="' + anchor + '" font-size="11" style="fill:var(--ink)">' + esc(short[i]) + "</text></a>";
+    });
+    $("home-wheel").innerHTML = out;
+    $("home-wheel-key").innerHTML = (window.ATTRIBUTES || []).map(function (a) { return "<li>" + esc(a.title) + "</li>"; }).join("");
+  })();
+
   var latest = N[0];
   $("home-news").innerHTML = '<p class="small mono">' + esc(latest.week) + "</p>" + latest.items.slice(0, 3).map(function (i) {
     return '<div><strong>' + ext(i.url, i.t) + "</strong></div>";
