@@ -75,7 +75,7 @@
     ["Flashcards", "Revise the attributes, the Code of Conduct, ICE history, contracts, H&S and current affairs.", "flashcards"],
     ["Latest news", "Headlines from NCE, ICE and other sources, plus a monthly briefing by sector.", "news"]
   ];
-  $("home-cards").innerHTML = homeCards.map(function (c) {
+  if ($("home-cards")) $("home-cards").innerHTML = homeCards.map(function (c) {
     return '<a class="panel home-card" href="#' + c[2] + '">' + icon(c[2]) + "<h3>" + esc(c[0]) + "</h3><p>" + esc(c[1]) + '</p><span class="more">Open</span></a>';
   }).join("");
 
@@ -105,7 +105,7 @@
   /* Welcome step: route, role and target cycle. Shown until answered or skipped; never required. */
   (function () {
     var el = $("welcome"); if (!el) return;
-    var state = store("cp-welcome"), editing = !state;
+    var state = store("cp-welcome"), editing = !state, compact = !state && window.matchMedia && window.matchMedia("(max-width: 700px)").matches;
     var open = (window.ICE_CYCLES || []).filter(function (x) { return pd(x.application) >= now; }).slice(0, 4);
     var pick = { level: store("cp-level") ? LEVEL : "", role: window.CPRole ? CPRole.get() : "", cycle: store("cp-wl-cycle") || "" };
     function secs() { return window.CPSectors ? CPSectors.get() : []; }
@@ -124,6 +124,7 @@
         return;
       }
       var R = window.ROLES || [];
+      if (compact) { el.innerHTML = '<button type="button" class="btn ghost wl-open" id="wl-open">Personalise the site in 4 taps</button>'; return; }
       el.innerHTML = '<div class="wl-card"><div class="wl-head"><strong>Set the site up for you</strong><span class="small muted">Four quick questions, all optional. Saved in this browser only.</span></div>' +
         '<div class="wl-q"><span><span class="n">1</span>Which route are you on?</span>' + opts("Route", [["level", "ceng", "Chartered (CEng)"], ["level", "ieng", "Incorporated (IEng)"]]) + '<a class="small" href="#route">Not sure? Compare the routes</a></div>' +
         '<div class="wl-q"><span><span class="n">2</span>What\'s your role?</span>' + opts("Role", R.map(function (x) { return ["role", x.id, esc(x.label)]; })) + "</div>" +
@@ -151,6 +152,7 @@
         return;
       }
       if (e.target.closest("#wl-done")) { store("cp-welcome", "done"); if (!store("cp-level")) setLevel(LEVEL); editing = false; draw(); var c = $("wl-change"); if (c) c.focus(); return; }
+      if (e.target.closest("#wl-open")) { compact = false; draw(); var f1 = el.querySelector("[data-wk]"); if (f1) f1.focus(); return; }
       if (e.target.closest("#wl-skip")) { store("cp-welcome", "skipped"); editing = false; draw(); return; }
       if (e.target.closest("#wl-change")) { editing = true; pick.level = LEVEL; pick.role = window.CPRole ? CPRole.get() : ""; pick.cycle = store("cp-wl-cycle") || ""; draw(); var f = el.querySelector("[data-wk]"); if (f) f.focus(); }
     });
@@ -219,6 +221,7 @@
 
   /* Seven attributes wheel */
   (function () {
+    if (!$("home-wheel")) return;
     var short = ["Engineering", "Management and leadership", "Commercial", "Health, safety and welfare", "Sustainable development", "Communication", "Professional commitment"];
     var cx = 230, cy = 150, r = 100, out = "";
     var pts = short.map(function (_, i) { var a = -Math.PI / 2 + i * 2 * Math.PI / 7; return [cx + r * Math.cos(a), cy + r * Math.sin(a), a]; });
@@ -355,7 +358,7 @@
   ];
   function tipIcon(i) { return '<svg class="tip-ill" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="stroke:var(--accent)">' + (TIP_ICONS[i] || TIP_ICONS[2]) + "</svg>"; }
   /* Tips */
-  $("tips").innerHTML = T.map(function (t, i) {
+  if ($("tips")) $("tips").innerHTML = T.map(function (t, i) {
     return '<div class="panel tip">' + tipIcon(i) + '<div style="display:flex;flex-direction:column;gap:6px;min-width:0"><h3>' + esc(t.t) + "</h3><p>" + esc(t.d) + '</p><span class="src">Source: ' + ext(t.url, t.src) + "</span></div></div>";
   }).join("");
 
@@ -550,8 +553,12 @@
     document.body.classList.toggle("on-cheat", v === "cheat-sheet");
     views.forEach(function (name) { $("view-" + name).hidden = name !== v; });
     Array.prototype.forEach.call(document.querySelectorAll("#nav a"), function (a) {
-      if (a.getAttribute("href") === "#" + (v === "flashcards" || v === "presentation" ? "review" : v)) a.setAttribute("aria-current", "page"); else a.removeAttribute("aria-current");
+      if ((a.dataset.group || "").split(" ").indexOf(v) > -1) a.setAttribute("aria-current", "page"); else a.removeAttribute("aria-current");
     });
+    var SUB = { planner: [["planner", "Planner"], ["route", "The route"]], review: [["review", "Overview"], ["presentation", "Presentation tips"], ["flashcards", "Flashcards"], ["questions", "Practice questions"], ["cheat-sheet", "Cheat sheet"]] };
+    var grp = ["planner", "route"].indexOf(v) > -1 ? "planner" : ["review", "presentation", "flashcards", "questions", "cheat-sheet"].indexOf(v) > -1 ? "review" : "";
+    $("subnav").hidden = !grp;
+    $("subnav").innerHTML = grp ? SUB[grp].map(function (x) { return '<a href="#' + x[0] + '"' + (x[0] === v ? ' aria-current="page"' : "") + ">" + x[1] + "</a>"; }).join("") : "";
     var withSources = ["route", "attributes", "review", "presentation", "cheat-sheet", "planner"].indexOf(v) > -1;
     document.body.classList.toggle("on-planner", v === "planner");
     $("sources-box").hidden = v === "planner"; $("ice-res-box").hidden = v !== "planner";
