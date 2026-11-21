@@ -386,6 +386,13 @@ input[type="date"], input[type="number"] { font: 400 0.95rem var(--font-body); p
 .emp dt { color: var(--muted); font-weight: 600; }
 .emp dd { margin: 0; }
 .cw-ch td { color: var(--accent); font-weight: 600; }
+.tl-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.tl-list li { border-left: 3px solid var(--line); padding-left: 10px; }
+.tl-h { display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; align-items: baseline; font-size: 0.92rem; }
+.tl-steps { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
+.tl-steps span { font: 500 0.8rem var(--font-mono); background: var(--paper); border: 1px solid var(--line); border-radius: 4px; padding: 1px 6px; }
+.tl-steps span + span::before { content: "→ "; color: var(--muted); }
+.tl-steps .tl-c { background: var(--accent-soft); color: var(--accent); border-color: var(--accent); font-weight: 700; }
 .car-quotes { margin: 0; padding-left: 1.1em; display: flex; flex-direction: column; gap: 6px; font-size: 0.92rem; }
 .car-bar { width: 100%; max-width: 420px; height: auto; }
 .car-bar .cb-w { stroke: var(--muted); stroke-width: 2; }
@@ -1678,13 +1685,13 @@ nav a[aria-current="page"][aria-expanded="true"] { color: var(--accent-ink); bac
   </div>
 </footer>
 
-<script src="js/content.js?v=20261121d"></script>
-<script src="js/role.js?v=20261121d"></script>
-<script src="js/careers.js?v=20261121d"></script>
-<script src="js/news-feed.js?v=20261121d"></script>
-<script src="js/news-archive.js?v=20261121d"></script>
-<script src="js/config.js?v=20261121d"></script>
-<script src="js/pages.js?v=20261121d"></script>
-<script src="js/site.js?v=20261121d"></script>
+<script src="js/content.js?v=20261121e"></script>
+<script src="js/role.js?v=20261121e"></script>
+<script src="js/careers.js?v=20261121e"></script>
+<script src="js/news-feed.js?v=20261121e"></script>
+<script src="js/news-archive.js?v=20261121e"></script>
+<script src="js/config.js?v=20261121e"></script>
+<script src="js/pages.js?v=20261121e"></script>
+<script src="js/site.js?v=20261121e"></script>
 </body>
 </html>
