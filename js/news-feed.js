@@ -3,24 +3,6 @@ window.NEWS_FEED = {
  "generated": "2026-11-21",
  "items": [
   {
-   "t": "Bouygues wins court fight over £15bn schools framework",
-   "url": "https://www.constructionenquirer.com/2026/11/20/dfe-loses-bid-to-halt-bouygues-15bn-schools-framework-challenge/",
-   "src": "Construction Enquirer",
-   "date": "2026-11-20",
-   "tags": [
-    "Industry and careers"
-   ]
-  },
-  {
-   "t": "Contractors called up for £500m retrofit framework",
-   "url": "https://www.constructionenquirer.com/2026/11/20/contractors-called-up-for-500m-retrofit-framework/",
-   "src": "Construction Enquirer",
-   "date": "2026-11-20",
-   "tags": [
-    "Industry and careers"
-   ]
-  },
-  {
    "t": "Flood warning service expanded in Tewkesbury area",
    "url": "https://www.gov.uk/government/news/flood-warning-service-expanded-in-tewkesbury-area",
    "src": "Environment Agency",
@@ -99,15 +81,6 @@ window.NEWS_FEED = {
    "date": "2026-11-19",
    "tags": [
     "Rail"
-   ]
-  },
-  {
-   "t": "Chemical manufacturer fined more than £100k after pollution",
-   "url": "https://www.gov.uk/government/news/chemical-manufacturer-fined-more-than-100k-after-pollution",
-   "src": "Environment Agency",
-   "date": "2026-11-17",
-   "tags": [
-    "Other"
    ]
   },
   {
@@ -472,15 +445,6 @@ window.NEWS_FEED = {
    "tags": [
     "Roads",
     "Policy and funding"
-   ]
-  },
-  {
-   "t": "How waste sites are monitored: who deals with odour and other types of pollution?",
-   "url": "https://environmentagency.blog.gov.uk/2026/10/27/how-waste-sites-are-monitored-who-deals-with-odour-and-other-types-of-pollution/",
-   "src": "Environment Agency blog",
-   "date": "2026-10-27",
-   "tags": [
-    "Other"
    ]
   },
   {

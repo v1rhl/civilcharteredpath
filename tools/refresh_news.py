@@ -39,8 +39,8 @@ FEEDS = [
     ("Environment Agency blog", "https://environmentagency.blog.gov.uk/feed/"),
     ("Defra", "https://www.gov.uk/search/news-and-communications.atom?organisations%5B%5D=department-for-environment-food-rural-affairs"),
     ("The Construction Index", "https://www.theconstructionindex.co.uk/news/rss"),
-    # Health and safety: HSE press releases tagged construction, and the Building Safety Regulator.
-    ("HSE", "https://press.hse.gov.uk/tag/construction/feed/"),
+    # Health and safety: the Building Safety Regulator. HSE's press feed (press.hse.gov.uk) was tried in Nov 2026 but its
+    # robots.txt disallows automated readers, so it's left out.
     ("Building Safety Regulator", "https://www.gov.uk/search/news-and-communications.atom?organisations%5B%5D=building-safety-regulator"),
     # Checked Nov 2026 and left out: Water Industry Journal (robots.txt disallows /feed/); SEPA, Natural Resources Wales,
     # British Dam Society, CIWEM, Utility Week, Water Magazine and WWT had no readable feed. Add them if that changes.
@@ -68,9 +68,9 @@ INFRA = re.compile(
     r"wastewater|drainage|coastal|coast|geotechnical|drought|embankments?|erosion|pumping stations?|sea defences?|"
     r"flood defences?|water (?:supply|supplies|resources|compan(?:y|ies)|industry|infrastructure|resilience|investment|bills?)|"
     r"thames water|ofwat|building safety|cdm|concrete|cement|timber|steel|asphalt|bim|digital twins?|"
-    r"major projects?|megaprojects?|framework|substations?|pylons?|transmission|interconnectors?|wind farms?|"
+    r"major projects?|megaprojects?|substations?|pylons?|transmission|interconnectors?|wind farms?|"
     r"airports?|runways?|metro|trams?|trains?|stations?|canals?|dredging|treatment works|jett(?:y|ies)|quays?|docks?|"
-    r"defences?|rock armour|waste plant|energy from waste|incinerators?|pollution|(?:thames|southern|anglian|wessex|united|yorkshire|"
+    r"defences?|rock armour|waste plant|energy from waste|incinerators?|(?:thames|southern|anglian|wessex|united|yorkshire|"
     r"northumbrian|welsh|severn trent|south west|affinity|portsmouth|bristol|scottish) water|transporter bridge)\b", re.I)
 # Sources that only publish civil engineering, construction-safety or infrastructure news: no topic check needed.
 SPECIALIST = {"NCE", "ICE", "Infrastructure Intelligence", "HSE", "Building Safety Regulator"}
