@@ -165,7 +165,7 @@
       "<li><strong>Working from home:</strong> most work from home 2 or 3 days a week. 9 never do, mostly site staff.</li>" +
       "<li><strong>Company vehicle:</strong> 11 of 54 have one.</li></ul>" +
       '<p class="small">' + cite("svy") + ". The survey didn\'t ask about pension in a way that fits the UK.</p>" +
-      '<p class="small">On Reddit, people mention car allowances of £1–4k, bonuses of 10–15% at senior level in contracting and renewables, and £28k a year in subsistence for one contractor working away from home (2024).</p>' +
+      '<p class="small">On Reddit, people mention car allowances of £1–4k, bonuses of 10–15% at senior level in contracting and renewables, £28k a year in subsistence for one contractor working away from home (2024), and a 10% pension match plus mileage for a contractor sub-agent (Jul 2026). One water company role came with a £6k car allowance and a 10% bonus (Sep 2026).</p>' +
       '<h4>What the pattern looks like</h4><ul>' +
       '<li><strong>Client side</strong>: the pension is usually the big difference. A defined benefit scheme like the Environment Agency\'s, with 19% from the employer, is worth far more than a 5–10% matched scheme.</li>' +
       '<li><strong>Contractors</strong> are the ones most likely to add a car or car allowance, because the job moves between sites.</li>' +
@@ -211,7 +211,8 @@
     ["6–9 years", 12, "£47–61k", "£48.8k"],
     ["10+ years", 14, "£57–75k", "£62.5k"]
   ];
-  /* Reddit accounts (r/civilengineering), pasted to us in Nov 2026. UK only; US and other countries left out. "C" marks chartership. */
+  /* Reddit (r/civilengineering, r/UKJobs), pasted to us in Nov 2026. UK only: US, Australia and cost-of-living arguments left out. No usernames.
+     Dates are when the thread was posted; replies can be a little later. "C" marks chartership. */
   var TL = [
     ["Building structures, the North", "early 2024", ["Y0 £25k", "Y4 £34k", "Y6 £41k", "C", "Y8 £49k", "Y10 £64k"]],
     ["Drainage and highways, London, never changed employer", "early 2024", ["Y1 £29k", "Y2 £31k", "Y3 £33k", "Y3.5 £37k", "Y4 £42k (senior)"]],
@@ -226,24 +227,91 @@
     ["Contractor, later design manager, chartered", "early 2024", ["Year in industry £23k", "Graduate (MSc) £35k incl. car allowance", "Engineer £46k", "Senior design coordinator £51k", "Design manager £68k"]],
     ["Degree apprentice, consultancy", "2026", ["Age 19 £18k", "Age 22 £33k", "On graduating £38k"]],
     ["Outside London", "2026", ["Y0 £27k", "Y2 £32k", "Y3 £35k", "Y4 £42k"]],
-    ["North East", "2026", ["Y0 £27k", "Y17 £52k + overtime"]]
+    ["Technician", "Sep 2026", ["Start £15k", "Y6 £29k", "£35k (moved)", "Y12 £41k"]],
+    ["London project manager", "Nov 2026", ["Y4 £38.5k", "£55k (moved)"]]
+  ];
+  /* Single engineer accounts from the 2026 threads: [years, base £k, employer type, chartered, region, date, note].
+     Employer type: con consultancy, ctr contractor, cli client, utility or developer, "" not given. Chartered: y, n, "" not given. */
+  var ACC = [
+    [4, 32, "", "", "", "Nov 2026", "asking whether they're underpaid; friends on £40–45k"],
+    [5, 49, "", "n", "London", "Nov 2026", "£42k before moving employer"],
+    [4.5, 50, "", "", "the North", "Nov 2026", "structural"],
+    [4, 55, "", "", "London", "Nov 2026", "project manager, MAPM; £38.5k before moving"],
+    [5, 65, "con", "", "", "Nov 2026", "civil and energy consultancy, quoted as £60–70k"],
+    [7, 42, "", "", "", "Nov 2026", ""],
+    [8, 55, "", "y", "London", "Jul 2026", "water design engineer"],
+    [16, 53, "cli", "y", "", "Jul 2026", "water process design engineer"],
+    [12, 48, "", "", "", "Jul 2026", "rail, IEng"],
+    [10, 36, "con", "n", "", "Jul 2026", "highways at a large consultancy, 5 of those years as a technician; told no rise until chartered"],
+    [7, 42, "con", "n", "", "Jul 2026", ""],
+    [10, 54, "", "", "", "Jul 2026", "senior civils designer, HND, fully remote"],
+    [6, 65, "cli", "y", "", "Jul 2026", "rail"],
+    [15, 70, "", "", "", "Jul 2026", "rail"],
+    [10, 70, "cli", "", "", "Jul 2026", "energy; £44k at a consultancy before moving"],
+    [5, 39, "con", "", "", "Jul 2026", "design"],
+    [22, 78, "con", "n", "", "Jul 2026", "water and flood"],
+    [8, 48, "con", "y", "", "Jul 2026", "senior engineer"],
+    [5, 51, "", "", "North Wales", "Jul 2026", "structural"],
+    [5, 35, "", "", "", "Jul 2026", "highways designer, apprenticeship route"],
+    [8, 50, "cli", "n", "", "Jul 2026", "design manager, after 4 years as a technician and 4 as an engineer"],
+    [8, 41, "con", "", "", "Jul 2026", "apprenticeship route; since offered £48k as a senior"],
+    [10, 58, "con", "", "Birmingham", "Jul 2026", "associate at a small consultancy, 45–50 hours a week"],
+    [9, 51, "", "", "", "Jul 2026", "highways, good benefits"],
+    [10, 43, "", "", "", "Jul 2026", "senior highways engineer"],
+    [4, 36, "con", "", "", "Jul 2026", "bridges, with private health and a good pension"],
+    [8, 44, "", "", "North West", "Jul 2026", "drainage, 3 years as an engineer after 5 as a technician"],
+    [20, 60, "", "y", "South Coast", "Jul 2026", "flood and drainage; has since gone self-employed"],
+    [7, 44, "con", "n", "", "Jul 2026", "large consultancy"]
+  ];
+  /* Technicians and CAD, kept apart from engineers. */
+  var TECH = [
+    ["Sep 2026", "Scotland, ground modelling, about 20 years: £65k + £5k bonus + £8k car allowance + private health."],
+    ["Sep 2026", "North West, about 20 years: £58k + £4k bonus."],
+    ["Sep 2026", "Principal technician, 12 years: £54k."],
+    ["Sep 2026", "5 years: £47k."],
+    ["Sep 2026", "Rail technician: £27k, then £42k."],
+    ["Sep 2026", "South West, 9 years: £37k."],
+    ["Sep 2026", "EngTech, 8 years: £26.5k."],
+    ["Sep 2026", "Small-firm technician, 8 years, on £34k, moved to a water company checking drainage adoption (S104) designs: £60k + £6k car allowance + 10% bonus, working from home."],
+    ["2026", "CAD team in a northern civils department: new graduate £28k, 5 years £50k, senior £60k. Engineers in the same firm reach £38–40k at about 4 years."]
+  ];
+  /* Pay bands commenters quoted for a whole grade ladder. */
+  var BANDS = [
+    ["Consultancy, Humber", "Nov 2026", "Graduate £35k · mid-level £40–55k · senior £55–65k · lead £65k+, plus car allowance"],
+    ["Consultancy, one commenter's area", "2026", "Principal £45–55k · associate £55–65k · technical director £65–75k"],
+    ["Senior engineer at about 4 years, a recruiter", "Nov 2026", "London £45–48k · South £42–45k · North and Midlands £38–42k"],
+    ["Consultancy hiring manager", "Nov 2026", "About £37k before chartership, low £40s after"],
+    ["Graduate offers quoted", "Nov 2026", "£31.5k · about £32k · £35k"],
+    ["Housebuilding", "Oct 2026", "Assistant £28–36k · engineer £36–55k · senior £55–70k, each with bonus and car"],
+    ["Technicians", "Sep 2026", "Junior £25k · technician £35k · senior £45k, ceiling about £50–60k"],
+    ["Contract designers", "Jul 2026", "About £500 a day"]
+  ];
+  /* Real but unrepresentative: shown, not counted. */
+  var OUT = [
+    ["£135k", "Jul 2026", "Energy, 17 years, chartered, project delivery lead. Others in the thread called it rare."],
+    ["£200k tax-free", "Jul 2026", "Saudi Arabia, 30 years. Overseas pay, not a UK salary."],
+    ["£120k", "Oct 2026", "Claimed for a site engineer. Other commenters doubted it."],
+    ["£400 a day", "2025", "Self-employed setting-out engineer, 3 years. Another commenter says £50–100k a year is more realistic after travel, kit and gaps between contracts."]
   ];
   var REDDIT = [
     ["2026", "Outside London: their firm gives a rise every 6 months for the first 3 years, then only a further rise and a small bonus on chartering. Moving jobs is where people step up."],
-    ["2026", "Before chartership, 5 to 6 years in, £32–40k is the norm. Once chartered, it depends on the work you win and deliver. In their area: principal engineer £45–55k, associate £55–65k, technical director £65–75k."],
+    ["2026", "Before chartership, 5 to 6 years in, £32–40k is the norm. Once chartered, it depends on the work you win and deliver."],
     ["2026", "Principal engineer, chartered: £65k."],
     ["2026", "£54k, fully remote for 5 years at a global renewables consultancy, designing onshore and offshore wind, solar and battery storage, and now data centres."],
-    ["2026", "Network Rail, outside London: asset engineers £43k, seniors £55k, and the same for track maintenance and signalling engineers. You wouldn't normally join at senior level from outside, and would struggle without a railway background. Most people work their way up."],
-    ["2026", "Civils department in the north: graduate engineers start on £28–32k and reach £38–40k when they become engineers at around 4 years. In the same firm's CAD team, a new graduate is on £28k, someone with 5 years on £50k and a senior on £60k."],
+    ["2026", "Network Rail, outside London: asset engineers £43k, seniors £55k, and the same for track maintenance and signalling engineers. You wouldn't normally join at senior level from outside, and would struggle without a railway background."],
     ["2026", "Rail consultancy design engineer, about a year from chartership: £38.9k."],
+    ["Jul 2026", "Water design engineer who moved to a utility, home-based in the Midlands: £50k to £70k."],
+    ["Jul 2026", "Contractor sub-agent, South Coast, 4 years, master's degree: £60k total package, plus mileage and a 10% pension match."],
+    ["Jul 2026", "Tier 1 and 2 contractors pay their designers 10–20% more than consultancies, according to one commenter."],
+    ["Jul 2026", "North of England: £60k + £5–10k bonus."],
+    ["Sep 2026", "Public-sector highways assistant project manager: £37.5k with 35 days' leave."],
     ["early 2024", "Offshore wind, working for a developer, 10 years, chartered: £75k + 15% bonus. Moved from bridges and oil and gas via an onshore wind consultancy."],
     ["early 2024", "Contractor, 11 years, not chartered: £67k + 10% bonus + £28k subsistence for working away from home."],
-    ["early 2024", "Highways, 5 years: about £38k. Graduate years stuck on paperwork while peers moved faster."],
+    ["early 2024", "Highways, 5 years: about £38k."],
     ["early 2024", "North West: the going rate for a consultancy senior engineer is about £35–40k."],
     ["early 2024", "Principal contractor, Birmingham: started on £30k, £35k after a year including car allowance."],
     ["early 2024", "Graduate offers at one large consultancy varied by division: around 2015–17, nuclear and power paid £30k + £2.5k joining bonus + £2.5k chartership bonus, while infrastructure paid £23k."],
-    ["2023", "London consultancy, Civil Engineer (not yet senior), EngTech MICE, degree done part-time 2014–2019, moved employer twice: about £46k. Replies said that's reasonable outside London; one said another £10k plus bonus and car allowance was possible by moving."],
-    ["2025", "Self-employed setting-out engineer, 3 years: £400 a day. Another commenter says £50–100k a year is more realistic after travel, equipment and gaps between contracts."]
+    ["2023", "London consultancy, civil engineer not yet senior, EngTech MICE, part-time degree, moved employer twice: about £46k. Replies said another £10k plus bonus and car allowance was possible by moving."]
   ];
 
   window.CPCareers = { PATHS: PATHS, S: S };
@@ -282,6 +350,77 @@
       "</g></svg>" + '<p class="small">Bottom 10%, quarter, median, three-quarters and top 20% of full-time civil engineers. ONS doesn\'t publish the top 10% for this group.</p>';
   }
 
+  function med(a) { a = a.slice().sort(function (x, y) { return x - y; }); var n = a.length; return n % 2 ? a[(n - 1) / 2] : (a[n / 2 - 1] + a[n / 2]) / 2; }
+  function kk(n) { return "£" + (Math.round(n * 10) / 10) + "k"; }
+  function accBands() {
+    return [["4–5 years", 4, 5.9], ["6–9 years", 6, 9.9], ["10–15 years", 10, 15.9], ["16+ years", 16, 99]].map(function (b) {
+      var v = ACC.filter(function (a) { return a[0] >= b[1] && a[0] <= b[2]; }).map(function (a) { return a[1]; });
+      return [b[0], v.length, kk(Math.min.apply(null, v)) + "–" + kk(Math.max.apply(null, v)), kk(med(v))];
+    });
+  }
+  function bySide(t) { var v = ACC.filter(function (a) { return a[0] >= 6 && a[2] === t; }).map(function (a) { return a[1]; }); return [kk(med(v)), v.length]; }
+  function accText(a) {
+    var t = { con: "consultancy", ctr: "contractor", cli: "client side" }[a[2]], c = { y: "chartered", n: "not chartered" }[a[3]];
+    return [a[0] + " years", t, c, a[4]].filter(Boolean).join(", ") + ": £" + a[1] + "k" + (a[6] ? " (" + a[6] + ")" : "") + ".";
+  }
+  function themes() {
+    var con = bySide("con"), cli = bySide("cli");
+    return [
+      ["Moving employer is where the money is",
+        "The biggest single rises in these threads nearly all come with a change of employer, often £7–25k in one go. People who stay describe small yearly rises and a one-off bump when they charter.",
+        [["Nov 2026", "London, 5 years, not chartered: £42k to £49k by moving."], ["Nov 2026", "London project manager, 4 years: £38.5k to £55k by moving."], ["Jul 2026", "Water design engineer: £50k to £70k moving to a utility."], ["Jul 2026", "Consultancy engineer, 10 years: £44k to £70k base moving to an energy client."], ["Sep 2026", "Technician, 8 years: £34k to £60k plus car allowance and bonus moving to a water company."], ["early 2024", "Site engineer: £38k to £45k on moving at year 8, then £93k as a technical director by year 14."]],
+        [["early 2024", "A London engineer who never moved reached £42k at 4 years and felt underpaid."], ["2026", "One firm gives rises every 6 months for 3 years, then only a small rise on chartering."]]],
+      ["Client, utility and developer side pays more than consultancy",
+        "Among engineers with 6 or more years who said who they work for, the client-side median is " + cli[0] + " (" + cli[1] + " people) against " + con[0] + " in consultancy (" + con[1] + " people). Small numbers, but each single jump of £20k or more in these threads was a move to a client, utility or developer. Commenters blame consultancies competing on fees. It isn't universal: client roles in the public sector and water can pay less.",
+        [["Jul 2026", "Rail, client side, chartered, 6 years: £65k."], ["Jul 2026", "Energy client, 10 years: £70k base, from £44k at a consultancy."], ["Jul 2026", "Utility design reviewer: £70k, from £50k."], ["early 2024", "Offshore wind developer, chartered, 10 years: £75k + 15% bonus."]],
+        [["Jul 2026", "Water process design engineer, client side, chartered, 16 years: £53k."], ["Sep 2026", "Public-sector highways assistant project manager: £37.5k, but with 35 days' leave."]]],
+      ["Chartership matters less to pay than people expect",
+        "Plenty of engineers without chartership report principal or associate pay, and the recruiter data above puts the chartered uplift at only 4–10% in highways. Where it bites is in consultancies that tie promotion to it. It opens grades rather than adding a fixed amount.",
+        [["Jul 2026", "Not chartered, 22 years, consultancy: £78k."], ["2024–25", "Not chartered, 8 years: £71k + 15% bonus."], ["early 2024", "Contractor, not chartered, 11 years: £67k + 10% bonus + £28k subsistence."], ["Jul 2026", "Client-side design manager, not chartered, 8 years: £50k."], ["Jul 2026", "Several commenters say non-chartered principals and associate directors are common where they work."]],
+        [["Jul 2026", "Highways at a large consultancy, 10 years: £36k, told there's no rise until chartered."], ["Nov 2026", "A consultancy hiring manager: about £37k before chartership, low £40s after."], ["Jul 2026", "Chartered isn't a guarantee either: chartered seniors report £48k at 8 years and £53k at 16."]]],
+      ["Contracting pays more, and asks more",
+        "Contractors and housebuilders are said to pay 10–20% more than consultancies, often with a car, bonus and better pension match. The trade is longer hours, site work and moving around. Energy, power, transmission, utilities and water were the sectors most often named as best paid (Oct 2026).",
+        [["Jul 2026", "Contractor sub-agent, South Coast, 4 years: £60k package, plus mileage and a 10% pension match."], ["early 2024", "Tunnelling contractor: £64k by year 2."], ["Oct 2026", "Housebuilding: engineer £36–55k, senior £55–70k, each with bonus and car."], ["Jul 2026", "Contract designers: about £500 a day."]],
+        []],
+      ["Technicians and CAD can match engineers, up to a point",
+        "Experienced technicians report £54–65k, more than many engineers of the same age, and in one firm CAD staff out-earn engineers at 5 years. But the spread is wide (£26.5k at 8 years at the bottom), and one commenter puts the ceiling at about £50–60k. Moving into a checking or reviewing role at a utility is one way past it.",
+        TECH, []],
+      ["Titles have inflated, so compare years and work, not titles",
+        "One commenter says principal used to mean about 8 years' experience and associate about 12, and now sees 5 and 6–7 (Nov 2026). So one title covers a wide range: principals on £45–55k in one area and £65k elsewhere; seniors on £35–40k in the North West against £45–48k in London. Six figures usually means director level. One commenter puts top chartered engineers at £85–100k (Jul 2026), close to the £95–120k Carrington West gives highways directors.",
+        [], []],
+      ["Graduate pay has kept pace with prices, but no more",
+        "One large consultancy offered infrastructure graduates £23k around 2015–17. Offers quoted in 2026 are £31.5–35k, and the 2024 survey median for 0–2 years is £31k. Prices rose by roughly 40% over that time (our rough figure from CPI), so in real terms starting pay is about flat.",
+        [], []]
+    ];
+  }
+  function drawReddit() {
+    var ev = function (l) { return l.map(function (e) { return "<li>" + esc(e[1]) + ' <span class="small">(' + esc(e[0]) + ")</span></li>"; }).join(""); };
+    return '<h4>What engineers said on Reddit</h4>' +
+      '<p class="small">Seven r/civilengineering and r/UKJobs threads on UK pay, posted between 2023 and November 2026, plus comments shared with us in November 2026. Every figure carries the date it was posted. These are individual accounts, not a sample: people who post are not typical, and older figures will be lower than today\'s. Accounts from the US, Australia and elsewhere, and arguments about cost of living, are left out.</p>' +
+      '<div class="rd-box"><h5>Engineers\' pay by experience, as reported in 2026</h5>' +
+      '<table class="car-tbl"><thead><tr><th>Experience</th><th>Accounts</th><th>Range</th><th>Median</th></tr></thead><tbody>' +
+      accBands().map(function (r) { return "<tr><td>" + r[0] + "</td><td>" + r[1] + "</td><td>" + r[2] + "</td><td><strong>" + r[3] + "</strong></td></tr>"; }).join("") + "</tbody></table>" +
+      '<p class="small">Base salary from ' + ACC.length + ' engineers who gave both their pay and their years of experience. Technicians, total-package figures and the outliers below are kept out. The 4–5 year median sits well above the 2024 survey\'s (£37.3k), probably because several London and energy accounts fall in that band; from 6 years on the two roughly agree.</p></div>' +
+      "<h4>What the accounts point to</h4>" +
+      '<div class="rd-themes">' + themes().map(function (t) {
+        var n = t[2].length + t[3].length;
+        return '<section class="rd-th"><h5>' + esc(t[0]) + "</h5><p>" + esc(t[1]) + "</p>" +
+          (n ? '<details class="car-more"><summary>The accounts (' + n + ")</summary>" + (t[2].length ? '<ul class="car-quotes">' + ev(t[2]) + "</ul>" : "") +
+            (t[3].length ? '<p class="small rd-but">Pointing the other way</p><ul class="car-quotes">' + ev(t[3]) + "</ul>" : "") + "</details>" : "") + "</section>";
+      }).join("") + "</div>" +
+      '<div class="rd-out"><h5>Outliers, shown but not counted</h5><ul>' + OUT.map(function (o) { return "<li><strong>" + esc(o[0]) + "</strong> " + esc(o[2]) + ' <span class="small">(' + esc(o[1]) + ")</span></li>"; }).join("") + "</ul></div>" +
+      '<details class="car-more"><summary>Pay ladders commenters quoted (' + BANDS.length + ")</summary>" +
+      '<table class="car-tbl rd-bands"><tbody>' + BANDS.map(function (b) { return "<tr><td><strong>" + esc(b[0]) + '</strong><br><span class="small">' + esc(b[1]) + "</span></td><td>" + esc(b[2]) + "</td></tr>"; }).join("") + "</tbody></table>" +
+      '<p class="small">One commenter warns that recruiters can overstate what you could earn to win their fee. That applies to the recruiter bands on this page too.</p></details>' +
+      '<details class="car-more"><summary>Pay over time, as people reported it (' + TL.length + ")</summary>" +
+      '<ul class="tl-list">' + TL.map(function (t) { return '<li><div class="tl-h"><strong>' + esc(t[0]) + '</strong><span class="small">' + esc(t[1]) + '</span></div><div class="tl-steps">' + t[2].map(function (x) { return x === "C" ? '<span class="tl-c">Chartered</span>' : "<span>" + esc(x) + "</span>"; }).join("") + "</div></li>"; }).join("") + "</ul></details>" +
+      '<details class="car-more"><summary>Every account (' + (ACC.length + TECH.length + REDDIT.length) + ")</summary>" +
+      '<p class="small rd-but">Engineers, 2026 threads</p><ul class="car-quotes">' + ACC.map(function (a) { return "<li>" + esc(accText(a)) + ' <span class="small">(' + a[5] + ")</span></li>"; }).join("") + "</ul>" +
+      '<p class="small rd-but">Technicians and CAD</p><ul class="car-quotes">' + ev(TECH) + "</ul>" +
+      '<p class="small rd-but">Other comments</p><ul class="car-quotes">' + ev(REDDIT) + "</ul></details>" +
+      '<p class="small">We couldn\'t read Glassdoor directly because it blocks automated access.</p>';
+  }
+
   function drawStatic() {
     var g = $("car-grades"); if (g) g.innerHTML =
       "<p>The middle UK civil engineer earns <strong>£52.5k</strong>, up from £45.5k in 2023. " + cite("onsJF") + "</p>" + onsBar() +
@@ -305,20 +444,7 @@
       '<table class="car-tbl"><thead><tr><th>Experience</th><th>People</th><th>Middle half</th><th>Median</th></tr></thead><tbody>' +
       SURVEY.map(function (r) { return "<tr><td>" + esc(r[0]) + "</td><td>" + r[1] + "</td><td>" + esc(r[2]) + "</td><td><strong>" + esc(r[3]) + "</strong></td></tr>"; }).join("") + "</tbody></table>" +
       "<p><strong>Chartered or not:</strong> among people with 6 or more years' experience, the 12 chartered engineers had a median of £65k and the 14 who weren't chartered had £50.8k. Chartered people also tended to have more experience, so not all of that gap is down to chartership. London had only 5 responses, too few to compare with the rest of the UK.</p>" +
-      "<h4>What people said on Reddit</h4>" +
-      '<p class="small">From three r/civilengineering threads on UK pay (posted 2023 and 2024, with replies up to 2026) and comments shared with us in November 2026. These are individual accounts, not a sample, and older figures will be lower than today\'s. Comments about other countries are left out.</p>' +
-      '<h4>Pay over time, as people reported it</h4><ul class="tl-list">' +
-      TL.map(function (t) { return '<li><div class="tl-h"><strong>' + esc(t[0]) + '</strong><span class="small">' + esc(t[1]) + '</span></div><div class="tl-steps">' + t[2].map(function (x) { return x === "C" ? '<span class="tl-c">Chartered</span>' : "<span>" + esc(x) + "</span>"; }).join("") + "</div></li>"; }).join("") + "</ul>" +
-      '<details class="car-more"><summary>Other comments (' + REDDIT.length + ')</summary><ul class="car-quotes">' +
-      REDDIT.map(function (r) { return "<li>" + esc(r[1]) + ' <span class="small">(' + esc(r[0]) + ")</span></li>"; }).join("") + "</ul></details>" +
-      "<h4>What these accounts suggest</h4><ul>" +
-      "<li><strong>Moving employer is where the big rises come from.</strong> Most of the steepest timelines include a move, and the London engineer who never moved calls themselves underpaid. The published surveys don\'t measure this.</li>" +
-      "<li><strong>Contracting, tunnelling, power and renewables pay more.</strong> The highest timelines come from tunnelling, contracting and offshore wind, often with a bonus, car allowance or subsistence on top. They also mention longer hours, shifts and working away.</li>" +
-      "<li><strong>Graduate pay has barely moved.</strong> Starting salaries of £25–27k appear in accounts from 17 years ago and from the last few years. The 2024 survey\'s median for 0–2 years is £31k. In real terms that\'s a fall.</li>" +
-      "<li><strong>Pay at the same title varies widely.</strong> Principal engineers are reported on £45–55k in one area and £65k elsewhere. Six figures is usually director level, which matches the £95–120k Carrington West gives for highways directors.</li>" +
-      "<li><strong>CAD can out-earn engineering in some firms.</strong> In one firm, CAD staff with 5 years earn £50k against £38–40k for engineers at 4 years.</li>" +
-      "<li><strong>Be wary of recruiters\' numbers.</strong> One commenter warns that recruiters can overstate what you could earn so they get their commission. That applies to the recruiter bands on this page too.</li></ul>" +
-      '<p class="small">We couldn\'t read Glassdoor directly because it blocks automated access.</p>';
+      drawReddit();
   }
 
   function init() {
