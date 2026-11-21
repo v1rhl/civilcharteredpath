@@ -208,6 +208,7 @@
     "Before chartership, 5 to 6 years in, £32–40k is the norm. Once chartered, it depends on the work you win and deliver. In their area: principal engineer £45–55k, associate £55–65k, technical director £65–75k.",
     "North East England, 17 years' experience: £52k plus overtime that's hard to avoid. Notes the North East is one of the cheapest places in the UK to live. Started on £27k as a graduate 17 years ago.",
     "Network Rail, outside London: asset engineers £43k, seniors £55k, and the same for track maintenance and signalling engineers. You wouldn't normally join at senior level from outside, and would struggle without a railway background. Most people work their way up.",
+    "Civils department in the north: graduate engineers start on £28–32k and reach £38–40k when they become engineers at around 4 years. In the same firm's CAD team, a new graduate is on £28k, someone with 5 years on £50k and a senior on £60k.",
     "Principal engineer, chartered: £65k.",
     "£54k, fully remote for 5 years at a global renewables consultancy, designing onshore and offshore wind, solar and battery storage, and now data centres."
   ];
@@ -271,7 +272,8 @@
       '<p class="small">Comments from r/civilengineering threads on UK pay, shared with us in November 2026. They\'re individual accounts, not a sample.</p><ul class="car-quotes">' +
       REDDIT.map(function (r) { return "<li>" + esc(r) + "</li>"; }).join("") + "</ul>" +
       "<p><strong>Where the accounts disagree:</strong> one chartered principal earns £65k, while another reader says principals in their area earn £45–55k. £65k sits inside both the survey\'s middle half for 10+ years (£57–75k) and the recruiter\'s principal band (£62–82k). £45–55k sits below both. Pay at the same title varies a lot by region and firm, so treat any single figure with care.</p>" +
-      "<p><strong>Graduate pay hasn\'t kept up:</strong> two of these accounts started on the same £27k, one 17 years ago and one 4 years ago. The 2024 survey\'s graduate median is only a little higher, at £31k. That\'s a real-terms fall over the period.</p>" +
+      "<p><strong>Graduate pay hasn\'t kept up:</strong> two of these accounts started on the same £27k, one 17 years ago and one 4 years ago, and a third firm starts graduates on £28–32k. The 2024 survey\'s median for 0–2 years is £31k. That\'s a real-terms fall over the period.</p>" +
+      "<p><strong>CAD can out-earn engineering:</strong> in one firm, CAD technicians with 5 years\' experience earn more than engineers at 4 years (£50k against £38–40k). That\'s one firm, but it\'s worth asking about if you\'re weighing the two routes.</p>" +
       "<p><strong>Moving jobs:</strong> several accounts say the big rises come from changing employer rather than staying put. The published surveys don\'t measure this.</p>" +
       '<p class="small">We couldn\'t read Glassdoor directly because it blocks automated access.</p>';
   }
