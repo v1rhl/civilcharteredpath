@@ -150,7 +150,7 @@
       '<div class="emp-grid">' + EMP.map(function (e) { return '<div class="emp"><div class="emp-h"><strong>' + esc(e[1]) + '</strong><span class="chip">' + esc(e[0]) + '</span></div><dl><dt>Leave</dt><dd>' + esc(e[2]) + "</dd><dt>Pension</dt><dd>" + esc(e[3]) + "</dd><dt>Other</dt><dd>" + esc(e[4]) + '</dd></dl><span class="small">' + pc(e[5]) + "</span></div>"; }).join("") + "</div>" +
       '<p class="small">From each employer\'s own careers pages, read in Nov 2026. Most pages carry no date and give no pension percentage, so we\'ve left those blank rather than guess. Bonus amounts, car allowance amounts and overtime rules weren\'t published by any of them.</p>' +
       '<h4>What the pattern looks like</h4><ul>' +
-      '<li><strong>Client side</strong> : the pension is usually the big difference. A defined benefit scheme like the Environment Agency\'s, with 19% from the employer, is worth far more than a 5–10% matched scheme.</li>' +
+      '<li><strong>Client side</strong>: the pension is usually the big difference. A defined benefit scheme like the Environment Agency\'s, with 19% from the employer, is worth far more than a 5–10% matched scheme.</li>' +
       '<li><strong>Contractors</strong> are the ones most likely to add a car or car allowance, because the job moves between sites.</li>' +
       '<li><strong>Consultancies</strong> tend to offer profit share and buying extra holiday rather than a car.</li>' +
       '<li>Overtime is rarely paid at professional grades anywhere; ask how hours and time off in lieu work before you accept.</li></ul>' +
