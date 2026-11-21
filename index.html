@@ -489,6 +489,16 @@ body.with-sources .shell .subnav.wrap { padding-left: 0; padding-right: 0; max-w
 .res-list li { display: block; }
 .res-list .res-cost, .res-list .res-att { display: inline-block !important; width: auto !important; }
 
+/* Drawn illustrations (js/art.js) */
+.view-head { position: relative; }
+.vh-art { position: absolute; top: 0; right: 0; width: 86px; height: 26px; opacity: .9; pointer-events: none; }
+.view-head > .eyebrow { padding-right: 94px; }
+@media (min-width: 760px) { .vh-art { width: 240px; height: 72px; top: 4px; } .view-head > :not(.vh-art) { max-width: calc(100% - 260px); } .view-head > .lede { max-width: min(62ch, calc(100% - 260px)); } }
+.hero-art { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; max-width: 1100px; margin: 0 auto; padding: 0 16px; height: 56px; opacity: .85; }
+.hero-art svg { width: 100%; height: 56px; }
+@media (max-width: 620px) { .hero-art { grid-template-columns: repeat(2, 1fr); height: 40px; } .hero-art svg { height: 40px; } .hero-art svg:nth-child(n+3) { display: none; } }
+@media print { .vh-art, .hero-art { display: none; } }
+
 /* Graded example answers */
 .levels { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px; }
 .levels > div { border: 1px solid var(--line); border-radius: var(--radius); padding: 12px 14px; display: flex; flex-direction: column; gap: 6px; }
@@ -1770,13 +1780,14 @@ nav a[aria-current="page"][aria-expanded="true"] { color: var(--accent-ink); bac
   </div>
 </footer>
 
-<script src="js/content.js?v=20261121j"></script>
-<script src="js/role.js?v=20261121j"></script>
-<script src="js/careers.js?v=20261121j"></script>
-<script src="js/news-feed.js?v=20261121j"></script>
-<script src="js/news-archive.js?v=20261121j"></script>
-<script src="js/config.js?v=20261121j"></script>
-<script src="js/pages.js?v=20261121j"></script>
-<script src="js/site.js?v=20261121j"></script>
+<script src="js/content.js?v=20261121k"></script>
+<script src="js/role.js?v=20261121k"></script>
+<script src="js/careers.js?v=20261121k"></script>
+<script src="js/news-feed.js?v=20261121k"></script>
+<script src="js/news-archive.js?v=20261121k"></script>
+<script src="js/config.js?v=20261121k"></script>
+<script src="js/pages.js?v=20261121k"></script>
+<script src="js/site.js?v=20261121k"></script>
+<script src="js/art.js?v=20261121k"></script>
 </body>
 </html>
