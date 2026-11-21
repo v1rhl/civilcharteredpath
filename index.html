@@ -322,6 +322,8 @@ input[type="date"], input[type="number"] { font: 400 0.95rem var(--font-body); p
 @media (max-width: 520px) { .plan-list li { grid-template-columns: 12px minmax(0, 1fr); } .plan-list .when { grid-column: 2; } }
 
 /* Flashcards */
+.tbc { font: 600 0.62rem var(--font-mono); letter-spacing: 0.04em; color: var(--muted); border: 1px solid var(--line); border-radius: 3px; padding: 0 3px; vertical-align: 1px; }
+@media (max-width: 420px) { #nav .tbc { display: none; } }
 .chips-row { display: flex; gap: 6px; flex-wrap: wrap; }
 .chips-row button { font: 600 0.85rem var(--font-body); padding: 6px 12px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); cursor: pointer; }
 .chips-row button .c { font: 500 0.72rem var(--font-mono); color: var(--muted); margin-left: 4px; }
@@ -356,6 +358,45 @@ input[type="date"], input[type="number"] { font: 400 0.95rem var(--font-body); p
 .feed a:hover { color: var(--accent); text-decoration: underline; }
 @media (max-width: 520px) { .feed li { grid-template-columns: 1fr; } }
 
+/* Careers */
+.car-path { display: flex; flex-direction: column; gap: 10px; }
+.car-path h4, #car-grades h4, #car-pkg h4 { margin: 8px 0 0; }
+.car-ladder { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0; border-left: 2px solid var(--accent); }
+.car-ladder li { padding: 6px 0 8px 14px; position: relative; }
+.car-ladder li::before { content: ""; position: absolute; left: -6px; top: 12px; width: 10px; height: 10px; border-radius: 50%; background: var(--surface); border: 2px solid var(--accent); }
+.car-ladder .cl-h { display: flex; justify-content: space-between; gap: 8px; align-items: baseline; flex-wrap: wrap; }
+.car-ladder p { margin: 2px 0 0; color: var(--muted); font-size: 0.92rem; }
+.car-pay { margin: 0; padding-left: 1.1em; }
+.car-pay strong { font-family: var(--font-mono); }
+.cite { white-space: normal; }
+.car-sec > summary { list-style: none; cursor: pointer; display: flex; flex-direction: column; gap: 2px; }
+.car-sec > summary::-webkit-details-marker { display: none; }
+.car-sec > summary h3::after { content: " ›"; color: var(--muted); font-family: var(--font-mono); }
+.car-sec[open] > summary h3::after { content: " ⌄"; }
+.car-sec > div { display: flex; flex-direction: column; gap: 10px; margin-top: 10px; }
+.car-more > summary { cursor: pointer; font-weight: 600; font-size: 0.92rem; }
+.car-more[open] > summary { margin-bottom: 8px; }
+.car-tbl { font-size: 0.88rem; }
+.car-tbl th, .car-tbl td { text-align: left; padding: 6px 8px 6px 0; border-bottom: 1px solid var(--line); vertical-align: top; }
+.car-tbl th { color: var(--muted); font-weight: 600; }
+.emp-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 10px; }
+.emp { border: 1px solid var(--line); border-radius: var(--radius); padding: 10px 12px; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.emp-h { display: flex; justify-content: space-between; gap: 8px; align-items: center; }
+.emp dl { margin: 0; display: grid; grid-template-columns: auto minmax(0,1fr); gap: 4px 10px; font-size: 0.86rem; }
+.emp dt { color: var(--muted); font-weight: 600; }
+.emp dd { margin: 0; }
+.car-bar { width: 100%; max-width: 420px; height: auto; }
+.car-bar .cb-w { stroke: var(--muted); stroke-width: 2; }
+.car-bar .cb-box { fill: var(--accent-soft); stroke: var(--accent); }
+.car-bar .cb-med { stroke: var(--accent); stroke-width: 3; }
+.car-bar text { font: 500 10px var(--font-mono); fill: var(--muted); }
+.pk-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.pk-col { border: 1px solid var(--line); border-radius: var(--radius); padding: 10px; margin: 0; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.pk-col legend { font-weight: 700; padding: 0 4px; }
+.pk-col .field span { font-size: 0.82rem; }
+.pk-col input { width: 100%; }
+.pk-tot td { font-weight: 700; border-bottom: 0; }
+@media (max-width: 420px) { .pk-grid { gap: 8px; } .pk-col { padding: 8px; } }
 /* Report check */
 .check { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; align-items: start; }
 .checks { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 0.9rem; }
@@ -717,11 +758,11 @@ html:not([data-level="ieng"]) .cmp-table .c-ceng, html[data-level="ieng"] .cmp-t
       <span id="site-name">Civil Chartered Path</span>
     </a>
     <nav id="nav" aria-label="Sections">
-      <a href="#planner" data-group="planner route">Plan</a>
+      <a href="#planner" data-group="planner route careers">Plan</a>
       <a href="#attributes" data-group="attributes">Attributes</a>
       <a href="#review" data-group="review presentation flashcards questions cheat-sheet">Review day</a>
       <a href="#news" data-group="news">News</a>
-      <a href="#check" data-group="check">Report check</a>
+      <a href="#check" data-group="check">Report check <span class="tbc">TBC</span></a>
     </nav>
     <button type="button" class="theme-toggle" id="theme-toggle" aria-label="Switch to dark mode" title="Switch to dark mode">
       <svg class="i-moon" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="stroke:currentColor"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/></svg>
@@ -815,6 +856,33 @@ html:not([data-level="ieng"]) .cmp-table .c-ceng, html[data-level="ieng"] .cmp-t
 </section>
 
 <!-- ATTRIBUTES -->
+<!-- CAREERS -->
+<section class="view wrap" id="view-careers" data-view="careers" hidden>
+  <div class="view-head">
+    <span class="eyebrow">After chartership</span>
+    <h2>Careers, pay and packages</h2>
+    <p class="lede">Where the paths lead, what each level expects, and what it pays. Every figure shows its source and date.</p>
+  </div>
+  <div class="panel">
+    <h3>Pick a path</h3>
+    <div class="chips-row" id="car-paths" role="group" aria-label="Career path"></div>
+    <div id="car-path" class="car-path"></div>
+  </div>
+  <details class="panel car-sec">
+    <summary><h3>Pay by grade</h3><span class="small">Published figures: ONS and recruiters</span></summary>
+    <div id="car-grades"></div>
+  </details>
+  <details class="panel car-sec">
+    <summary><h3>What engineers report</h3><span class="small">Self-reported and advertised pay, kept separate</span></summary>
+    <div id="car-reported"></div>
+  </details>
+  <details class="panel car-sec">
+    <summary><h3>The whole package</h3><span class="small">Pension, leave, car and bonus, with an offer comparer</span></summary>
+    <div id="car-pkg"></div>
+  </details>
+</section>
+
+
 <section class="view wrap" id="view-attributes" data-view="attributes" hidden>
   <div class="view-head">
     <span class="eyebrow">The seven attributes</span>
@@ -1144,13 +1212,13 @@ html:not([data-level="ieng"]) .cmp-table .c-ceng, html[data-level="ieng"] .cmp-t
   <div class="view-head">
     <span class="eyebrow">Report check</span>
     <h2>Get feedback on your report before your supervisor does</h2>
-    <p class="lede">Paste a section of your CEng report or IPD record, or upload it as Word or PDF. An AI reviewer reads it against the seven attributes and the chartered-level bar, then points out gaps, errors and passages to rewrite.</p>
+    <p class="lede">TBC. An AI reviewer that reads a section of your report against the seven attributes is planned, but it isn't ready yet.</p>
   </div>
   <div class="notice" role="note" id="check-offline">
     <span class="mono" aria-hidden="true">!</span>
-    <p><strong>Report check is not available yet.</strong> We're working on it. Nothing you type here is sent anywhere. The feedback shown is an example of what you'll get, written for a made-up report.</p>
+    <p><strong>TBC.</strong> This feature is still to come. Until then, use the <a href="#attributes">Attributes</a> page and your mentor to check your report.</p>
   </div>
-  <div class="check">
+  <div class="check" hidden>
     <form class="panel" id="check-form" autocomplete="off">
       <div class="field">
         <label for="check-type">What are you checking?</label>
@@ -1181,7 +1249,7 @@ html:not([data-level="ieng"]) .cmp-table .c-ceng, html[data-level="ieng"] .cmp-t
     </form>
     <div class="panel" id="check-result" style="gap:16px" aria-live="polite"></div>
   </div>
-  <div class="panel">
+  <div class="panel" hidden>
     <h3>How the feedback works</h3>
     <p>The reviewer is told what ICE reviewers look for under each attribute, the extra the chartered level asks for, and the common reasons reports fall short: writing as "we", no numbers, reflections that don't say what changed, claims that go beyond your role, and figures that don't add up. It can be wrong. Treat it as a second pair of eyes, not a verdict, and always take your supervisor's or mentor's advice over it.</p>
   </div>
@@ -1596,12 +1664,13 @@ html:not([data-level="ieng"]) .cmp-table .c-ceng, html[data-level="ieng"] .cmp-t
   </div>
 </footer>
 
-<script src="js/content.js?v=20261117a"></script>
-<script src="js/role.js?v=20261117a"></script>
-<script src="js/news-feed.js?v=20261117a"></script>
-<script src="js/news-archive.js?v=20261117a"></script>
-<script src="js/config.js?v=20261117a"></script>
-<script src="js/pages.js?v=20261117a"></script>
-<script src="js/site.js?v=20261117a"></script>
+<script src="js/content.js?v=20261121a"></script>
+<script src="js/role.js?v=20261121a"></script>
+<script src="js/careers.js?v=20261121a"></script>
+<script src="js/news-feed.js?v=20261121a"></script>
+<script src="js/news-archive.js?v=20261121a"></script>
+<script src="js/config.js?v=20261121a"></script>
+<script src="js/pages.js?v=20261121a"></script>
+<script src="js/site.js?v=20261121a"></script>
 </body>
 </html>

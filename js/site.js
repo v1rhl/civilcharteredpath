@@ -545,7 +545,7 @@
   renderForum();
 
   /* Routing on the hash */
-  var views = ["home", "route", "attributes", "planner", "flashcards", "review", "presentation", "questions", "news", "check", "cheat-sheet", "community"];
+  var views = ["home", "route", "careers", "attributes", "planner", "flashcards", "review", "presentation", "questions", "news", "check", "cheat-sheet", "community"];
   function route() {
     var v = (location.hash || "#home").slice(1);
     if (v === "reference") { v = "cheat-sheet"; history.replaceState(null, "", "#cheat-sheet"); }
@@ -555,8 +555,8 @@
     Array.prototype.forEach.call(document.querySelectorAll("#nav a"), function (a) {
       if ((a.dataset.group || "").split(" ").indexOf(v) > -1) a.setAttribute("aria-current", "page"); else a.removeAttribute("aria-current");
     });
-    var SUB = { planner: [["planner", "Planner"], ["route", "The route"]], review: [["review", "Overview"], ["presentation", "Presentation tips"], ["flashcards", "Flashcards"], ["questions", "Practice questions"], ["cheat-sheet", "Cheat sheet"]] };
-    var grp = ["planner", "route"].indexOf(v) > -1 ? "planner" : ["review", "presentation", "flashcards", "questions", "cheat-sheet"].indexOf(v) > -1 ? "review" : "";
+    var SUB = { planner: [["planner", "Planner"], ["route", "The route"], ["careers", "Careers"]], review: [["review", "Overview"], ["presentation", "Presentation tips"], ["flashcards", "Flashcards"], ["questions", "Practice questions"], ["cheat-sheet", "Cheat sheet"]] };
+    var grp = ["planner", "route", "careers"].indexOf(v) > -1 ? "planner" : ["review", "presentation", "flashcards", "questions", "cheat-sheet"].indexOf(v) > -1 ? "review" : "";
     $("subnav").hidden = !grp;
     $("subnav").innerHTML = grp ? SUB[grp].map(function (x) { return '<a href="#' + x[0] + '"' + (x[0] === v ? ' aria-current="page"' : "") + ">" + x[1] + "</a>"; }).join("") : "";
     var withSources = ["route", "attributes", "review", "presentation", "cheat-sheet", "planner"].indexOf(v) > -1;
