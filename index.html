@@ -475,6 +475,20 @@ body.with-sources .shell .subnav.wrap { padding-left: 0; padding-right: 0; max-w
 .shade-key .k-tool { background: var(--tool-bg); border-color: var(--tool-line); }
 .shade-key .k-ref { background: var(--ref-bg); border-color: var(--ref-line); }
 
+.res-grid { display: grid; gap: 14px; }
+@media (min-width: 900px) { .res-grid { grid-template-columns: 1fr 1fr; } }
+.res-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 12px; }
+.res-list li > a:first-child { font-weight: 600; }
+.res-list p { margin: 2px 0 0; font-size: 0.92rem; }
+.res-cost { display: inline-block; font: 500 0.7rem var(--font-mono); text-transform: uppercase; letter-spacing: 0.04em; border-radius: 4px; padding: 1px 6px; border: 1px solid var(--line); vertical-align: 1px; }
+.res-cost.free { background: var(--accent-soft); color: var(--accent); border-color: transparent; }
+.res-cost.reg { background: var(--paper); color: var(--ink); }
+.res-cost.mem { background: var(--flag-soft); color: var(--ink); border-color: transparent; }
+.res-cost.paid { background: var(--accent-2-soft); color: var(--ink); border-color: transparent; }
+.res-att { font: 500 0.72rem var(--font-mono); margin-left: 4px; }
+.res-list li { display: block; }
+.res-list .res-cost, .res-list .res-att { display: inline-block !important; width: auto !important; }
+
 /* Graded example answers */
 .levels { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px; }
 .levels > div { border: 1px solid var(--line); border-radius: var(--radius); padding: 12px 14px; display: flex; flex-direction: column; gap: 6px; }
@@ -794,7 +808,7 @@ nav a[aria-current="page"][aria-expanded="true"] { color: var(--accent-ink); bac
       <span id="site-name">Civil Chartered Path</span>
     </a>
     <nav id="nav" aria-label="Sections">
-      <a href="#planner" data-group="planner route careers">Plan</a>
+      <a href="#planner" data-group="planner route careers resources">Plan</a>
       <a href="#attributes" data-group="attributes">Attributes</a>
       <a href="#review" data-group="review presentation flashcards questions cheat-sheet">Review day</a>
       <a href="#news" data-group="news">News</a>
@@ -893,6 +907,61 @@ nav a[aria-current="page"][aria-expanded="true"] { color: var(--accent-ink); bac
 
 <!-- ATTRIBUTES -->
 <!-- CAREERS -->
+<section class="view wrap" id="view-resources" data-view="resources" hidden>
+  <div class="view-head">
+    <span class="eyebrow"><a href="#planner">Plan</a> / Technical resources</span>
+    <h2>Where to learn and check the technical side</h2>
+    <p class="lede">Places to ask questions, find the code, read design guidance and run a quick check. Each one says what it gives you and what it costs. Where it lines up with an attribute, we've said which.</p>
+  </div>
+  <p class="small">Links checked 21 Nov 2026. <span class="res-cost free">Free</span> open to anyone. <span class="res-cost reg">Free, sign-up</span> needs an account. <span class="res-cost mem">Members</span> free to members of that body. <span class="res-cost paid">Paid</span> costs money, often covered by your employer.</p>
+  <div class="res-grid">
+    <div class="panel">
+      <h3>Ask and discuss</h3>
+      <ul class="res-list">
+        <li><a href="https://www.eng-tips.com/" target="_blank" rel="noopener">Eng-Tips</a> <span class="res-cost free">Free</span><p>Long-running forums for practising engineers, strongest on structures and geotechnics. Search before you post: most questions have been answered. Many members work to US codes, so check which code an answer assumes.</p></li>
+        <li><a href="https://www.reddit.com/r/civilengineering/" target="_blank" rel="noopener">r/civilengineering</a> <span class="res-cost free">Free</span><p>Careers, pay and day-to-day practice. Mostly US, so filter for UK threads. Good for "how do others handle this", not for design answers.</p></li>
+      </ul>
+    </div>
+    <div class="panel">
+      <h3>Standards and codes</h3>
+      <ul class="res-list">
+        <li><a href="https://standardsforhighways.co.uk/help" target="_blank" rel="noopener">Standards for Highways</a> <span class="res-cost free">Free</span><p>The DMRB and the Specification for Highway Works, with downloads of the set current on any date. A free account adds bookmarks and update emails.</p></li>
+        <li><a href="https://www.gov.uk/guidance/building-regulations-and-approved-documents-index" target="_blank" rel="noopener">Approved Documents</a> <span class="res-cost free">Free</span><p>All the Building Regulations guidance for England in one searchable PDF, including Part A (structure).</p></li>
+        <li><a href="https://www.hse.gov.uk/pubns/books/l153.htm" target="_blank" rel="noopener">HSE L153: CDM 2015 guidance</a> <span class="res-cost free">Free</span> <a class="res-att" href="#attributes-4">Attribute 4</a><p>The official guidance on the CDM Regulations: designer duties, the principal designer and the construction phase plan. Worth reading before your review.</p></li>
+        <li><a href="https://www.water.org.uk/sites/default/files/2023-11/SSG%20Appendix%20C%20-%20Design%20and%20Construction%20Guidance%20v2-3_0.pdf" target="_blank" rel="noopener">Water UK: Design and Construction Guidance</a> <span class="res-cost free">Free</span><p>The adoption standard for foul and surface water sewers in England (v2.3, Nov 2023). Replaced Sewers for Adoption.</p></li>
+        <li><a href="https://www.rssb.co.uk/standards-catalogue" target="_blank" rel="noopener">RSSB standards catalogue</a> <span class="res-cost reg">Free, sign-up</span><p>Searchable list of GB rail standards and the Rule Book. Network Rail company standards are separate and usually come through your employer.</p></li>
+        <li>British Standards and Eurocodes <span class="res-cost paid">Paid</span><p>Sold by BSI. Most employers and universities subscribe to British Standards Online, so ask before you buy.</p></li>
+      </ul>
+    </div>
+    <div class="panel">
+      <h3>Design guidance</h3>
+      <ul class="res-list">
+        <li><a href="https://steelconstruction.info/Eurocode_Design_Guides" target="_blank" rel="noopener">steelconstruction.info: Eurocode design guides</a> <span class="res-cost free">Free</span> <a class="res-att" href="#attributes-1">Attribute 1</a><p>SCI's guides to Eurocode 3 as free PDFs, with a starter set for beginners. The wider site explains steel design topic by topic. SCI's NCCI documents are free with sign-up.</p></li>
+        <li><a href="https://www.concretecentre.com/Codes/Design-Codes/Eurocode-2/Phenomena.aspx" target="_blank" rel="noopener">The Concrete Centre: Eurocode 2</a> <span class="res-cost paid">Paid</span> <a class="res-att" href="#attributes-1">Attribute 1</a><p>The standard UK guides to concrete design, including How to Design Concrete Structures and Worked Examples to Eurocode 2 (£30 download).</p></li>
+        <li><a href="https://www.ciria.org/CIRIA/Resources" target="_blank" rel="noopener">CIRIA</a> <span class="res-cost mem">Members</span> <a class="res-att" href="#attributes-5">Attribute 5</a><p>Industry guidance on drainage, ground engineering, temporary works and the environment. A few titles are free with sign-up; most are free to member organisations, so check whether your employer is one. The SuDS Manual (C753) is listed via <a href="https://susdrain.org/resources/ciria-guidance.html" target="_blank" rel="noopener">susdrain</a>.</p></li>
+        <li><a href="https://www.designingbuildings.co.uk/wiki/About" target="_blank" rel="noopener">Designing Buildings Wiki</a> <span class="res-cost free">Free</span><p>Plain-English explainers on about 21,000 construction topics, from contracts to CDM. Good for a quick primer before a meeting or your review.</p></li>
+      </ul>
+    </div>
+    <div class="panel">
+      <h3>Data and calculations</h3>
+      <ul class="res-list">
+        <li><a href="https://eurocodeapplied.com" target="_blank" rel="noopener">Eurocode Applied</a> <span class="res-cost free">Free</span> <a class="res-att" href="#attributes-1">Attribute 1</a><p>Online calculators for loads, concrete, steel and seismic design, with UK National Annex values and printable reports.</p></li>
+        <li><a href="https://skyciv.com/beam-calculator-features" target="_blank" rel="noopener">SkyCiv beam calculator</a> <span class="res-cost reg">Free, sign-up</span><p>Reactions, shear, bending and deflection for a beam, with the hand calculation shown. Full design software is paid.</p></li>
+        <li><a href="https://www.bgs.ac.uk/map-viewers/geoindex-onshore/" target="_blank" rel="noopener">BGS GeoIndex</a> <span class="res-cost free">Free</span><p>The British Geological Survey's map of borehole records and geology. The first place to look on a desk study.</p></li>
+      </ul>
+      <p class="small">Free calculators are for learning and checking. Check by hand and against the code, and use your firm's verified tools for anything you issue.</p>
+    </div>
+    <div class="panel">
+      <h3>From ICE</h3>
+      <ul class="res-list">
+        <li><a href="https://www.ice.org.uk/learning-hub" target="_blank" rel="noopener">ICE Knowledge Hub</a> <span class="res-cost free">Free</span> <a class="res-att" href="#attributes-7">Attribute 7</a><p>CPD articles, case studies and recorded Tech Talks, organised by ICE's CPD topics. The password has been removed for now, so anyone can read it.</p></li>
+        <li><a href="https://emeraldicevl.freshdesk.com/support/solutions/articles/36000491039-ice-member-access-entitlements-on-the-virtual-library" target="_blank" rel="noopener">ICE Virtual Library</a> <span class="res-cost mem">Members</span><p>ICE's journals and books. Membership includes four issues a year of Civil Engineering, the last three years of journals you subscribe to, and the archive from 1836 to 1900. Other journals are discounted by up to 90%.</p></li>
+      </ul>
+    </div>
+  </div>
+  <p class="small">Left out: TRL's free report library, because we couldn't confirm it's still free; and recommendations we couldn't check. Know a good one? Tell us through <a href="#community">Community</a>.</p>
+</section>
+
 <section class="view wrap" id="view-careers" data-view="careers" hidden>
   <div class="view-head">
     <span class="eyebrow">After chartership</span>
@@ -1701,13 +1770,13 @@ nav a[aria-current="page"][aria-expanded="true"] { color: var(--accent-ink); bac
   </div>
 </footer>
 
-<script src="js/content.js?v=20261121i"></script>
-<script src="js/role.js?v=20261121i"></script>
-<script src="js/careers.js?v=20261121i"></script>
-<script src="js/news-feed.js?v=20261121i"></script>
-<script src="js/news-archive.js?v=20261121i"></script>
-<script src="js/config.js?v=20261121i"></script>
-<script src="js/pages.js?v=20261121i"></script>
-<script src="js/site.js?v=20261121i"></script>
+<script src="js/content.js?v=20261121j"></script>
+<script src="js/role.js?v=20261121j"></script>
+<script src="js/careers.js?v=20261121j"></script>
+<script src="js/news-feed.js?v=20261121j"></script>
+<script src="js/news-archive.js?v=20261121j"></script>
+<script src="js/config.js?v=20261121j"></script>
+<script src="js/pages.js?v=20261121j"></script>
+<script src="js/site.js?v=20261121j"></script>
 </body>
 </html>
