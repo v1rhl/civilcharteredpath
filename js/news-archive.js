@@ -2,12 +2,76 @@
 window.NEWS_ARCHIVE = {
  "items": [
   {
+   "t": "£800m London waste plant job cost rockets to £1.25bn",
+   "url": "https://www.constructionenquirer.com/2026/11/16/800m-london-waste-plant-job-cost-rockets-to-1-25bn/",
+   "src": "Construction Enquirer",
+   "date": "2026-11-16",
+   "tags": [
+    "Other"
+   ]
+  },
+  {
+   "t": "Northern Trains seeks firms for £307m upgrade plan",
+   "url": "https://www.constructionenquirer.com/2026/11/16/northern-trains-seeks-firms-for-307m-upgrade-plan/",
+   "src": "Construction Enquirer",
+   "date": "2026-11-16",
+   "tags": [
+    "Rail"
+   ]
+  },
+  {
+   "t": "Bridge gantry crane in place for HS2 Curzon viaducts",
+   "url": "https://www.theconstructionindex.co.uk/news/view/bridge-gantry-crane-in-place-for-hs2-curzon-viaducts",
+   "src": "The Construction Index",
+   "date": "2026-11-16",
+   "tags": [
+    "Rail",
+    "Tunnels and structures"
+   ]
+  },
+  {
+   "t": "MoD lines up £500m Portsmouth naval jetty rebuild",
+   "url": "https://www.constructionenquirer.com/2026/11/13/mod-lines-up-500m-portsmouth-naval-jetty-rebuild/",
+   "src": "Construction Enquirer",
+   "date": "2026-11-13",
+   "tags": [
+    "Aviation and ports"
+   ]
+  },
+  {
+   "t": "BAM called in to save iconic Teesside Transporter Bridge",
+   "url": "https://www.constructionenquirer.com/2026/11/13/bam-called-in-to-save-iconic-teessides-transporter-bridge/",
+   "src": "Construction Enquirer",
+   "date": "2026-11-13",
+   "tags": [
+    "Tunnels and structures"
+   ]
+  },
+  {
+   "t": "£550m Humber to Midlands pylon project clears first hurdle",
+   "url": "https://www.constructionenquirer.com/2026/11/13/550m-humber-to-midlands-pylon-project-clears-first-hurdle/",
+   "src": "Construction Enquirer",
+   "date": "2026-11-13",
+   "tags": [
+    "Energy"
+   ]
+  },
+  {
    "t": "£11m pumping station upgrade boosts Somerset flood resilience",
    "url": "https://www.gov.uk/government/news/11m-pumping-station-upgrade-boosts-somerset-flood-resilience",
    "src": "Environment Agency",
    "date": "2026-11-12",
    "tags": [
     "Flood and coastal",
+    "Rail"
+   ]
+  },
+  {
+   "t": "The Great British Railways licence",
+   "url": "https://www.gov.uk/government/consultations/the-great-british-railways-licence",
+   "src": "Department for Transport",
+   "date": "2026-11-12",
+   "tags": [
     "Rail"
    ]
   },
@@ -96,6 +160,15 @@ window.NEWS_ARCHIVE = {
    ]
   },
   {
+   "t": "Beyond the floodwater: the lasting impact of flooding and coastal change",
+   "url": "https://environmentagency.blog.gov.uk/2026/11/03/beyond-the-floodwater-the-lasting-impact-of-flooding-and-coastal-change/",
+   "src": "Environment Agency blog",
+   "date": "2026-11-06",
+   "tags": [
+    "Flood and coastal"
+   ]
+  },
+  {
    "t": "National Grid sets out plans for its construction and maintenance supplier market",
    "url": "https://www.newcivilengineer.com/latest/national-grid-sets-out-plans-for-construction-and-maintenance-supplier-market-05-11-2026/",
    "src": "NCE",
@@ -103,6 +176,16 @@ window.NEWS_ARCHIVE = {
    "tags": [
     "Energy",
     "Industry and careers"
+   ]
+  },
+  {
+   "t": "Communities to get a stronger say over billions of pounds of water investment",
+   "url": "https://www.gov.uk/government/news/communities-to-get-a-stronger-say-over-billions-of-pounds-of-water-investment",
+   "src": "GOV.UK",
+   "date": "2026-11-05",
+   "tags": [
+    "Water and wastewater",
+    "Policy and funding"
    ]
   },
   {
@@ -120,16 +203,7 @@ window.NEWS_ARCHIVE = {
    "src": "NCE",
    "date": "2026-11-03",
    "tags": [
-    "Industry and careers"
-   ]
-  },
-  {
-   "t": "Beyond the floodwater: the lasting impact of flooding and coastal change",
-   "url": "https://environmentagency.blog.gov.uk/2026/11/03/beyond-the-floodwater-the-lasting-impact-of-flooding-and-coastal-change/",
-   "src": "Environment Agency blog",
-   "date": "2026-11-03",
-   "tags": [
-    "Flood and coastal"
+    "Digital and technology"
    ]
   },
   {
@@ -166,7 +240,8 @@ window.NEWS_ARCHIVE = {
    "src": "NCE",
    "date": "2026-10-29",
    "tags": [
-    "Rail"
+    "Rail",
+    "Health and safety"
    ]
   },
   {
@@ -176,6 +251,15 @@ window.NEWS_ARCHIVE = {
    "date": "2026-10-29",
    "tags": [
     "Industry and careers"
+   ]
+  },
+  {
+   "t": "Regulators publish first joint report on water industry performance, giving the public a clearer picture of company performance",
+   "url": "https://www.gov.uk/government/news/regulators-publish-first-joint-report-on-water-industry-performance-giving-the-public-a-clearer-picture-of-company-performance",
+   "src": "Environment Agency",
+   "date": "2026-10-29",
+   "tags": [
+    "Water and wastewater"
    ]
   },
   {
@@ -249,7 +333,7 @@ window.NEWS_ARCHIVE = {
    "date": "2026-10-22",
    "tags": [
     "Water and wastewater",
-    "Industry and careers"
+    "Digital and technology"
    ]
   },
   {
@@ -349,6 +433,15 @@ window.NEWS_ARCHIVE = {
    ]
   },
   {
+   "t": "Water company bosses update National Drought Group on resilience",
+   "url": "https://www.gov.uk/government/news/water-company-bosses-update-national-drought-group-on-resilience",
+   "src": "GOV.UK",
+   "date": "2026-10-20",
+   "tags": [
+    "Water and wastewater"
+   ]
+  },
+  {
    "t": "EFRA chair urges decisive action over Thames Water's future",
    "url": "https://www.watermagazine.co.uk/2026/10/19/efra-chair-urges-decisive-action-over-thames-waters-future/",
    "src": "Water Magazine",
@@ -364,7 +457,8 @@ window.NEWS_ARCHIVE = {
    "date": "2026-10-19",
    "tags": [
     "Water and wastewater",
-    "Tunnels and structures"
+    "Tunnels and structures",
+    "Digital and technology"
    ]
   },
   {
@@ -374,6 +468,16 @@ window.NEWS_ARCHIVE = {
    "date": "2026-10-19",
    "tags": [
     "Flood and coastal"
+   ]
+  },
+  {
+   "t": "Ministerial direction to protect public water supplies in areas affected by severe drought",
+   "url": "https://www.gov.uk/government/publications/ministerial-direction-to-protect-public-water-supplies-in-areas-affected-by-severe-drought",
+   "src": "GOV.UK",
+   "date": "2026-10-19",
+   "tags": [
+    "Water and wastewater",
+    "Policy and funding"
    ]
   },
   {
@@ -425,6 +529,24 @@ window.NEWS_ARCHIVE = {
    ]
   },
   {
+   "t": "New guidance to help farmers build their flood resilience",
+   "url": "https://environmentagency.blog.gov.uk/2026/10/16/new-guidance-to-help-farmers-build-their-flood-resilience/",
+   "src": "Environment Agency blog",
+   "date": "2026-10-16",
+   "tags": [
+    "Flood and coastal"
+   ]
+  },
+  {
+   "t": "What is severe drought?",
+   "url": "https://environmentagency.blog.gov.uk/2026/10/15/what-is-severe-drought/",
+   "src": "Environment Agency blog",
+   "date": "2026-10-16",
+   "tags": [
+    "Water and wastewater"
+   ]
+  },
+  {
    "t": "Work starts on final link of Birmingham Metro extension at HS2 Curzon Street",
    "url": "https://www.newcivilengineer.com/archive/work-starts-on-final-link-of-birmingham-metro-extension-at-hs2-curzon-street-site-15-10-2026/",
    "src": "NCE",
@@ -457,7 +579,7 @@ window.NEWS_ARCHIVE = {
    "src": "NCE",
    "date": "2026-10-15",
    "tags": [
-    "Industry and careers"
+    "Digital and technology"
    ]
   },
   {
@@ -467,6 +589,16 @@ window.NEWS_ARCHIVE = {
    "date": "2026-10-15",
    "tags": [
     "Industry and careers"
+   ]
+  },
+  {
+   "t": "Government activates plan to protect consumers as severe drought declared in parts of England",
+   "url": "https://www.gov.uk/government/news/government-activates-plan-to-protect-consumers-as-severe-drought-declared-in-parts-of-england",
+   "src": "GOV.UK",
+   "date": "2026-10-15",
+   "tags": [
+    "Water and wastewater",
+    "Policy and funding"
    ]
   },
   {
@@ -485,6 +617,7 @@ window.NEWS_ARCHIVE = {
    "src": "NCE",
    "date": "2026-10-14",
    "tags": [
+    "Digital and technology",
     "Industry and careers"
    ]
   },
@@ -573,14 +706,32 @@ window.NEWS_ARCHIVE = {
    ]
   },
   {
-   "t": "New taskforce to boost Britain's resilience to flooding and drought",
+   "t": "New 'Missy and Stanley's Tale' film helps the public prepare for flooding risk",
+   "url": "https://www.gov.uk/government/news/new-missy-and-stanleys-tale-film-helps-the-public-prepare-for-flooding-risk",
+   "src": "Environment Agency",
+   "date": "2026-10-12",
+   "tags": [
+    "Flood and coastal"
+   ]
+  },
+  {
+   "t": "New taskforce to boost Britain’s resilience to flooding and drought",
    "url": "https://www.gov.uk/government/news/new-taskforce-to-boost-britains-resilience-to-flooding-and-drought",
-   "src": "Defra",
+   "src": "GOV.UK",
    "date": "2026-10-11",
    "tags": [
     "Flood and coastal",
     "Water and wastewater",
     "Policy and funding"
+   ]
+  },
+  {
+   "t": "Environment Agency declares drought status in Yorkshire",
+   "url": "https://www.gov.uk/government/news/environment-agency-declares-drought-status-in-yorkshire",
+   "src": "GOV.UK",
+   "date": "2026-10-09",
+   "tags": [
+    "Water and wastewater"
    ]
   },
   {
@@ -605,10 +756,19 @@ window.NEWS_ARCHIVE = {
   {
    "t": "Drought permit granted to support Wimbleball Reservoir",
    "url": "https://www.gov.uk/government/news/drought-permit-granted-to-support-wimbleball-reservoir",
-   "src": "Environment Agency",
+   "src": "GOV.UK",
    "date": "2026-10-08",
    "tags": [
     "Reservoirs and dams",
+    "Water and wastewater"
+   ]
+  },
+  {
+   "t": "Understanding drought: applying science to protect people and nature",
+   "url": "https://environmentagency.blog.gov.uk/2026/10/08/understanding-drought-applying-science-to-protect-people-and-nature/",
+   "src": "Environment Agency blog",
+   "date": "2026-10-08",
+   "tags": [
     "Water and wastewater"
    ]
   },
@@ -631,9 +791,9 @@ window.NEWS_ARCHIVE = {
    ]
   },
   {
-   "t": "England's reservoirs continue to feel drought strain after sixth dry month of 2026",
+   "t": "England’s reservoirs continue to feel drought strain after sixth dry month of 2026",
    "url": "https://www.gov.uk/government/news/englands-reservoirs-continue-to-feel-drought-strain-after-sixth-dry-month-of-2026",
-   "src": "Environment Agency",
+   "src": "GOV.UK",
    "date": "2026-10-02",
    "tags": [
     "Reservoirs and dams",
@@ -643,7 +803,7 @@ window.NEWS_ARCHIVE = {
   {
    "t": "Drought permit granted to help Ardingly Reservoir",
    "url": "https://www.gov.uk/government/news/drought-permit-granted-to-help-ardingly-reservoir",
-   "src": "Environment Agency",
+   "src": "GOV.UK",
    "date": "2026-10-02",
    "tags": [
     "Reservoirs and dams",
@@ -696,6 +856,15 @@ window.NEWS_ARCHIVE = {
    ]
   },
   {
+   "t": "Southern Water fined £2.4m for Kent pollution",
+   "url": "https://www.gov.uk/government/news/southern-water-fined-24m-for-kent-pollution",
+   "src": "Environment Agency",
+   "date": "2026-09-22",
+   "tags": [
+    "Water and wastewater"
+   ]
+  },
+  {
    "t": "£30m for a Shetland spaceport",
    "url": "https://www.newcivilengineer.com/latest/government-announces-30m-investment-in-shetland-spaceport-14-09-2026/",
    "src": "NCE",
@@ -721,7 +890,8 @@ window.NEWS_ARCHIVE = {
    "src": "Environment Agency",
    "date": "2026-09-04",
    "tags": [
-    "Reservoirs and dams"
+    "Reservoirs and dams",
+    "Health and safety"
    ]
   },
   {
@@ -749,7 +919,7 @@ window.NEWS_ARCHIVE = {
    "src": "NCE",
    "date": "2026-08-18",
    "tags": [
-    "Industry and careers"
+    "Digital and technology"
    ]
   },
   {

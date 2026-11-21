@@ -21,60 +21,6 @@ window.NEWS_FEED = {
    ]
   },
   {
-   "t": "Liverpool two towers scheme clears final planning hurdle",
-   "url": "https://www.constructionenquirer.com/2026/11/16/liverpool-two-towers-scheme-clears-final-planning-hurdle/",
-   "src": "Construction Enquirer",
-   "date": "2026-11-16",
-   "tags": [
-    "Other"
-   ]
-  },
-  {
-   "t": "Notice: NE22 7FG, Rainton Construction Limited: environmental permit application advertisement - EPR/GP3429UF/A001",
-   "url": "https://www.gov.uk/government/publications/ne22-7fg-rainton-construction-limited-environmental-permit-application-advertisement-eprgp3429ufa001",
-   "src": "Environment Agency",
-   "date": "2026-11-16",
-   "tags": [
-    "Other"
-   ]
-  },
-  {
-   "t": "Notice: TA5 2AW, Wessex Water Services Limited: environmental permit application advertisement - EPR/DP3420UN/A001",
-   "url": "https://www.gov.uk/government/publications/ta5-2aw-wessex-water-services-limited-environmental-permit-application-advertisement-eprdp3420una001",
-   "src": "Environment Agency",
-   "date": "2026-11-16",
-   "tags": [
-    "Water and wastewater"
-   ]
-  },
-  {
-   "t": "Guidance: PFI Support Information",
-   "url": "https://www.gov.uk/government/publications/pfi-support-information",
-   "src": "NISTA",
-   "date": "2026-11-16",
-   "tags": [
-    "Other"
-   ]
-  },
-  {
-   "t": "Guidance: Businesses approved to export to the EU",
-   "url": "https://www.gov.uk/government/publications/businesses-approved-to-export-to-the-eu",
-   "src": "Defra",
-   "date": "2026-11-16",
-   "tags": [
-    "Other"
-   ]
-  },
-  {
-   "t": "Guidance: Horse passport issuing organisations in Great Britain and Northern Ireland",
-   "url": "https://www.gov.uk/government/publications/horse-passport-issuing-organisations-in-great-britain-and-northern-ireland",
-   "src": "Defra",
-   "date": "2026-11-16",
-   "tags": [
-    "Other"
-   ]
-  },
-  {
    "t": "Bridge gantry crane in place for HS2 Curzon viaducts",
    "url": "https://www.theconstructionindex.co.uk/news/view/bridge-gantry-crane-in-place-for-hs2-curzon-viaducts",
    "src": "The Construction Index",
@@ -85,39 +31,12 @@ window.NEWS_FEED = {
    ]
   },
   {
-   "t": "BAM takes ECI role on Tees Transporter restoration",
-   "url": "https://www.theconstructionindex.co.uk/news/view/bam-takes-eci-role-on-tees-transporter-restoration",
-   "src": "The Construction Index",
-   "date": "2026-11-16",
-   "tags": [
-    "Other"
-   ]
-  },
-  {
-   "t": "Wates to expand student support programme",
-   "url": "https://www.theconstructionindex.co.uk/news/view/wates-to-expand-student-support-programme",
-   "src": "The Construction Index",
-   "date": "2026-11-16",
-   "tags": [
-    "Other"
-   ]
-  },
-  {
-   "t": "Landsec puts new schemes on ice as build costs soar 41%",
-   "url": "https://www.constructionenquirer.com/2026/11/13/landsec-puts-new-schemes-on-ice-as-build-costs-soar-41/",
-   "src": "Construction Enquirer",
-   "date": "2026-11-13",
-   "tags": [
-    "Industry and careers"
-   ]
-  },
-  {
    "t": "MoD lines up £500m Portsmouth naval jetty rebuild",
    "url": "https://www.constructionenquirer.com/2026/11/13/mod-lines-up-500m-portsmouth-naval-jetty-rebuild/",
    "src": "Construction Enquirer",
    "date": "2026-11-13",
    "tags": [
-    "Other"
+    "Aviation and ports"
    ]
   },
   {
@@ -135,106 +54,7 @@ window.NEWS_FEED = {
    "src": "Construction Enquirer",
    "date": "2026-11-13",
    "tags": [
-    "Other"
-   ]
-  },
-  {
-   "t": "Gary Neville unveils plans for more Manchester towers",
-   "url": "https://www.constructionenquirer.com/2026/11/13/gary-neville-unveils-plans-for-more-manchester-towers/",
-   "src": "Construction Enquirer",
-   "date": "2026-11-13",
-   "tags": [
-    "Other"
-   ]
-  },
-  {
-   "t": "Kier wins planning battle for Birmingham towers",
-   "url": "https://www.constructionenquirer.com/2026/11/13/kier-wins-planning-battle-for-birmingham-towers/",
-   "src": "Construction Enquirer",
-   "date": "2026-11-13",
-   "tags": [
-    "Other"
-   ]
-  },
-  {
-   "t": "Research: Water situation: national monthly reports for England 2026",
-   "url": "https://www.gov.uk/government/publications/water-situation-national-monthly-reports-for-england-2026",
-   "src": "Environment Agency",
-   "date": "2026-11-13",
-   "tags": [
-    "Water and wastewater"
-   ]
-  },
-  {
-   "t": "Research: Water and sewerage companies in England: environmental performance report 2025",
-   "url": "https://www.gov.uk/government/publications/water-and-sewerage-companies-in-england-environmental-performance-report-2025",
-   "src": "Environment Agency",
-   "date": "2026-11-13",
-   "tags": [
-    "Water and wastewater"
-   ]
-  },
-  {
-   "t": "Notice: Alan James Skeels trading as J and A Skeels (NPS/WR/048068): application made to abstract water",
-   "url": "https://www.gov.uk/government/publications/alan-james-skeels-trading-as-j-and-a-skeels-npswr048068-application-made-to-abstract-water",
-   "src": "Environment Agency",
-   "date": "2026-11-13",
-   "tags": [
-    "Water and wastewater"
-   ]
-  },
-  {
-   "t": "Notice: Ewelme Park Estate Private Limited (NPS/WR/048237): application made to abstract water",
-   "url": "https://www.gov.uk/government/publications/ewelme-park-estate-private-limited-npswr048237-application-made-to-abstract-water",
-   "src": "Environment Agency",
-   "date": "2026-11-13",
-   "tags": [
-    "Water and wastewater"
-   ]
-  },
-  {
-   "t": "Accredited official statistics: Transport Statistics Great Britain: 2026",
-   "url": "https://www.gov.uk/government/statistics/announcements/transport-statistics-great-britain-2026",
-   "src": "Department for Transport",
-   "date": "2026-11-13",
-   "tags": [
-    "Other"
-   ]
-  },
-  {
-   "t": "Guidance: Confined establishments approved to export captive-bred birds to the EU",
-   "url": "https://www.gov.uk/government/publications/confined-establishments-approved-to-export-captive-bred-birds-to-the-eu",
-   "src": "Defra",
-   "date": "2026-11-13",
-   "tags": [
-    "Other"
-   ]
-  },
-  {
-   "t": "Guidance: Confined establishments approved to export ungulates to the EU",
-   "url": "https://www.gov.uk/government/publications/confined-establishments-approved-to-export-ungulates-to-the-eu",
-   "src": "Defra",
-   "date": "2026-11-13",
-   "tags": [
-    "Other"
-   ]
-  },
-  {
-   "t": "New business survey finds Brexit barriers hit profits for more than half of small and medium UK food and drink manufacturers exporting to the EU",
-   "url": "https://www.gov.uk/government/news/new-business-survey-finds-brexit-barriers-hit-profits-for-more-than-half-of-small-and-medium-uk-food-and-drink-manufacturers-exporting-to-the-eu",
-   "src": "Defra",
-   "date": "2026-11-13",
-   "tags": [
-    "Flood and coastal"
-   ]
-  },
-  {
-   "t": "Imports, exports and EU trade of animals and animal products: topical issues",
-   "url": "https://www.gov.uk/guidance/imports-exports-and-eu-trade-of-animals-and-animal-products-topical-issues",
-   "src": "Defra",
-   "date": "2026-11-13",
-   "tags": [
-    "Other"
+    "Energy"
    ]
   },
   {
@@ -248,111 +68,12 @@ window.NEWS_FEED = {
    ]
   },
   {
-   "t": "McLaren leaves £300m Cardiff Arena job",
-   "url": "https://www.constructionenquirer.com/2026/11/12/mclaren-leaves-300m-cardiff-arena-job/",
-   "src": "Construction Enquirer",
-   "date": "2026-11-12",
-   "tags": [
-    "Other"
-   ]
-  },
-  {
-   "t": "Accredited official statistics: Port freight quarterly statistics: July to September 2026",
-   "url": "https://www.gov.uk/government/statistics/announcements/port-freight-quarterly-statistics-july-to-september-2026",
-   "src": "Department for Transport",
-   "date": "2026-11-12",
-   "tags": [
-    "Aviation and ports"
-   ]
-  },
-  {
-   "t": "Official Statistics: Daily domestic transport use by mode",
-   "url": "https://www.gov.uk/government/statistics/daily-domestic-transport-use-by-mode",
-   "src": "Department for Transport",
-   "date": "2026-11-12",
-   "tags": [
-    "Other"
-   ]
-  },
-  {
    "t": "The Great British Railways licence",
    "url": "https://www.gov.uk/government/consultations/the-great-british-railways-licence",
    "src": "Department for Transport",
    "date": "2026-11-12",
    "tags": [
     "Rail"
-   ]
-  },
-  {
-   "t": "Official Statistics: Rail Trends 2027",
-   "url": "https://www.gov.uk/government/statistics/announcements/rail-trends-2027",
-   "src": "Department for Transport",
-   "date": "2026-11-11",
-   "tags": [
-    "Rail"
-   ]
-  },
-  {
-   "t": "Accredited official statistics: Transport Statistics Great Britain: 2027",
-   "url": "https://www.gov.uk/government/statistics/announcements/transport-statistics-great-britain-2027",
-   "src": "Department for Transport",
-   "date": "2026-11-11",
-   "tags": [
-    "Other"
-   ]
-  },
-  {
-   "t": "Official Statistics: Transport Statistics Geography Portal: December 2027",
-   "url": "https://www.gov.uk/government/statistics/announcements/transport-statistics-geography-portal-december-2027",
-   "src": "Department for Transport",
-   "date": "2026-11-11",
-   "tags": [
-    "Other"
-   ]
-  },
-  {
-   "t": "Accredited official statistics: Port freight quarterly statistics: July to September 2027",
-   "url": "https://www.gov.uk/government/statistics/announcements/port-freight-quarterly-statistics-july-to-september-2027",
-   "src": "Department for Transport",
-   "date": "2026-11-11",
-   "tags": [
-    "Aviation and ports"
-   ]
-  },
-  {
-   "t": "Accredited official statistics: Travel time measures for local ‘A’ roads in Great Britain: October 2026 to September 2027",
-   "url": "https://www.gov.uk/government/statistics/announcements/travel-time-measures-for-local-a-roads-in-great-britain-october-2026-to-september-2027",
-   "src": "Department for Transport",
-   "date": "2026-11-11",
-   "tags": [
-    "Roads"
-   ]
-  },
-  {
-   "t": "Accredited official statistics: Provisional road traffic estimates, Great Britain: October 2026 to September 2027",
-   "url": "https://www.gov.uk/government/statistics/announcements/provisional-road-traffic-estimates-great-britain-october-2026-to-september-2027",
-   "src": "Department for Transport",
-   "date": "2026-11-11",
-   "tags": [
-    "Roads"
-   ]
-  },
-  {
-   "t": "Accredited official statistics: Reported road casualties in Great Britain, provisional estimates: year ending June 2026",
-   "url": "https://www.gov.uk/government/statistics/announcements/reported-road-casualties-in-great-britain-provisional-estimates-year-ending-june-2026",
-   "src": "Department for Transport",
-   "date": "2026-11-11",
-   "tags": [
-    "Roads"
-   ]
-  },
-  {
-   "t": "Official Statistics: Electric vehicle charging infrastructure statistics: 1 October 2026",
-   "url": "https://www.gov.uk/government/statistics/announcements/electric-vehicle-charging-infrastructure-statistics-1-october-2026",
-   "src": "Department for Transport",
-   "date": "2026-11-11",
-   "tags": [
-    "Other"
    ]
   },
   {
@@ -483,7 +204,7 @@ window.NEWS_FEED = {
    "src": "NCE",
    "date": "2026-11-03",
    "tags": [
-    "Industry and careers"
+    "Digital and technology"
    ]
   },
   {
@@ -494,15 +215,6 @@ window.NEWS_FEED = {
    "tags": [
     "Water and wastewater",
     "Policy and funding"
-   ]
-  },
-  {
-   "t": "Radioactivity in food and the environment - our 2025 report.",
-   "url": "https://environmentagency.blog.gov.uk/2026/10/30/radioactivity-in-food-and-the-environment-our-2025-report/",
-   "src": "Environment Agency blog",
-   "date": "2026-10-30",
-   "tags": [
-    "Other"
    ]
   },
   {
@@ -529,7 +241,8 @@ window.NEWS_FEED = {
    "src": "NCE",
    "date": "2026-10-29",
    "tags": [
-    "Rail"
+    "Rail",
+    "Health and safety"
    ]
   },
   {
@@ -621,7 +334,7 @@ window.NEWS_FEED = {
    "date": "2026-10-22",
    "tags": [
     "Water and wastewater",
-    "Industry and careers"
+    "Digital and technology"
    ]
   },
   {
@@ -745,7 +458,8 @@ window.NEWS_FEED = {
    "date": "2026-10-19",
    "tags": [
     "Water and wastewater",
-    "Tunnels and structures"
+    "Tunnels and structures",
+    "Digital and technology"
    ]
   },
   {
@@ -866,7 +580,7 @@ window.NEWS_FEED = {
    "src": "NCE",
    "date": "2026-10-15",
    "tags": [
-    "Industry and careers"
+    "Digital and technology"
    ]
   },
   {
@@ -904,6 +618,7 @@ window.NEWS_FEED = {
    "src": "NCE",
    "date": "2026-10-14",
    "tags": [
+    "Digital and technology",
     "Industry and careers"
    ]
   },
@@ -1094,15 +809,6 @@ window.NEWS_FEED = {
    "tags": [
     "Reservoirs and dams",
     "Water and wastewater"
-   ]
-  },
-  {
-   "t": "AAIB Report: Beagle B121 Series 2, G-AZDG",
-   "url": "https://www.gov.uk/government/news/aaib-report-beagle-b121-series-2-g-azdg",
-   "src": "GOV.UK",
-   "date": "2026-10-01",
-   "tags": [
-    "Other"
    ]
   },
   {

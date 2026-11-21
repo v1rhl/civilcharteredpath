@@ -342,6 +342,12 @@
   $("feed-src").innerHTML = srcs.map(function (s) { return "<option>" + esc(s) + "</option>"; }).join("");
   $("feed-updated").textContent = FEED.generated ? "Updated " + fmt(parse(FEED.generated)) : "";
   /* Sector tags come from tools/refresh_news.py; anything untagged counts as Other */
+  /* Cross-sector topics that map to a chartership attribute */
+  var TOPIC_ATTR = {
+    "Health and safety": [[4], "Use a prosecution or incident here to test your own site: what went wrong, which duty under CDM it touches, and what you would have done. That's evidence for"],
+    "Digital and technology": [[1], "A tool or method you've used, or assessed and rejected, makes good evidence for"],
+    "Materials and carbon": [[1, 5], "Choosing or trialling a lower-carbon material is evidence for"]
+  };
   function tagsOf(i) { return i.tags && i.tags.length ? i.tags : ["Other"]; }
   var MYS = window.CPSectors ? CPSectors.get() : [];
   function inMine(i) { return tagsOf(i).some(function (t) { return MYS.indexOf(t) > -1; }); }
@@ -362,6 +368,10 @@
     $("feed").innerHTML = list.slice(0, shown).map(function (i) {
       return '<li><div style="display:flex;flex-direction:column;gap:2px"><span class="src">' + esc(i.src) + '</span><span class="date">' + (i.date ? fmt(parse(i.date)) : "") + '</span></div><div class="feed-item"><a href="' + esc(i.url) + '" target="_blank" rel="noopener">' + esc(i.t) + '</a><span class="tags">' + tagsOf(i).map(function (t) { return '<span class="tag">' + esc(t) + "</span>"; }).join("") + "</span></div></li>";
     }).join("") || '<li><span class="small">No headlines match.</span></li>';
+    var ta = TOPIC_ATTR[sector], note = $("feed-attr");
+    if (!note) { note = document.createElement("p"); note.id = "feed-attr"; note.className = "feed-attr"; $("feed").parentNode.insertBefore(note, $("feed")); }
+    note.hidden = !ta;
+    if (ta) note.innerHTML = ta[1] + " " + ta[0].map(function (n) { var a = window.ATTRIBUTES[n - 1]; return '<a href="#attributes-' + n + '">Attribute ' + n + ": " + esc(a.title) + "</a>"; }).join(" and ") + ".";
     var left = list.length - Math.min(shown, list.length);
     $("feed-more").hidden = left <= 0;
     $("feed-more").textContent = "Show " + Math.min(PAGE, left) + " older headline" + (Math.min(PAGE, left) === 1 ? "" : "s");
