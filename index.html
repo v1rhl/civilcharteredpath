@@ -734,6 +734,18 @@ html:not([data-level="ieng"]) .cmp-table .c-ceng, html[data-level="ieng"] .cmp-t
 .cs-notes-row label { display: flex; gap: 6px; align-items: center; font-weight: 600; font-size: 0.9rem; }
 @media print { iframe[aria-hidden="true"] { display: none !important; } }
 .cs-notes-fit-bad { color: var(--danger, #b3261e); font-weight: 600; }
+/* Top nav dropdowns */
+nav a[data-menu]::after { content: ""; display: inline-block; width: 0; height: 0; margin-left: 5px; vertical-align: 2px; border: 4px solid transparent; border-top-color: currentColor; border-bottom: 0; opacity: .7; }
+nav a[aria-expanded="true"] { color: var(--ink); background: var(--paper); }
+nav a[aria-current="page"][aria-expanded="true"] { color: var(--accent-ink); background: var(--accent); }
+.topbar .wrap { position: relative; }
+.navmenu { position: absolute; z-index: 20; min-width: 220px; max-width: min(420px, calc(100vw - 32px)); max-height: min(70vh, 460px); overflow-y: auto; overscroll-behavior: contain; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: 0 10px 30px rgba(0,0,0,.14); padding: 6px; }
+.navmenu ul { list-style: none; margin: 0; padding: 0; }
+.navmenu a { display: block; padding: 10px 12px; border-radius: calc(var(--radius) - 2px); color: var(--ink); text-decoration: none; font: 500 0.94rem var(--font-body); }
+.navmenu a:hover, .navmenu a:focus-visible { background: var(--paper); }
+.navmenu a[aria-current="page"] { background: var(--accent-soft); color: var(--accent); font-weight: 700; }
+@media (max-width: 760px) { .navmenu { left: 16px; right: 16px; max-width: none; } }
+@media (max-width: 420px) { nav a[data-menu]::after { margin-left: 3px; border-width: 3.5px; } }
 /* Section sub-navigation (Plan and Review day groups) */
 .subnav { display: flex; gap: 6px; overflow-x: auto; padding-top: 14px !important; padding-bottom: 2px !important; scrollbar-width: none; }
 .subnav::-webkit-scrollbar { display: none; }
@@ -1664,13 +1676,13 @@ html:not([data-level="ieng"]) .cmp-table .c-ceng, html[data-level="ieng"] .cmp-t
   </div>
 </footer>
 
-<script src="js/content.js?v=20261121a"></script>
-<script src="js/role.js?v=20261121a"></script>
-<script src="js/careers.js?v=20261121a"></script>
-<script src="js/news-feed.js?v=20261121a"></script>
-<script src="js/news-archive.js?v=20261121a"></script>
-<script src="js/config.js?v=20261121a"></script>
-<script src="js/pages.js?v=20261121a"></script>
-<script src="js/site.js?v=20261121a"></script>
+<script src="js/content.js?v=20261121b"></script>
+<script src="js/role.js?v=20261121b"></script>
+<script src="js/careers.js?v=20261121b"></script>
+<script src="js/news-feed.js?v=20261121b"></script>
+<script src="js/news-archive.js?v=20261121b"></script>
+<script src="js/config.js?v=20261121b"></script>
+<script src="js/pages.js?v=20261121b"></script>
+<script src="js/site.js?v=20261121b"></script>
 </body>
 </html>

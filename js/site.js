@@ -324,6 +324,7 @@
     var v = e.target.closest("[data-role-view]"); if (v) CPRole.set(v.dataset.roleView);
   });
   if (window.CPRole) CPRole.on(function () { renderAttr(); });
+  function goAttr(i) { if (i >= 0 && i < A.length && i !== attrIdx) { attrIdx = i; renderAttr(); } }
   $("attr-tabs").addEventListener("click", function (e) {
     var b = e.target.closest("button"); if (!b) return;
     attrIdx = +b.dataset.i; renderAttr();
@@ -549,6 +550,7 @@
   function route() {
     var v = (location.hash || "#home").slice(1);
     if (v === "reference") { v = "cheat-sheet"; history.replaceState(null, "", "#cheat-sheet"); }
+    var am = /^attributes-([1-7])$/.exec(v); if (am) { v = "attributes"; goAttr(+am[1] - 1); }
     if (views.indexOf(v) < 0) v = "home";
     document.body.classList.toggle("on-cheat", v === "cheat-sheet");
     views.forEach(function (name) { $("view-" + name).hidden = name !== v; });
@@ -570,5 +572,40 @@
     window.scrollTo(0, 0);
   }
   window.addEventListener("hashchange", route);
+
+  /* Dropdown menus on the top nav. Tap a section to open its list; tap it again (or pick an item) to go. */
+  var MENUS = {
+    planner: [["planner", "Planner"], ["route", "The route"], ["careers", "Careers"]],
+    attributes: [["attributes", "All seven attributes"]].concat(A.map(function (a, i) { return ["attributes-" + (i + 1), a.n + ". " + a.title]; })),
+    review: [["review", "Overview"], ["presentation", "Presentation tips"], ["flashcards", "Revision flashcards"], ["questions", "Practice questions"], ["cheat-sheet", "Cheat sheet"]]
+  };
+  var nav = $("nav"), menu = document.createElement("div"), openFor = null;
+  menu.id = "navmenu"; menu.className = "navmenu"; menu.hidden = true;
+  nav.parentNode.appendChild(menu);
+  Array.prototype.forEach.call(nav.querySelectorAll("a"), function (a) {
+    var key = a.getAttribute("href").slice(1);
+    if (MENUS[key]) { a.dataset.menu = key; a.setAttribute("aria-haspopup", "true"); a.setAttribute("aria-expanded", "false"); a.setAttribute("aria-controls", "navmenu"); }
+  });
+  function closeMenu() { if (!openFor) return; openFor.setAttribute("aria-expanded", "false"); openFor = null; menu.hidden = true; }
+  function openMenu(a) {
+    closeMenu(); openFor = a; a.setAttribute("aria-expanded", "true");
+    var here = location.hash.slice(1) || "home";
+    menu.innerHTML = '<ul role="list">' + MENUS[a.dataset.menu].map(function (x) { return '<li><a href="#' + x[0] + '"' + (x[0] === here ? ' aria-current="page"' : "") + ">" + esc(x[1]) + "</a></li>"; }).join("") + "</ul>";
+    menu.hidden = false;
+    var bar = menu.parentNode.getBoundingClientRect(), r = a.getBoundingClientRect();
+    if (window.innerWidth > 760) { menu.style.left = Math.max(8, Math.min(r.left - bar.left, bar.width - menu.offsetWidth - 8)) + "px"; menu.style.top = (r.bottom - bar.top + 4) + "px"; }
+    else { menu.style.left = ""; menu.style.top = (r.bottom - bar.top + 4) + "px"; }
+    var f = menu.querySelector("a"); if (f && document.activeElement === a && a.dataset.kbd) f.focus();
+  }
+  nav.addEventListener("click", function (e) {
+    var a = e.target.closest("a[data-menu]"); if (!a) { closeMenu(); return; }
+    if (openFor === a) { closeMenu(); return; } /* second tap: follow the link */
+    e.preventDefault(); a.dataset.kbd = e.detail === 0 ? "1" : ""; openMenu(a);
+  });
+  menu.addEventListener("click", function (e) { var l = e.target.closest("a"); if (!l) return; closeMenu(); if (l.getAttribute("href") === location.hash) route(); });
+  document.addEventListener("click", function (e) { if (openFor && !e.target.closest("#nav") && !e.target.closest("#navmenu")) closeMenu(); });
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape" && openFor) { var a = openFor; closeMenu(); a.focus(); } });
+  window.addEventListener("resize", closeMenu);
+  window.addEventListener("hashchange", closeMenu);
   route();
 })();
