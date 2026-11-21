@@ -91,7 +91,7 @@
         ["Head of or director", "15+ yrs", "Strategy, regulators and the board. Statutory roles, such as reservoir panel engineers, sit alongside this path."]
       ],
       pay: [["Civil engineers, all employers (median)", 52456, "onsPP"]],
-      helps: ["Consultant or contractor experience first makes you a better client. Many move across at engineer or senior level.", "Asset management qualifications (IAM certificate or diploma).", "Pay bands are usually published on the advert, so you can compare before applying."]
+      helps: ["Consultant or contractor experience makes you a better client. Some bodies mostly promote from within, though: one Reddit account says Network Rail rarely hires seniors from outside without a railway background, so joining earlier can be easier.", "Asset management qualifications (IAM certificate or diploma).", "Pay bands are usually published on the advert, so you can compare before applying."]
     }
   ];
 
@@ -207,6 +207,7 @@
     "Outside London: started on £27k as a graduate, £32k at 2 years, £35k at 3, £42k at 4. Their firm gives a rise every 6 months for the first 3 years, then only a further rise and a small bonus on chartering. Moving jobs is where people step up.",
     "Before chartership, 5 to 6 years in, £32–40k is the norm. Once chartered, it depends on the work you win and deliver. In their area: principal engineer £45–55k, associate £55–65k, technical director £65–75k.",
     "North East England, 17 years' experience: £52k plus overtime that's hard to avoid. Notes the North East is one of the cheapest places in the UK to live. Started on £27k as a graduate 17 years ago.",
+    "Network Rail, outside London: asset engineers £43k, seniors £55k, and the same for track maintenance and signalling engineers. You wouldn't normally join at senior level from outside, and would struggle without a railway background. Most people work their way up.",
     "Principal engineer, chartered: £65k.",
     "£54k, fully remote for 5 years at a global renewables consultancy, designing onshore and offshore wind, solar and battery storage, and now data centres."
   ];
