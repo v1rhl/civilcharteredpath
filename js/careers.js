@@ -20,6 +20,7 @@
     psSen: { name: "PayScale, Senior Civil Engineer, UK", date: "Mar 2026", kind: "Self-reported", url: "https://www.payscale.com/research/UK/Job=Senior_Civil_Engineer/Salary" },
     psMice: { name: "PayScale, Chartered Civil Engineer (MICE), UK", date: "Oct 2025", kind: "Self-reported", url: "https://www.payscale.com/research/UK/Certification=Chartered_Civil_Engineer%3A_MICE_(Institution_of_Civil_Engineers)/Salary" },
     lv: { name: "Levels.fyi, Civil Engineer, United Kingdom", date: "Oct 2026", kind: "Self-reported", url: "https://www.levels.fyi/t/civil-engineer/locations/united-kingdom" },
+    svy: { name: "2024 Civil Engineering Salary Survey (public online form, UK responses only)", date: "2024", kind: "Self-reported", url: "https://docs.google.com/spreadsheets/d/1442pGzO66N9cZeTwyXh-5q8hzjNnnpZ74q6ViHYh0OM/edit?gid=298969764" },
     indeed: { name: "Indeed UK, Civil engineer salaries (from job adverts in the last 36 months)", date: "Oct 2026", kind: "Advertised", url: "https://uk.indeed.com/career/civil-engineer/salaries" }
   };
   function cite(id) { var s = S[id]; return '<a class="cite" href="' + s.url + '" target="_blank" rel="noopener" title="' + esc(s.name) + '">' + esc(s.kind === "Official" ? "ONS" : s.name.split(",")[0]) + ", " + esc(s.date) + "</a>"; }
@@ -149,6 +150,14 @@
       '<p>Compare offers on the whole package, not the base salary. The legal minimum is <strong>28 days</strong> including bank holidays ' + pc("hol") + ' and <strong>3%</strong> employer pension (8% in total) ' + pc("tpr") + '. Most employers below give well over that.</p>' +
       '<div class="emp-grid">' + EMP.map(function (e) { return '<div class="emp"><div class="emp-h"><strong>' + esc(e[1]) + '</strong><span class="chip">' + esc(e[0]) + '</span></div><dl><dt>Leave</dt><dd>' + esc(e[2]) + "</dd><dt>Pension</dt><dd>" + esc(e[3]) + "</dd><dt>Other</dt><dd>" + esc(e[4]) + '</dd></dl><span class="small">' + pc(e[5]) + "</span></div>"; }).join("") + "</div>" +
       '<p class="small">From each employer\'s own careers pages, read in Nov 2026. Most pages carry no date and give no pension percentage, so we\'ve left those blank rather than guess. Bonus amounts, car allowance amounts and overtime rules weren\'t published by any of them.</p>' +
+      '<h4>What the 2024 survey says (54 UK engineers)</h4><ul>' +
+      "<li><strong>Bonus:</strong> 21 of 54 got one. The median was £2,000, about 5% of salary.</li>" +
+      "<li><strong>Overtime:</strong> 30 of 54 aren\'t paid for it. 11 get straight time and 9 get time and a half, mostly in site and contractor roles.</li>" +
+      "<li><strong>Hours:</strong> the median is 40 a week, and 14 of 53 work more than 40.</li>" +
+      "<li><strong>Leave:</strong> the median is 28 days, from a question that mixed holiday and sick leave, so it isn't exact.</li>" +
+      "<li><strong>Working from home:</strong> most work from home 2 or 3 days a week. 9 never do, mostly site staff.</li>" +
+      "<li><strong>Company vehicle:</strong> 11 of 54 have one.</li></ul>" +
+      '<p class="small">' + cite("svy") + ". The survey didn\'t ask about pension in a way that fits the UK.</p>" +
       '<h4>What the pattern looks like</h4><ul>' +
       '<li><strong>Client side</strong>: the pension is usually the big difference. A defined benefit scheme like the Environment Agency\'s, with 19% from the employer, is worth far more than a 5–10% matched scheme.</li>' +
       '<li><strong>Contractors</strong> are the ones most likely to add a car or car allowance, because the job moves between sites.</li>' +
@@ -186,6 +195,21 @@
     out();
   }
   window.CPCareersPkg = drawPkg;
+
+  /* 2024 survey, UK rows only: our own count from the public responses. */
+  var SURVEY = [
+    ["0–2 years", 15, "£30–33k", "£31k"],
+    ["3–5 years", 13, "£34–40k", "£37.3k"],
+    ["6–9 years", 12, "£47–61k", "£48.8k"],
+    ["10+ years", 14, "£57–75k", "£62.5k"]
+  ];
+  var REDDIT = [
+    "Outside London: started on £27k as a graduate, £32k at 2 years, £35k at 3, £42k at 4. Their firm gives a rise every 6 months for the first 3 years, then only a further rise and a small bonus on chartering. Moving jobs is where people step up.",
+    "Before chartership, 5 to 6 years in, £32–40k is the norm. Once chartered, it depends on the work you win and deliver. In their area: principal engineer £45–55k, associate £55–65k, technical director £65–75k.",
+    "North East England, 17 years' experience: £52k plus overtime that's hard to avoid. Notes the North East is one of the cheapest places in the UK to live. Started on £27k as a graduate 17 years ago.",
+    "Principal engineer, chartered: £65k.",
+    "£54k, fully remote for 5 years at a global renewables consultancy, designing onshore and offshore wind, solar and battery storage, and now data centres."
+  ];
 
   window.CPCareers = { PATHS: PATHS, S: S };
 
@@ -237,7 +261,18 @@
       '<table class="car-tbl"><thead><tr><th>What</th><th>Figure</th><th>Based on</th><th>Source</th></tr></thead><tbody>' +
       REPORTED.map(function (r) { return "<tr><td>" + esc(r[0]) + "</td><td>" + esc(r[1]) + "</td><td>" + esc(r[2]) + "</td><td>" + cite(r[3]) + "</td></tr>"; }).join("") + "</tbody></table>" +
       '<p><strong>Where these disagree with the published figures:</strong> self-reported pay runs lower. PayScale\'s senior engineer median (£45k) sits at the bottom of the recruiter\'s senior band (£45–62k) and well under the ONS median for all civil engineers (£52.5k). Its chartered average (£46k) is also below the ONS median. Our guess at why, which isn\'t measured: people who fill in these sites are often early in their career or checking whether they\'re underpaid. Treat them as a floor rather than the norm.</p>' +
-      '<p class="small">We couldn\'t read Glassdoor or Reddit: both block automated access, so nothing from them is included. If you find a useful thread, send it and we\'ll add it with its date.</p>';
+      "<h4>2024 salary survey: 54 UK engineers</h4>" +
+      "<p>An open online survey with about 1,880 responses, mostly from the US. We used only the 62 from the UK. From those we set aside one salary that looks like a typing error (£450k for 2 years' experience), one self-employed director, and six apprentices and trainees (£19–27k). That leaves 54 people. " + cite("svy") + "</p>" +
+      '<table class="car-tbl"><thead><tr><th>Experience</th><th>People</th><th>Middle half</th><th>Median</th></tr></thead><tbody>' +
+      SURVEY.map(function (r) { return "<tr><td>" + esc(r[0]) + "</td><td>" + r[1] + "</td><td>" + esc(r[2]) + "</td><td><strong>" + esc(r[3]) + "</strong></td></tr>"; }).join("") + "</tbody></table>" +
+      "<p><strong>Chartered or not:</strong> among people with 6 or more years' experience, the 12 chartered engineers had a median of £65k and the 14 who weren't chartered had £50.8k. Chartered people also tended to have more experience, so not all of that gap is down to chartership. London had only 5 responses, too few to compare with the rest of the UK.</p>" +
+      "<h4>What people said on Reddit</h4>" +
+      '<p class="small">Comments from r/civilengineering threads on UK pay, shared with us in November 2026. They\'re individual accounts, not a sample.</p><ul class="car-quotes">' +
+      REDDIT.map(function (r) { return "<li>" + esc(r) + "</li>"; }).join("") + "</ul>" +
+      "<p><strong>Where the accounts disagree:</strong> one chartered principal earns £65k, while another reader says principals in their area earn £45–55k. £65k sits inside both the survey\'s middle half for 10+ years (£57–75k) and the recruiter\'s principal band (£62–82k). £45–55k sits below both. Pay at the same title varies a lot by region and firm, so treat any single figure with care.</p>" +
+      "<p><strong>Graduate pay hasn\'t kept up:</strong> two of these accounts started on the same £27k, one 17 years ago and one 4 years ago. The 2024 survey\'s graduate median is only a little higher, at £31k. That\'s a real-terms fall over the period.</p>" +
+      "<p><strong>Moving jobs:</strong> several accounts say the big rises come from changing employer rather than staying put. The published surveys don\'t measure this.</p>" +
+      '<p class="small">We couldn\'t read Glassdoor directly because it blocks automated access.</p>';
   }
 
   function init() {
