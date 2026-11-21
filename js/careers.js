@@ -20,6 +20,7 @@
     psSen: { name: "PayScale, Senior Civil Engineer, UK", date: "Mar 2026", kind: "Self-reported", url: "https://www.payscale.com/research/UK/Job=Senior_Civil_Engineer/Salary" },
     psMice: { name: "PayScale, Chartered Civil Engineer (MICE), UK", date: "Oct 2025", kind: "Self-reported", url: "https://www.payscale.com/research/UK/Certification=Chartered_Civil_Engineer%3A_MICE_(Institution_of_Civil_Engineers)/Salary" },
     lv: { name: "Levels.fyi, Civil Engineer, United Kingdom", date: "Oct 2026", kind: "Self-reported", url: "https://www.levels.fyi/t/civil-engineer/locations/united-kingdom" },
+    cw: { name: "Carrington West, 2026 Salary Ranges: Highway Engineers (permanent; average is the mode)", date: "2026", kind: "Recruiter", url: "https://www.carringtonwest.com/" },
     svy: { name: "2024 Civil Engineering Salary Survey (public online form, UK responses only)", date: "2024", kind: "Self-reported", url: "https://docs.google.com/spreadsheets/d/1442pGzO66N9cZeTwyXh-5q8hzjNnnpZ74q6ViHYh0OM/edit?gid=298969764" },
     indeed: { name: "Indeed UK, Civil engineer salaries (from job adverts in the last 36 months)", date: "Oct 2026", kind: "Advertised", url: "https://uk.indeed.com/career/civil-engineer/salaries" }
   };
@@ -102,6 +103,12 @@
     ["Senior engineer", "5–10 yrs", "£45–62k", "£54–74k"],
     ["Principal engineer", "10–15 yrs", "£62–82k", "£72–96k"],
     ["Technical director or director", "15+ yrs", "£82–115k+", "£96–135k+"]
+  ];
+  /* Carrington West 2026, highways only: [title, min, max, mode, chartered row?] */
+  var CW = [
+    ["Graduate", 27000, 32000, 28500], ["Graduate (MEng)", 28000, 32000, 28500], ["Assistant", 32000, 38000, 35000], ["Engineer", 37000, 44000, 40000],
+    ["Senior", 45000, 53000, 49000], ["Senior, chartered", 47000, 58000, 54000, 1], ["Principal", 55000, 62000, 58000], ["Principal, chartered", 58000, 68000, 63000, 1],
+    ["Associate", 65000, 75000, 70000], ["Associate, chartered", 66000, 80000, 73000, 1], ["Associate director", 75000, 85000, 80000], ["Technical director", 75000, 90000, 82000], ["Director", 95000, 120000, 110000]
   ];
   var ONS_DIST = { p10: 33200, p25: 41300, med: 52500, p75: 69400, p80: 74200 };
   var ONS_REGION = [["Scotland", 59000], ["London", 57900], ["North West", 56300], ["South East", 53500], ["South West", 50600], ["Yorkshire and the Humber", 49200]];
@@ -258,7 +265,11 @@
       '<table class="car-tbl"><thead><tr><th>Grade</th><th>Typical years</th><th>UK</th><th>London</th></tr></thead><tbody>' +
       GRADES.map(function (r) { return "<tr><td>" + esc(r[0]) + "</td><td>" + esc(r[1]) + "</td><td>" + esc(r[2]) + "</td><td>" + esc(r[3]) + "</td></tr>"; }).join("") + "</tbody></table>" +
       '<p class="small">' + cite("je") + '. No official source publishes pay by grade. ICE Recruit gives similar bands (graduate £25–30k, senior £50–70k, principal or chartered £70–90k), bonuses of 5–15% and contract rates of £200–500 a day. ' + cite("icer") + "</p>" +
-      '<p class="small">On chartership: JustEng says CEng adds 15–25% over non-chartered peers with the same experience, but gives no source for it. We couldn\'t find an official figure.</p>';
+      "<h4>Highways, with and without chartership</h4>" +
+      '<table class="car-tbl"><thead><tr><th>Highways grade</th><th>Range</th><th>Typical</th></tr></thead><tbody>' +
+      CW.map(function (r) { return "<tr" + (r[4] ? ' class="cw-ch"' : "") + "><td>" + esc(r[0]) + "</td><td>" + k(r[1]) + "–" + k(r[2]) + "</td><td>" + k(r[3]) + "</td></tr>"; }).join("") + "</tbody></table>" +
+      '<p class="small">' + cite("cw") + '. Highways only. The guide says pay can be higher on large national infrastructure schemes.</p>' +
+      "<p><strong>What chartership adds:</strong> in this guide, the typical chartered salary is £5k higher at senior grade (+10%), £5k higher at principal (+9%) and £3k higher at associate (+4%). That is well below the 15–25% another recruiter claims without a source. In the 2024 survey below, the gap is wider (£65k against £50.8k), but the chartered group there also has more experience. In our view, chartership's bigger effect is on which grades you can reach at all.</p>";
     var rp = $("car-reported"); if (rp) rp.innerHTML =
       '<table class="car-tbl"><thead><tr><th>What</th><th>Figure</th><th>Based on</th><th>Source</th></tr></thead><tbody>' +
       REPORTED.map(function (r) { return "<tr><td>" + esc(r[0]) + "</td><td>" + esc(r[1]) + "</td><td>" + esc(r[2]) + "</td><td>" + cite(r[3]) + "</td></tr>"; }).join("") + "</tbody></table>" +
