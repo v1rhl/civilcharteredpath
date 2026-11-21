@@ -36,14 +36,17 @@
   --s-violet: #7553c4;
   --review: #c0304f;
   --review-soft: rgba(192,48,79,0.10);
+  /* Box shading, used as a system: tool = somewhere you fill in or choose; ref = quoted or published reference. */
+  --tool-bg: #eaf4f5; --tool-line: #a9cfd4;
+  --ref-bg: #f8f4ea; --ref-line: #e0d5bd;
 }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
   --paper: #0f1824; --surface: #162232; --ink: #e6ecf2; --muted: #9aa8b8; --line: #2a3a4e;
-  --accent: #5fc2cf; --accent-ink: #0f1824; --accent-soft: #173a44; --accent-2: #f08a6c; --accent-2-ink: #0f1824; --accent-2-soft: #3b241c; --flag: #e7bd52; --flag-soft: #3a3016;
+  --accent: #5fc2cf; --accent-ink: #0f1824; --accent-soft: #173a44; --accent-2: #f08a6c; --accent-2-ink: #0f1824; --accent-2-soft: #3b241c; --flag: #e7bd52; --flag-soft: #3a3016; --tool-bg: #142c36; --tool-line: #2b5865; --ref-bg: #1f2228; --ref-line: #4a4535;
   --grid: rgba(95,194,207,0.07); --s-blue: #86a8f0; --s-violet: #b49cf0; --review: #f2849b; --review-soft: rgba(242,132,155,0.14); color-scheme: dark } }
 :root[data-theme="dark"] {
   --paper: #0f1824; --surface: #162232; --ink: #e6ecf2; --muted: #9aa8b8; --line: #2a3a4e;
-  --accent: #5fc2cf; --accent-ink: #0f1824; --accent-soft: #173a44; --accent-2: #f08a6c; --accent-2-ink: #0f1824; --accent-2-soft: #3b241c; --flag: #e7bd52; --flag-soft: #3a3016;
+  --accent: #5fc2cf; --accent-ink: #0f1824; --accent-soft: #173a44; --accent-2: #f08a6c; --accent-2-ink: #0f1824; --accent-2-soft: #3b241c; --flag: #e7bd52; --flag-soft: #3a3016; --tool-bg: #142c36; --tool-line: #2b5865; --ref-bg: #1f2228; --ref-line: #4a4535;
   --grid: rgba(95,194,207,0.07); --s-blue: #86a8f0; --s-violet: #b49cf0; --review: #f2849b; --review-soft: rgba(242,132,155,0.14); color-scheme: dark }
 
 * { box-sizing: border-box; }
@@ -461,6 +464,17 @@ body.with-sources .shell .subnav.wrap { padding-left: 0; padding-right: 0; max-w
   .sources summary .eyebrow::after { content: " (tap to open)"; text-transform: none; letter-spacing: 0; }
 }
 
+/* Shading system: tool boxes (you act in them) and reference boxes (quoted or published material). Everything else stays plain. */
+.panel.tool, .tool-box { background: var(--tool-bg); border-color: var(--tool-line); }
+.tool-box, .ref-box { border: 1px solid; border-radius: var(--radius); padding: 12px 14px; }
+.panel.ref, .ref-box { background: var(--ref-bg); border-color: var(--ref-line); }
+.ice-says { background: var(--ref-bg) !important; border-left-color: var(--ref-line); }
+.rung { background: var(--ref-bg); border-color: var(--ref-line); }
+.shade-key { display: inline-flex; flex-wrap: wrap; gap: 6px 12px; align-items: center; }
+.shade-key i { display: inline-block; width: 12px; height: 12px; border-radius: 3px; vertical-align: -1px; margin-right: 4px; border: 1px solid; }
+.shade-key .k-tool { background: var(--tool-bg); border-color: var(--tool-line); }
+.shade-key .k-ref { background: var(--ref-bg); border-color: var(--ref-line); }
+
 /* Graded example answers */
 .levels { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px; }
 .levels > div { border: 1px solid var(--line); border-radius: var(--radius); padding: 12px 14px; display: flex; flex-direction: column; gap: 6px; }
@@ -486,7 +500,7 @@ footer .wrap { padding-block: 24px; display: flex; flex-direction: column; gap: 
   :root, :root[data-theme="dark"], :root:not([data-theme="light"]) {
     --paper: #ffffff; --surface: #ffffff; --ink: #15233a; --muted: #4a5667; --line: #c9d0ce;
     --accent: #0d6b78; --accent-ink: #ffffff; --accent-soft: #dcecee; --accent-2: #b84a32; --accent-2-ink: #ffffff; --accent-2-soft: #f8e5de; --flag: #b07a06; --flag-soft: #f7edcf;
-    --s-blue: #3f6fd1; --s-violet: #7553c4; --review: #c0304f; --review-soft: rgba(192,48,79,0.10); color-scheme: light; }
+    --s-blue: #3f6fd1; --s-violet: #7553c4; --review: #c0304f; --review-soft: rgba(192,48,79,0.10); --tool-bg: #ffffff; --tool-line: #c9d0ce; --ref-bg: #ffffff; --ref-line: #c9d0ce; color-scheme: light; }
   @page { size: A4 landscape; margin: 12mm; }
   * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   body { background: #fff !important; }
@@ -816,7 +830,7 @@ nav a[aria-current="page"][aria-expanded="true"] { color: var(--accent-ink); bac
     </div>
   </div>
   <div class="wrap" style="display:flex;flex-direction:column;gap:28px">
-    <div class="panel start-here" id="start-here">
+    <div class="panel start-here tool" id="start-here">
       <div>
         <span class="eyebrow">Start here</span>
         <h2>Where are you on the journey?</h2>
@@ -828,7 +842,7 @@ nav a[aria-current="page"][aria-expanded="true"] { color: var(--accent-ink); bac
     <div class="progress-strip" id="home-progress"></div>
 
     <div class="grid two">
-      <div class="panel try-card">
+      <div class="panel try-card tool">
         <span class="eyebrow">Try a flashcard</span>
         <button type="button" class="flip" id="home-card" aria-live="polite"></button>
         <div style="display:flex;gap:8px;flex-wrap:wrap">
@@ -853,7 +867,7 @@ nav a[aria-current="page"][aria-expanded="true"] { color: var(--accent-ink); bac
     <h2>Six stages from graduate member to chartered</h2>
     <p class="lede">The order is fixed; the pace is yours. Check ICE's current guidance for forms, word limits and fees, because they change.</p>
   </div>
-  <div class="panel" id="key-dates" style="gap:14px">
+  <div class="panel tool" id="key-dates" style="gap:14px">
     <div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;align-items:baseline">
       <h3>Which review are you aiming for?</h3>
       <a class="small" id="key-dates-src" target="_blank" rel="noopener">ICE key dates</a>
@@ -885,16 +899,16 @@ nav a[aria-current="page"][aria-expanded="true"] { color: var(--accent-ink); bac
     <h2>Careers, pay and packages</h2>
     <p class="lede">Where the paths lead, what each level expects, and what it pays. Every figure shows its source and date.</p>
   </div>
-  <div class="panel">
+  <div class="panel tool">
     <h3>Pick a path</h3>
     <div class="chips-row" id="car-paths" role="group" aria-label="Career path"></div>
     <div id="car-path" class="car-path"></div>
   </div>
-  <details class="panel car-sec">
+  <details class="panel car-sec ref">
     <summary><h3>Pay by grade</h3><span class="small">Published figures: ONS and recruiters</span></summary>
     <div id="car-grades"></div>
   </details>
-  <details class="panel car-sec">
+  <details class="panel car-sec ref">
     <summary><h3>What engineers report</h3><span class="small">One table of self-reported pay, 2024 to 2026</span></summary>
     <div id="car-reported"></div>
   </details>
@@ -911,11 +925,11 @@ nav a[aria-current="page"][aria-expanded="true"] { color: var(--accent-ink); bac
     <h2>What reviewers are looking for</h2>
     <p class="lede">Your report and review are assessed against seven attributes. For each one, here's what good evidence covers, the bar for your level, and questions to test your own examples.</p>
   </div>
-  <div class="panel level-banner">
+  <div class="panel level-banner tool">
     <span>Showing what's needed for <strong data-lv="title">CEng MICE</strong>. The other level is shown alongside for comparison.</span>
     <div class="level-pick" role="group" aria-label="Which level are you aiming for?"></div>
   </div>
-  <div class="panel role-panel" id="role-panel"></div>
+  <div class="panel role-panel tool" id="role-panel"></div>
   <div class="attr-tabs" id="attr-tabs" role="tablist" aria-label="Attributes"></div>
   <div id="attr-detail"></div>
   <div id="attr-examples"></div>
@@ -928,7 +942,7 @@ nav a[aria-current="page"][aria-expanded="true"] { color: var(--accent-ink); bac
     <h2>Plan back from your submission date</h2>
   </div>
   <div class="planner">
-    <details class="panel plan-settings no-print" id="plan-settings">
+    <details class="panel plan-settings no-print tool" id="plan-settings">
       <summary><span class="eyebrow">Plan settings</span><span class="ps-sum" id="ps-sum"></span><span class="ps-edit">Change</span></summary>
       <p class="small" style="margin:8px 0 0">Pick a cycle or type your own dates. The planner works back to when to start each stage, then forward to your review.</p>
     <form id="plan-form" autocomplete="off">
@@ -955,7 +969,7 @@ nav a[aria-current="page"][aria-expanded="true"] { color: var(--accent-ink); bac
       </details>
     </form>
     </details>
-    <div class="panel" style="gap:16px">
+    <div class="panel tool" style="gap:16px">
       <div class="no-print" style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;align-items:baseline">
         <h3>Your plan</h3>
         <span class="small mono"><span id="plan-summary"></span> &middot; <span id="chk-count"></span></span>
@@ -1012,7 +1026,7 @@ nav a[aria-current="page"][aria-expanded="true"] { color: var(--accent-ink); bac
     <p class="lede">What happens on the day, what ICE says about each part, and practical advice. Facts from ICE's guidance are marked <span class="tag-ice">ICE</span> with a page number; everything under "Our advice" is our own suggestion.</p>
   </div>
 
-  <div class="panel day-glance">
+  <div class="panel day-glance ref">
     <div class="glance-head">
       <span class="eyebrow">The day at a glance: <span data-lv="rv">Chartered</span> review</span>
       <div class="level-pick" role="group" aria-label="Which review: IEng or CEng?"></div>
@@ -1284,11 +1298,11 @@ nav a[aria-current="page"][aria-expanded="true"] { color: var(--accent-ink); bac
     <h2>Need-to-know, the night before</h2>
     <p class="lede">The facts to glance at before your review, on one page. Each block links to its source; check anything you plan to quote.</p>
   </div>
-  <div class="panel level-banner no-print">
+  <div class="panel level-banner no-print tool">
     <span>Timings shown for the <strong data-lv="rv">Chartered</strong> review (<span data-lv="title">CEng MICE</span>).</span>
     <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"><div class="level-pick" role="group" aria-label="Which level are you aiming for?"></div><button type="button" class="btn" id="cs-print">Print the one-page sheet</button></div>
   </div>
-  <div class="panel cs-notes-panel no-print" id="cs-notes-panel">
+  <div class="panel cs-notes-panel no-print tool" id="cs-notes-panel">
     <div><span class="eyebrow">Communication task notes</span><h3 style="margin-top:4px">Export as your allowed reference notes</h3></div>
     <div class="ice-says"><span class="tag-ice">ICE</span><ul>
       <li>&ldquo;You will only be allowed to refer to 2 sides of A4 (either soft or hard copy) as reference material, you will not be allowed to use any other reference material or access any other information.&rdquo; <a href="https://www.ice.org.uk/media/aj2gmts3/11-jun-26-professional-review-guidance.pdf" target="_blank" rel="noopener">p. 27</a></li>
@@ -1303,8 +1317,8 @@ nav a[aria-current="page"][aria-expanded="true"] { color: var(--accent-ink); bac
     </div>
     <p class="small muted" style="margin:0">Our advice: pick the text size you normally work in. ICE's guidance doesn't say whether notes are checked on the day, so keep them to facts and figures you'll refer to, not paragraphs you'd want to copy. If you're unsure, ask ICE at professional.reviews@ice.org.uk.</p>
   </div>
-  <div class="panel role-banner no-print"><div class="role-pick" role="group" aria-label="What's your role?"></div></div>
-  <details class="panel cs-custom no-print" id="cs-custom">
+  <div class="panel role-banner no-print tool"><div class="role-pick" role="group" aria-label="What's your role?"></div></div>
+  <details class="panel cs-custom no-print tool" id="cs-custom">
     <summary><strong>Customise your cheat sheet</strong> <span class="small">Choose sections, reorder them and add your own notes. Saved in this browser only.</span></summary>
     <ul class="cs-pick" id="cs-pick"></ul>
     <div style="display:flex;gap:8px;flex-wrap:wrap"><button type="button" class="btn ghost" id="cs-reset">Reset to the full sheet</button><span class="small" id="cs-fit" role="status"></span></div>
@@ -1438,7 +1452,7 @@ nav a[aria-current="page"][aria-expanded="true"] { color: var(--accent-ink); bac
     <p class="lede">The presentation takes one aspect of a project you've already written about and goes deeper. Here's how to choose it, structure it, and design slides that help rather than get in the way.</p>
   </div>
 
-  <div class="panel">
+  <div class="panel ref">
     <span class="eyebrow">What ICE says</span>
     <div class="ice-says">
       <span class="tag-ice">ICE</span>
@@ -1493,7 +1507,7 @@ nav a[aria-current="page"][aria-expanded="true"] { color: var(--accent-ink); bac
     <p class="small muted" style="margin:0">Several attributes will come through naturally (engineering judgement, commercial, safety, communication). That's fine, but don't try to tour all seven: ICE says not to.</p>
   </div>
 
-  <div class="panel">
+  <div class="panel tool">
     <div><span class="eyebrow">Plan it</span><h3 style="margin-top:4px">Your presentation on one page</h3></div>
     <p class="small" style="margin:0">Fill this in before you open your slide software. It's saved in this browser only.</p>
     <div class="pres-plan" id="pres-plan">
@@ -1638,17 +1652,17 @@ nav a[aria-current="page"][aria-expanded="true"] { color: var(--accent-ink); bac
     </div>
   </div>
   <div class="grid">
-    <div class="panel">
+    <div class="panel tool">
       <h3>Find a mock review partner</h3>
       <p>Pair up by sector and review date, and run each other's presentation and interview under time.</p>
       <button class="btn ghost" type="button" disabled>Opens with the forum</button>
     </div>
-    <div class="panel">
+    <div class="panel tool">
       <h3>Share your review questions</h3>
       <p>After your review, tell others which questions came up for each attribute. No names, no employers.</p>
       <button class="btn ghost" type="button" disabled>Opens with the forum</button>
     </div>
-    <div class="panel">
+    <div class="panel ref">
       <h3>House rules</h3>
       <p>Be kind. Don't share anyone's report or confidential project information. Anything about the process should be checked against ICE's own guidance.</p>
     </div>
@@ -1682,17 +1696,18 @@ nav a[aria-current="page"][aria-expanded="true"] { color: var(--accent-ink); bac
   <div class="wrap">
     <span>Civil Chartered Path is an independent community resource. It is not affiliated with or endorsed by the Institution of Civil Engineers.</span>
     <span>Current affairs summarised from public sources, linked in each item. Last updated <span id="updated"></span>.</span>
+    <span class="shade-key"><span><i class="k-tool"></i>Shaded teal: somewhere you fill in or choose</span><span><i class="k-ref"></i>Shaded sand: quoted or published reference</span></span>
     <span><a href="#community">Community (coming soon)</a></span>
   </div>
 </footer>
 
-<script src="js/content.js?v=20261121h"></script>
-<script src="js/role.js?v=20261121h"></script>
-<script src="js/careers.js?v=20261121h"></script>
-<script src="js/news-feed.js?v=20261121h"></script>
-<script src="js/news-archive.js?v=20261121h"></script>
-<script src="js/config.js?v=20261121h"></script>
-<script src="js/pages.js?v=20261121h"></script>
-<script src="js/site.js?v=20261121h"></script>
+<script src="js/content.js?v=20261121i"></script>
+<script src="js/role.js?v=20261121i"></script>
+<script src="js/careers.js?v=20261121i"></script>
+<script src="js/news-feed.js?v=20261121i"></script>
+<script src="js/news-archive.js?v=20261121i"></script>
+<script src="js/config.js?v=20261121i"></script>
+<script src="js/pages.js?v=20261121i"></script>
+<script src="js/site.js?v=20261121i"></script>
 </body>
 </html>

@@ -206,7 +206,7 @@
   var PK = load();
   function calc() {
     function col(o, t) { return '<fieldset class="pk-col"><legend>' + t + "</legend>" + FIELDS.map(function (f) { return '<label class="field"><span>' + f[1] + '</span><input type="number" inputmode="decimal" min="0" step="' + f[2] + '" data-o="' + o + '" data-f="' + f[0] + '" value="' + PK[o][f[0]] + '"></label>'; }).join("") + "</fieldset>"; }
-    return '<details class="car-more" id="pk-wrap" open><summary>Compare two offers</summary><p class="small">Starts with example figures (offer A is shaped like a client-side role with a public-sector pension). Replace them with your own. Saved only in this browser.</p>' +
+    return '<details class="car-more tool-box" id="pk-wrap" open><summary>Compare two offers</summary><p class="small">Starts with example figures (offer A is shaped like a client-side role with a public-sector pension). Replace them with your own. Saved only in this browser.</p>' +
       '<div class="pk-grid">' + col("a", "Offer A") + col("b", "Offer B") + "</div>" + '<div id="pk-out" role="status"></div></details>';
   }
   function value(o) { var base = +o.base || 0, day = base / 260; return { cash: base + base * (+o.bonus || 0) / 100 + (+o.car || 0), pen: base * (+o.pen || 0) / 100, leave: ((+o.leave || 0) - 25) * day }; }
