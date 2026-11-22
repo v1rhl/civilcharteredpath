@@ -180,10 +180,23 @@
       ["Practise questions out loud", "The questions reviewers ask, with what a good answer covers.", "#questions", "Practice questions"],
       ["Revise little and often", "Code of Conduct, H&S, contracts, sustainability and current affairs.", "#flashcards", "Flashcards"] ] }
   ];
+  /* Line icons for the journey track: survey level, blocks of evidence, report, review panel, finished bridge */
+  var JICON = [
+    '<path d="M12 9V4M8 3h8M12 9l-6 12M12 9l6 12M9 15h6"/>',
+    '<path d="M4 14h7v6H4zM13 14h7v6h-7zM8.5 7h7v6h-7z"/>',
+    '<path d="M6 3h9l4 4v14H6zM15 3v4h4M9 11h7M9 15h7M9 19h4"/>',
+    '<path d="M3 4h18v11H3zM12 15v5M8 20h8M7 11l3-3 3 2 4-4"/>',
+    '<path d="M2 19h20M4 19v-6M20 19v-6M4 13q8-9 16 0M8 19v-4.5M12 19v-6M16 19v-4.5"/>'
+  ];
   var stage = hload("cp-stage", "deciding");
   if (!STAGES.some(function (x) { return x.id === stage; })) stage = "deciding";
   function renderStage() {
-    $("stage-tabs").innerHTML = STAGES.map(function (x) { return '<button type="button" role="tab" data-stage="' + x.id + '" aria-selected="' + (x.id === stage) + '">' + esc(x.t) + "</button>"; }).join("");
+    var cur = 0; STAGES.forEach(function (x, i) { if (x.id === stage) cur = i; });
+    $("stage-tabs").innerHTML = STAGES.map(function (x, i) {
+      var st = i < cur ? "done" : i === cur ? "now" : i === cur + 1 ? "next" : "later";
+      return '<button type="button" role="tab" class="j-' + st + '" data-stage="' + x.id + '" aria-selected="' + (i === cur) + '"><svg viewBox="0 0 24 24" aria-hidden="true">' + JICON[i] + "</svg><span>" + esc(x.t) + "</span>" +
+        (st === "now" ? '<em>You are here</em>' : st === "next" ? "<em>Next</em>" : "") + "</button>";
+    }).join("") + '<a class="j-goal" href="#route"><svg viewBox="0 0 24 24" aria-hidden="true">' + JICON[4] + "</svg><span>Chartered</span><em>The goal</em></a>";
     var st = STAGES.filter(function (x) { return x.id === stage; })[0];
     $("stage-steps").innerHTML = st.steps.map(function (k) { return "<li><strong>" + esc(k[0]) + "</strong><p>" + esc(k[1]) + '</p><a href="' + k[2] + '">' + esc(k[3]) + " &rarr;</a></li>"; }).join("");
   }

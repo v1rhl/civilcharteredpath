@@ -499,6 +499,36 @@ body.with-sources .shell .subnav.wrap { padding-left: 0; padding-right: 0; max-w
 @media (max-width: 620px) { .hero-art { grid-template-columns: repeat(2, 1fr); height: 40px; } .hero-art svg { height: 40px; } .hero-art svg:nth-child(n+3) { display: none; } }
 @media print { .vh-art, .hero-art { display: none; } }
 
+/* Journey track on the home page: the stage picker drawn as a route */
+#stage-tabs.journey { display: grid !important; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 0; position: relative; margin: 4px 0 6px; }
+#stage-tabs.journey > * { position: relative; display: flex; flex-direction: column; align-items: center; gap: 4px; text-align: center; background: none !important; border: 0 !important; padding: 0 2px !important; color: var(--muted); font: 500 0.78rem/1.2 var(--font-body); cursor: pointer; text-decoration: none; border-radius: 0 !important; box-shadow: none !important; }
+#stage-tabs.journey > *::before { content: ""; position: absolute; top: 21px; left: -50%; width: 100%; height: 3px; background: var(--line); z-index: 0; }
+#stage-tabs.journey > *:first-child::before { display: none; }
+#stage-tabs.journey svg { position: relative; z-index: 1; width: 44px; height: 44px; padding: 9px; border-radius: 50%; background: var(--surface); border: 2px solid var(--line); fill: none; stroke: var(--muted); stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; box-sizing: border-box; }
+#stage-tabs.journey em { font: 500 0.66rem var(--font-mono); text-transform: uppercase; letter-spacing: 0.05em; font-style: normal; }
+#stage-tabs.journey .j-done { color: var(--ink); } #stage-tabs.journey .j-done svg { border-color: var(--accent); stroke: var(--accent); }
+#stage-tabs.journey .j-done::before, #stage-tabs.journey .j-now::before { background: var(--accent); }
+#stage-tabs.journey .j-now { color: var(--ink); font-weight: 700; } #stage-tabs.journey .j-now svg { background: var(--accent); border-color: var(--accent); stroke: var(--accent-ink); transform: scale(1.08); }
+#stage-tabs.journey .j-now em { color: var(--accent); }
+#stage-tabs.journey .j-next svg { border-style: dashed; border-color: var(--accent-2); stroke: var(--accent-2); }
+#stage-tabs.journey .j-next em { color: var(--accent-2); }
+#stage-tabs.journey .j-goal svg { border-color: var(--accent-2); stroke: var(--accent-2); }
+#stage-tabs.journey > *:hover svg, #stage-tabs.journey > *:focus-visible svg { border-color: var(--accent); }
+#stage-tabs.journey > *:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+@media (max-width: 420px) { #stage-tabs.journey > * { font-size: 0.7rem; } #stage-tabs.journey svg { width: 38px; height: 38px; padding: 8px; } #stage-tabs.journey > *::before { top: 18px; } }
+
+.kn-list { display: flex; flex-direction: column; }
+.kn-list details { border-top: 1px solid var(--ref-line); padding: 10px 0; }
+.kn-list details:first-child { border-top: 0; }
+.kn-list summary { cursor: pointer; display: flex; flex-wrap: wrap; gap: 2px 8px; align-items: baseline; list-style: none; padding-right: 22px; position: relative; }
+.kn-list summary::-webkit-details-marker { display: none; }
+.kn-list summary::after { content: "+"; position: absolute; right: 2px; top: 0; font: 600 1.1rem/1 var(--font-mono); color: var(--accent); }
+.kn-list details[open] > summary::after { content: "\2212"; }
+.kn-list details p { margin: 6px 0 0; font-size: 0.92rem; color: var(--ink); }
+.kn-list .kn-foot { font-size: 0.82rem; color: var(--muted); }
+#view-resources > .panel { margin-bottom: 14px; }
+.res-more-h { margin: 18px 0 6px; }
+
 /* Graded example answers */
 .levels { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px; }
 .levels > div { border: 1px solid var(--line); border-radius: var(--radius); padding: 12px 14px; display: flex; flex-direction: column; gap: 6px; }
@@ -859,7 +889,7 @@ nav a[aria-current="page"][aria-expanded="true"] { color: var(--accent-ink); bac
         <span class="eyebrow">Start here</span>
         <h2>Where are you on the journey?</h2>
       </div>
-      <div class="stage-tabs" role="tablist" id="stage-tabs"></div>
+      <div class="stage-tabs journey" role="tablist" aria-label="Your stage" id="stage-tabs"></div>
       <ol class="stage-steps" id="stage-steps"></ol>
     </div>
 
@@ -920,10 +950,76 @@ nav a[aria-current="page"][aria-expanded="true"] { color: var(--accent-ink); bac
 <section class="view wrap" id="view-resources" data-view="resources" hidden>
   <div class="view-head">
     <span class="eyebrow"><a href="#planner">Plan</a> / Technical resources</span>
-    <h2>Where to learn and check the technical side</h2>
-    <p class="lede">Places to ask questions, find the code, read design guidance and run a quick check. Each one says what it gives you and what it costs. Where it lines up with an attribute, we've said which.</p>
+    <h2>Technical knowledge to have</h2>
+    <p class="lede">The failures and standards that come up at review, then places to ask questions, find the code, read guidance and run a quick check. Where something lines up with an attribute, we've said which.</p>
   </div>
-  <p class="small">Links checked 21 Nov 2026. <span class="res-cost free">Free</span> open to anyone. <span class="res-cost reg">Free, sign-up</span> needs an account. <span class="res-cost mem">Members</span> free to members of that body. <span class="res-cost paid">Paid</span> costs money, often covered by your employer.</p>
+  <div class="panel ref">
+    <h3>Failures that changed practice</h3>
+    <p>Reviewers often ask you to describe an industry failure and what changed because of it. Pick one close to your own work, and know what happened, why it happened, and what is done differently now. Tap one to open it.</p>
+    <div class="kn-list">
+      <details><summary><strong>Toddbrook Reservoir, Whaley Bridge</strong> <span class="small">2019 · dam spillway</span></summary>
+        <p><b>What happened:</b> in heavy rain on 1 August 2019, part of the concrete spillway on a 19th-century dam broke up. About 1,500 people were evacuated while the dam was shored up and the reservoir drawn down.</p>
+        <p><b>What changed:</b> an independent review led by Prof David Balmforth made 22 recommendations, all accepted by government. A wider review of reservoir safety and a reform programme followed, moving towards a more risk-based regime.</p>
+        <p class="kn-foot"><a href="https://www.gov.uk/government/publications/toddbrook-reservoir-incident-2019-independent-review" target="_blank" rel="noopener">The review on GOV.UK</a> · <a href="#attributes-4">Attribute 4</a> · <a href="#attributes-1">Attribute 1</a></p></details>
+      <details><summary><strong>Grenfell Tower, London</strong> <span class="small">2017 · fire and cladding</span></summary>
+        <p><b>What happened:</b> 72 people died when fire spread up the outside of a 24-storey residential block that had been refurbished with combustible cladding. The Inquiry's final report (4 September 2024) found failures by government, regulators, manufacturers, designers and contractors over many years.</p>
+        <p><b>What changed:</b> Dame Judith Hackitt's review, <a href="https://www.gov.uk/government/publications/independent-review-of-building-regulations-and-fire-safety-final-report" target="_blank" rel="noopener">Building a Safer Future</a> (May 2018), led to the Building Safety Act 2022, the Building Safety Regulator and new competence duties (see below).</p>
+        <p class="kn-foot"><a href="https://www.gov.uk/government/publications/publication-of-the-grenfell-tower-inquiry-phase-2-report" target="_blank" rel="noopener">Phase 2 report on GOV.UK</a> · <a href="#attributes-4">Attribute 4</a> · <a href="#attributes-7">Attribute 7</a></p></details>
+      <details><summary><strong>Carillion</strong> <span class="small">2018 · contractor insolvency</span></summary>
+        <p><b>What happened:</b> one of the UK's largest contractors declared insolvency on 15 January 2018, part-way through hospitals, roads and rail work. MPs blamed aggressive accounting, bidding work at too little margin, and paying suppliers late.</p>
+        <p><b>What changed:</b> more scrutiny of contractors' finances and of bidding on lowest price, and more attention to prompt payment down the supply chain. A good example for commercial questions.</p>
+        <p class="kn-foot"><a href="https://committees.parliament.uk/work/3897/" target="_blank" rel="noopener">The MPs' inquiry</a> · <a href="#attributes-3">Attribute 3</a> · <a href="#attributes-2">Attribute 2</a></p></details>
+      <details><summary><strong>Ronan Point, east London</strong> <span class="small">1968 · progressive collapse</span></summary>
+        <p><b>What happened:</b> a gas explosion in a flat blew out a load-bearing wall panel in a 22-storey precast block, and a whole corner of the building collapsed floor by floor. Four people died.</p>
+        <p><b>What changed:</b> designing against disproportionate collapse (robustness and tying) entered the Building Regulations. It's now requirement A3 in <a href="https://www.gov.uk/guidance/building-regulations-and-approved-documents-index" target="_blank" rel="noopener">Approved Document A</a>.</p>
+        <p class="kn-foot"><a href="https://www.nationalarchives.gov.uk/education/resources/sixties-britain/ronan-point-collapse/" target="_blank" rel="noopener">National Archives</a> · <a href="#attributes-1">Attribute 1</a></p></details>
+      <details><summary><strong>Nicoll Highway, Singapore</strong> <span class="small">2004 · deep excavation</span></summary>
+        <p><b>What happened:</b> a braced excavation for a metro line collapsed, killing four. The inquiry found errors in detailing the bracing connections and a design that overestimated the soil's strength.</p>
+        <p><b>What changed:</b> a standard case for checking temporary works design independently and for acting on monitoring readings before they reach trigger levels.</p>
+        <p class="kn-foot"><a href="https://news.mit.edu/2008/collapse-highway-0201" target="_blank" rel="noopener">MIT summary</a> · <a href="#attributes-1">Attribute 1</a> · <a href="#attributes-4">Attribute 4</a></p></details>
+      <details><summary><strong>Hyatt Regency walkways, Kansas City</strong> <span class="small">1981 · connection design</span></summary>
+        <p><b>What happened:</b> two suspended walkways fell into a crowded atrium, and 113 people died. The hanger connections had too little capacity: the detail was changed during fabrication and the change wasn't properly checked.</p>
+        <p><b>What changed:</b> the reference case for who owns a design change, and for checking connections, not just members.</p>
+        <p class="kn-foot"><a href="https://www.nist.gov/el/walkway-collapse-kansas-city-missouri-1981" target="_blank" rel="noopener">NIST investigation</a> · <a href="#attributes-1">Attribute 1</a> · <a href="#attributes-7">Attribute 7</a></p></details>
+      <details><summary><strong>Morandi bridge, Genoa</strong> <span class="small">2018 · ageing asset</span></summary>
+        <p><b>What happened:</b> a span of a 1960s motorway viaduct collapsed, killing 43. Its stays were steel encased in concrete, hard to inspect, and later inquiries pointed to poor maintenance and design weaknesses.</p>
+        <p><b>What changed:</b> renewed attention, in Italy and beyond, to inspecting ageing structures whose critical parts can't be seen.</p>
+        <p class="kn-foot"><a href="https://www.designingbuildings.co.uk/wiki/Genoa_bridge_collapse" target="_blank" rel="noopener">Designing Buildings summary</a> · <a href="#attributes-1">Attribute 1</a> · <a href="#attributes-2">Attribute 2</a></p></details>
+      <details><summary><strong>CROSS-UK safety reports</strong> <span class="small">ongoing · near misses</span></summary>
+        <p><b>What it is:</b> a confidential scheme where engineers report structural and fire safety concerns. Reports are published anonymously with expert comment. The Building Safety Regulator named it the official voluntary reporting system for building safety until at least 2028.</p>
+        <p><b>Why read it:</b> the reports are short, recent and close to everyday work, so they're easy to use as examples at review.</p>
+        <p class="kn-foot"><a href="https://ice.org.uk/get-involved/industry-networks/cross-uk" target="_blank" rel="noopener">CROSS-UK at ICE</a> · <a href="#attributes-4">Attribute 4</a> · <a href="#attributes-7">Attribute 7</a></p></details>
+    </div>
+  </div>
+  <div class="panel ref">
+    <h3>Standards and law to know</h3>
+    <p>What each one governs and when it applies to you. You won't need them all, but you should know the ones on your projects well.</p>
+    <div class="kn-list">
+      <details><summary><strong>Eurocodes and UK National Annexes</strong> <span class="small">structural design</span></summary>
+        <p>The European design codes (EN 1990 to 1999) cover the basis of design, loads and each material. The UK National Annex to each one sets the UK's values, so you always use the two together. Second-generation Eurocodes are being published up to 2027, and BSI says the UK versions of the current ones will be withdrawn on 30 March 2028. Know which generation your project uses.</p>
+        <p class="kn-foot"><a href="https://knowledge.bsigroup.com/articles/eurocodes-from-european-ambition-to-the-next-generation-of-structural-standards" target="_blank" rel="noopener">BSI on the next generation</a> · <a href="#attributes-1">Attribute 1</a></p></details>
+      <details><summary><strong>CDM 2015</strong> <span class="small">all construction work</span></summary>
+        <p>Applies to every construction project. As a designer you must eliminate, reduce or control foreseeable risks to people who build, use and maintain what you design, and pass on what others need to know. Projects with more than one contractor need a principal designer and a principal contractor. Expect a question on it at review.</p>
+        <p class="kn-foot"><a href="https://www.hse.gov.uk/pubns/books/l153.htm" target="_blank" rel="noopener">HSE guidance (L153, free)</a> · <a href="#attributes-4">Attribute 4</a></p></details>
+      <details><summary><strong>Building Safety Act 2022</strong> <span class="small">buildings, especially higher-risk</span></summary>
+        <p>Higher-risk buildings (at least 18 m or seven storeys, mainly residential) go through the Building Safety Regulator at gateways: approval before building work starts (Gateway 2) and before occupation (Gateway 3). All building work now has dutyholders with competence duties, including designers.</p>
+        <p class="kn-foot"><a href="https://www.gov.uk/guidance/the-building-safety-act" target="_blank" rel="noopener">GOV.UK guidance</a> · <a href="#attributes-4">Attribute 4</a> · <a href="#attributes-7">Attribute 7</a></p></details>
+      <details><summary><strong>Reservoirs Act 1975</strong> <span class="small">dams and reservoirs</span></summary>
+        <p>In England it covers reservoirs holding 25,000 m³ or more above the surrounding land. High-risk reservoirs must always have a supervising engineer and be inspected at least every 10 years by an inspecting engineer, both from government panels of qualified civil engineers.</p>
+        <p class="kn-foot"><a href="https://www.gov.uk/guidance/reservoirs-how-to-manage-your-large-raised-reservoir" target="_blank" rel="noopener">Environment Agency guidance</a> · <a href="#attributes-4">Attribute 4</a></p></details>
+      <details><summary><strong>DMRB</strong> <span class="small">motorways and trunk roads</span></summary>
+        <p>The Design Manual for Roads and Bridges sets the standards for the strategic road network. Doing something different needs an approved departure from standard. Many local authorities use it too.</p>
+        <p class="kn-foot"><a href="https://standardsforhighways.co.uk/help" target="_blank" rel="noopener">Standards for Highways</a> · <a href="#attributes-1">Attribute 1</a></p></details>
+      <details><summary><strong>Manual for Streets 1 and 2</strong> <span class="small">local streets</span></summary>
+        <p>Department for Transport guidance (2007) for residential streets, putting place before movement. Manual for Streets 2 extends it to busier streets such as high streets and town centres. Used instead of DMRB for most local roads.</p>
+        <p class="kn-foot"><a href="https://www.gov.uk/government/publications/manual-for-streets" target="_blank" rel="noopener">GOV.UK</a> · <a href="#attributes-5">Attribute 5</a></p></details>
+      <details><summary><strong>BS 5975</strong> <span class="small">temporary works</span></summary>
+        <p>The code of practice for temporary works, now in two parts (2024): Part 1 covers managing temporary works, including the temporary works coordinator and categories of design check; Part 2 covers falsework design. If you work for or with a contractor, know who your temporary works coordinator is.</p>
+        <p class="kn-foot"><a href="https://www.bsigroup.com/en-GB/insights-and-media/media-centre/press-releases/2025/february/new-standards-for-temporary-works-published-by-bsi/" target="_blank" rel="noopener">BSI announcement</a> · <a href="#attributes-4">Attribute 4</a></p></details>
+    </div>
+  </div>
+  <h3 class="res-more-h">Where to find more</h3>
+  <p class="small">Links checked 22 Nov 2026. <span class="res-cost free">Free</span> open to anyone. <span class="res-cost reg">Free, sign-up</span> needs an account. <span class="res-cost mem">Members</span> free to members of that body. <span class="res-cost paid">Paid</span> costs money, often covered by your employer.</p>
   <div class="res-grid">
     <div class="panel">
       <h3>Ask and discuss</h3>
@@ -1780,14 +1876,14 @@ nav a[aria-current="page"][aria-expanded="true"] { color: var(--accent-ink); bac
   </div>
 </footer>
 
-<script src="js/content.js?v=20261121k"></script>
-<script src="js/role.js?v=20261121k"></script>
-<script src="js/careers.js?v=20261121k"></script>
-<script src="js/news-feed.js?v=20261121k"></script>
-<script src="js/news-archive.js?v=20261121k"></script>
-<script src="js/config.js?v=20261121k"></script>
-<script src="js/pages.js?v=20261121k"></script>
-<script src="js/site.js?v=20261121k"></script>
-<script src="js/art.js?v=20261121k"></script>
+<script src="js/content.js?v=20261122a"></script>
+<script src="js/role.js?v=20261122a"></script>
+<script src="js/careers.js?v=20261122a"></script>
+<script src="js/news-feed.js?v=20261122a"></script>
+<script src="js/news-archive.js?v=20261122a"></script>
+<script src="js/config.js?v=20261122a"></script>
+<script src="js/pages.js?v=20261122a"></script>
+<script src="js/site.js?v=20261122a"></script>
+<script src="js/art.js?v=20261122a"></script>
 </body>
 </html>
