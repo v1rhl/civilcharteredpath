@@ -25,6 +25,7 @@ sub-pages are `SECTIONS` in `js/site.js`. A **Learning** tab is already in the n
 | Tools | Hub listing every tool; built from `window.CP_TOOLS` | `js/site.js` |
 | Sketch pad | Freehand and beam/frame diagram sketching on A4 sheets with a title block, typical details, image underlay, PNG/JPEG/SVG/PDF export; saved in the visitor's browser | `js/tools/sketch.js`, `js/tools/sketch-templates.js` |
 | Retaining wall | Indicative first-pass check of cantilever and gravity retaining walls, with a live section, calc sheet and CSV/XLSX/PNG/PDF export. Not for construction. | `js/tools/retaining-wall.js` (page), `js/tools/retaining-wall-calc.js` (engine, tested by `node tools/test_retaining_wall.js`), `js/tools/export.js` (shared `CPExport`) |
+| Site diary | Site visit record built for a phone: header details, photos from the camera or device, a plan from an image or PDF page with each photo pinned and a direction-of-view arrow, photo and plan markup with commentary, a PDF report, and visit files to back up or move a visit. Photos and plans stay on the device (IndexedDB); pdf.js and jsPDF load from cdnjs when first used | `js/tools/site-diary.js` |
 
 ## Look and feel
 Colours and fonts are CSS custom properties at the top of the `<style>` block in `index.html`, built from five base

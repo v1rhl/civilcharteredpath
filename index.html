@@ -2531,6 +2531,150 @@ footer .wrap { font-family: var(--font-body); }
   </div>
 </section>
 
+<!-- TOOL: SITE DIARY (js/tools/site-diary.js builds the page) -->
+<section class="view wrap" id="view-site-diary" data-view="site-diary" hidden>
+  <style>
+    #view-site-diary { --sd-stage: #e6eaea; --sd-pin: #b84a32; }
+    :root[data-theme="dark"] #view-site-diary { --sd-stage: #0b121b; }
+    @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) #view-site-diary { --sd-stage: #0b121b; } }
+    #view-site-diary.wrap { max-width: 1240px; }
+    #view-site-diary .view-head .eyebrow a { color: inherit; text-decoration: none; }
+    #view-site-diary .sd-row, #view-site-diary .sd-bar, #view-site-diary .sd-bar-btns { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+    #view-site-diary .sd-bar { justify-content: space-between; gap: 10px 16px; }
+    #view-site-diary .sd-vis { display: flex; align-items: center; gap: 8px; min-width: 0; flex: 1 1 260px; }
+    #view-site-diary .sd-vis select { flex: 1; min-width: 0; max-width: 420px; }
+    #view-site-diary .sd-lab { font: 500 0.72rem var(--font-mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+    #view-site-diary .sd-btn { font: 600 0.86rem var(--font-body); border: 1px solid var(--line); background: var(--surface); color: var(--ink); padding: 7px 12px; border-radius: var(--radius); cursor: pointer; min-height: 36px; }
+    #view-site-diary .sd-btn:hover:not([disabled]) { border-color: var(--accent); }
+    #view-site-diary .sd-btn[disabled] { opacity: 0.45; cursor: default; }
+    #view-site-diary .sd-btn.danger { color: var(--review); }
+    #view-site-diary .btn svg { width: 20px; height: 20px; }
+    #view-site-diary .sd-local { margin: 8px 0 14px; max-width: 80ch; }
+    #view-site-diary .sd-status { min-height: 1.3em; margin: 8px 0; color: var(--ink); }
+    #view-site-diary .sd-tabs { display: flex; gap: 4px; background: var(--surface); border: 1px solid var(--line); border-radius: 999px; padding: 3px; width: max-content; max-width: 100%; }
+    #view-site-diary .sd-tabs button { font: 600 0.9rem var(--font-body); border: 0; background: transparent; color: var(--ink); padding: 8px 16px; border-radius: 999px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
+    #view-site-diary .sd-tabs button[aria-selected="true"] { background: var(--accent); color: var(--accent-ink); }
+    #view-site-diary .sd-tabs .sd-shoot { order: 9; background: var(--accent-2); color: var(--accent-2-ink); margin-left: 6px; }
+    #view-site-diary .sd-tabs .sd-shoot svg { width: 20px; height: 20px; }
+    #view-site-diary .sd-count:empty { display: none; }
+    #view-site-diary .sd-count { font: 600 0.72rem var(--font-mono); background: var(--accent-soft); color: var(--ink); border-radius: 999px; padding: 0 6px; }
+    #view-site-diary .sd-pane { margin-top: 4px; }
+    #view-site-diary .sd-form { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px 16px; }
+    #view-site-diary .sd-form .wide, #view-site-diary .sd-form .sd-f-site { grid-column: 1 / -1; }
+    #view-site-diary .sd-form input, #view-site-diary .sd-form textarea { width: 100%; min-width: 0; box-sizing: border-box; font-size: 1rem; }
+    #view-site-diary .sd-form input[type="time"] { font: 400 1rem var(--font-body); padding: 8px 10px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); color: var(--ink); }
+    #view-site-diary .sd-form textarea { resize: vertical; }
+    #view-site-diary .sd-acts { margin-bottom: 12px; }
+    #view-site-diary .sd-none p { color: var(--muted); max-width: 70ch; }
+    #view-site-diary .sd-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; }
+    #view-site-diary .sd-card { display: flex; flex-direction: column; text-align: left; padding: 0; border: 1px solid var(--line); background: var(--surface); color: var(--ink); border-radius: var(--radius); overflow: hidden; cursor: pointer; font: inherit; }
+    #view-site-diary .sd-card:hover { border-color: var(--accent); }
+    #view-site-diary .sd-thumb { position: relative; display: block; aspect-ratio: 4 / 3; background: var(--sd-stage); }
+    #view-site-diary .sd-thumb svg { width: 100%; height: 100%; display: block; }
+    #view-site-diary .sd-num { position: absolute; left: 6px; top: 6px; min-width: 24px; height: 24px; padding: 0 5px; box-sizing: border-box; border-radius: 12px; background: var(--sd-pin); color: #fff; font: 700 0.8rem/24px Arial, sans-serif; text-align: center; border: 2px solid #fff; }
+    #view-site-diary .sd-cap { display: flex; flex-direction: column; gap: 3px; padding: 8px 10px 10px; font-size: 0.88rem; }
+    #view-site-diary .sd-pinned { font-size: 0.78rem; color: var(--accent); }
+    #view-site-diary .sd-pinned.no { color: var(--flag); }
+    #view-site-diary .sd-note { color: var(--ink); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    #view-site-diary .sd-note.none { color: var(--muted); font-style: italic; }
+    #view-site-diary .sd-plan-bar { justify-content: space-between; margin-bottom: 6px; }
+    #view-site-diary .sd-plan-name { font-family: var(--font-display); }
+    #view-site-diary .sd-hint { min-height: 1.3em; margin: 4px 0 6px; }
+    #view-site-diary .sd-hint.on { color: var(--ink); font-weight: 600; background: var(--flag-soft); border: 1px solid var(--flag); border-radius: var(--radius); padding: 6px 10px; }
+    #view-site-diary .sd-stage { position: relative; background: var(--sd-stage); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; }
+    #view-site-diary .sd-stage svg { display: block; width: 100%; height: 100%; touch-action: none; user-select: none; -webkit-user-select: none; cursor: grab; }
+    #view-site-diary .sd-plan-stage { height: clamp(320px, 64vh, 760px); }
+    #view-site-diary .sd-pin { cursor: move; }
+    #view-site-diary .sd-rot { cursor: grab; }
+    #view-site-diary .sd-zoom { position: absolute; right: 8px; bottom: 8px; display: flex; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,.15); }
+    #view-site-diary .sd-zoom button { border: 0; background: transparent; color: var(--ink); font: 600 1rem var(--font-body); min-width: 42px; height: 40px; cursor: pointer; }
+    #view-site-diary .sd-zoom button + button { border-left: 1px solid var(--line); }
+    #view-site-diary .sd-pinbar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-top: 10px; padding: 8px 10px; background: var(--surface); border: 1px solid var(--accent); border-radius: var(--radius); }
+    #view-site-diary .sd-pinbar img { width: 56px; height: 42px; object-fit: cover; border-radius: 4px; }
+    #view-site-diary .sd-pinbar-txt { flex: 1 1 160px; line-height: 1.3; }
+    #view-site-diary .sd-strip-head { display: flex; flex-wrap: wrap; gap: 4px 12px; align-items: baseline; margin: 14px 0 6px; }
+    #view-site-diary .sd-strip { display: flex; gap: 8px; overflow-x: auto; padding: 2px 2px 8px; scroll-snap-type: x proximity; }
+    #view-site-diary .sd-chip { position: relative; flex: 0 0 auto; width: 104px; height: 78px; padding: 0; border: 2px solid var(--line); border-radius: var(--radius); background: var(--sd-stage); cursor: pointer; overflow: hidden; scroll-snap-align: start; }
+    #view-site-diary .sd-chip img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    #view-site-diary .sd-chip.unpinned { border-style: dashed; border-color: var(--flag); }
+    #view-site-diary .sd-chip.sel { border: 3px solid var(--accent); }
+    #view-site-diary .sd-flag { position: absolute; left: 0; right: 0; bottom: 0; font: 600 0.66rem var(--font-body); background: rgba(0,0,0,.6); color: #fff; padding: 2px 4px; }
+    #view-site-diary .sd-chip-add { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; color: var(--ink); font: 600 0.75rem var(--font-body); background: var(--surface); border-style: dashed; }
+    #view-site-diary .sd-chip-add svg { width: 24px; height: 24px; }
+    #view-site-diary .sd-linkbtn { margin: 0; font-size: inherit; }
+    #view-site-diary .sd-paper { background: #fff; color: #15233a; border: 1px solid var(--line); border-radius: var(--radius); padding: clamp(14px, 4vw, 36px); max-width: 820px; font: 14px/1.45 Arial, Helvetica, sans-serif; }
+    #view-site-diary .sd-paper h2, #view-site-diary .sd-paper h3 { color: #15233a; }
+    /* modals */
+    #view-site-diary .sd-modal { position: fixed; inset: 0; z-index: 60; background: var(--paper); }
+    #view-site-diary .sd-modal[hidden] { display: none; }
+    #view-site-diary .sd-ed { display: flex; flex-direction: column; padding: env(safe-area-inset-top, 0px) env(safe-area-inset-right, 0px) env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px); }
+    #view-site-diary .sd-ed-top { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-bottom: 1px solid var(--line); background: var(--surface); }
+    #view-site-diary .sd-ed-top strong { flex: 1; text-align: center; font-family: var(--font-display); }
+    #view-site-diary .sd-done { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+    #view-site-diary .sd-ed-nav { display: flex; gap: 6px; }
+    #view-site-diary .sd-ed-nav .sd-btn { font-size: 1.3rem; line-height: 1; min-width: 42px; }
+    #view-site-diary .sd-ed-body { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr) 340px; }
+    #view-site-diary .sd-ed-stage { border: 0; border-radius: 0; min-height: 0; }
+    #view-site-diary .sd-ed-stage[data-tool="arrow"] svg, #view-site-diary .sd-ed-stage[data-tool="box"] svg, #view-site-diary .sd-ed-stage[data-tool="ell"] svg, #view-site-diary .sd-ed-stage[data-tool="pen"] svg { cursor: crosshair; }
+    #view-site-diary .sd-ed-stage[data-tool="text"] svg { cursor: text; }
+    #view-site-diary .sd-ed-stage[data-tool="select"] svg [data-m] { cursor: move; }
+    #view-site-diary .sd-ed-side { display: flex; flex-direction: column; gap: 12px; padding: 12px; overflow-y: auto; background: var(--surface); border-left: 1px solid var(--line); }
+    #view-site-diary .sd-tools { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; background: var(--tool-bg); border: 1px solid var(--tool-line); border-radius: var(--radius); padding: 4px; }
+    #view-site-diary .sd-tool { display: flex; flex-direction: column; align-items: center; gap: 2px; font: 600 0.72rem var(--font-body); border: 1px solid transparent; background: transparent; color: var(--ink); padding: 6px 2px; border-radius: calc(var(--radius) - 2px); cursor: pointer; min-height: 48px; }
+    #view-site-diary .sd-tool svg { width: 22px; height: 22px; }
+    #view-site-diary .sd-tool[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
+    #view-site-diary .sd-tool[disabled] { opacity: 0.4; cursor: default; }
+    #view-site-diary .sd-style { display: flex; flex-wrap: wrap; gap: 10px 14px; align-items: center; }
+    #view-site-diary .sd-swatches, #view-site-diary .sd-sizes { display: flex; gap: 6px; }
+    #view-site-diary .sd-sw { width: 32px; height: 32px; border-radius: 50%; border: 2px solid var(--surface); box-shadow: 0 0 0 1px var(--line); cursor: pointer; padding: 0; }
+    #view-site-diary .sd-sw[aria-pressed="true"] { box-shadow: 0 0 0 3px var(--accent); }
+    #view-site-diary .sd-size { width: 40px; height: 32px; display: inline-flex; align-items: center; justify-content: center; border: 1px solid var(--line); background: var(--surface); border-radius: var(--radius); cursor: pointer; padding: 0 7px; }
+    #view-site-diary .sd-size i { display: block; width: 100%; background: var(--ink); border-radius: 4px; }
+    #view-site-diary .sd-size[aria-pressed="true"] { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
+    #view-site-diary .sd-ed-side textarea { width: 100%; box-sizing: border-box; font-size: 1rem; resize: vertical; }
+    #view-site-diary .sd-ed-hint { margin: 0; }
+    #view-site-diary .sd-ed-photo { display: flex; flex-direction: column; gap: 8px; border-top: 1px solid var(--line); padding-top: 12px; }
+    #view-site-diary .sd-ed-photo p { margin: 0; }
+    #view-site-diary .sd-pick { display: flex; align-items: center; justify-content: center; background: rgba(10,16,24,.55); padding: 16px; }
+    #view-site-diary .sd-pick-box { width: min(900px, 100%); max-height: 100%; overflow: auto; }
+    #view-site-diary .sd-pages { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; }
+    #view-site-diary .sd-page { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 6px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); border-radius: var(--radius); cursor: pointer; font: 600 0.8rem var(--font-body); }
+    #view-site-diary .sd-page:hover { border-color: var(--accent); }
+    #view-site-diary .sd-page canvas { max-width: 100%; height: auto; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.2); }
+    html.sd-locked, html.sd-locked body { overflow: hidden; }
+    @media (pointer: fine) { #view-site-diary .sd-coarse { display: none; } }
+    @media (max-width: 760px) {
+      #view-site-diary { padding-bottom: calc(84px + env(safe-area-inset-bottom, 0px)); }
+      #view-site-diary .sd-tabs { position: fixed; left: 0; right: 0; bottom: 0; z-index: 30; width: auto; max-width: none; border-radius: 0; border: 0; border-top: 1px solid var(--line); padding: 6px 6px calc(6px + env(safe-area-inset-bottom, 0px)); justify-content: space-around; box-shadow: 0 -4px 16px rgba(0,0,0,.08); }
+      #view-site-diary .sd-tabs button { flex: 1; flex-direction: column; gap: 0; padding: 8px 2px; font-size: 0.78rem; border-radius: var(--radius); min-height: 48px; justify-content: center; }
+      #view-site-diary .sd-tabs .sd-shoot { order: 0; flex: 0 0 64px; margin: -18px 2px 0; height: 64px; border-radius: 50%; box-shadow: 0 3px 10px rgba(0,0,0,.25); border: 3px solid var(--surface); }
+      #view-site-diary .sd-tabs .sd-shoot svg { width: 26px; height: 26px; }
+      #view-site-diary .sd-tabs [data-tab="details"] { order: -2; } #view-site-diary .sd-tabs [data-tab="plan"] { order: -1; }
+      #view-site-diary .sd-tabs [data-tab="photos"] { order: 1; } #view-site-diary .sd-tabs [data-tab="report"] { order: 2; }
+      #view-site-diary .sd-count { position: absolute; top: 3px; right: 4px; }
+      #view-site-diary .sd-strip-head .small { display: none; }
+      #view-site-diary .sd-tabs button[data-tab] { position: relative; }
+      #view-site-diary .sd-bar-btns .sd-btn { padding: 6px 9px; font-size: 0.82rem; }
+      #view-site-diary .sd-plan-stage { height: calc(100svh - 300px); min-height: 300px; }
+      #view-site-diary .sd-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+      #view-site-diary .sd-cap { font-size: 0.8rem; padding: 6px 8px 8px; }
+      #view-site-diary .sd-ed-body { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1fr) auto; }
+      #view-site-diary .sd-ed-side { border-left: 0; border-top: 1px solid var(--line); max-height: 46svh; padding: 8px 10px 10px; gap: 8px; }
+      #view-site-diary .sd-tools { grid-template-columns: repeat(8, 1fr); }
+      #view-site-diary .sd-tool { font-size: 0.62rem; padding: 4px 0; }
+      #view-site-diary .sd-ed-hint { display: none; }
+      #view-site-diary .sd-ed-photo textarea { min-height: 3.2em; }
+      #view-site-diary .sd-ed-top { padding: 6px 8px; }
+    }
+  </style>
+  <div class="view-head">
+    <span class="eyebrow"><a href="#tools">Tools</a> / Site diary</span>
+    <h2>Site diary</h2>
+    <p class="lede">Record a site visit as you walk round: take photos, pin each one on the plan with an arrow for the way you were looking, mark them up, and add your comments. Then download the visit as a PDF report, ready to keep as evidence for your experience report.</p>
+  </div>
+  <div id="sd-app" class="sd-app"></div>
+</section>
+
 </main>
 
 <aside class="sources" id="sources" aria-label="Official sources" hidden>
