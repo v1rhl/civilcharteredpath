@@ -558,10 +558,23 @@
   $("compose").addEventListener("submit", function (e) { e.preventDefault(); });
   renderForum();
 
+  /* Tools: each tool script (js/tools/<id>.js, loaded before this file) registers itself in window.CP_TOOLS as
+     { id, label, blurb } and supplies its own <section id="view-<id>">. The Tools nav item, its dropdown, the
+     subnav and the #tools hub are all built from that list, so adding a tool never needs a change here. */
+  var TOOLS = (window.CP_TOOLS || []).filter(function (t) { return t && t.id && $("view-" + t.id); });
+  var toolIds = TOOLS.map(function (t) { return t.id; });
+  (function () {
+    var hub = $("tools-hub"), navA = document.querySelector('#nav a[href="#tools"]');
+    if (navA) navA.dataset.group = ["tools"].concat(toolIds).join(" ");
+    if (hub) hub.innerHTML = TOOLS.length ? TOOLS.map(function (t) {
+      return '<a class="panel tool tool-card" href="#' + esc(t.id) + '"><h3>' + esc(t.label) + "</h3>" + (t.blurb ? "<p>" + esc(t.blurb) + "</p>" : "") + '<span class="more">Open ' + esc(t.label.toLowerCase()) + "</span></a>";
+    }).join("") : '<p class="small">No tools yet.</p>';
+  })();
+
   /* Routing on the hash */
-  var views = ["home", "route", "careers", "resources", "attributes", "planner", "flashcards", "review", "presentation", "questions", "news", "check", "cheat-sheet", "community"];
+  var views = ["home", "route", "careers", "resources", "attributes", "planner", "flashcards", "review", "presentation", "questions", "news", "check", "cheat-sheet", "community", "tools"].concat(toolIds);
   function route() {
-    var v = (location.hash || "#home").slice(1);
+    var v = (location.hash || "#home").slice(1).split("?")[0]; /* tools may pass parameters, e.g. #pipeflow?Q=12 */
     if (v === "reference") { v = "cheat-sheet"; history.replaceState(null, "", "#cheat-sheet"); }
     var am = /^attributes-([1-7])$/.exec(v); if (am) { v = "attributes"; goAttr(+am[1] - 1); }
     if (views.indexOf(v) < 0) v = "home";
@@ -570,8 +583,9 @@
     Array.prototype.forEach.call(document.querySelectorAll("#nav a"), function (a) {
       if ((a.dataset.group || "").split(" ").indexOf(v) > -1) a.setAttribute("aria-current", "page"); else a.removeAttribute("aria-current");
     });
-    var SUB = { planner: [["planner", "Planner"], ["route", "The route"], ["careers", "Careers"], ["resources", "Resources"]], review: [["review", "Overview"], ["presentation", "Presentation tips"], ["flashcards", "Flashcards"], ["questions", "Practice questions"], ["cheat-sheet", "Cheat sheet"]] };
-    var grp = ["planner", "route", "careers", "resources"].indexOf(v) > -1 ? "planner" : ["review", "presentation", "flashcards", "questions", "cheat-sheet"].indexOf(v) > -1 ? "review" : "";
+    var SUB = { planner: [["planner", "Planner"], ["route", "The route"], ["careers", "Careers"], ["resources", "Resources"]], review: [["review", "Overview"], ["presentation", "Presentation tips"], ["flashcards", "Flashcards"], ["questions", "Practice questions"], ["cheat-sheet", "Cheat sheet"]],
+      tools: [["tools", "All tools"]].concat(TOOLS.map(function (t) { return [t.id, t.label]; })) };
+    var grp = ["planner", "route", "careers", "resources"].indexOf(v) > -1 ? "planner" : ["review", "presentation", "flashcards", "questions", "cheat-sheet"].indexOf(v) > -1 ? "review" : (v === "tools" || toolIds.indexOf(v) > -1) ? "tools" : "";
     $("subnav").hidden = !grp;
     $("subnav").innerHTML = grp ? SUB[grp].map(function (x) { return '<a href="#' + x[0] + '"' + (x[0] === v ? ' aria-current="page"' : "") + ">" + x[1] + "</a>"; }).join("") : "";
     var withSources = ["route", "attributes", "review", "presentation", "cheat-sheet", "planner"].indexOf(v) > -1;
@@ -590,7 +604,8 @@
   var MENUS = {
     planner: [["planner", "Planner"], ["route", "The route"], ["careers", "Careers"], ["resources", "Technical resources"]],
     attributes: [["attributes", "All seven attributes"]].concat(A.map(function (a, i) { return ["attributes-" + (i + 1), a.n + ". " + a.title]; })),
-    review: [["review", "Overview"], ["presentation", "Presentation tips"], ["flashcards", "Revision flashcards"], ["questions", "Practice questions"], ["cheat-sheet", "Cheat sheet"]]
+    review: [["review", "Overview"], ["presentation", "Presentation tips"], ["flashcards", "Revision flashcards"], ["questions", "Practice questions"], ["cheat-sheet", "Cheat sheet"]],
+    tools: [["tools", "All tools"]].concat(TOOLS.map(function (t) { return [t.id, t.label]; }))
   };
   var nav = $("nav"), menu = document.createElement("div"), openFor = null;
   menu.id = "navmenu"; menu.className = "navmenu"; menu.hidden = true;
@@ -602,7 +617,7 @@
   function closeMenu() { if (!openFor) return; openFor.setAttribute("aria-expanded", "false"); openFor = null; menu.hidden = true; }
   function openMenu(a) {
     closeMenu(); openFor = a; a.setAttribute("aria-expanded", "true");
-    var here = location.hash.slice(1) || "home";
+    var here = location.hash.slice(1).split("?")[0] || "home";
     menu.innerHTML = '<ul role="list">' + MENUS[a.dataset.menu].map(function (x) { return '<li><a href="#' + x[0] + '"' + (x[0] === here ? ' aria-current="page"' : "") + ">" + esc(x[1]) + "</a></li>"; }).join("") + "</ul>";
     menu.hidden = false;
     var bar = menu.parentNode.getBoundingClientRect(), r = a.getBoundingClientRect();

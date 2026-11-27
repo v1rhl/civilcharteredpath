@@ -834,6 +834,69 @@ nav a[aria-current="page"][aria-expanded="true"] { color: var(--accent-ink); bac
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 .role-compare .linkish { margin-left: 0; }
 .fc-decks-mine { outline: 2px solid var(--accent-2); outline-offset: 1px; }
+/* Tools hub */
+.tool-card { text-decoration: none; color: var(--ink); }
+.tool-card:hover { border-color: var(--accent); }
+.tool-card .more { font-weight: 600; color: var(--accent); margin-top: auto; }
+/* Sketch pad. The sheet itself stays white paper in both themes, so what you see is what exports. */
+#view-sketch.wrap { max-width: 1320px; }
+#view-sketch .view-head .eyebrow a { color: inherit; text-decoration: none; }
+.sk-app { display: flex; flex-direction: column; gap: 10px; }
+.sk-top, .sk-style, .sk-toolrow, .sk-props { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; }
+.sk-top { justify-content: space-between; }
+.sk-sheets, .sk-actions, .sk-group, .sk-layers { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.sk-seg { display: inline-flex; border: 1px solid var(--line); border-radius: 999px; padding: 2px; background: var(--surface); }
+.sk-seg button { font: 600 0.88rem var(--font-body); border: 0; background: transparent; color: var(--ink); padding: 6px 14px; border-radius: 999px; cursor: pointer; }
+.sk-seg-sm button { font-size: 0.82rem; padding: 4px 10px; }
+.sk-seg button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
+.sk-btn { font: 600 0.85rem var(--font-body); border: 1px solid var(--line); background: var(--surface); color: var(--ink); padding: 6px 11px; border-radius: var(--radius); cursor: pointer; }
+.sk-btn:hover:not([disabled]) { border-color: var(--accent); }
+.sk-btn[disabled] { opacity: 0.45; cursor: default; }
+.sk-btn.danger { color: var(--review); }
+.sk-app select { padding: 6px 8px; font-size: 0.88rem; }
+.sk-tools { display: flex; flex-wrap: wrap; gap: 4px; background: var(--tool-bg); border: 1px solid var(--tool-line); border-radius: var(--radius); padding: 4px; }
+.sk-tool { display: inline-flex; flex-direction: column; align-items: center; gap: 2px; min-width: 62px; font: 600 0.72rem var(--font-body); border: 1px solid transparent; background: transparent; color: var(--ink); padding: 5px 6px; border-radius: calc(var(--radius) - 2px); cursor: pointer; }
+.sk-tool svg { width: 22px; height: 22px; }
+.sk-tool:hover { background: var(--surface); }
+.sk-tool[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
+.sk-tpl { max-width: 100%; }
+.sk-lab { font: 500 0.72rem var(--font-mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+.sk-swatches { display: flex; gap: 4px; }
+.sk-sw { width: 24px; height: 24px; border-radius: 50%; border: 2px solid var(--surface); box-shadow: 0 0 0 1px var(--line); cursor: pointer; padding: 0; }
+.sk-sw[aria-pressed="true"] { box-shadow: 0 0 0 2px var(--accent); }
+.sk-pick input { width: 30px; height: 26px; padding: 0; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); cursor: pointer; }
+.sk-chips { display: flex; gap: 3px; }
+.sk-chip { width: 34px; height: 28px; display: inline-flex; align-items: center; justify-content: center; border: 1px solid var(--line); background: var(--surface); border-radius: var(--radius); cursor: pointer; padding: 0 6px; }
+.sk-chip i { display: block; width: 100%; background: var(--ink); border-radius: 4px; min-height: 1px; }
+.sk-chip[aria-pressed="true"] { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
+.sk-check { display: inline-flex; gap: 5px; align-items: center; font-size: 0.88rem; }
+.sk-check input[type="number"] { padding: 4px 6px; }
+.sk-layers { padding-left: 10px; border-left: 1px solid var(--line); }
+.sk-stage { position: relative; background: #e9edec; border: 1px solid var(--line); border-radius: var(--radius); padding: 10px; }
+.sk-stage.port #sk-svg { max-width: min(860px, calc((100vh - 60px) * 0.7071)); }
+#sk-svg { display: block; width: 100%; max-width: calc((100vh - 60px) * 1.4143); margin: 0 auto; height: auto; background: #fff; box-shadow: 0 1px 4px rgba(0,0,0,.18); touch-action: none; user-select: none; -webkit-user-select: none; }
+.sk-stage[data-tool="pen"] #sk-svg, .sk-stage[data-tool="line"] #sk-svg, .sk-stage[data-tool="member"] #sk-svg, .sk-stage[data-tool="hatch"] #sk-svg, .sk-stage[data-tool="udl"] #sk-svg, .sk-stage[data-tool="dim"] #sk-svg, .sk-stage[data-tool="leader"] #sk-svg { cursor: crosshair; }
+.sk-stage[data-tool="text"] #sk-svg { cursor: text; }
+.sk-stage[data-tool="eraser"] #sk-svg { cursor: cell; }
+#sk-svg .sk-tbcell { cursor: text; }
+#sk-svg .sk-tbcell:hover rect { fill: rgba(13,107,120,0.07); }
+#sk-svg [data-id] { cursor: pointer; }
+.sk-stage[data-tool="pen"] #sk-svg [data-id] { cursor: crosshair; }
+#sk-svg .sk-h { fill: #fff; stroke: #0d6b78; stroke-width: 2; cursor: grab; vector-effect: non-scaling-stroke; }
+#sk-svg .sk-sel { fill: none; stroke: #0d6b78; stroke-dasharray: 5 4; vector-effect: non-scaling-stroke; pointer-events: none; }
+#sk-svg .sk-sel.grp { stroke: #b84a32; }
+#sk-svg .sk-sel.lk { stroke: #7a7f87; }
+.sk-tb-edit { position: absolute; z-index: 2; font: 500 15px Arial, Helvetica, sans-serif !important; padding: 4px 8px !important; border: 2px solid var(--accent) !important; border-radius: 2px !important; background: #fff !important; color: #15233a !important; }
+.sk-drop { position: absolute; inset: 10px; display: flex; align-items: center; justify-content: center; background: rgba(13,107,120,0.12); border: 2px dashed var(--accent); border-radius: var(--radius); font-weight: 600; color: var(--ink); pointer-events: none; }
+.sk-props { min-height: 46px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 8px 12px; }
+.sk-props textarea { min-width: min(320px, 100%); min-height: 2.6em; padding: 6px 8px; resize: vertical; }
+.sk-props input[type="text"] { padding: 6px 8px; }
+.sk-status { min-height: 1.3em; margin: 0; }
+@media (max-width: 760px) {
+  .sk-tool { min-width: 52px; font-size: 0.68rem; }
+  .sk-layers { padding-left: 0; border-left: 0; }
+  .sk-stage { padding: 4px; }
+}
 </style>
 </head>
 <body>
@@ -853,6 +916,7 @@ nav a[aria-current="page"][aria-expanded="true"] { color: var(--accent-ink); bac
       <a href="#attributes" data-group="attributes">Attributes</a>
       <a href="#review" data-group="review presentation flashcards questions cheat-sheet">Review day</a>
       <a href="#news" data-group="news">News</a>
+      <a href="#tools" data-group="tools">Tools</a>
       <a href="#check" data-group="check">Report check <span class="tbc">TBC</span></a>
     </nav>
     <button type="button" class="theme-toggle" id="theme-toggle" aria-label="Switch to dark mode" title="Switch to dark mode">
@@ -1824,6 +1888,26 @@ nav a[aria-current="page"][aria-expanded="true"] { color: var(--accent-ink); bac
   </div>
 </section>
 
+<!-- TOOLS HUB: cards are built in js/site.js from window.CP_TOOLS -->
+<section class="view wrap" id="view-tools" data-view="tools" hidden>
+  <div class="view-head">
+    <span class="eyebrow">Tools</span>
+    <h2>Tools for day-to-day engineering</h2>
+    <p class="lede">Small, free tools. Calculations run in your browser; if a tool sends anything elsewhere, it says so on that tool.</p>
+  </div>
+  <div class="grid" id="tools-hub"></div>
+</section>
+
+<!-- SKETCH PAD: built by js/tools/sketch.js -->
+<section class="view wrap" id="view-sketch" data-view="sketch" hidden>
+  <div class="view-head">
+    <span class="eyebrow"><a href="#tools">Tools</a> / Sketch pad</span>
+    <h2>Sketch pad</h2>
+    <p class="lede">Sketch freehand, or build a beam and frame diagram with proper supports, loads and dimensions, on an A4 sheet with your own title block. Start from a typical detail if it helps. Your sheets are saved in this browser only.</p>
+  </div>
+  <div id="sk-app" class="sk-app"></div>
+</section>
+
 <!-- COMMUNITY -->
 <section class="view wrap" id="view-community" data-view="community" hidden>
   <div class="view-head">
@@ -1910,7 +1994,9 @@ nav a[aria-current="page"][aria-expanded="true"] { color: var(--accent-ink); bac
 <script src="js/news-archive.js?v=20261122b"></script>
 <script src="js/config.js?v=20261122b"></script>
 <script src="js/pages.js?v=20261122b"></script>
-<script src="js/site.js?v=20261122b"></script>
+<script src="js/tools/sketch-templates.js?v=20261127a"></script>
+<script src="js/tools/sketch.js?v=20261127a"></script>
+<script src="js/site.js?v=20261127a"></script>
 <script src="js/art.js?v=20261122b"></script>
 </body>
 </html>

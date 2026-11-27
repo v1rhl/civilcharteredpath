@@ -17,6 +17,16 @@ static host (GitHub Pages, Netlify, Cloudflare Pages).
 | News | Latest headlines (links out) and a weekly briefing | `js/news-feed.js`, `NEWS` in `js/content.js` |
 | Report check | Marked as coming soon; shows an example only | not live yet |
 | Community | Forum and mock-review partners, design only, posting off | `FORUM_CATEGORIES`, `EXAMPLE_THREADS` |
+| Tools | Hub listing every tool; built from `window.CP_TOOLS` | `js/site.js` |
+| Sketch pad | Freehand and beam/frame diagram sketching on A4 sheets with a title block, typical details, image underlay, PNG/JPEG/SVG/PDF export; saved in the visitor's browser | `js/tools/sketch.js`, `js/tools/sketch-templates.js` |
+
+## Adding a tool
+Put the script in `js/tools/<id>.js`, load it before `js/site.js` in `index.html`, and add a
+`<section class="view wrap" id="view-<id>" data-view="<id>" hidden>` for it. The script registers itself with
+`window.CP_TOOLS = (window.CP_TOOLS || []).concat([{ id: "<id>", label: "Name", blurb: "One line for the hub card" }]);`
+and `js/site.js` adds it to the routes, the Tools menu, the subnav and the hub. Keep its CSS scoped under `#view-<id>`.
+Other tools can send a drawing to the sketch pad with `window.CPSketch.importDetail({ svg, title, scale, source })`
+(an SVG whose viewBox is in paper millimetres); it lands on the sheet's underlay layer.
 
 ## Things that need a decision or a service before going public
 1. **Name.** The site is called "Civil Chartered Path". To rename it, change `SITE.name` in `js/content.js` and the title in `index.html`.
