@@ -203,7 +203,7 @@
   });
 
   /* ---------- drawing ---------- */
-  var LIVE = { conc: "var(--tool-bg)", concLine: "var(--ink)", soil: "var(--ref-bg)", soilLine: "var(--ref-line)", found: "var(--paper)", ink: "var(--ink)", muted: "var(--muted)", accent: "var(--accent)", acc2: "var(--accent-2)", water: "var(--s-blue)", bg: "var(--surface)", font: "IBM Plex Sans, Arial, sans-serif", mono: "IBM Plex Mono, monospace" };
+  var LIVE = { conc: "var(--tool-bg)", concLine: "var(--ink)", soil: "var(--ref-bg)", soilLine: "var(--ref-line)", found: "var(--paper)", ink: "var(--ink)", muted: "var(--muted)", accent: "var(--accent)", acc2: "var(--accent-2)", water: "var(--s-blue)", bg: "var(--surface)", font: "Palanquin, Arial, sans-serif", mono: "PT Sans Caption, Arial, sans-serif" };
   var PRINT = { conc: "#e4eef0", concLine: "#15233a", soil: "#f3ecdb", soilLine: "#cdbf9c", found: "#eef0ec", ink: "#15233a", muted: "#5a6677", accent: "#0d6b78", acc2: "#b84a32", water: "#3f6fd1", bg: "#ffffff", font: "Arial, Helvetica, sans-serif", mono: "Courier New, monospace" };
 
   function draw(res, P, showIdx) {
