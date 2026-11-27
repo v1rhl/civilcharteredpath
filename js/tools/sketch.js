@@ -10,6 +10,7 @@
   /* Paper at 4 units per mm, landscape [width, height]; portrait swaps them. */
   var PAPER = { A4: [1188, 840], A3: [1680, 1188] }, PT = { A4: [841.89, 595.28], A3: [1190.55, 841.89] };
   var TBS = { small: 0.75, medium: 0.9, large: 1.1 };
+  var NOTE_SC = "Indicative only. Check all dimensions on site. Not for construction.";
   var NOTE = "NOT TO SCALE. This sketch is indicative only and must not be used for construction.";
   var COLORS = [["#15233a", "Black"], ["#b84a32", "Red"], ["#0d6b78", "Teal"], ["#3f6fd1", "Blue"], ["#2e7d32", "Green"], ["#b07a06", "Amber"], ["#7a7f87", "Grey"]];
   var WIDTHS = [[1, "Hairline"], [2, "Fine"], [4, "Medium"], [7, "Heavy"], [14, "Marker"]];
@@ -145,18 +146,93 @@
   }
   function segPts(it) { return [{ x: it.x1, y: it.y1 }, { x: it.x2, y: it.y2 }]; }
   function norm(it) { var dx = it.x2 - it.x1, dy = it.y2 - it.y1, L = Math.hypot(dx, dy) || 1; return { dx: dx / L, dy: dy / L, nx: dy / L, ny: -dx / L, L: L }; }
-  function snapPt(p, opts) {
-    var d = doc(); opts = opts || {};
-    if (mode !== "struct" || !d.snap || opts.free) return { x: r1(p.x), y: r1(p.y) };
-    var best = null, bd = 12 * Math.max(k, 1);
-    d.items.forEach(function (it) {
-      if (!SEG[it.type] || it.id === opts.skip) return;
-      segPts(it).forEach(function (q) { var dd = dist(p, q); if (dd < bd) { bd = dd; best = q; } });
+  /* ---------- Snapping ----------
+     Grid plus object snaps. Object snaps look only at items near the pointer, and the
+     snapped point is marked with a small glyph so you can see what it caught. Hold Alt to draw free. */
+  var SNAPS = [["grid", "Grid"], ["end", "Endpoint"], ["mid", "Midpoint"], ["cen", "Centre"], ["int", "Intersection"], ["perp", "Perpendicular"], ["tan", "Tangent"], ["par", "Parallel"], ["near", "On a line (coincident)"]];
+  if (!S.snaps) { S.snaps = {}; SNAPS.forEach(function (x) { S.snaps[x[0]] = x[0] !== "near"; }); }
+  var noSnap = false, snapHit = null;
+  function snapGeom(skip) { /* segments, circles and key points of every snappable item */
+    var segs = [], circs = [], pts = [];
+    doc().items.forEach(function (it) {
+      if (it.id === skip || it.type === "text" || it.type === "leader" || (it.type === "hatch" && it.seed)) return;
+      var add = function (a, b) { segs.push({ a: { x: a[0], y: a[1] }, b: { x: b[0], y: b[1] }, id: it.id }); };
+      if (it.type === "circle") { circs.push({ c: { x: it.x1, y: it.y1 }, r: Math.hypot(it.x2 - it.x1, it.y2 - it.y1), id: it.id }); return; }
+      if (it.type === "rect") { var o = outlineOf(it); for (var i = 0; i < 4; i++) add(o[i], o[i + 1]); pts.push({ x: (it.x1 + it.x2) / 2, y: (it.y1 + it.y2) / 2, k: "cen" }); return; }
+      if (it.type === "poly" || (it.type === "hatch" && !it.seed)) { var q = it.pts.concat([it.pts[0]]); for (var j = 0; j < q.length - 1; j++) add(q[j], q[j + 1]); return; }
+      if (it.type === "stroke") { pts.push({ x: it.pts[0][0], y: it.pts[0][1], k: "end" }, { x: it.pts[it.pts.length - 1][0], y: it.pts[it.pts.length - 1][1], k: "end" }); return; }
+      if (SEG[it.type]) { if (it.type !== "cloud") add([it.x1, it.y1], [it.x2, it.y2]); return; }
+      if (it.x != null) pts.push({ x: it.x, y: it.y, k: "end" });
     });
-    if (best) return { x: best.x, y: best.y };
-    return { x: Math.round(p.x / GRID) * GRID, y: Math.round(p.y / GRID) * GRID };
+    return { segs: segs, circs: circs, pts: pts };
   }
-  function snapDelta(v) { return mode === "struct" && doc().snap ? Math.round(v / GRID) * GRID : r1(v); }
+  function footOn(s, p, clampIt) { var dx = s.b.x - s.a.x, dy = s.b.y - s.a.y, L2 = dx * dx + dy * dy || 1, t = ((p.x - s.a.x) * dx + (p.y - s.a.y) * dy) / L2; if (clampIt) t = Math.max(0, Math.min(1, t)); return { x: s.a.x + dx * t, y: s.a.y + dy * t, t: t }; }
+  function segX(s1, s2) {
+    var d1x = s1.b.x - s1.a.x, d1y = s1.b.y - s1.a.y, d2x = s2.b.x - s2.a.x, d2y = s2.b.y - s2.a.y, den = d1x * d2y - d1y * d2x; if (Math.abs(den) < 1e-9) return null;
+    var t = ((s2.a.x - s1.a.x) * d2y - (s2.a.y - s1.a.y) * d2x) / den, u = ((s2.a.x - s1.a.x) * d1y - (s2.a.y - s1.a.y) * d1x) / den;
+    return t > -1e-6 && t < 1 + 1e-6 && u > -1e-6 && u < 1 + 1e-6 ? [{ x: s1.a.x + d1x * t, y: s1.a.y + d1y * t }] : null;
+  }
+  function segCirc(s, c) {
+    var dx = s.b.x - s.a.x, dy = s.b.y - s.a.y, fx = s.a.x - c.c.x, fy = s.a.y - c.c.y, A = dx * dx + dy * dy, B = 2 * (fx * dx + fy * dy), C = fx * fx + fy * fy - c.r * c.r, D = B * B - 4 * A * C, o = [];
+    if (D < 0 || !A) return o; D = Math.sqrt(D);
+    [(-B - D) / (2 * A), (-B + D) / (2 * A)].forEach(function (t) { if (t >= 0 && t <= 1) o.push({ x: s.a.x + dx * t, y: s.a.y + dy * t }); }); return o;
+  }
+  function circCirc(c1, c2) {
+    var dx = c2.c.x - c1.c.x, dy = c2.c.y - c1.c.y, d = Math.hypot(dx, dy); if (!d || d > c1.r + c2.r || d < Math.abs(c1.r - c2.r)) return [];
+    var a = (c1.r * c1.r - c2.r * c2.r + d * d) / (2 * d), h = Math.sqrt(Math.max(0, c1.r * c1.r - a * a)), mx = c1.c.x + dx * a / d, my = c1.c.y + dy * a / d;
+    return [{ x: mx + h * dy / d, y: my - h * dx / d }, { x: mx - h * dy / d, y: my + h * dx / d }];
+  }
+  function snapPt(p, opts) {
+    var d = doc(), on = S.snaps; opts = opts || {}; snapHit = null;
+    if (!d.snap || opts.free || noSnap) { showSnap(); return { x: r1(p.x), y: r1(p.y) }; }
+    var tol = 12 * Math.max(k, 1), G = snapGeom(opts.skip), from = opts.from || (drag && drag.a) || (pend && pend.pts.length ? { x: pend.pts[pend.pts.length - 1][0], y: pend.pts[pend.pts.length - 1][1] } : null);
+    var best = null, bd = tol;
+    function cand(q, kind, ref, pri) { var dd = dist(p, q) - (pri || 0); if (dd < bd) { bd = dd; best = { x: q.x, y: q.y, k: kind, ref: ref }; } }
+    var nearS = G.segs.filter(function (sg) { return dist(p, footOn(sg, p, true)) < tol * 1.5; }), nearC = G.circs.filter(function (c) { return Math.abs(dist(p, c.c) - c.r) < tol * 1.5 || dist(p, c.c) < tol; });
+    /* point snaps win over line snaps, so give them a little priority */
+    if (on.end) { G.segs.forEach(function (sg) { cand(sg.a, "end", null, 3); cand(sg.b, "end", null, 3); }); G.pts.forEach(function (q) { if (q.k === "end") cand(q, "end", null, 3); }); G.circs.forEach(function (c) { [[1, 0], [0, 1], [-1, 0], [0, -1]].forEach(function (v) { cand({ x: c.c.x + c.r * v[0], y: c.c.y + c.r * v[1] }, "end", null, 2); }); }); }
+    if (on.mid) G.segs.forEach(function (sg) { cand({ x: (sg.a.x + sg.b.x) / 2, y: (sg.a.y + sg.b.y) / 2 }, "mid", null, 3); });
+    if (on.cen) { G.circs.forEach(function (c) { cand(c.c, "cen", null, 3); }); G.pts.forEach(function (q) { if (q.k === "cen") cand(q, "cen", null, 3); }); }
+    if (on.int) {
+      for (var i = 0; i < nearS.length; i++) { for (var j = i + 1; j < nearS.length; j++) (segX(nearS[i], nearS[j]) || []).forEach(function (q) { cand(q, "int", null, 3); }); nearC.forEach(function (c) { segCirc(nearS[i], c).forEach(function (q) { cand(q, "int", null, 3); }); }); }
+      for (i = 0; i < nearC.length; i++) for (j = i + 1; j < nearC.length; j++) circCirc(nearC[i], nearC[j]).forEach(function (q) { cand(q, "int", null, 3); });
+    }
+    if (from && !best) {
+      if (on.perp) { nearS.forEach(function (sg) { var f = footOn(sg, from, false); if (f.t > -0.001 && f.t < 1.001 && dist(f, from) > 2) cand(f, "perp", sg, 1); }); nearC.forEach(function (c) { var dd = dist(from, c.c); if (dd > 1) [1, -1].forEach(function (sn) { cand({ x: c.c.x + (from.x - c.c.x) / dd * c.r * sn, y: c.c.y + (from.y - c.c.y) / dd * c.r * sn }, "perp", null, 1); }); }); }
+      if (on.tan) nearC.forEach(function (c) { var dx = from.x - c.c.x, dy = from.y - c.c.y, dd = Math.hypot(dx, dy); if (dd <= c.r) return; var a0 = Math.atan2(dy, dx), b = Math.acos(c.r / dd); [a0 + b, a0 - b].forEach(function (a) { cand({ x: c.c.x + c.r * Math.cos(a), y: c.c.y + c.r * Math.sin(a) }, "tan", null, 1); }); });
+    }
+    if (on.near && !best) { nearS.forEach(function (sg) { cand(footOn(sg, p, true), "near", sg); }); nearC.forEach(function (c) { var dd = dist(p, c.c); if (dd > 1) cand({ x: c.c.x + (p.x - c.c.x) / dd * c.r, y: c.c.y + (p.y - c.c.y) / dd * c.r }, "near"); }); }
+    if (from && on.par && !best && dist(p, from) > tol) { /* keep the new line parallel to an existing one */
+      var ang = Math.atan2(p.y - from.y, p.x - from.x), L = dist(p, from), pb = null, pd = 2.5 * Math.PI / 180;
+      G.segs.forEach(function (sg) { var a2 = Math.atan2(sg.b.y - sg.a.y, sg.b.x - sg.a.x), df = Math.abs(((ang - a2) % Math.PI + 1.5 * Math.PI) % Math.PI - Math.PI / 2); if (df < pd && (a2 * 180 / Math.PI) % 90) { pd = df; pb = sg; } });
+      if (pb) { var u = { x: pb.b.x - pb.a.x, y: pb.b.y - pb.a.y }, uL = Math.hypot(u.x, u.y), dot = ((p.x - from.x) * u.x + (p.y - from.y) * u.y) / uL; best = { x: from.x + u.x / uL * dot, y: from.y + u.y / uL * dot, k: "par", ref: pb }; }
+    }
+    if (!best && on.grid) best = { x: Math.round(p.x / GRID) * GRID, y: Math.round(p.y / GRID) * GRID, k: "grid" };
+    if (!best) { showSnap(); return { x: r1(p.x), y: r1(p.y) }; }
+    snapHit = best.k === "grid" ? null : best; showSnap();
+    return { x: r1(best.x), y: r1(best.y) };
+  }
+  function showSnap() {
+    var g = $("sk-snapg"); if (!g) return; var h = snapHit; if (!h) { g.innerHTML = ""; return; }
+    var r = 7 * Math.max(k, 1), x = h.x, y = h.y, a = ' fill="none" stroke="#d9480f" stroke-width="1.6" vector-effect="non-scaling-stroke"', o = "";
+    var gl = {
+      end: '<rect x="' + r1(x - r) + '" y="' + r1(y - r) + '" width="' + r1(2 * r) + '" height="' + r1(2 * r) + '"' + a + "/>",
+      mid: '<path d="M' + r1(x) + " " + r1(y - r) + "L" + r1(x + r) + " " + r1(y + r * 0.8) + "L" + r1(x - r) + " " + r1(y + r * 0.8) + 'Z"' + a + "/>",
+      cen: '<circle cx="' + r1(x) + '" cy="' + r1(y) + '" r="' + r1(r) + '"' + a + '/><path d="M' + r1(x - r / 3) + " " + r1(y) + "h" + r1(r / 1.5) + "M" + r1(x) + " " + r1(y - r / 3) + "v" + r1(r / 1.5) + '"' + a + "/>",
+      int: '<path d="M' + r1(x - r) + " " + r1(y - r) + "L" + r1(x + r) + " " + r1(y + r) + "M" + r1(x + r) + " " + r1(y - r) + "L" + r1(x - r) + " " + r1(y + r) + '"' + a + "/>",
+      perp: '<path d="M' + r1(x - r) + " " + r1(y - r) + "V" + r1(y + r) + "H" + r1(x + r) + "M" + r1(x - r) + " " + r1(y) + "H" + r1(x) + "V" + r1(y + r) + '"' + a + "/>",
+      tan: '<circle cx="' + r1(x) + '" cy="' + r1(y + r * 0.2) + '" r="' + r1(r * 0.7) + '"' + a + '/><path d="M' + r1(x - r) + " " + r1(y - r * 0.5) + "H" + r1(x + r) + '"' + a + "/>",
+      near: '<path d="M' + r1(x - r) + " " + r1(y - r) + "H" + r1(x + r) + "L" + r1(x - r) + " " + r1(y + r) + "H" + r1(x + r) + 'Z"' + a + "/>",
+      par: '<path d="M' + r1(x - r) + " " + r1(y + r * 0.6) + "L" + r1(x - r * 0.2) + " " + r1(y - r * 0.6) + "M" + r1(x + r * 0.2) + " " + r1(y + r * 0.6) + "L" + r1(x + r) + " " + r1(y - r * 0.6) + '"' + a + "/>"
+    };
+    if (h.ref) o += '<line x1="' + r1(h.ref.a.x) + '" y1="' + r1(h.ref.a.y) + '" x2="' + r1(h.ref.b.x) + '" y2="' + r1(h.ref.b.y) + '" stroke="#d9480f" stroke-width="1" stroke-dasharray="4 3" vector-effect="non-scaling-stroke" opacity="0.7"/>';
+    var names = { end: "Endpoint", mid: "Midpoint", cen: "Centre", int: "Intersection", perp: "Perpendicular", tan: "Tangent", near: "On line", par: "Parallel" };
+    o += gl[h.k] + '<text x="' + r1(x + r * 1.4) + '" y="' + r1(y - r * 1.2) + '" font-family="' + FONT + '" font-size="' + r1(10 * Math.max(k, 1)) + '" fill="#d9480f">' + names[h.k] + "</text>";
+    g.innerHTML = o;
+  }
+  function snapDelta(v) { return doc().snap && S.snaps.grid && !noSnap ? Math.round(v / GRID) * GRID : r1(v); }
+  window.addEventListener("pointermove", function (e) { noSnap = e.altKey; }, true);
+  window.addEventListener("pointerdown", function (e) { noSnap = e.altKey; }, true);
 
   /* ---------- Drawing helpers ---------- */
   var mctx = document.createElement("canvas").getContext("2d");
@@ -185,6 +261,7 @@
     return d;
   }
   function arrow(x1, y1, x2, y2, c, w, s) { var L = Math.hypot(x2 - x1, y2 - y1) || 1, ux = (x2 - x1) / L, uy = (y2 - y1) / L; s = s || 12; return ln(x1, y1, x2 - ux * s * 0.8, y2 - uy * s * 0.8, c, w) + head(x2, y2, ux, uy, c, s); }
+  function r3(v) { return Math.round(v * 1000) / 1000; }
   function txt(x, y, s, c, sz, anchor, extra) { return '<text x="' + r1(x) + '" y="' + r1(y) + '" font-family="' + FONT + '" font-size="' + (sz || 14) + '" fill="' + c + '" text-anchor="' + (anchor || "start") + '"' + (extra || "") + ">" + esc(s) + "</text>"; }
   function smooth(pts) {
     if (!pts.length) return "";
@@ -316,7 +393,13 @@
     }
     return "";
   }
-  function dimAuto(it) { var L = Math.hypot(it.x2 - it.x1, it.y2 - it.y1) / GRID * (doc().scale || 0.2); return (Math.round(L * 100) / 100) + " m"; }
+  /* Drawing scale: with 1:N set, one sheet unit (0.25 mm on paper) is 0.25·N mm on the ground. */
+  var SCALES = [1, 2, 5, 10, 20, 25, 50, 100, 200, 250, 500, 1000, 1250, 2500];
+  function toM(u) { var N = doc().dscale; return N ? u / 4 * N / 1000 : u / GRID * (doc().scale || 0.2); }
+  function fromM(m) { var N = doc().dscale; return N ? m * 1000 / N * 4 : m / (doc().scale || 0.2) * GRID; }
+  function fmtM(m) { var a = Math.abs(m); return a >= 1 || !doc().dscale ? (Math.round(m * 100) / 100) + " m" : Math.round(m * 1000) + " mm"; }
+  function measured() { return !!doc().dscale || mode === "struct"; }
+  function dimAuto(it) { return fmtM(toM(Math.hypot(it.x2 - it.x1, it.y2 - it.y1))); }
   function hit(it) {
     var w = Math.max(16 * k, 10), T = 'stroke="transparent" fill="none" pointer-events="stroke" stroke-linecap="round" stroke-width="';
     switch (it.type) {
@@ -417,8 +500,10 @@
       '<label class="sk-check"><input type="checkbox" id="sk-rev"> Revisions</label><button type="button" class="sk-btn" id="sk-addrev">Add revision</button>' +
       '<label class="sk-check">Watermark <select id="sk-wm"><option value="">None</option><option>DRAFT</option><option>NOT FOR CONSTRUCTION</option><option>PRELIMINARY</option><option>FOR INFORMATION</option><option value="*">Your own text…</option></select></label><input type="text" id="sk-wmtext" placeholder="Watermark text" hidden style="width:12em">' +
       '<label class="sk-check"><input type="checkbox" id="sk-grid"> Grid</label>' +
-      '<label class="sk-check" data-only="struct"><input type="checkbox" id="sk-snap"> Snap</label>' +
-      '<label class="sk-check" data-only="struct">Grid square = <input type="number" id="sk-scale" min="0.01" step="0.05" style="width:5.5em"> m</label>' +
+      '<label class="sk-check">Scale <select id="sk-dscale"><option value="0">Not to scale</option>' + SCALES.map(function (n) { return '<option value="' + n + '">1:' + n + "</option>"; }).join("") + '</select></label><span class="small" id="sk-gridinfo"></span>' +
+      '<label class="sk-check" id="sk-gsq">Grid square = <input type="number" id="sk-scale" min="0.01" step="0.05" style="width:5.5em"> m</label>' +
+      '<span class="sk-snapwrap"><label class="sk-check"><input type="checkbox" id="sk-snap"> Snap</label><details class="sk-snapmenu"><summary>Snaps</summary><div>' +
+        SNAPS.map(function (x) { return '<label class="sk-check"><input type="checkbox" data-snap="' + x[0] + '"> ' + x[1] + "</label>"; }).join("") + '<p class="small">Hold Alt to draw without snapping.</p></div></details></span>' +
       '<span class="sk-layers"><span class="sk-lab">Layers</span>' +
         '<label class="sk-check"><input type="checkbox" id="sk-show-draw"> Drawing</label><label class="sk-check"><input type="checkbox" id="sk-lock-draw"> Lock drawing</label>' +
         '<label class="sk-check"><input type="checkbox" id="sk-show-under"> Underlay</label><label class="sk-check"><input type="checkbox" id="sk-lock-under"> Lock underlay</label>' +
@@ -427,7 +512,7 @@
     "</div>" +
     '<div class="sk-tabs" id="sk-tabs" role="tablist" aria-label="Sheets"></div>' +
     '<div class="sk-stage" id="sk-stage">' +
-      '<svg id="sk-svg" xmlns="' + NS + '" role="img" aria-label="Sketch sheet"><defs id="sk-defs"></defs><rect id="sk-bg" fill="#fff"/><g id="sk-under"></g><g id="sk-gridg"></g><g id="sk-content"></g><g id="sk-frame"></g><g id="sk-live"></g><g id="sk-ui"></g></svg>' +
+      '<svg id="sk-svg" xmlns="' + NS + '" role="img" aria-label="Sketch sheet"><defs id="sk-defs"></defs><rect id="sk-bg" fill="#fff"/><g id="sk-under"></g><g id="sk-gridg"></g><g id="sk-content"></g><g id="sk-frame"></g><g id="sk-live"></g><g id="sk-ui"></g><g id="sk-snapg" pointer-events="none"></g></svg>' +
       '<input type="text" id="sk-tb-edit" class="sk-tb-edit" hidden aria-label="Title block field">' +
       '<div class="sk-drop" id="sk-drop" hidden>Drop the image to trace over it</div>' +
     "</div>" +
@@ -451,7 +536,7 @@
       '<pattern id="sk-g5" width="100" height="100" patternUnits="userSpaceOnUse"><rect width="100" height="100" fill="url(#sk-g1)"/><path d="M100 0H0V100" fill="none" stroke="#c9d4d3" stroke-width="1"/></pattern>';
   }
   function gridStr() { var g = geo().inner; return '<rect x="' + g.x + '" y="' + g.y + '" width="' + g.w + '" height="' + g.h + '" fill="url(#sk-g5)"/>'; }
-  function tbGet(key) { var d = doc(), m = /^r\.(\d+)\.(\w+)$/.exec(key); if (m) return ((d.revs || [])[+m[1]] || {})[m[2]] || ""; if (key === "note") return d.tb.note == null ? NOTE : d.tb.note; if (key === "scale") return d.tb.scale == null ? "NTS" : d.tb.scale; return d.tb[key] || ""; }
+  function tbGet(key) { var d = doc(), m = /^r\.(\d+)\.(\w+)$/.exec(key); if (m) return ((d.revs || [])[+m[1]] || {})[m[2]] || ""; if (key === "note") return d.tb.note == null ? (d.dscale ? NOTE_SC : NOTE) : d.tb.note; if (key === "scale") return d.tb.scale == null ? (d.dscale ? "1:" + d.dscale + " at " + (d.paper || "A4") : "NTS") : d.tb.scale; return d.tb[key] || ""; }
   function tbSet(key, v) { var d = doc(), m = /^r\.(\d+)\.(\w+)$/.exec(key); if (m) { d.revs = d.revs || []; while (d.revs.length <= +m[1]) d.revs.push({ rev: "", date: "", desc: "", by: "" }); d.revs[+m[1]][m[2]] = v; } else d.tb[key] = v; }
   function frameStr(forExport) {
     var G = geo(), d = doc(), c = "#15233a", o = "";
@@ -601,7 +686,9 @@
     Array.prototype.forEach.call(app.querySelectorAll("[data-w]"), function (b) { b.setAttribute("aria-pressed", +b.dataset.w === style.w); });
     Array.prototype.forEach.call(app.querySelectorAll("[data-orient]"), function (b) { b.setAttribute("aria-pressed", b.dataset.orient === d.orient); });
     $("sk-color").value = style.c; $("sk-ls").value = style.ls; $("sk-pat").value = style.pat;
-    $("sk-grid").checked = d.grid; $("sk-snap").checked = d.snap; $("sk-scale").value = d.scale;
+    $("sk-grid").checked = d.grid; $("sk-snap").checked = d.snap; $("sk-scale").value = d.scale; $("sk-dscale").value = d.dscale || 0;
+    $("sk-gsq").hidden = !!d.dscale || mode !== "struct"; $("sk-gridinfo").textContent = d.dscale ? "grid " + fmtM(toM(GRID)) : "";
+    Array.prototype.forEach.call(app.querySelectorAll("[data-snap]"), function (c) { c.checked = !!S.snaps[c.dataset.snap]; c.disabled = !d.snap; });
     $("sk-show-draw").checked = d.showDraw; $("sk-lock-draw").checked = d.lockDraw; $("sk-show-under").checked = d.showUnder; $("sk-lock-under").checked = d.lockUnder;
     Array.prototype.forEach.call(app.querySelectorAll("[data-paper]"), function (b) { b.setAttribute("aria-pressed", b.dataset.paper === (d.paper || "A4")); });
     $("sk-showframe").checked = d.frame !== false; $("sk-tbs").value = d.tbs || "medium"; $("sk-rev").checked = !!d.showRev; $("sk-addrev").hidden = !d.showRev || geo().tb.off; $("sk-fs").value = style.fs; $("sk-hsc").value = style.hsc || 1;
@@ -614,7 +701,7 @@
     $("sk-undo").disabled = !H().u.length; $("sk-redo").disabled = !H().r.length;
   }
   function setMode(m) { mode = m; S.mode = m; pend = null; sel = null; persist(); renderTools(); renderAll(); renderLive(); renderProps(); }
-  function setTool(t) { if (pend && pend.poly && t !== "poly") finishPoly(); else if (pend && !pend.poly && t !== "hatch") finishHatch(); tool[mode] = t; renderTools(); if (t !== "select") sel = null; renderUI(); renderProps(); }
+  function setTool(t) { if (pend && pend.poly && t !== "poly") finishPoly(); else if (pend && !pend.poly && t !== "hatch") finishHatch(); tool[mode] = t; snapHit = null; showSnap(); renderTools(); if (t !== "select") sel = null; renderUI(); renderProps(); }
 
   /* Turning the sheet keeps everything on it, shifted so it stays centred on the new sheet. */
   function setOrient(o, paper) {
@@ -651,7 +738,9 @@
     var d = doc(), last = (d.revs || []).slice(-1)[0], m = last && /^([A-Za-z]*)(\d+)$/.exec(last.rev || ""), nr = m ? m[1] + ("0" + (+m[2] + 1)).slice(-Math.max(2, m[2].length)) : "";
     begin(); d.revs = (d.revs || []).concat([{ rev: nr, date: today(), desc: "", by: last ? last.by : "" }]); commit(); setTimeout(function () { openTB("r." + (d.revs.length - 1) + ".desc"); }, 0);
   });
-  opt("sk-grid", "grid"); opt("sk-snap", "snap"); opt("sk-scale", "scale");
+  opt("sk-grid", "grid"); opt("sk-snap", "snap", syncControls); opt("sk-scale", "scale");
+  $("sk-dscale").addEventListener("change", function () { begin(); var d = doc(); d.dscale = +this.value || 0; commit(); syncControls(); renderProps(); status(d.dscale ? "Drawing at 1:" + d.dscale + " on " + (d.paper || "A4") + ". One grid square is " + fmtM(toM(GRID)) + ". Dimensions and lengths now read true." : "Not to scale."); });
+  app.addEventListener("change", function (e) { var c = e.target; if (c.dataset && c.dataset.snap) { S.snaps[c.dataset.snap] = c.checked; persist(); } });
   opt("sk-show-draw", "showDraw"); opt("sk-lock-draw", "lockDraw", function () { sel = null; renderProps(); });
   opt("sk-show-under", "showUnder", function () { underKey = ""; if (sel && sel.k === "img") { sel = null; renderProps(); } });
   opt("sk-lock-under", "lockUnder", function () { if (sel && sel.k === "img") { sel = null; renderProps(); } });
@@ -701,6 +790,9 @@
     if (it.type === "support") h += '<select id="skp-kind" aria-label="Support type"><option value="pin">Pinned</option><option value="roller">Roller</option><option value="fixed">Fixed</option></select>';
     if (it.type === "text" || it.type === "leader") h += '<textarea id="skp-text" rows="2" aria-label="Text">' + esc(it.text) + "</textarea>";
     if (it.type === "text") h += '<select id="skp-size" aria-label="Text size">' + [12, 14, 18, 24, 32, 44].map(function (s) { return '<option value="' + s + '"' + ((it.size || 18) === s ? " selected" : "") + ">" + s + " pt</option>"; }).join("") + '</select><label class="sk-check"><input type="checkbox" id="skp-bold"' + (it.bold ? " checked" : "") + "> Bold</label>";
+    if (measured() && /^(line|member|arrow|dim|section|slope|brk)$/.test(it.type)) h += '<label class="sk-check">Length <input type="number" id="skp-len" step="0.01" min="0" style="width:6.5em" value="' + r3(toM(Math.hypot(it.x2 - it.x1, it.y2 - it.y1))) + '"> m</label>';
+    if (measured() && (it.type === "rect" || it.type === "cloud")) h += '<label class="sk-check">W <input type="number" id="skp-rw" step="0.01" min="0" style="width:6em" value="' + r3(toM(Math.abs(it.x2 - it.x1))) + '"></label><label class="sk-check">H <input type="number" id="skp-rh" step="0.01" min="0" style="width:6em" value="' + r3(toM(Math.abs(it.y2 - it.y1))) + '"> m</label>';
+    if (measured() && it.type === "circle") h += '<label class="sk-check">Radius <input type="number" id="skp-rad" step="0.01" min="0" style="width:6em" value="' + r3(toM(Math.hypot(it.x2 - it.x1, it.y2 - it.y1))) + '"> m</label>';
     if (it.type === "section" || it.type === "wl") h += '<input type="text" id="skp-label" value="' + esc(it.label || "") + '" aria-label="Label" style="width:' + (it.type === "wl" ? 11 : 4) + 'em">';
     if (it.type === "slope" || it.type === "north" || it.type === "wl") h += '<label class="sk-check">Size <select id="skp-s">' + [0.5, 0.75, 1, 1.5, 2, 3].map(function (v) { return '<option value="' + v + '"' + ((it.s || 1) === v ? " selected" : "") + ">×" + v + "</option>"; }).join("") + "</select></label>";
     if (it.type === "section" || it.type === "slope") h += '<button type="button" class="sk-btn" data-act="flip">Flip side</button>';
@@ -732,6 +824,10 @@
     liveEdit("skp-label", function (it, el) { it.label = el.value; });
     liveEdit("skp-size", function (it, el) { it.size = +el.value; });
     liveEdit("skp-s", function (it, el) { it.s = +el.value; });
+    liveEdit("skp-len", function (it, el) { var v = parseFloat(el.value); if (!(v > 0)) return; var n = norm(it), L = fromM(v); it.x2 = r1(it.x1 + n.dx * L); it.y2 = r1(it.y1 + n.dy * L); });
+    liveEdit("skp-rw", function (it, el) { var v = parseFloat(el.value); if (!(v > 0)) return; it.x2 = r1(it.x1 + (it.x2 >= it.x1 ? 1 : -1) * fromM(v)); });
+    liveEdit("skp-rh", function (it, el) { var v = parseFloat(el.value); if (!(v > 0)) return; it.y2 = r1(it.y1 + (it.y2 >= it.y1 ? 1 : -1) * fromM(v)); });
+    liveEdit("skp-rad", function (it, el) { var v = parseFloat(el.value); if (!(v > 0)) return; var n = norm(it), L = fromM(v); it.x2 = r1(it.x1 + n.dx * L); it.y2 = r1(it.y1 + n.dy * L); });
     liveEdit("skp-ah", function (it, el) { it.ah = +el.value; });
     liveEdit("skp-hsc", function (it, el) { it.ps = +el.value; });
     liveEdit("skp-bold", function (it, el) { it.bold = el.checked; });
@@ -898,6 +994,14 @@
       drag = { type: "leader", temp: ld, start: p }; renderLive(); return;
     }
   });
+  var SNAP_TOOLS = { line: 1, arrow: 1, rect: 1, circle: 1, poly: 1, member: 1, dim: 1, udl: 1, section: 1, brk: 1, slope: 1, cloud: 1, pin: 1, roller: 1, fixed: 1, pload: 1, moment: 1, wl: 1, hatch: 1, leader: 1 };
+  /* while drawing to scale, the status line reads out the true length */
+  function lenStatus(a, b, type) {
+    if (!measured() || !a) return; var A = a.x != null ? a : { x: a[0], y: a[1] }, dx = b.x - A.x, dy = b.y - A.y;
+    if (type === "rect" || type === "cloud") status("Width " + fmtM(toM(Math.abs(dx))) + " × height " + fmtM(toM(Math.abs(dy))));
+    else if (type === "circle") status("Radius " + fmtM(toM(Math.hypot(dx, dy))));
+    else status("Length " + fmtM(toM(Math.hypot(dx, dy))) + ", angle " + Math.round(((-Math.atan2(dy, dx) * 180 / Math.PI) + 360) % 360) + "°");
+  }
   function focusText() { setTimeout(function () { var el = $("skp-text"); if (el) { el.focus({ preventScroll: true }); el.select(); } }, 0); }
   function eraseAt(e) {
     var it = itemAt(e); if (!it || locked(it)) { if ($("sk-erm").value === "part") partErase(world(e)); return; }
@@ -936,8 +1040,8 @@
   }
 
   window.addEventListener("pointermove", function (e) {
-    if (pend && !drag) { var sp = snapPt(world(e)); pend.cur = sp; renderLive(); return; }
-    if (!drag) return;
+    if (pend && !drag) { var sp = snapPt(world(e)); pend.cur = sp; renderLive(); lenStatus(pend.pts[pend.pts.length - 1], sp); return; }
+    if (!drag) { if (e.target.closest && e.target.closest("#sk-svg") && SNAP_TOOLS[tool[mode]]) snapPt(world(e)); else if (snapHit) { snapHit = null; showSnap(); } return; }
     var p = world(e), it;
     switch (drag.type) {
       case "pen":
@@ -947,7 +1051,7 @@
       case "erase": eraseAt(e); return;
       case "seg":
         var b = snapPt(p); if (e.shiftKey) b = constrain(drag.a, b);
-        drag.temp.x2 = b.x; drag.temp.y2 = b.y; renderLive(); return;
+        drag.temp.x2 = b.x; drag.temp.y2 = b.y; renderLive(); lenStatus(drag.a, b, drag.temp.type); return;
       case "hatch0": if (dist(p, drag.start) > 8 * Math.max(k, 1)) drag.type = "hatchR";
       /* falls through */
       case "hatchR":
@@ -981,6 +1085,7 @@
     }
   });
   window.addEventListener("pointerup", function () {
+    if (snapHit) { snapHit = null; showSnap(); }
     if (!drag) return; var d = drag; drag = null;
     switch (d.type) {
       case "pen": d.el.remove(); addItem(d.item); return;
