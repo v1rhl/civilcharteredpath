@@ -1955,6 +1955,202 @@ nav a[aria-current="page"][aria-expanded="true"] { color: var(--accent-ink); bac
   </div>
 </section>
 
+<!-- PIPE FLOW (tool: js/tools/hydraulics.js, js/tools/pipeflow.js) -->
+<style>
+#view-pipeflow .pf-layout { display: grid; grid-template-columns: minmax(0, 360px) minmax(0, 1fr); gap: 16px; align-items: start; }
+#view-pipeflow .pf-form { gap: 14px; }
+#view-pipeflow .pf-form .field input, #view-pipeflow .pf-form .field select { width: 100%; min-width: 0; }
+#view-pipeflow .pf-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 10px; }
+#view-pipeflow .pf-inline { display: grid; grid-template-columns: minmax(0, 1fr) 96px; gap: 6px; }
+#view-pipeflow .field .hint { font-size: 0.8rem; color: var(--muted); }
+#view-pipeflow .chips-row button { font-size: 0.82rem; padding: 5px 10px; }
+#view-pipeflow fieldset { border: 0; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+#view-pipeflow legend { font-weight: 600; font-size: 0.92rem; padding: 0; margin-bottom: 6px; }
+#view-pipeflow .pf-adv summary { cursor: pointer; font-weight: 600; color: var(--accent); }
+#view-pipeflow .pf-adv[open] > div { display: flex; flex-direction: column; gap: 10px; margin-top: 10px; }
+#view-pipeflow .pf-check-label { display: flex; gap: 8px; align-items: flex-start; font-size: 0.9rem; }
+#view-pipeflow .pf-out { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+#view-pipeflow .pf-tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
+#view-pipeflow .pf-tile { border: 1px solid var(--line); border-radius: var(--radius); padding: 10px 12px; background: var(--surface); display: flex; flex-direction: column; gap: 2px; }
+#view-pipeflow .pf-tile .k { font: 500 0.7rem var(--font-mono); text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+#view-pipeflow .pf-tile .v { font: 700 1.45rem var(--font-display); font-variant-numeric: tabular-nums; }
+#view-pipeflow .pf-tile .v small { font: 500 0.8rem var(--font-body); color: var(--muted); margin-left: 3px; }
+#view-pipeflow .pf-tile .s { font-size: 0.8rem; color: var(--muted); }
+#view-pipeflow .pf-tile.solved { border-color: var(--accent); box-shadow: inset 3px 0 0 var(--accent); }
+#view-pipeflow .pf-checks { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+#view-pipeflow .pf-checks li { display: grid; grid-template-columns: 64px minmax(0, 1fr); gap: 10px; align-items: baseline; font-size: 0.92rem; }
+#view-pipeflow .pf-badge { font: 600 0.7rem var(--font-mono); text-transform: uppercase; letter-spacing: 0.05em; text-align: center; border-radius: 999px; padding: 2px 6px; }
+#view-pipeflow .pf-badge.ok { background: var(--accent-soft); color: var(--accent); }
+#view-pipeflow .pf-badge.warn { background: var(--flag-soft); color: var(--flag); }
+#view-pipeflow .pf-badge.info { background: var(--paper); color: var(--muted); border: 1px solid var(--line); }
+#view-pipeflow .pf-msg { border-left: 3px solid var(--flag); background: var(--flag-soft); padding: 10px 12px; border-radius: 0 var(--radius) var(--radius) 0; font-size: 0.92rem; }
+#view-pipeflow .pf-chart { position: relative; }
+#view-pipeflow .pf-chart svg { width: 100%; height: auto; display: block; overflow: visible; }
+#view-pipeflow .pf-legend { display: flex; gap: 16px; flex-wrap: wrap; font-size: 0.85rem; color: var(--ink); }
+#view-pipeflow .pf-legend span { display: inline-flex; align-items: center; gap: 6px; }
+#view-pipeflow .pf-legend i { display: inline-block; width: 18px; height: 0; border-top: 2px solid; }
+#view-pipeflow .pf-tip { position: absolute; pointer-events: none; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 6px 9px; font-size: 0.8rem; box-shadow: 0 4px 14px rgba(0,0,0,0.12); white-space: nowrap; }
+#view-pipeflow .pf-tip b { font-family: var(--font-mono); font-weight: 500; }
+#view-pipeflow table.pf-table td { width: auto; }
+#view-pipeflow table.pf-table td:first-child { width: auto; font-weight: 500; }
+#view-pipeflow table.pf-table td.num { text-align: right; font-family: var(--font-mono); font-variant-numeric: tabular-nums; color: var(--ink); white-space: nowrap; }
+#view-pipeflow table.pf-table td.u { color: var(--muted); padding-left: 6px; white-space: nowrap; }
+#view-pipeflow table.pf-table tr.grp td { font: 500 0.72rem var(--font-mono); text-transform: uppercase; letter-spacing: 0.06em; color: var(--accent-2); padding-top: 14px; }
+#view-pipeflow table.pf-table tr.hl td { background: var(--accent-soft); }
+#view-pipeflow .pf-tools { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+#view-pipeflow .pf-tools .btn { padding: 7px 12px; font-size: 0.88rem; }
+#view-pipeflow .pf-working { display: flex; flex-direction: column; gap: 10px; }
+#view-pipeflow .pf-eq { font-family: var(--font-mono); font-size: 0.84rem; background: var(--paper); border: 1px solid var(--line); border-radius: var(--radius); padding: 10px 12px; overflow-x: auto; white-space: pre; line-height: 1.55; color: var(--ink); }
+#view-pipeflow .pf-assume { margin: 0; padding-left: 1.1em; display: flex; flex-direction: column; gap: 5px; color: var(--muted); font-size: 0.92rem; }
+@media (max-width: 820px) { #view-pipeflow .pf-layout { grid-template-columns: 1fr; } }
+@media print {
+  #view-pipeflow:not([hidden]) { display: flex !important; padding: 0 !important; }
+  body.on-pipeflow .topbar, body.on-pipeflow footer, body.on-pipeflow .subnav, body.on-pipeflow .sources { display: none !important; }
+  #view-pipeflow .pf-tools, #view-pipeflow .pf-form .chips-row { display: none !important; }
+}
+</style>
+<section class="view wrap" id="view-pipeflow" data-view="pipeflow" hidden>
+  <div class="view-head">
+    <span class="eyebrow"><a href="#tools">Tools</a> / Pipe flow</span>
+    <h2>Pipe flow and capacity</h2>
+    <p class="lede">Capacity and velocity of a circular pipe running full or part-full, by Colebrook-White or Manning. Solve for depth, flow, gradient or diameter, and keep the working for your calcs.</p>
+  </div>
+
+  <div class="pf-layout">
+    <form class="panel tool pf-form" id="pf-form" autocomplete="off" novalidate>
+      <fieldset>
+        <legend>What do you want to find?</legend>
+        <div class="chips-row" id="pf-mode" role="group" aria-label="What to find">
+          <button type="button" data-mode="cap" aria-pressed="true">Full-bore capacity</button>
+          <button type="button" data-mode="depth" aria-pressed="false">Depth for a flow</button>
+          <button type="button" data-mode="flow" aria-pressed="false">Flow at a depth</button>
+          <button type="button" data-mode="grad" aria-pressed="false">Gradient needed</button>
+          <button type="button" data-mode="dia" aria-pressed="false">Diameter needed</button>
+        </div>
+      </fieldset>
+
+      <div class="field" data-need="D">
+        <label for="pf-D">Internal diameter (mm)</label>
+        <input type="number" id="pf-D" value="225" min="20" max="5000" step="any" inputmode="decimal" list="pf-sizes">
+        <datalist id="pf-sizes"></datalist>
+      </div>
+      <div class="field" data-need="S">
+        <label for="pf-S">Gradient</label>
+        <div class="pf-inline">
+          <input type="number" id="pf-S" value="150" min="0" step="any" inputmode="decimal" aria-describedby="pf-S-hint">
+          <select id="pf-Su" aria-label="Gradient units">
+            <option value="in" selected>1 in N</option>
+            <option value="pct">%</option>
+            <option value="mm">m/m</option>
+          </select>
+        </div>
+        <span class="hint" id="pf-S-hint">Enter N for 1 in N, e.g. 150.</span>
+      </div>
+      <div class="field" data-need="Q">
+        <label for="pf-Q">Design flow (l/s)</label>
+        <input type="number" id="pf-Q" value="20" min="0" step="any" inputmode="decimal">
+      </div>
+      <div class="field" data-need="y">
+        <label for="pf-y">Depth of flow (mm)</label>
+        <input type="number" id="pf-y" value="112.5" min="0" step="any" inputmode="decimal">
+      </div>
+      <div class="field" data-need="p">
+        <label for="pf-p">Design proportional depth d/D</label>
+        <input type="number" id="pf-p" value="1" min="0.05" max="1" step="0.05" inputmode="decimal" aria-describedby="pf-p-hint">
+        <span class="hint" id="pf-p-hint">1 sizes the pipe to run just full. Use less (e.g. 0.75) to leave headroom.</span>
+      </div>
+
+      <fieldset>
+        <legend>Roughness</legend>
+        <div class="chips-row" id="pf-method" role="group" aria-label="Friction method">
+          <button type="button" data-method="cw" aria-pressed="true">Colebrook-White</button>
+          <button type="button" data-method="manning" aria-pressed="false">Manning</button>
+        </div>
+        <div class="field">
+          <label for="pf-preset">Pipe and condition</label>
+          <select id="pf-preset"></select>
+        </div>
+        <div class="field" data-rough="cw">
+          <label for="pf-ks">Roughness k<sub>s</sub> (mm)</label>
+          <input type="number" id="pf-ks" value="0.6" min="0" step="any" inputmode="decimal">
+        </div>
+        <div class="field" data-rough="manning" hidden>
+          <label for="pf-n">Manning's n</label>
+          <input type="number" id="pf-n" value="0.013" min="0.005" step="0.001" inputmode="decimal">
+        </div>
+        <span class="hint small">Typical textbook values, editable. Use the value your client's or adopting authority's guidance requires.</span>
+      </fieldset>
+
+      <details class="pf-adv">
+        <summary>Checks and constants</summary>
+        <div>
+          <div class="pf-row">
+            <div class="field">
+              <label for="pf-vmin">Min velocity (m/s)</label>
+              <input type="number" id="pf-vmin" value="0.75" min="0" step="0.05" inputmode="decimal">
+            </div>
+            <div class="field">
+              <label for="pf-vmax">Max velocity (m/s)</label>
+              <input type="number" id="pf-vmax" value="3" min="0" step="0.1" inputmode="decimal">
+            </div>
+          </div>
+          <span class="hint small">Starting values only. Self-cleansing and maximum velocities vary by authority, sewer type and material; check the governing document.</span>
+          <div class="field" data-rough="cw">
+            <label for="pf-nu">Kinematic viscosity ν (×10⁻⁶ m²/s)</label>
+            <input type="number" id="pf-nu" value="1.141" min="0.1" step="0.001" inputmode="decimal">
+            <span class="hint">1.141 is clean water at 15 °C.</span>
+          </div>
+          <label class="pf-check-label" data-need="std"><input type="checkbox" id="pf-std" checked> <span>Round the diameter up to the next common nominal size</span></label>
+        </div>
+      </details>
+      <div class="pf-tools">
+        <button type="button" class="btn ghost" id="pf-example">Load worked example</button>
+        <button type="button" class="linkish" id="pf-reset" style="margin-left:0">Reset</button>
+      </div>
+    </form>
+
+    <div class="pf-out" aria-live="polite">
+      <div class="pf-tiles" id="pf-tiles"></div>
+      <div id="pf-msg" class="pf-msg" hidden></div>
+      <div class="panel">
+        <h3>Checks</h3>
+        <ul class="pf-checks" id="pf-checks"></ul>
+      </div>
+      <div class="panel">
+        <h3>Proportional depth, flow and velocity</h3>
+        <div class="pf-legend" aria-hidden="true">
+          <span><i style="border-color:var(--accent)"></i>Q / Q<sub>full</sub></span>
+          <span><i style="border-color:var(--accent-2);border-top-style:dashed"></i>V / V<sub>full</sub></span>
+          <span><i style="border-color:var(--muted);border-top-style:dotted"></i>Design depth</span>
+        </div>
+        <div class="pf-chart" id="pf-chart"></div>
+        <p class="small" id="pf-chart-note"></p>
+      </div>
+      <div class="panel">
+        <div style="display:flex;gap:8px 16px;flex-wrap:wrap;align-items:center;justify-content:space-between">
+          <h3>Results</h3>
+          <div class="pf-tools">
+            <button type="button" class="btn ghost" id="pf-copy">Copy table</button>
+            <button type="button" class="btn ghost" id="pf-csv">Download CSV</button>
+            <button type="button" class="btn ghost" id="pf-link">Copy link</button>
+            <span class="small" id="pf-copied" role="status"></span>
+          </div>
+        </div>
+        <div class="table-wrap"><table class="pf-table"><tbody id="pf-table"></tbody></table></div>
+      </div>
+      <div class="panel pf-working">
+        <h3>Working</h3>
+        <div id="pf-working"></div>
+      </div>
+      <div class="panel ref">
+        <h3>Assumptions</h3>
+        <ul class="pf-assume" id="pf-assume"></ul>
+        <p class="small">For learning and checking your own calculations. This tool doesn't apply or claim compliance with any design standard. Check inputs, criteria and results against the governing document and your firm's verified tools before you issue anything.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
 </main>
 
 <aside class="sources" id="sources" aria-label="Official sources" hidden>
@@ -1996,6 +2192,8 @@ nav a[aria-current="page"][aria-expanded="true"] { color: var(--accent-ink); bac
 <script src="js/pages.js?v=20261122b"></script>
 <script src="js/tools/sketch-templates.js?v=20261127a"></script>
 <script src="js/tools/sketch.js?v=20261127a"></script>
+<script src="js/tools/hydraulics.js?v=20261127a"></script>
+<script src="js/tools/pipeflow.js?v=20261127a"></script>
 <script src="js/site.js?v=20261127a"></script>
 <script src="js/art.js?v=20261122b"></script>
 </body>
