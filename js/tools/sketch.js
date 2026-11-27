@@ -7,7 +7,10 @@
   var view = document.getElementById("view-sketch"); if (!view) return;
   var NS = "http://www.w3.org/2000/svg", GRID = 20, FONT = "Arial, Helvetica, sans-serif", KEY = "cp-sketch";
   /* A4 at 4 units per mm, so a grid square of 20 units is 5 mm on the printed sheet. */
-  var SIZES = { land: [1188, 840], port: [840, 1188] };
+  /* Paper at 4 units per mm, landscape [width, height]; portrait swaps them. */
+  var PAPER = { A4: [1188, 840], A3: [1680, 1188] }, PT = { A4: [841.89, 595.28], A3: [1190.55, 841.89] };
+  var TBS = { small: 0.75, medium: 0.9, large: 1.1 };
+  var NOTE = "NOT TO SCALE. This sketch is indicative only and must not be used for construction.";
   var COLORS = [["#15233a", "Black"], ["#b84a32", "Red"], ["#0d6b78", "Teal"], ["#3f6fd1", "Blue"], ["#2e7d32", "Green"], ["#b07a06", "Amber"], ["#7a7f87", "Grey"]];
   var WIDTHS = [[1, "Hairline"], [2, "Fine"], [4, "Medium"], [7, "Heavy"], [14, "Marker"]];
   var LINES = [["solid", "Solid"], ["dashed", "Dashed"], ["dashdot", "Dash-dot"], ["dotted", "Dotted"], ["centre", "Centreline"]];
@@ -81,7 +84,7 @@
   /* ---------- State ---------- */
   var mode = S.mode === "struct" ? "struct" : "free";
   var tool = { free: "pen", struct: "member" };
-  var style = { c: COLORS[0][0], w: 2, ls: "solid", pat: "diag" };
+  var style = { c: COLORS[0][0], w: 2, ls: "solid", pat: "diag", fs: 14 };
   var sel = null; /* {k:"item"|"img", id} */
   var drag = null, pend = null, before = null, k = 1;
   var hist = {}; function H() { var id = S.cur; return hist[id] || (hist[id] = { u: [], r: [] }); }
@@ -104,10 +107,18 @@
   function redo() { var h = H(); if (!h.r.length) return; h.u.push(snap()); restore(h.r.pop()); sel = null; persist(); renderAll(); renderProps(); }
 
   /* ---------- Geometry ---------- */
-  function size() { return SIZES[doc().orient] || SIZES.land; }
+  function size() { var p = PAPER[doc().paper] || PAPER.A4; return doc().orient === "port" ? [p[1], p[0]] : [p[0], p[1]]; }
+  /* Sheet geometry: the frame, the title block (sized small/medium/large or off) and the revision box above it. */
   function geo() {
-    var s = size(), W = s[0], Hh = s[1], m = 40, tw = doc().orient === "land" ? 520 : W - 2 * m, th = 126;
-    return { W: W, H: Hh, inner: { x: m, y: m, w: W - 2 * m, h: Hh - 2 * m }, tb: { x: W - m - tw, y: Hh - m - th, w: tw, h: th } };
+    var d = doc(), s = size(), W = s[0], Hh = s[1], m = d.frame === false ? 20 : 40, inner = { x: m, y: m, w: W - 2 * m, h: Hh - 2 * m };
+    var k2 = TBS[d.tbs || "medium"], G = { W: W, H: Hh, inner: inner, m: m };
+    if (!k2) { G.tb = { x: W - m, y: Hh - m, w: 0, h: 0, off: true }; return G; }
+    var tw0 = 480 * k2, rh = 30 * k2, nh = 32 * k2, th = 3 * rh + nh, rr = 18 * k2, nrev = d.showRev ? 1 + Math.max(1, (d.revs || []).length) : 0, rvh = nrev * rr;
+    G.k = k2; G.rh = rh; G.nh = nh; G.rr = rr;
+    G.tbBlock = { x: W - m - tw0, y: Hh - m - th, w: tw0, h: th };
+    G.rev = nrev ? { x: W - m - tw0, y: Hh - m - th - rvh, w: tw0, h: rvh } : null;
+    G.tb = { x: W - m - tw0, y: Hh - m - th - rvh, w: tw0, h: th + rvh };
+    return G;
   }
   function segPts(it) { return [{ x: it.x1, y: it.y1 }, { x: it.x2, y: it.y2 }]; }
   function norm(it) { var dx = it.x2 - it.x1, dy = it.y2 - it.y1, L = Math.hypot(dx, dy) || 1; return { dx: dx / L, dy: dy / L, nx: dy / L, ny: -dx / L, L: L }; }
@@ -180,7 +191,7 @@
   }
   function syncLeaders() { doc().items.forEach(function (it) { if (it.type === "leader") { var a = anchorOf(it); it.ax = r1(a.x); it.ay = r1(a.y); if (it.att && !byId(it.att.id)) it.att = null; } }); }
   function leaderBox(it) {
-    var lines = String(it.text || "").split("\n"), sz = 14, w = 0;
+    var lines = String(it.text || "").split("\n"), sz = it.fs || 14, w = 0;
     lines.forEach(function (l) { w = Math.max(w, tw(l, sz)); });
     var W = Math.max(w, 20) + 18, Hh = lines.length * sz * 1.3 + 12;
     return { x: it.bx - W / 2, y: it.by - Hh / 2, w: W, h: Hh, lines: lines, sz: sz };
@@ -204,20 +215,20 @@
       case "pload":
         var a = (it.ang == null ? 90 : it.ang) * Math.PI / 180, ux = Math.cos(a), uy = Math.sin(a), Lp = 72, tx = it.x - ux * Lp, ty = it.y - uy * Lp;
         o = arrow(tx, ty, it.x, it.y, c, 2.5, 14);
-        if (it.label) o += txt(tx - ux * 12, ty - uy * 12 + 5, it.label, c, 15, Math.abs(ux) < 0.3 ? "middle" : ux > 0 ? "end" : "start", ' font-weight="bold"');
+        if (it.label) o += txt(tx - ux * 12, ty - uy * 12 + 5, it.label, c, it.fs || 15, Math.abs(ux) < 0.3 ? "middle" : ux > 0 ? "end" : "start", ' font-weight="bold"');
         return o;
       case "udl":
         var n = norm(it), sd = it.side === -1 ? -1 : 1, nx = n.nx * sd, ny = n.ny * sd, hh = 40, cnt = Math.max(2, Math.round(n.L / 30) + 1);
         o = ln(it.x1 + nx * hh, it.y1 + ny * hh, it.x2 + nx * hh, it.y2 + ny * hh, c, 2);
         for (i = 0; i < cnt; i++) { var t = i / (cnt - 1), px = it.x1 + (it.x2 - it.x1) * t, py = it.y1 + (it.y2 - it.y1) * t; o += arrow(px + nx * hh, py + ny * hh, px, py, c, 1.5, 9); }
-        if (it.label) { var mx = (it.x1 + it.x2) / 2 + nx * (hh + 16), my = (it.y1 + it.y2) / 2 + ny * (hh + 16) + 5; o += txt(mx, my, it.label, c, 15, "middle", ' font-weight="bold"'); }
+        if (it.label) { var mx = (it.x1 + it.x2) / 2 + nx * (hh + 16), my = (it.y1 + it.y2) / 2 + ny * (hh + 16) + 5; o += txt(mx, my, it.label, c, it.fs || 15, "middle", ' font-weight="bold"'); }
         return o;
       case "moment":
         var R = 24, cw = it.dir !== "ccw", t0 = (cw ? 135 : 45) * Math.PI / 180, t1 = (cw ? 405 : -225) * Math.PI / 180;
         var sx = it.x + R * Math.cos(t0), sy = it.y + R * Math.sin(t0), ex = it.x + R * Math.cos(t1), ey = it.y + R * Math.sin(t1);
         var tux = cw ? -Math.sin(t1) : Math.sin(t1), tuy = cw ? Math.cos(t1) : -Math.cos(t1);
         o = '<path d="M' + r1(sx) + " " + r1(sy) + "A" + R + " " + R + " 0 1 " + (cw ? 1 : 0) + " " + r1(ex - tux * 8) + " " + r1(ey - tuy * 8) + '" fill="none" stroke="' + c + '" stroke-width="2.5"/>' + head(ex + tux * 3, ey + tuy * 3, tux, tuy, c, 13) + '<circle cx="' + it.x + '" cy="' + it.y + '" r="2.5" fill="' + c + '"/>';
-        if (it.label) o += txt(it.x + R + 10, it.y - R + 2, it.label, c, 15, "start", ' font-weight="bold"');
+        if (it.label) o += txt(it.x + R + 10, it.y - R + 2, it.label, c, it.fs || 15, "start", ' font-weight="bold"');
         return o;
       case "dim":
         var dn = norm(it), off = it.o == null ? 30 : it.o, sg = off >= 0 ? 1 : -1, ax1 = it.x1 + dn.nx * off, ay1 = it.y1 + dn.ny * off, ax2 = it.x2 + dn.nx * off, ay2 = it.y2 + dn.ny * off;
@@ -226,7 +237,7 @@
         var lab = it.label || dimAuto(it), ang = Math.atan2(dn.dy, dn.dx) * 180 / Math.PI; if (ang > 90.5 || ang < -89.5) ang += 180;
         var ar = ang * Math.PI / 180, upx = Math.sin(ar), upy = -Math.cos(ar), side = (dn.nx * sg * upx + dn.ny * sg * upy) > 0;
         var gap = side ? 7 : 19, lx = (ax1 + ax2) / 2 + dn.nx * sg * gap, ly = (ay1 + ay2) / 2 + dn.ny * sg * gap;
-        return o + txt(lx, ly, lab, c, 14, "middle", ' transform="rotate(' + r1(ang) + " " + r1(lx) + " " + r1(ly) + ')"');
+        return o + txt(lx, ly, lab, c, it.fs || 14, "middle", ' transform="rotate(' + r1(ang) + " " + r1(lx) + " " + r1(ly) + ')"');
       case "text":
         var sz = it.size || 18, ls = String(it.text || "").split("\n");
         return '<text font-family="' + FONT + '" font-size="' + sz + '" fill="' + c + '"' + (it.bold ? ' font-weight="bold"' : "") + ">" + ls.map(function (l, j) { return '<tspan x="' + it.x + '" y="' + r1(it.y + sz * 0.85 + j * sz * 1.25) + '">' + (esc(l) || " ") + "</tspan>"; }).join("") + "</text>";
@@ -309,10 +320,9 @@
   function iconSvg(name) { return '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="stroke:currentColor">' + IC[name] + "</svg>"; }
   var app = $("sk-app");
   app.innerHTML =
-    '<div class="sk-top">' +
+    '<div class="sk-head" id="sk-head"><div class="sk-top">' +
       '<div class="sk-seg" role="group" aria-label="Mode"><button type="button" data-mode="free">Freehand</button><button type="button" data-mode="struct">Beam and frame diagram</button></div>' +
-      '<div class="sk-sheets"><label class="sr-only" for="sk-sheet">Sheet</label><select id="sk-sheet"></select>' +
-        '<button type="button" class="sk-btn" id="sk-new">New sheet</button><button type="button" class="sk-btn" id="sk-del">Delete sheet</button></div>' +
+
       '<div class="sk-actions"><button type="button" class="sk-btn" id="sk-undo" title="Undo (Ctrl+Z)">Undo</button><button type="button" class="sk-btn" id="sk-redo" title="Redo (Ctrl+Y)">Redo</button>' +
         '<button type="button" class="sk-btn" id="sk-clear">Clear</button>' +
         '<label class="sr-only" for="sk-fmt">Export format</label><select id="sk-fmt"><option value="png">PNG image</option><option value="jpeg">JPEG image</option><option value="svg">SVG drawing</option><option value="pdf">PDF, this sheet</option><option value="pdfall">PDF, all sheets</option></select><button type="button" class="btn" id="sk-export">Export</button></div>' +
@@ -323,11 +333,16 @@
       '<div class="sk-group"><span class="sk-lab">Colour</span><div class="sk-swatches" id="sk-swatches"></div><label class="sk-pick" title="Pick any colour"><span class="sr-only">Custom colour</span><input type="color" id="sk-color"></label></div>' +
       '<div class="sk-group"><span class="sk-lab">Weight</span><div class="sk-chips" id="sk-widths"></div></div>' +
       '<div class="sk-group"><label class="sk-lab" for="sk-ls">Line</label><select id="sk-ls">' + LINES.map(function (l) { return '<option value="' + l[0] + '">' + l[1] + "</option>"; }).join("") + "</select></div>" +
+      '<div class="sk-group"><label class="sk-lab" for="sk-fs">Text</label><select id="sk-fs">' + [8, 10, 12, 14, 16, 18, 24, 32].map(function (v) { return '<option value="' + v + '">' + v + "</option>"; }).join("") + "</select></div>" +
       '<div class="sk-group"><label class="sk-lab" for="sk-pat">Hatch</label><select id="sk-pat">' + PATS.map(function (l) { return '<option value="' + l[0] + '">' + l[1] + "</option>"; }).join("") + "</select>" +
         '<label class="sr-only" for="sk-hby">Hatch by</label><select id="sk-hby"><option value="pick">Click inside an area</option><option value="shape">Draw a shape</option></select></div>' +
     "</div>" +
     '<div class="sk-style sk-sheetopts">' +
+      '<div class="sk-seg sk-seg-sm" role="group" aria-label="Paper size"><button type="button" data-paper="A4">A4</button><button type="button" data-paper="A3">A3</button></div>' +
       '<div class="sk-seg sk-seg-sm" role="group" aria-label="Orientation"><button type="button" data-orient="land">Landscape</button><button type="button" data-orient="port">Portrait</button></div>' +
+      '<label class="sk-check"><input type="checkbox" id="sk-showframe"> Frame</label>' +
+      '<label class="sk-check">Title block <select id="sk-tbs"><option value="small">Small</option><option value="medium">Medium</option><option value="large">Large</option><option value="off">Off</option></select></label>' +
+      '<label class="sk-check"><input type="checkbox" id="sk-rev"> Revisions</label><button type="button" class="sk-btn" id="sk-addrev">Add revision</button>' +
       '<label class="sk-check"><input type="checkbox" id="sk-grid"> Grid</label>' +
       '<label class="sk-check" data-only="struct"><input type="checkbox" id="sk-snap"> Snap</label>' +
       '<label class="sk-check" data-only="struct">Grid square = <input type="number" id="sk-scale" min="0.01" step="0.05" style="width:5.5em"> m</label>' +
@@ -336,6 +351,8 @@
         '<label class="sk-check"><input type="checkbox" id="sk-show-under"> Underlay</label><label class="sk-check"><input type="checkbox" id="sk-lock-under"> Lock underlay</label>' +
         '<button type="button" class="sk-btn" id="sk-img-btn">Add image to trace</button><input type="file" id="sk-img" accept="image/*" hidden></span>' +
     "</div>" +
+    "</div>" +
+    '<div class="sk-tabs" id="sk-tabs" role="tablist" aria-label="Sheets"></div>' +
     '<div class="sk-stage" id="sk-stage">' +
       '<svg id="sk-svg" xmlns="' + NS + '" role="img" aria-label="Sketch sheet"><defs id="sk-defs"></defs><rect id="sk-bg" fill="#fff"/><g id="sk-under"></g><g id="sk-gridg"></g><g id="sk-content"></g><g id="sk-frame"></g><g id="sk-live"></g><g id="sk-ui"></g></svg>' +
       '<input type="text" id="sk-tb-edit" class="sk-tb-edit" hidden aria-label="Title block field">' +
@@ -361,21 +378,50 @@
       '<pattern id="sk-g5" width="100" height="100" patternUnits="userSpaceOnUse"><rect width="100" height="100" fill="url(#sk-g1)"/><path d="M100 0H0V100" fill="none" stroke="#c9d4d3" stroke-width="1"/></pattern>';
   }
   function gridStr() { var g = geo().inner; return '<rect x="' + g.x + '" y="' + g.y + '" width="' + g.w + '" height="' + g.h + '" fill="url(#sk-g5)"/>'; }
+  function tbGet(key) { var d = doc(), m = /^r\.(\d+)\.(\w+)$/.exec(key); if (m) return ((d.revs || [])[+m[1]] || {})[m[2]] || ""; if (key === "note") return d.tb.note == null ? NOTE : d.tb.note; if (key === "scale") return d.tb.scale == null ? "NTS" : d.tb.scale; return d.tb[key] || ""; }
+  function tbSet(key, v) { var d = doc(), m = /^r\.(\d+)\.(\w+)$/.exec(key); if (m) { d.revs = d.revs || []; while (d.revs.length <= +m[1]) d.revs.push({ rev: "", date: "", desc: "", by: "" }); d.revs[+m[1]][m[2]] = v; } else d.tb[key] = v; }
   function frameStr(forExport) {
-    var G = geo(), t = G.tb, d = doc(), c = "#15233a", o = "", rh = t.h / 3;
-    o += '<rect x="20" y="20" width="' + (G.W - 40) + '" height="' + (G.H - 40) + '" fill="none" stroke="' + c + '" stroke-width="0.8"/>';
-    o += '<rect x="' + G.inner.x + '" y="' + G.inner.y + '" width="' + G.inner.w + '" height="' + G.inner.h + '" fill="none" stroke="' + c + '" stroke-width="2.2"/>';
-    o += '<rect x="' + t.x + '" y="' + t.y + '" width="' + t.w + '" height="' + t.h + '" fill="#fff" stroke="' + c + '" stroke-width="2.2"/>';
-    o += ln(t.x, t.y + rh, t.x + t.w, t.y + rh, c, 1) + ln(t.x, t.y + 2 * rh, t.x + t.w, t.y + 2 * rh, c, 1) + ln(t.x + t.w / 2, t.y + 2 * rh, t.x + t.w / 2, t.y + t.h, c, 1);
-    var cells = [["project", "PROJECT", t.x, t.y, t.w], ["title", "SKETCH TITLE", t.x, t.y + rh, t.w], ["ref", "SKETCH NO.", t.x, t.y + 2 * rh, t.w / 2], ["date", "DATE", t.x + t.w / 2, t.y + 2 * rh, t.w / 2]];
-    var PH = { project: "Click to add project name", title: "Click to add a title", ref: "Sketch number", date: "Date" };
-    cells.forEach(function (cl) {
-      var v = d.tb[cl[0]] || "", maxw = cl[4] - 20, sz = cl[0] === "title" ? 17 : 15, shown = v;
-      while (shown && tw(shown, sz, cl[0] === "title") > maxw) shown = shown.slice(0, -2) + "…";
-      o += '<g data-tb="' + cl[0] + '"' + (forExport ? "" : ' class="sk-tbcell"') + ">" + (forExport ? "" : '<rect x="' + cl[2] + '" y="' + cl[3] + '" width="' + cl[4] + '" height="' + rh + '" fill="transparent"/>') +
-        txt(cl[2] + 8, cl[3] + 12, cl[1], "#5a6677", 9, "start", ' letter-spacing="0.8"') +
-        (v ? txt(cl[2] + 8, cl[3] + rh - 9, shown, c, sz, "start", cl[0] === "title" ? ' font-weight="bold"' : "") : forExport ? "" : txt(cl[2] + 8, cl[3] + rh - 9, PH[cl[0]], "#a3adb8", 14, "start", ' font-style="italic"')) + "</g>";
-    });
+    var G = geo(), d = doc(), c = "#15233a", o = "";
+    if (d.frame !== false) o += '<rect x="' + G.inner.x + '" y="' + G.inner.y + '" width="' + G.inner.w + '" height="' + G.inner.h + '" fill="none" stroke="' + c + '" stroke-width="2"/>';
+    if (G.tb.off) return o;
+    var K = G.k, t = G.tbBlock, rh = G.rh, lw = Math.max(1, 1.6 * K);
+    function cell(key, label, x, y, w, h, sz, bold, ph) {
+      var v = tbGet(key), shown = v, maxw = w - 12 * K;
+      while (shown && tw(shown, sz, bold) > maxw) shown = shown.slice(0, -2) + "…";
+      var g = '<g data-tb="' + key + '"' + (forExport ? "" : ' class="sk-tbcell"') + ">" + (forExport ? "" : '<rect x="' + r1(x) + '" y="' + r1(y) + '" width="' + r1(w) + '" height="' + r1(h) + '" fill="transparent"/>');
+      if (label) g += txt(x + 5 * K, y + 10 * K, label, "#5a6677", r1(7.5 * K), "start", ' letter-spacing="0.6"');
+      if (v) g += txt(x + 5 * K, y + h - 7 * K, shown, c, r1(sz), "start", bold ? ' font-weight="bold"' : "");
+      else if (!forExport && ph) g += txt(x + 5 * K, y + h - 7 * K, ph, "#a3adb8", r1(11 * K), "start", ' font-style="italic"');
+      return g + "</g>";
+    }
+    o += '<rect x="' + r1(t.x) + '" y="' + r1(t.y) + '" width="' + r1(t.w) + '" height="' + r1(t.h) + '" fill="#fff" stroke="' + c + '" stroke-width="' + lw + '"/>';
+    for (var i = 1; i <= 3; i++) o += ln(t.x, t.y + i * rh, t.x + t.w, t.y + i * rh, c, 0.8);
+    var c1 = t.w * 0.36, c2 = t.w * 0.28;
+    o += ln(t.x + c1, t.y + 2 * rh, t.x + c1, t.y + 3 * rh, c, 0.8) + ln(t.x + c1 + c2, t.y + 2 * rh, t.x + c1 + c2, t.y + 3 * rh, c, 0.8);
+    o += cell("project", "PROJECT", t.x, t.y, t.w, rh, 13 * K, false, "Click to add project name");
+    o += cell("title", "SKETCH TITLE", t.x, t.y + rh, t.w, rh, 14 * K, true, "Click to add a title");
+    o += cell("ref", "SKETCH NO.", t.x, t.y + 2 * rh, c1, rh, 13 * K, false, "Number");
+    o += cell("scale", "SCALE", t.x + c1, t.y + 2 * rh, c2, rh, 13 * K, false, "Scale");
+    o += cell("date", "DATE", t.x + c1 + c2, t.y + 2 * rh, t.w - c1 - c2, rh, 13 * K, false, "Date");
+    /* disclaimer: wraps onto two lines */
+    var nv = tbGet("note"), nsz = 9 * K, words = nv.split(/\s+/), lines = [""], ny = t.y + 3 * rh;
+    words.forEach(function (w) { var tr = lines[lines.length - 1] ? lines[lines.length - 1] + " " + w : w; if (tw(tr, nsz, false) > t.w - 12 * K && lines[lines.length - 1]) lines.push(w); else lines[lines.length - 1] = tr; });
+    lines = lines.slice(0, 2);
+    o += '<g data-tb="note"' + (forExport ? "" : ' class="sk-tbcell"') + ">" + (forExport ? "" : '<rect x="' + r1(t.x) + '" y="' + r1(ny) + '" width="' + r1(t.w) + '" height="' + r1(G.nh) + '" fill="transparent"/>') +
+      (nv ? lines.map(function (l, j) { var bold = j === 0 && /^NOT TO SCALE/i.test(l); return txt(t.x + 5 * K, ny + 13 * K + j * 11.5 * K, l, c, r1(nsz), "start", bold ? ' font-weight="bold"' : ""); }).join("") : forExport ? "" : txt(t.x + 5 * K, ny + 18 * K, "Click to add a note or disclaimer", "#a3adb8", r1(10 * K), "start", ' font-style="italic"')) + "</g>";
+    if (G.rev) {
+      var R = G.rev, rr = G.rr, cols = [["rev", "REV", 0.12], ["date", "DATE", 0.22], ["desc", "DESCRIPTION", 0.5], ["by", "BY", 0.16]], revs = d.revs && d.revs.length ? d.revs : [{}];
+      o += '<rect x="' + r1(R.x) + '" y="' + r1(R.y) + '" width="' + r1(R.w) + '" height="' + r1(R.h) + '" fill="#fff" stroke="' + c + '" stroke-width="' + lw + '"/>';
+      var x = R.x;
+      cols.forEach(function (cl, ci) {
+        var w = R.w * cl[2];
+        if (ci) o += ln(x, R.y, x, R.y + R.h, c, 0.8);
+        o += txt(x + 4 * K, R.y + rr - 5 * K, cl[1], "#5a6677", r1(7.5 * K), "start", ' letter-spacing="0.6"');
+        revs.forEach(function (rv, ri) { o += cell("r." + ri + "." + cl[0], "", x, R.y + rr * (ri + 1), w, rr, 10 * K, false, ri === 0 && ci === 0 ? "+" : ""); });
+        x += w;
+      });
+      for (var j = 1; j <= revs.length; j++) o += ln(R.x, R.y + j * rr, R.x + R.w, R.y + j * rr, c, 0.8);
+    }
     return o;
   }
   function underStr() {
@@ -383,11 +429,18 @@
       return '<g data-uid="' + im.id + '" transform="translate(' + im.x + " " + im.y + ") rotate(" + (im.rot || 0) + ')" opacity="' + (im.op == null ? 0.5 : im.op) + '"><image href="' + im.src + '" x="' + r1(-im.w / 2) + '" y="' + r1(-im.h / 2) + '" width="' + r1(im.w) + '" height="' + r1(im.h) + '" preserveAspectRatio="none"/></g>';
     }).join("");
   }
+  /* Keep the whole sheet in view under the sticky toolbars on a desktop screen. */
+  function fitSheet() {
+    var G = geo(), top = document.querySelector(".topbar"), th = top ? top.offsetHeight : 0, hh = window.innerWidth > 760 ? $("sk-head").offsetHeight : 0;
+    app.style.setProperty("--sk-top", th + "px");
+    var avail = window.innerHeight - th - hh - $("sk-tabs").offsetHeight - 36;
+    svg.style.maxWidth = Math.max(320, avail * G.W / G.H) + "px";
+  }
   function measureK() { var w = svg.getBoundingClientRect().width; k = w ? geo().W / w : 1; }
   var underKey = "";
   function renderAll() {
     var d = doc(), G = geo();
-    svg.setAttribute("viewBox", "0 0 " + G.W + " " + G.H);
+    svg.setAttribute("viewBox", "0 0 " + G.W + " " + G.H); fitSheet();
     stage.classList.toggle("port", d.orient === "port");
     $("sk-bg").setAttribute("width", G.W); $("sk-bg").setAttribute("height", G.H);
     measureK();
@@ -415,7 +468,7 @@
     return shape === "sq" ? '<rect data-h="' + name + '" x="' + r1(x - r) + '" y="' + r1(y - r) + '" width="' + r1(2 * r) + '" height="' + r1(2 * r) + '" class="sk-h"/>' : '<circle data-h="' + name + '" cx="' + r1(x) + '" cy="' + r1(y) + '" r="' + r1(r) + '" class="sk-h"/>';
   }
   function renderUI() {
-    var o = "", sw = r1(1.5 * Math.max(k, 1));
+    var o = "", sw = 1.5; /* screen px: these outlines use non-scaling strokes */
     if (sel && sel.k === "img") {
       var im = imgById(sel.id);
       if (im) {
@@ -470,16 +523,21 @@
     $("sk-color").value = style.c; $("sk-ls").value = style.ls; $("sk-pat").value = style.pat;
     $("sk-grid").checked = d.grid; $("sk-snap").checked = d.snap; $("sk-scale").value = d.scale;
     $("sk-show-draw").checked = d.showDraw; $("sk-lock-draw").checked = d.lockDraw; $("sk-show-under").checked = d.showUnder; $("sk-lock-under").checked = d.lockUnder;
-    $("sk-sheet").innerHTML = S.sheets.map(function (s, i) { return '<option value="' + i + '"' + (i === S.cur ? " selected" : "") + ">" + esc((s.tb.ref || "Sheet " + (i + 1)) + (s.tb.title ? " · " + s.tb.title : "")) + "</option>"; }).join("");
-    $("sk-del").disabled = S.sheets.length < 2;
+    Array.prototype.forEach.call(app.querySelectorAll("[data-paper]"), function (b) { b.setAttribute("aria-pressed", b.dataset.paper === (d.paper || "A4")); });
+    $("sk-showframe").checked = d.frame !== false; $("sk-tbs").value = d.tbs || "medium"; $("sk-rev").checked = !!d.showRev; $("sk-addrev").hidden = !d.showRev || geo().tb.off; $("sk-fs").value = style.fs;
+    $("sk-tabs").innerHTML = S.sheets.map(function (s, i) {
+      var on = i === S.cur;
+      return '<span class="sk-tab' + (on ? " on" : "") + '"><button type="button" role="tab" data-sheet="' + i + '" aria-selected="' + on + '" title="' + esc(s.tb.title || "") + '">' + esc(s.tb.ref || "Sheet " + (i + 1)) + (s.tb.title ? '<small>' + esc(s.tb.title.length > 22 ? s.tb.title.slice(0, 21) + "…" : s.tb.title) + "</small>" : "") + "</button>" +
+        (on && S.sheets.length > 1 ? '<button type="button" class="sk-tabx" id="sk-del" aria-label="Delete this sheet" title="Delete this sheet">×</button>' : "") + "</span>";
+    }).join("") + '<button type="button" class="sk-tabadd" id="sk-new" title="New sheet">+ New sheet</button>';
     $("sk-undo").disabled = !H().u.length; $("sk-redo").disabled = !H().r.length;
   }
   function setMode(m) { mode = m; S.mode = m; pend = null; sel = null; persist(); renderTools(); renderAll(); renderLive(); renderProps(); }
   function setTool(t) { if (pend && t !== "hatch") finishHatch(); tool[mode] = t; renderTools(); if (t !== "select") sel = null; renderUI(); renderProps(); }
 
   /* Turning the sheet keeps everything on it, shifted so it stays centred on the new sheet. */
-  function setOrient(o) {
-    var d = doc(), s0 = size(); begin(); d.orient = o; var s1 = size();
+  function setOrient(o, paper) {
+    var d = doc(), s0 = size(); begin(); if (o) d.orient = o; if (paper) d.paper = paper; var s1 = size();
     var dx = Math.round((s1[0] - s0[0]) / 2 / GRID) * GRID, dy = Math.round((s1[1] - s0[1]) / 2 / GRID) * GRID;
     d.items = d.items.map(function (it) { var n = shifted(it, dx, dy); if (n.type === "leader" && n.att) { n.ax += dx; n.ay += dy; } return n; });
     d.under.forEach(function (im) { im.x += dx; im.y += dy; });
@@ -493,13 +551,22 @@
     if (b.dataset.tool) return setTool(b.dataset.tool);
     if (b.dataset.color) { style.c = b.dataset.color; restyle(function (it) { it.c = style.c; }); syncControls(); return; }
     if (b.dataset.w) { style.w = +b.dataset.w; restyle(function (it) { if ("w" in it) it.w = style.w; }); syncControls(); return; }
+    if (b.dataset.paper) { if ((doc().paper || "A4") !== b.dataset.paper) setOrient(null, b.dataset.paper); return; }
     if (b.dataset.orient) { if (doc().orient !== b.dataset.orient) setOrient(b.dataset.orient); return; }
   });
+  $("sk-fs").addEventListener("change", function () { style.fs = +this.value; restyle(function (it) { if (it.type === "text") it.size = style.fs; else if (it.type === "leader" || it.label != null || it.type === "dim") it.fs = style.fs; }); renderProps(); });
   $("sk-color").addEventListener("input", function () { style.c = this.value; syncControls(); });
   $("sk-color").addEventListener("change", function () { style.c = this.value; restyle(function (it) { it.c = style.c; }); });
   $("sk-ls").addEventListener("change", function () { style.ls = this.value; restyle(function (it) { if (it.type === "stroke" || it.type === "line" || it.type === "member" || it.type === "hatch") it.ls = style.ls; }); });
   $("sk-pat").addEventListener("change", function () { style.pat = this.value; if (tool[mode] !== "hatch" && !(sel && byId(sel.id) && byId(sel.id).type === "hatch")) setTool("hatch"); restyle(function (it) { if (it.type === "hatch") it.pat = style.pat; }); renderProps(); });
   function opt(id, key, after) { $(id).addEventListener("change", function () { doc()[key] = this.type === "checkbox" ? this.checked : +this.value || doc()[key]; persist(); if (after) after(); renderAll(); }); }
+  opt("sk-showframe", "frame"); 
+  $("sk-tbs").addEventListener("change", function () { begin(); doc().tbs = this.value; commit(); });
+  $("sk-rev").addEventListener("change", function () { begin(); var d = doc(); d.showRev = this.checked; if (d.showRev && !(d.revs && d.revs.length)) d.revs = [{ rev: "P01", date: today(), desc: "First issue", by: "" }]; commit(); });
+  $("sk-addrev").addEventListener("click", function () {
+    var d = doc(), last = (d.revs || []).slice(-1)[0], m = last && /^([A-Za-z]*)(\d+)$/.exec(last.rev || ""), nr = m ? m[1] + ("0" + (+m[2] + 1)).slice(-Math.max(2, m[2].length)) : "";
+    begin(); d.revs = (d.revs || []).concat([{ rev: nr, date: today(), desc: "", by: last ? last.by : "" }]); commit(); setTimeout(function () { openTB("r." + (d.revs.length - 1) + ".desc"); }, 0);
+  });
   opt("sk-grid", "grid"); opt("sk-snap", "snap"); opt("sk-scale", "scale");
   opt("sk-show-draw", "showDraw"); opt("sk-lock-draw", "lockDraw", function () { sel = null; renderProps(); });
   opt("sk-show-under", "showUnder", function () { underKey = ""; if (sel && sel.k === "img") { sel = null; renderProps(); } });
@@ -508,12 +575,16 @@
   $("sk-clear").addEventListener("click", function () { if (!doc().items.length) return; begin(); doc().items = doc().items.filter(function (it) { return it.lock; }); sel = null; commit(); renderProps(); status("Cleared the drawing (locked items kept). Undo brings it back."); });
 
   /* ---------- Sheets ---------- */
-  $("sk-sheet").addEventListener("change", function () { S.cur = +this.value; sel = null; pend = null; underKey = ""; persist(); renderAll(); renderProps(); });
-  $("sk-new").addEventListener("click", function () { S.sheets.push(blankSheet(S.sheets.length + 1, doc())); S.cur = S.sheets.length - 1; sel = null; underKey = ""; persist(); renderAll(); renderProps(); status("New sheet " + doc().tb.ref + " added."); });
-  $("sk-del").addEventListener("click", function () {
-    if (S.sheets.length < 2) return;
-    if (!window.confirm("Delete sheet " + (doc().tb.ref || "") + "? This can't be undone.")) return;
-    delete hist[S.cur]; S.sheets.splice(S.cur, 1); hist = {}; S.cur = Math.max(0, S.cur - 1); sel = null; underKey = ""; persist(); renderAll(); renderProps();
+  $("sk-tabs").addEventListener("click", function (e) {
+    var b = e.target.closest("button"); if (!b) return;
+    if (tbKey) closeTB(true);
+    if (b.dataset.sheet) { S.cur = +b.dataset.sheet; sel = null; pend = null; underKey = ""; persist(); renderAll(); renderProps(); return; }
+    if (b.id === "sk-new") { var n = blankSheet(S.sheets.length + 1, doc()); n.paper = doc().paper; n.frame = doc().frame; n.tbs = doc().tbs; S.sheets.push(n); S.cur = S.sheets.length - 1; sel = null; underKey = ""; persist(); renderAll(); renderProps(); status("New sheet " + doc().tb.ref + " added."); return; }
+    if (b.id === "sk-del") {
+      if (S.sheets.length < 2) return;
+      if (!window.confirm("Delete sheet " + (doc().tb.ref || "") + "? This can't be undone.")) return;
+      S.sheets.splice(S.cur, 1); hist = {}; S.cur = Math.max(0, S.cur - 1); sel = null; underKey = ""; persist(); renderAll(); renderProps();
+    }
   });
 
   /* ---------- Properties bar ---------- */
@@ -615,15 +686,16 @@
     var r = cell.getBoundingClientRect(), sr = stage.getBoundingClientRect();
     tbKey = key; tbEdit.hidden = false;
     tbEdit.style.left = (r.left - sr.left) + "px"; tbEdit.style.top = (r.top - sr.top) + "px"; tbEdit.style.width = r.width + "px"; tbEdit.style.height = r.height + "px";
-    tbEdit.value = doc().tb[key] || ""; tbEdit.placeholder = { project: "Project name", title: "Sketch title", ref: "e.g. SK-01", date: "e.g. " + today() }[key];
-    begin(); tbEdit.focus(); tbEdit.select();
+    tbEdit.value = tbGet(key); tbEdit.placeholder = { project: "Project name", title: "Sketch title", ref: "e.g. SK-01", date: "e.g. " + today(), scale: "e.g. NTS or 1:100 at A3", note: "Disclaimer, e.g. NOT TO SCALE" }[key] || "";
+    tbEdit.style.fontSize = Math.max(12, Math.min(15, r.height * 0.45)) + "px";
+    begin(); tbEdit.focus({ preventScroll: true }); tbEdit.select();
   }
   function closeTB(keep) {
     if (!tbKey) return; var key = tbKey; tbKey = null; tbEdit.hidden = true;
-    if (keep) doc().tb[key] = tbEdit.value.trim();
+    if (keep) tbSet(key, tbEdit.value.trim());
     commit();
   }
-  tbEdit.addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); closeTB(true); } else if (e.key === "Escape") { e.preventDefault(); closeTB(false); } else if (e.key === "Tab") { e.preventDefault(); var order = ["project", "title", "ref", "date"], nx = order[(order.indexOf(tbKey) + (e.shiftKey ? 3 : 1)) % 4]; closeTB(true); openTB(nx); } });
+  tbEdit.addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); closeTB(true); } else if (e.key === "Escape") { e.preventDefault(); closeTB(false); } else if (e.key === "Tab") { e.preventDefault(); var order = Array.prototype.map.call(gFrame.querySelectorAll("[data-tb]"), function (g) { return g.dataset.tb; }), nx = order[(order.indexOf(tbKey) + (e.shiftKey ? order.length - 1 : 1)) % order.length]; closeTB(true); openTB(nx); } });
   tbEdit.addEventListener("blur", function () { closeTB(true); });
 
   /* ---------- Pointer handling ---------- */
@@ -645,7 +717,7 @@
   }
   function deleteSel() { var l = selList().filter(function (x) { return !locked(x); }), ids = l.map(function (x) { return x.id; }); syncLeaders(); doc().items = doc().items.filter(function (x) { return ids.indexOf(x.id) < 0; }); sel = null; }
   function selectItem(it) { sel = it ? { k: "item", id: it.id } : null; renderContent(); renderProps(); }
-  function base(type, extra) { var o = { id: newId(), type: type, c: style.c }; for (var p in extra) o[p] = extra[p]; return o; }
+  function base(type, extra) { var o = { id: newId(), type: type, c: style.c }; if (/^(leader|pload|udl|moment|dim)$/.test(type)) o.fs = style.fs; for (var p in extra) o[p] = extra[p]; return o; }
   function addItem(it) { begin(); doc().items.push(it); commit(); return it; }
   function constrain(a, p) { var dx = p.x - a.x, dy = p.y - a.y, ang = Math.round(Math.atan2(dy, dx) / (Math.PI / 4)) * (Math.PI / 4), L = Math.hypot(dx, dy); return { x: r1(a.x + Math.cos(ang) * L), y: r1(a.y + Math.sin(ang) * L) }; }
   function finishHatch() {
@@ -713,14 +785,14 @@
     }
     if (t === "pin" || t === "roller" || t === "fixed") { var q = snapPt(p); var s = addItem(base("support", { kind: t, x: q.x, y: q.y, rot: t === "fixed" ? 90 : 0 })); selectAfterCreate(s); begin(); drag = { type: "move", orig: clone(s), start: p }; return; }
     if (t === "pload" || t === "moment") { var q2 = snapPt(p); var s2 = addItem(base(t, t === "pload" ? { x: q2.x, y: q2.y, ang: 90, label: "20 kN" } : { x: q2.x, y: q2.y, dir: "cw", label: "15 kNm" })); selectAfterCreate(s2); begin(); drag = { type: "move", orig: clone(s2), start: p }; return; }
-    if (t === "text") { var q3 = snapPt(p, { free: true }); var s3 = addItem(base("text", { x: q3.x, y: q3.y, text: "Text", size: 18 })); selectAfterCreate(s3); focusText(); return; }
+    if (t === "text") { var q3 = snapPt(p, { free: true }); var s3 = addItem(base("text", { x: q3.x, y: q3.y, text: "Text", size: Math.max(style.fs, 12) })); selectAfterCreate(s3); focusText(); return; }
     if (t === "leader") {
       var target = itemAt(e), ap = target ? { x: r1(p.x), y: r1(p.y) } : snapPt(p);
       var ld = base("leader", { ax: ap.x, ay: ap.y, bx: r1(ap.x + 90), by: r1(ap.y - 70), text: "Note", att: makeAttach(target, ap) });
       drag = { type: "leader", temp: ld, start: p }; renderLive(); return;
     }
   });
-  function focusText() { setTimeout(function () { var el = $("skp-text"); if (el) { el.focus(); el.select(); } }, 0); }
+  function focusText() { setTimeout(function () { var el = $("skp-text"); if (el) { el.focus({ preventScroll: true }); el.select(); } }, 0); }
   function eraseAt(e) { var it = itemAt(e); if (it && !locked(it)) { removeItem(it.id); renderContent(); } }
 
   window.addEventListener("pointermove", function (e) {
@@ -768,7 +840,7 @@
     switch (d.type) {
       case "pen": d.el.remove(); addItem(d.item); return;
       case "marquee": gLive.innerHTML = ""; if (d.cur && Math.abs(d.cur.x - d.start.x) + Math.abs(d.cur.y - d.start.y) > 4) setSel(d.base.concat(inBox(d.start, d.cur))); else if (!d.add) setSel([]); return;
-      case "seg": renderLive(); if (Math.hypot(d.temp.x2 - d.temp.x1, d.temp.y2 - d.temp.y1) < 6) return; var it = addItem(d.temp); if (it.type !== "line") selectAfterCreate(it); if (it.type === "udl" || it.type === "dim") setTimeout(function () { var el = $("skp-label"); if (el) el.focus(); }, 0); return;
+      case "seg": renderLive(); if (Math.hypot(d.temp.x2 - d.temp.x1, d.temp.y2 - d.temp.y1) < 6) return; var it = addItem(d.temp); if (it.type !== "line") selectAfterCreate(it); if (it.type === "udl" || it.type === "dim") setTimeout(function () { var el = $("skp-label"); if (el) el.focus({ preventScroll: true }); }, 0); return;
       case "hatch0":
         if (hatchBy === "pick") { pickHatch(d.raw || d.start); return; }
         pend = { pts: [[d.start.x, d.start.y]], cur: d.start }; renderLive(); return;
@@ -875,14 +947,14 @@
   }
   function exportPdf(all, cb) {
     var idx = all ? S.sheets.map(function (s, i) { return i; }) : [S.cur];
-    var jobs = idx.map(function (i) { return onSheet(i, function () { var G = geo(); return { svg: exportSvg(), W: G.W, H: G.H, land: doc().orient === "land" }; }); });
+    var jobs = idx.map(function (i) { return onSheet(i, function () { var G = geo(); return { svg: exportSvg(), W: G.W, H: G.H, land: doc().orient !== "port", pt: PT[doc().paper] || PT.A4 }; }); });
     var pages = [], j = 0;
     (function next() {
       if (j >= jobs.length) { cb(buildPdf(pages)); return; }
       var jb = jobs[j++];
       raster(jb.svg, jb.W, jb.H, 2.5, "image/jpeg", 0.92, function (b, w, h) {
         if (!b) { cb(null); return; }
-        b.arrayBuffer().then(function (ab) { pages.push({ bytes: new Uint8Array(ab), w: w, h: h, ptW: jb.land ? 841.89 : 595.28, ptH: jb.land ? 595.28 : 841.89 }); next(); });
+        b.arrayBuffer().then(function (ab) { pages.push({ bytes: new Uint8Array(ab), w: w, h: h, ptW: jb.pt[jb.land ? 0 : 1], ptH: jb.pt[jb.land ? 1 : 0] }); next(); });
       });
     })();
   }
@@ -1082,6 +1154,8 @@
   window.CPSketch = { importDetail: importDetail, exportSvg: exportSvg, toPng: toPng, exportPdf: exportPdf, insertTemplate: insertTemplate, state: function () { return S; }, setMode: setMode, setTool: setTool, render: function () { underKey = ""; renderAll(); renderProps(); } };
 
   window.addEventListener("resize", function () { if (!view.hidden) { renderAll(); if (tbKey) closeTB(true); } });
-  window.addEventListener("hashchange", function () { if (!view.hidden) setTimeout(function () { renderAll(); }, 0); });
+  /* On opening, scroll so the toolbars sit at the top of the window with the sheet below them. */
+  function toTop() { var top = document.querySelector(".topbar"), th = top ? top.offsetHeight : 0; window.scrollTo(0, Math.max(0, app.getBoundingClientRect().top + window.scrollY - th - 8)); }
+  new MutationObserver(function () { if (!view.hidden) setTimeout(function () { renderAll(); if (window.innerWidth > 760) toTop(); }, 30); }).observe(view, { attributes: true, attributeFilter: ["hidden"] });
   renderTools(); renderAll(); renderProps();
 })();
