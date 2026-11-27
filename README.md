@@ -19,6 +19,7 @@ sub-pages are `SECTIONS` in `js/site.js`. A **Learning** tab is already in the n
 | Planner | Works back from a submission date to a dated plan | `PLAN` in `js/content.js` |
 | Flashcards | Practice questions plus fact cards, with progress saved in the visitor's browser | `QUESTIONS`, `FACT_CARDS` in `js/content.js` |
 | Questions | The practice questions as a list | `QUESTIONS` |
+| Learning | Learning summaries: NEC4 contracts, CDM 2015 by role (with a role and project-type switcher and an F10 check), and how engineers learn (learning cycle, reflection, CPD, with a reflection drafter). Our own words, pointing to the source documents | `js/learn.js` |
 | News | Latest headlines (links out) and a weekly briefing | `js/news-feed.js`, `NEWS` in `js/content.js` |
 | Community | Forum and mock-review partners, design only, posting off | `FORUM_CATEGORIES`, `EXAMPLE_THREADS` |
 | Tools | Hub listing every tool; built from `window.CP_TOOLS` | `js/site.js` |

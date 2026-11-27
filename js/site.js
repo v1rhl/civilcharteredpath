@@ -567,7 +567,7 @@
   var SECTIONS = {
     chartership: [["route", "The route"], ["planner", "Planner"], ["attributes", "Attributes"], ["review", "Review day"], ["presentation", "Presentation tips"], ["flashcards", "Flashcards"], ["questions", "Practice questions"], ["cheat-sheet", "Cheat sheet"]],
     guidance: [["resources", "Technical resources"], ["careers", "Careers"]],
-    learning: [["learning", "Learning"]],
+    learning: [["learning", "Overview"], ["nec4", "NEC4 contracts"], ["cdm", "CDM 2015 by role"], ["learn-theory", "How engineers learn"]],
     tools: [["tools", "All tools"]].concat(TOOLS.map(function (t) { return [t.id, t.label]; }))
   };
   var learnA = document.querySelector('#nav a[href="#learning"]');

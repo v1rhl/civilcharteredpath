@@ -1055,6 +1055,76 @@ footer .wrap { font-family: var(--font-body); }
   .rh-eg { border-left: 0; border-top: 1.5px dashed var(--rule); padding: 6px 0 0; }
 }
 @media (max-width: 480px) { .rh { grid-template-columns: 18px minmax(0, 1fr); gap: 8px; } .rh-axis span { display: none; } }
+
+/* Learn pages (js/learn.js) */
+.lr-body { display: flex; flex-direction: column; gap: 14px; }
+.lr-sec { scroll-margin-top: 80px; }
+.lr-sec h4 { margin: 8px 0 0; font-size: 1rem; }
+.lr-sec ul { margin: 0; padding-left: 1.1em; display: flex; flex-direction: column; gap: 6px; }
+.lr-sec li, .lr-sec dd { color: var(--ink); }
+.lr-note { background: var(--flag-soft); border: 1px solid var(--flag); border-radius: var(--radius); padding: 12px 14px; font-size: 0.93rem; }
+.lr-toc { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.lr-toc .small { margin-right: 4px; }
+.lr-toc button { font: 500 0.8rem var(--font-body); padding: 4px 10px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); color: var(--accent); cursor: pointer; }
+.lr-toc button:hover { border-color: var(--accent); }
+.lr-dl { display: grid; grid-template-columns: minmax(0, 11em) minmax(0, 1fr); gap: 6px 14px; margin: 4px 0 0; font-size: 0.93rem; }
+.lr-dl dt { font-weight: 600; }
+.lr-dl dd { margin: 0; }
+@media (max-width: 560px) { .lr-dl { grid-template-columns: 1fr; } .lr-dl dd { margin-bottom: 6px; } }
+.lr-role, .lr-opt { display: flex; flex-direction: column; gap: 8px; border-top: 1px solid var(--tool-line); padding-top: 12px; }
+.lr-who { color: var(--ink) !important; font-size: 1rem; }
+.lr-when { border-left: 3px solid var(--accent); background: var(--surface); padding: 8px 12px; border-radius: 0 var(--radius) var(--radius) 0; }
+.lr-when p { margin: 2px 0 0; color: var(--ink); }
+.lr-trap { border-left: 3px solid var(--accent-2); background: var(--accent-2-soft); padding: 8px 12px; border-radius: 0 var(--radius) var(--radius) 0; }
+.lr-trap .eyebrow { color: var(--accent-2); }
+.lr-trap p { margin: 2px 0 0; color: var(--ink); }
+.lr-trap ul { margin-top: 4px; }
+.lr-docs { display: flex; flex-wrap: wrap; gap: 6px; }
+.lr-docs span { font-size: 0.85rem; border: 1px solid var(--line); background: var(--surface); border-radius: 999px; padding: 2px 10px; }
+.lr-2 { display: grid; gap: 12px; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+.lr-2 p { color: var(--ink); }
+@media (max-width: 700px) { .lr-2 { grid-template-columns: 1fr; } }
+.lr-proj { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; }
+.lr-scale { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; font: 500 0.72rem var(--font-mono); color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }
+.lr-scale-r { text-align: right; }
+.lr-track { grid-column: 1 / -1; position: relative; height: 30px; margin: 2px 14px 0; background: linear-gradient(90deg, var(--accent-2-soft), var(--accent-soft)); border-radius: 999px; }
+.lr-track i { position: absolute; top: 3px; transform: translateX(-50%); width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; font: 600 0.75rem var(--font-mono); font-style: normal; background: var(--surface); border: 1px solid var(--line); color: var(--muted); }
+.lr-track i.on { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); z-index: 1; }
+.lr-table th, .lr-table td { text-align: left; vertical-align: top; padding: 8px 10px 8px 0; border-top: 1px solid var(--line); font-size: 0.9rem; }
+.lr-table thead th { font: 500 0.72rem var(--font-mono); text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); border-top: 0; }
+.lr-table tbody th { font-weight: 600; color: var(--ink); }
+.lr-table td, .lr-table td:first-child { width: auto; font-weight: 400; color: var(--ink); }
+.lr-steps, .lr-gpp { list-style: none; margin: 0; padding: 0; counter-reset: lr; display: flex; flex-direction: column; gap: 8px; }
+.lr-steps li, .lr-gpp li { counter-increment: lr; display: grid; grid-template-columns: 30px minmax(0, 1fr); column-gap: 10px; }
+.lr-steps li::before, .lr-gpp li::before { content: counter(lr); grid-row: span 2; width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; font: 600 0.8rem var(--font-mono); background: var(--accent-soft); color: var(--accent); }
+.lr-steps li span, .lr-gpp li span { color: var(--muted); font-size: 0.93rem; }
+.lr-cards { display: grid; gap: 12px; }
+@media (min-width: 980px) { .lr-cards { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+.lr-card { border: 1px solid var(--line); border-radius: var(--radius); padding: 12px 14px; display: flex; flex-direction: column; gap: 6px; }
+.lr-card h4 { margin: 0; }
+.lr-card .lr-dl { grid-template-columns: 1fr; gap: 2px; }
+.lr-card .lr-dl dd { margin-bottom: 6px; }
+.lr-eric { display: grid; gap: 8px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 180px), 1fr)); }
+.lr-eric > div { border: 1px solid var(--line); border-radius: var(--radius); padding: 10px 12px; display: grid; grid-template-columns: auto 1fr; column-gap: 10px; }
+.lr-eric b { grid-row: span 2; font: 700 1.6rem/1 var(--font-mono); color: var(--accent-2); }
+.lr-eric span { color: var(--muted); font-size: 0.9rem; }
+.lr-asks { list-style: none; padding: 0 !important; }
+.lr-asks li { display: flex; flex-direction: column; gap: 2px; border-top: 1px solid var(--ref-line); padding-top: 8px; }
+.lr-asks li:first-child { border-top: 0; padding-top: 0; }
+.lr-asks span { color: var(--muted); font-size: 0.92rem; }
+.lr-f10 { display: flex; flex-direction: column; gap: 8px; margin-top: 6px; }
+.lr-f10 h4 { margin: 0; }
+.lr-f10-in, .lt-row { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 170px), 1fr)); }
+.lr-f10 label, .lt-builder label { display: flex; flex-direction: column; gap: 4px; font-size: 0.85rem; font-weight: 600; }
+.lr-f10 input, .lr-f10 select, .lt-builder input, .lt-builder select { font: 400 0.95rem var(--font-body); padding: 8px 10px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); color: var(--ink); }
+.lt-builder { display: flex; flex-direction: column; gap: 10px; margin-top: 6px; }
+.lt-builder h4 { margin: 0; }
+.lt-out { white-space: pre-wrap; font: 400 0.88rem var(--font-mono); background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 10px 12px; margin: 0; min-height: 3em; }
+.learn-card { text-decoration: none; color: inherit; border-top: 3px solid var(--accent); }
+.learn-card:nth-child(even) { border-top-color: var(--accent-2); }
+.learn-card:hover h3 { color: var(--accent); }
+.learn-card .more { color: var(--accent); font-weight: 600; }
+@media print { .lr-toc, .lr-f10, .lt-builder { display: none; } }
 </style>
 </head>
 <body>
@@ -2026,6 +2096,40 @@ footer .wrap { font-family: var(--font-body); }
 </section>
 
 <!-- TOOLS HUB: cards are built in js/site.js from window.CP_TOOLS -->
+<!-- LEARN: content and switchers are drawn by js/learn.js -->
+<section class="view wrap" id="view-learning" data-view="learning" hidden>
+  <div class="view-head">
+    <span class="eyebrow">Learning</span>
+    <h2>Learn the topics reviewers ask about</h2>
+    <p class="lede">Plain-English learning summaries of the subjects that come up at professional review, with the questions a reviewer asks and self-tests. Each one points you to the source to read.</p>
+  </div>
+  <div class="grid" id="learn-hub"></div>
+</section>
+<section class="view wrap" id="view-nec4" data-view="nec4" hidden>
+  <div class="view-head">
+    <span class="eyebrow"><a href="#learning">Learning</a> / NEC4 contracts</span>
+    <h2>NEC4 contracts</h2>
+    <p class="lede">How the NEC4 Engineering and Construction Contract works in practice: the options and who carries the risk, the roles, the programme, early warnings and compensation events, and how it differs from JCT.</p>
+  </div>
+  <div class="lr-body" id="nec4-body"></div>
+</section>
+<section class="view wrap" id="view-cdm" data-view="cdm" hidden>
+  <div class="view-head">
+    <span class="eyebrow"><a href="#learning">Learning</a> / CDM 2015</span>
+    <h2>CDM 2015, role by role</h2>
+    <p class="lede">What each duty holder has to do, how that changes with one contractor or more, the key documents, notifying HSE, and how designers eliminate and reduce risk.</p>
+  </div>
+  <div class="lr-body" id="cdm-body"></div>
+</section>
+<section class="view wrap" id="view-learn-theory" data-view="learn-theory" hidden>
+  <div class="view-head">
+    <span class="eyebrow"><a href="#learning">Learning</a> / How engineers learn</span>
+    <h2>How engineers learn</h2>
+    <p class="lede">How competence develops, the learning cycle and reflective practice, and how to turn experience into a development plan, a CPD record and good answers at review.</p>
+  </div>
+  <div class="lr-body" id="theory-body"></div>
+</section>
+
 <section class="view wrap" id="view-tools" data-view="tools" hidden>
   <div class="view-head">
     <span class="eyebrow">Tools</span>
@@ -2456,7 +2560,8 @@ footer .wrap { font-family: var(--font-body); }
 <script src="js/tools/export.js?v=20261127a"></script>
 <script src="js/tools/retaining-wall-calc.js?v=20261127a"></script>
 <script src="js/tools/retaining-wall.js?v=20261127a"></script>
-<script src="js/site.js?v=20261127a"></script>
-<script src="js/art.js?v=20261122b"></script>
+<script src="js/learn.js?v=20261127m"></script>
+<script src="js/site.js?v=20261127m"></script>
+<script src="js/art.js?v=20261127m"></script>
 </body>
 </html>
