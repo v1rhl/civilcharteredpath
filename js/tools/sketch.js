@@ -507,12 +507,20 @@
       '<span class="sk-layers"><span class="sk-lab">Layers</span>' +
         '<label class="sk-check"><input type="checkbox" id="sk-show-draw"> Drawing</label><label class="sk-check"><input type="checkbox" id="sk-lock-draw"> Lock drawing</label>' +
         '<label class="sk-check"><input type="checkbox" id="sk-show-under"> Underlay</label><label class="sk-check"><input type="checkbox" id="sk-lock-under"> Lock underlay</label>' +
-        '<button type="button" class="sk-btn" id="sk-img-btn">Add image to trace</button><input type="file" id="sk-img" accept="image/*" hidden></span>' +
+        '<button type="button" class="sk-btn" id="sk-img-btn">Add image to trace</button><input type="file" id="sk-img" accept="image/*" hidden>' +
+        '<label class="sk-check" id="sk-mapshow-l" hidden><input type="checkbox" id="sk-mapshow"> Map</label><button type="button" class="sk-btn" id="sk-map-btn" aria-expanded="false">Map and contours</button></span>' +
+    "</div>" +
+    '<div class="sk-mappanel" id="sk-mappanel" hidden>' +
+      '<div class="sk-maprow"><label class="sk-check">Location <input type="text" id="sk-maploc" placeholder="Grid ref, e.g. SK 012 813, or E, N, or lat, long" style="width:20em"></label><button type="button" class="sk-btn" id="sk-mapgeo">Use my location</button>' +
+        '<label class="sk-check"><input type="checkbox" id="sk-maposm" checked> OpenStreetMap</label><label class="sk-check">Fade <input type="range" id="sk-mapop" min="0.15" max="1" step="0.05" value="0.55"></label><label class="sk-check"><input type="checkbox" id="sk-mapgrey" checked> Greyscale</label>' +
+        '<label class="sk-check"><input type="checkbox" id="sk-mapcont" checked> LiDAR contours</label><label class="sk-check">every <select id="sk-mapiv">' + [0.1, 0.25, 0.5, 1, 2, 5, 10].map(function (v) { return '<option value="' + v + '"' + (v === 0.5 ? " selected" : "") + ">" + v + " m</option>"; }).join("") + "</select></label>" +
+        '<button type="button" class="btn" id="sk-mapgo">Place map</button><button type="button" class="sk-btn danger" id="sk-mapdel">Remove map</button></div>' +
+      '<p class="small">Centres the map on the sheet at the drawing scale, grid north up. The map tiles come from OpenStreetMap and the contours from the Environment Agency\'s 1 m LiDAR terrain model, so the location is sent to them. <strong>LiDAR covers England only.</strong> Map data © OpenStreetMap contributors (ODbL). LiDAR © Environment Agency, Open Government Licence. Treat contours as indicative: they come from a bare-earth model, smoothed by the cell size.</p>' +
     "</div>" +
     "</div>" +
     '<div class="sk-tabs" id="sk-tabs" role="tablist" aria-label="Sheets"></div>' +
     '<div class="sk-stage" id="sk-stage">' +
-      '<svg id="sk-svg" xmlns="' + NS + '" role="img" aria-label="Sketch sheet"><defs id="sk-defs"></defs><rect id="sk-bg" fill="#fff"/><g id="sk-under"></g><g id="sk-gridg"></g><g id="sk-content"></g><g id="sk-frame"></g><g id="sk-live"></g><g id="sk-ui"></g><g id="sk-snapg" pointer-events="none"></g></svg>' +
+      '<svg id="sk-svg" xmlns="' + NS + '" role="img" aria-label="Sketch sheet"><defs id="sk-defs"></defs><rect id="sk-bg" fill="#fff"/><g id="sk-mapg" pointer-events="none"></g><g id="sk-under"></g><g id="sk-gridg"></g><g id="sk-content"></g><g id="sk-frame"></g><g id="sk-live"></g><g id="sk-ui"></g><g id="sk-snapg" pointer-events="none"></g></svg>' +
       '<input type="text" id="sk-tb-edit" class="sk-tb-edit" hidden aria-label="Title block field">' +
       '<div class="sk-drop" id="sk-drop" hidden>Drop the image to trace over it</div>' +
     "</div>" +
@@ -609,6 +617,7 @@
     var uk = d.under.map(function (im) { return im.id + im.src.length; }).join() + d.showUnder;
     if (uk !== underKey) { gUnder.innerHTML = d.showUnder ? underStr() : ""; underKey = uk; } else d.under.forEach(updImg);
     gUnder.style.pointerEvents = d.lockUnder ? "none" : "";
+    var mk = mapKey(); if (mk !== mapKeyV) { $("sk-mapg").innerHTML = mapStr(false); mapKeyV = mk; }
     gGrid.innerHTML = d.grid ? gridStr() : "";
     renderContent();
     gFrame.innerHTML = frameStr(false);
@@ -687,7 +696,7 @@
     Array.prototype.forEach.call(app.querySelectorAll("[data-orient]"), function (b) { b.setAttribute("aria-pressed", b.dataset.orient === d.orient); });
     $("sk-color").value = style.c; $("sk-ls").value = style.ls; $("sk-pat").value = style.pat;
     $("sk-grid").checked = d.grid; $("sk-snap").checked = d.snap; $("sk-scale").value = d.scale; $("sk-dscale").value = d.dscale || 0;
-    $("sk-gsq").hidden = !!d.dscale || mode !== "struct"; $("sk-gridinfo").textContent = d.dscale ? "grid " + fmtM(toM(GRID)) : "";
+    $("sk-gsq").hidden = !!d.dscale || mode !== "struct"; $("sk-mapshow-l").hidden = !d.map; if (d.map) { $("sk-mapshow").checked = d.map.show !== false; $("sk-maposm").checked = d.map.osm !== false; $("sk-mapcont").checked = d.map.cont !== false; $("sk-mapgrey").checked = d.map.grey !== false; $("sk-mapop").value = d.map.op || 0.55; } $("sk-gridinfo").textContent = d.dscale ? "grid " + fmtM(toM(GRID)) : "";
     Array.prototype.forEach.call(app.querySelectorAll("[data-snap]"), function (c) { c.checked = !!S.snaps[c.dataset.snap]; c.disabled = !d.snap; });
     $("sk-show-draw").checked = d.showDraw; $("sk-lock-draw").checked = d.lockDraw; $("sk-show-under").checked = d.showUnder; $("sk-lock-under").checked = d.lockUnder;
     Array.prototype.forEach.call(app.querySelectorAll("[data-paper]"), function (b) { b.setAttribute("aria-pressed", b.dataset.paper === (d.paper || "A4")); });
@@ -1162,7 +1171,7 @@
     var d = doc(), G = geo(), c = contentStr(true);
     return '<svg xmlns="' + NS + '" xmlns:xlink="http://www.w3.org/1999/xlink" width="' + G.W + '" height="' + G.H + '" viewBox="0 0 ' + G.W + " " + G.H + '">' +
       "<defs>" + (d.grid ? gridDefs() : "") + c.defs + "</defs>" + '<rect width="' + G.W + '" height="' + G.H + '" fill="#fff"/>' +
-      (d.showUnder ? underStr() : "") + (d.grid ? gridStr() : "") + (d.showDraw ? c.s : "") + frameStr(true) + "</svg>";
+      mapStr(true) + (d.showUnder ? underStr() : "") + (d.grid ? gridStr() : "") + (d.showDraw ? c.s : "") + frameStr(true) + "</svg>";
   }
   function onSheet(i, fn) { var keep = S.cur; S.cur = i; try { return fn(); } finally { S.cur = keep; } }
   function fname(ext, all) { var t = doc().tb, s = all ? (t.project || "sketches") : [t.ref, t.title].filter(Boolean).join(" "); s = s.replace(/[^\w\- ]+/g, "").trim().replace(/\s+/g, "-"); return (s || "sketch") + "." + ext; }
@@ -1212,10 +1221,161 @@
     var f = $("sk-fmt").value, G = geo(), fail = function () { status("Couldn't export in this browser. Try SVG instead."); };
     if (f === "svg") return download(new Blob([exportSvg()], { type: "image/svg+xml" }), fname("svg"));
     if (f === "dxf") { try { var dx = exportDxf(); download(new Blob([dx.text], { type: "application/dxf" }), fname("dxf")); status(dx.note); } catch (er) { status("Couldn't build the DXF: " + er.message); } return; }
-    status("Preparing your export…");
+    status("Preparing your export…"); exportSvg(); var miss = mapMissing;
+    if (miss) setTimeout(function () { status(miss + " map tile" + (miss > 1 ? "s hadn't" : " hadn't") + " finished loading, so they're blank in this export. Wait a moment and export again."); }, 1500);
     if (f === "png" || f === "jpeg") raster(exportSvg(), G.W, G.H, 2, "image/" + f, 0.92, function (b) { if (!b) return fail(); status(""); download(b, fname(f === "jpeg" ? "jpg" : "png")); });
     else exportPdf(f === "pdfall", function (b) { if (!b) return fail(); status(f === "pdfall" ? S.sheets.length + " sheets saved as one PDF, one A4 page each." : ""); download(b, fname("pdf", f === "pdfall")); });
   });
+
+  /* ---------- Map backdrop: OpenStreetMap tiles and EA LiDAR contours ----------
+     The sheet is laid out in British National Grid, grid north up, with the centre of the drawing frame
+     at the chosen point and the drawing scale setting metres per sheet unit. OSM tiles (Web Mercator) are
+     placed with one affine transform worked out at the centre, which is accurate to well under a pixel
+     across a sheet. Contours are traced from an EA 1 m LiDAR DTM grid fetched for the sheet's extent
+     (the same service the catchment tool uses) and stored in metres, so they follow scale changes. */
+  var mapKeyV = "", tileCache = {}, tilePending = {};
+  function RO() { return window.Runoff; }
+  function mapFrame() { var d = doc(), G = geo(), mu = (d.dscale || 0) / 4000; return { cx: G.inner.x + G.inner.w / 2, cy: G.inner.y + G.inner.h / 2, mu: mu, inner: G.inner }; }
+  function mapKey() { var d = doc(), m = d.map; return m ? [m.e, m.n, d.dscale, d.paper, d.orient, d.tbs, m.show, m.osm, m.cont, m.op, m.grey, m.c ? m.c.lines.length + ":" + m.c.iv : ""].join("|") : ""; }
+  function merc(lat, lon, z) { var n = 256 * Math.pow(2, z), la = lat * Math.PI / 180; return [(lon + 180) / 360 * n, (1 - Math.log(Math.tan(la) + 1 / Math.cos(la)) / Math.PI) / 2 * n]; }
+  function cacheTile(url) {
+    if (tileCache[url] || tilePending[url] || !window.fetch) return; tilePending[url] = 1;
+    fetch(url).then(function (r) { if (!r.ok) throw 0; return r.blob(); }).then(function (b) { var fr = new FileReader(); fr.onload = function () { tileCache[url] = fr.result; }; fr.readAsDataURL(b); }).catch(function () {}).then(function () { delete tilePending[url]; });
+  }
+  var mapMissing = 0;
+  function mapStr(forExport) {
+    var d = doc(), m = d.map; mapMissing = 0; if (!m || m.show === false || !d.dscale || !RO()) return "";
+    var F = mapFrame(), I = F.inner, o = '<clipPath id="sk-mapclipg' + (forExport ? "x" : "") + '"><rect x="' + I.x + '" y="' + I.y + '" width="' + I.w + '" height="' + I.h + '"/></clipPath><g clip-path="url(#sk-mapclipg' + (forExport ? "x" : "") + ')">';
+    if (m.osm !== false) {
+      var ll = RO().bngToWgs(m.e, m.n), z = Math.round(Math.log2(156543.034 * Math.cos(ll.lat * Math.PI / 180) / (F.mu * 1.2))); z = Math.max(8, Math.min(19, z));
+      var p1 = RO().bngToWgs(m.e + 200, m.n), p2 = RO().bngToWgs(m.e, m.n + 200), m0 = merc(ll.lat, ll.lon, z), m1 = merc(p1.lat, p1.lon, z), m2 = merc(p2.lat, p2.lon, z);
+      var a1 = [m1[0] - m0[0], m1[1] - m0[1]], a2 = [m2[0] - m0[0], m2[1] - m0[1]], det = a1[0] * a2[1] - a2[0] * a1[1], s2 = 200 / F.mu;
+      /* world = A · mercator + t, with A taking a1 to (s2, 0) and a2 to (0, -s2) */
+      var iv = [[a2[1] / det, -a2[0] / det], [-a1[1] / det, a1[0] / det]], A = [[s2 * iv[0][0], s2 * iv[0][1]], [-s2 * iv[1][0], -s2 * iv[1][1]]];
+      var tx = F.cx - (A[0][0] * m0[0] + A[0][1] * m0[1]), ty = F.cy - (A[1][0] * m0[0] + A[1][1] * m0[1]);
+      var dA = A[0][0] * A[1][1] - A[0][1] * A[1][0], inv = function (x, y) { x -= tx; y -= ty; return [(A[1][1] * x - A[0][1] * y) / dA, (-A[1][0] * x + A[0][0] * y) / dA]; };
+      var cs = [inv(I.x, I.y), inv(I.x + I.w, I.y), inv(I.x, I.y + I.h), inv(I.x + I.w, I.y + I.h)], X0 = Infinity, Y0 = Infinity, X1 = -Infinity, Y1 = -Infinity;
+      cs.forEach(function (c) { X0 = Math.min(X0, c[0]); X1 = Math.max(X1, c[0]); Y0 = Math.min(Y0, c[1]); Y1 = Math.max(Y1, c[1]); });
+      /* tile positions go in relative to a local origin: browsers lose precision on huge coordinates */
+      var Ox = Math.floor(m0[0]), Oy = Math.floor(m0[1]), ltx = tx + A[0][0] * Ox + A[0][1] * Oy, lty = ty + A[1][0] * Ox + A[1][1] * Oy;
+      var t0x = Math.floor(X0 / 256), t1x = Math.floor(X1 / 256), t0y = Math.floor(Y0 / 256), t1y = Math.floor(Y1 / 256);
+      if ((t1x - t0x + 1) * (t1y - t0y + 1) <= 120) {
+        o += '<filter id="sk-mapfx' + (forExport ? "x" : "") + '"><feColorMatrix type="saturate" values="0"/></filter><g opacity="' + (m.op || 0.55) + '"' + (m.grey !== false ? ' filter="url(#sk-mapfx' + (forExport ? "x" : "") + ')"' : "") + ' transform="matrix(' + [A[0][0], A[1][0], A[0][1], A[1][1], ltx, lty].map(function (v) { return +v.toFixed(6); }).join(" ") + ')">';
+        for (var X = t0x; X <= t1x; X++) for (var Y = t0y; Y <= t1y; Y++) {
+          var url = "https://tile.openstreetmap.org/" + z + "/" + X + "/" + Y + ".png", src = tileCache[url] || (forExport ? "" : url);
+          if (!forExport) cacheTile(url); if (!src) { mapMissing++; continue; }
+          o += '<image href="' + src + '" x="' + (X * 256 - Ox) + '" y="' + (Y * 256 - Oy) + '" width="256.6" height="256.6" preserveAspectRatio="none"/>';
+        }
+        o += "</g>";
+      }
+    }
+    if (m.cont !== false && m.c && m.c.lines.length) {
+      var W2 = function (q) { return r1(F.cx + q[0] / F.mu) + " " + r1(F.cy - q[1] / F.mu); }, idx = m.c.iv * 5, lab = "";
+      o += '<g fill="none" stroke="#8a5a2b" stroke-linejoin="round">';
+      m.c.lines.forEach(function (l) {
+        var major = Math.abs(l.z / idx - Math.round(l.z / idx)) < 1e-6;
+        o += '<path d="M' + l.p.map(W2).join("L") + '" stroke-width="' + (major ? 1.3 : 0.6) + '"/>';
+        if (major && l.p.length > 4) { var q = l.p[Math.floor(l.p.length / 2)], q2 = l.p[Math.floor(l.p.length / 2) + 1], x = F.cx + q[0] / F.mu, y = F.cy - q[1] / F.mu, ang = Math.atan2(-(q2[1] - q[1]), q2[0] - q[0]) * 180 / Math.PI; if (ang > 90) ang -= 180; if (ang < -90) ang += 180;
+          lab += '<text x="' + r1(x) + '" y="' + r1(y + 3) + '" transform="rotate(' + r1(ang) + " " + r1(x) + " " + r1(y) + ')" font-family="' + FONT + '" font-size="9" fill="#8a5a2b" text-anchor="middle" stroke="#fff" stroke-width="3" paint-order="stroke">' + (+l.z.toFixed(2)) + "</text>"; }
+      });
+      o += "</g>" + lab;
+    }
+    var attr = [m.osm !== false ? "Map © OpenStreetMap contributors" : "", m.cont !== false && m.c ? "Contours " + m.c.iv + " m from EA LiDAR DTM © Environment Agency (OGL), indicative" : ""].filter(Boolean).join(" · ");
+    if (attr) o += txt(I.x + 6, I.y + I.h - 6, attr, "#5a6677", 8, "start", ' stroke="#fff" stroke-width="3" paint-order="stroke"');
+    return o + "</g>";
+  }
+  /* marching squares over the terrain grid, joined into polylines and simplified */
+  function traceContours(g, iv, e0, n0) {
+    var mn = Infinity, mx = -Infinity, i, j; for (i = 0; i < g.z.length; i++) { var v = g.z[i]; if (v === v) { if (v < mn) mn = v; if (v > mx) mx = v; } }
+    if (!(mx >= mn)) return null;
+    while ((mx - mn) / iv > 150) iv = iv < 1 ? iv * 2 : iv < 5 ? 5 : iv * 2;
+    var nx = g.nx, ny = g.ny, out = [], X = function (ii) { return g.x0 + (ii + 0.5) * g.cell - e0; }, Y = function (jj) { return g.y0 + (ny - jj - 0.5) * g.cell - n0; };
+    for (var L = Math.ceil(mn / iv) * iv; L <= mx; L += iv) {
+      var segs = {}, ends = [];
+      var key = function (p) { return Math.round(p[0] * 100) + "," + Math.round(p[1] * 100); };
+      for (j = 0; j < ny - 1; j++) for (i = 0; i < nx - 1; i++) {
+        var a = g.z[j * nx + i], b = g.z[j * nx + i + 1], c = g.z[(j + 1) * nx + i + 1], dd = g.z[(j + 1) * nx + i];
+        if (a !== a || b !== b || c !== c || dd !== dd) continue;
+        var cse = (a > L ? 8 : 0) | (b > L ? 4 : 0) | (c > L ? 2 : 0) | (dd > L ? 1 : 0); if (!cse || cse === 15) continue;
+        var t = function (p, q) { return (L - p) / (q - p); };
+        var eT = [X(i) + t(a, b) * g.cell, Y(j)], eR = [X(i + 1), Y(j) - t(b, c) * g.cell], eB = [X(i) + t(dd, c) * g.cell, Y(j + 1)], eL = [X(i), Y(j) - t(a, dd) * g.cell];
+        var S2 = { 1: [[eL, eB]], 2: [[eB, eR]], 3: [[eL, eR]], 4: [[eT, eR]], 5: [[eL, eT], [eB, eR]], 6: [[eT, eB]], 7: [[eL, eT]], 8: [[eL, eT]], 9: [[eT, eB]], 10: [[eT, eR], [eL, eB]], 11: [[eT, eR]], 12: [[eL, eR]], 13: [[eB, eR]], 14: [[eL, eB]] }[cse];
+        S2.forEach(function (sg) { var k1 = key(sg[0]), k2 = key(sg[1]); (segs[k1] || (segs[k1] = [])).push([k2, sg[1], sg[0]]); (segs[k2] || (segs[k2] = [])).push([k1, sg[0], sg[1]]); });
+      }
+      /* join */
+      var used = {};
+      var take = function (k1) { var l = segs[k1]; if (!l) return null; while (l.length) { var s3 = l.pop(); var id = k1 < s3[0] ? k1 + "|" + s3[0] : s3[0] + "|" + k1; if (!used[id]) { used[id] = 1; return s3; } } return null; };
+      Object.keys(segs).forEach(function (k0) {
+        var first;
+        while ((first = take(k0))) {
+          var line = [first[2], first[1]], kk = first[0], nxt2;
+          while ((nxt2 = take(kk))) { line.push(nxt2[1]); kk = nxt2[0]; }
+          kk = k0; var back = [];
+          while ((nxt2 = take(kk))) { back.push(nxt2[1]); kk = nxt2[0]; }
+          line = back.reverse().concat(line);
+          if (line.length > 2) out.push({ z: +L.toFixed(3), p: dpS(line, g.cell * 0.35).map(function (q) { return [Math.round(q[0] * 100) / 100, Math.round(q[1] * 100) / 100]; }) });
+        }
+      });
+    }
+    return { iv: iv, lines: out };
+  }
+  function dpS(P, eps) {
+    if (P.length < 3) return P;
+    if (Math.hypot(P[0][0] - P[P.length - 1][0], P[0][1] - P[P.length - 1][1]) < 1e-6) { /* closed loop: simplify each half */
+      var far = 0, fd = -1; P.forEach(function (q, i) { var d2 = Math.hypot(q[0] - P[0][0], q[1] - P[0][1]); if (d2 > fd) { fd = d2; far = i; } });
+      if (far > 0 && far < P.length - 1) return dpS(P.slice(0, far + 1), eps).concat(dpS(P.slice(far), eps).slice(1));
+    } var keep = new Uint8Array(P.length), st = [[0, P.length - 1]]; keep[0] = keep[P.length - 1] = 1;
+    while (st.length) { var r = st.pop(), a = P[r[0]], b = P[r[1]], dx = b[0] - a[0], dy = b[1] - a[1], L = Math.hypot(dx, dy) || 1e-9, md = 0, mi = -1;
+      for (var i = r[0] + 1; i < r[1]; i++) { var dd = Math.abs((P[i][0] - a[0]) * dy - (P[i][1] - a[1]) * dx) / L; if (dd > md) { md = dd; mi = i; } }
+      if (md > eps) { keep[mi] = 1; st.push([r[0], mi], [mi, r[1]]); } }
+    return P.filter(function (q, i) { return keep[i]; });
+  }
+  function parseLoc(t) {
+    var m = /^\s*(-?\d{1,2}\.\d+)\s*,\s*(-?\d{1,3}\.\d+)\s*$/.exec(t || "");
+    if (m && +m[1] > 49 && +m[1] < 61) return RO().wgsToBng(+m[1], +m[2]);
+    return RO().parseLocation(t);
+  }
+  function mapStatus(msg) { status(msg); }
+  $("sk-map-btn").addEventListener("click", function () { var pn = $("sk-mappanel"); pn.hidden = !pn.hidden; this.setAttribute("aria-expanded", !pn.hidden); if (!pn.hidden) { var m = doc().map; if (m && !$("sk-maploc").value) $("sk-maploc").value = Math.round(m.e) + ", " + Math.round(m.n); fitSheet(); } });
+  $("sk-mapgeo").addEventListener("click", function () {
+    if (!navigator.geolocation || !RO()) { mapStatus("This browser can't share its location. Type a grid reference instead."); return; }
+    mapStatus("Finding your location…");
+    navigator.geolocation.getCurrentPosition(function (pos) { var b = RO().wgsToBng(pos.coords.latitude, pos.coords.longitude); $("sk-maploc").value = Math.round(b.e) + ", " + Math.round(b.n); mapStatus(""); }, function () { mapStatus("Couldn't get your location. Type a grid reference instead."); });
+  });
+  function mapSet(fn) { var m = doc().map; if (!m) return; fn(m); persist(); renderAll(); }
+  $("sk-maposm").addEventListener("change", function () { var v = this.checked; mapSet(function (m) { m.osm = v; }); });
+  $("sk-mapgrey").addEventListener("change", function () { var v = this.checked; mapSet(function (m) { m.grey = v; }); });
+  $("sk-mapop").addEventListener("input", function () { var v = +this.value; mapSet(function (m) { m.op = v; }); });
+  $("sk-mapcont").addEventListener("change", function () { var v = this.checked; mapSet(function (m) { m.cont = v; }); if (v && doc().map && !doc().map.c) fetchContours(); });
+  $("sk-mapiv").addEventListener("change", function () { if (doc().map && doc().map.cont !== false) fetchContours(); });
+  $("sk-mapshow").addEventListener("change", function () { var v = this.checked; mapSet(function (m) { m.show = v; }); });
+  $("sk-mapdel").addEventListener("click", function () { if (!doc().map) return; delete doc().map; persist(); renderAll(); mapStatus("Map removed."); });
+  $("sk-mapgo").addEventListener("click", function () {
+    if (!RO()) { mapStatus("The map helpers didn't load. Reload the page and try again."); return; }
+    var c = parseLoc($("sk-maploc").value);
+    if (!c || !(c.e > 0 && c.e < 700000 && c.n > 0 && c.n < 1300000)) { mapStatus("That location wasn't understood. Try a grid reference like SK 012 813, eastings and northings like 401200, 381300, or a latitude and longitude."); return; }
+    var d = doc(), auto = !d.dscale; if (auto) d.dscale = 500;
+    d.map = { e: Math.round(c.e), n: Math.round(c.n), osm: $("sk-maposm").checked, cont: $("sk-mapcont").checked, op: +$("sk-mapop").value, grey: $("sk-mapgrey").checked, show: true };
+    persist(); renderAll(); renderProps();
+    mapStatus((auto ? "The sketch was not to scale, so it is now 1:500; change the scale to zoom the map. " : "") + "Map placed at " + d.map.e + ", " + d.map.n + ".");
+    if (d.map.cont) fetchContours();
+  });
+  function fetchContours() {
+    var d = doc(), m = d.map, F = mapFrame(); if (!m || !d.dscale) return;
+    var Wm = F.inner.w * F.mu, Hm = F.inner.h * F.mu;
+    if (Math.max(Wm, Hm) > 6000) { mapStatus("The sheet covers more than 6 km at this scale, too much LiDAR to fetch. Pick a larger scale (smaller number) for contours."); return; }
+    var cell = Math.max(1, Math.ceil(Math.max(Wm, Hm) / 300)), x0 = Math.floor(m.e - Wm / 2 - cell), y0 = Math.floor(m.n - Hm / 2 - cell), nx = Math.ceil((Wm + 2 * cell) / cell), ny = Math.ceil((Hm + 2 * cell) / cell);
+    var R = RO(), url = R.EA_WCS + "?service=WCS&version=2.0.1&request=GetCoverage&coverageId=" + R.EA_COVERAGE + "&subset=E(" + x0 + "," + (x0 + nx * cell) + ")&subset=N(" + y0 + "," + (y0 + ny * cell) + ")&scaleSize=i(" + nx + "),j(" + ny + ")&format=text%2Fplain";
+    var iv = +$("sk-mapiv").value, sheet = d, key = m.e + "," + m.n;
+    mapStatus("Fetching LiDAR terrain from the Environment Agency (" + nx + " × " + ny + " cells at " + cell + " m)…");
+    fetch(url).then(function (r) { if (!r.ok) throw new Error("the EA service answered " + r.status); return r.text(); }).then(function (t) {
+      var g = R.parseWcsText(t), c = traceContours(g, iv, m.e, m.n);
+      if (!sheet.map || sheet.map.e + "," + sheet.map.n !== key) return;
+      if (!c) { mapStatus("No LiDAR came back for this spot. The EA's LiDAR covers England only, and has a few gaps."); return; }
+      sheet.map.c = c; persist(); renderAll();
+      mapStatus(c.lines.length + " contour lines every " + c.iv + " m" + (c.iv !== iv ? " (widened from " + iv + " m: the ground is steep here)" : "") + ", from the EA's LiDAR terrain model.");
+    }).catch(function (err) { mapStatus("Couldn't fetch LiDAR: " + err.message + ". The EA service may be busy; try again. LiDAR covers England only."); });
+  }
 
   /* ---------- DXF export ----------
      Writes an AutoCAD R12 (AC1009) ASCII DXF, which every CAD package reads. Each item is drawn to a
@@ -1243,9 +1403,9 @@
     function pair(code, x, y) { var px = X(x), py = Y(y); ext[0] = Math.min(ext[0], px); ext[1] = Math.min(ext[1], py); ext[2] = Math.max(ext[2], px); ext[3] = Math.max(ext[3], py); out.push(code, num(px), code + 10, num(py), code + 20, "0"); }
     function head0(type, L, col, lt) { out.push("0", type, "8", L); if (lt) out.push("6", lt); if (col !== 256) out.push("62", String(col)); n++; }
     function line(a, b, L, col, lt) { head0("LINE", L, col, lt); pair(10, a[0], a[1]); pair(11, b[0], b[1]); }
-    function pline(pts, closed, L, col, lt) {
-      if (pts.length < 2) return; if (pts.length === 2 && !closed) return line(pts[0], pts[1], L, col, lt);
-      head0("POLYLINE", L, col, lt); out.push("66", "1", "70", closed ? "1" : "0", "10", "0", "20", "0", "30", "0");
+    function pline(pts, closed, L, col, lt, elev) {
+      if (pts.length < 2) return; if (pts.length === 2 && !closed && elev == null) return line(pts[0], pts[1], L, col, lt);
+      head0("POLYLINE", L, col, lt); out.push("66", "1", "70", closed ? "1" : "0", "10", "0", "20", "0", "30", elev == null ? "0" : num(elev * 1000));
       pts.forEach(function (q) { out.push("0", "VERTEX", "8", L); pair(10, q[0], q[1]); }); out.push("0", "SEQEND", "8", L);
     }
     function solid(pts, L, col) { head0("SOLID", L, col); var q = pts.length === 3 ? [pts[0], pts[1], pts[2], pts[2]] : [pts[0], pts[1], pts[3], pts[2]]; q.forEach(function (v, i) { pair(10 + i, v[0], v[1]); }); }
@@ -1322,6 +1482,10 @@
         }
         walk(draw(it), L, it.ls);
       });
+      if (d.map && d.map.show !== false && d.map.cont !== false && d.map.c && d.dscale) {
+        var MF = mapFrame(); layers["SK-CONTOURS"] = 1;
+        d.map.c.lines.forEach(function (l) { pline(l.p.map(function (q) { return [MF.cx + q[0] / MF.mu, MF.cy - q[1] / MF.mu]; }), false, "SK-CONTOURS", 34, null, l.z); });
+      }
       walk(frameStr(true), "SK-FRAME"); layers["SK-FRAME"] = 1; if (d.wm) layers["SK-WATERMARK"] = 1;
     } finally { host.remove(); }
     /* the file */
@@ -1335,7 +1499,7 @@
     Object.keys(layers).forEach(function (L) { tb.push("0", "LAYER", "2", L, "70", "0", "62", L === "SK-WATERMARK" ? "9" : L === "SK-HATCH" || L === "SK-HATCH-BOUNDARY" ? "8" : "7", "6", "CONTINUOUS"); });
     tb.push("0", "ENDTAB", "0", "TABLE", "2", "STYLE", "70", "1", "0", "STYLE", "2", "STANDARD", "70", "0", "40", "0", "41", "1", "50", "0", "71", "0", "42", "2.5", "3", "txt", "4", "", "0", "ENDTAB", "0", "ENDSEC");
     var all = hd.concat(tb, ["0", "SECTION", "2", "ENTITIES"], out, ["0", "ENDSEC", "0", "EOF"]);
-    var note = "DXF saved: " + n + " objects on " + Object.keys(layers).length + " layers, in millimetres " + (d.dscale ? "at true size (1:" + N + ")." : "at paper size (the sketch is not to scale).") + " Line weights and the underlay image aren't included." + (skipped ? " Solid and concrete hatches come out as their boundary only." : "");
+    var note = (d.map && d.map.osm !== false ? "The OpenStreetMap backdrop isn't included in the DXF. " : "") + "DXF saved: " + n + " objects on " + Object.keys(layers).length + " layers, in millimetres " + (d.dscale ? "at true size (1:" + N + ")." : "at paper size (the sketch is not to scale).") + " Line weights and the underlay image aren't included." + (skipped ? " Solid and concrete hatches come out as their boundary only." : "");
     return { text: all.join("\r\n") + "\r\n", note: note, count: n };
   }
 
