@@ -373,7 +373,7 @@
     '<div class="table-wrap"><table class="ct-t ct-in"><thead><tr><th>Name</th><th>Area (ha)</th><th>Impermeable (%)</th><th>Flow path length (m)</th><th>Slope (%)</th><th>Travel time override (min)</th><th></th></tr></thead><tbody id="ct-subs"></tbody></table></div>' +
     '<div class="ct-actions"><button type="button" class="ct-row-btn" id="ct-sub-add">Add sub-catchment</button></div>' +
     '<details class="ct-more" id="ct-lidar-box"><summary>Find a catchment from LiDAR (England)</summary><div id="ct-lidar" style="display:flex;flex-direction:column;gap:12px;margin-top:12px"></div></details></div>' +
-    '<div class="panel"><div class="ct-actions" style="justify-content:space-between"><h3>4. Results</h3><div class="ct-actions"><a class="btn ghost" id="ct-pipe" href="#pipeflow">Size a pipe for this flow</a><button type="button" class="btn" id="ct-csv">Download CSV</button></div></div>' +
+    '<div class="panel"><div class="ct-actions" style="justify-content:space-between"><h3>4. Results</h3><div class="ct-actions"><a class="btn ghost" id="ct-pipe" href="#pipeflow">Size a pipe for this flow</a><a class="btn ghost" id="ct-culvert" href="#culvert">Check a culvert for this flow</a><button type="button" class="btn" id="ct-csv">Download CSV</button></div></div>' +
     '<div class="ct-big" id="ct-big"></div><div class="table-wrap"><table class="ct-t"><thead><tr><th>Sub-catchment</th><th class="num">Area (ha)</th><th class="num">C</th><th class="num">Tc (min)</th><th class="num">i (mm/h)</th><th class="num">Peak Q (l/s)</th><th class="num">Greenfield Q (l/s)</th><th class="num">Runoff vol (m³)</th><th class="num">Greenfield vol (m³)</th><th class="num">Extra vol (m³)</th></tr></thead><tbody id="ct-res"></tbody></table></div>' +
     '<p class="small" id="ct-flags"></p></div>' +
     '<div class="panel ref"><h3>Working and equations</h3><pre class="ct-work" id="ct-work"></pre>' +
@@ -438,6 +438,8 @@
     if (tot.A > 200) flags.push("The total area is large for the rational method. Consider a hydrograph method.");
     $("ct-flags").innerHTML = flags.join(" ");
     var pipe = $("ct-pipe"); if (c) pipe.href = "#pipeflow?Q=" + Math.round(c.Q);
+    var culv = $("ct-culvert"); if (culv && c) culv.href = "#culvert?Qls=" + Math.round(c.Q);
+    window.CPCatchment = { peakLs: function () { return c ? c.Q : null; } }; /* read by the culvert tool */
     renderWork();
     save();
   }
