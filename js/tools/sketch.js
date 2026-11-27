@@ -30,6 +30,7 @@
     member: '<path d="M3 12h18" stroke-width="3"/>',
     pin: '<path d="M12 6l-6 10h12z"/><path d="M4 19h16"/>',
     xform: '<path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5"/><path d="M12 8v8M8 12h8"/>',
+    inset: '<circle cx="10" cy="10" r="6"/><path d="M14.5 14.5L21 21M10 7.5v5M7.5 10h5"/>',
     image: '<rect x="3" y="5" width="18" height="14" rx="1"/><circle cx="9" cy="10" r="1.8"/><path d="M3 17l5-5 4 4 3-3 6 6"/>',
     roller: '<path d="M12 5l-6 9h12z"/><circle cx="9" cy="17" r="1.6"/><circle cx="15" cy="17" r="1.6"/><path d="M4 20h16"/>',
     fixed: '<path d="M6 4v16" stroke-width="2.4"/><path d="M6 7L3 10M6 12l-3 3M6 17l-3 3"/><path d="M6 12h14"/>',
@@ -51,7 +52,7 @@
   var TOOLS = {
     free: [["select", "Select"], ["xform", "Move/resize"], ["pen", "Pen"], ["eraser", "Eraser"], ["hatch", "Hatch"], ["text", "Text"], ["leader", "Leader"], ["dim", "Dimension"]],
     struct: [["select", "Select"], ["xform", "Move/resize"], ["member", "Member"], ["pin", "Pin"], ["roller", "Roller"], ["fixed", "Fixed"], ["pload", "Point load"], ["udl", "UDL"], ["moment", "Moment"], ["dim", "Dimension"], ["hatch", "Hatch"], ["text", "Text"], ["leader", "Leader"], ["eraser", "Eraser"]],
-    shapes: [["line", "Line"], ["arrow", "Arrow"], ["rect", "Rectangle"], ["circle", "Circle"], ["poly", "Polygon"], ["section", "Section"], ["north", "North"], ["brk", "Break line"], ["cloud", "Rev cloud"], ["slope", "Slope"], ["wl", "Water level"], ["image", "Image"]]
+    shapes: [["line", "Line"], ["arrow", "Arrow"], ["rect", "Rectangle"], ["circle", "Circle"], ["poly", "Polygon"], ["section", "Section"], ["north", "North"], ["brk", "Break line"], ["cloud", "Rev cloud"], ["slope", "Slope"], ["wl", "Water level"], ["image", "Image"], ["inset", "Detail window"]]
   };
   var HINTS = {
     select: "Click to select, drag a box to select several, Shift or Ctrl click to add or remove. Drag to move, Delete removes, Ctrl+C / Ctrl+V copy and paste, Ctrl+D duplicates, Ctrl+A selects all, Esc clears.",
@@ -79,6 +80,7 @@
     cloud: "Drag a box round the change to draw a revision cloud.",
     slope: "Drag along the top of the slope. The ticks point down the slope; Flip side if they're the wrong way.",
     xform: "Click or box-select items, then drag them to move, or drag a corner handle to resize them all together (Shift to stretch). Works on typical details and groups too.",
+    inset: "Drag a box round the part of the drawing or map to enlarge. A detail window at a larger scale is added: move it with Select, resize it from its square handle, and drag its round handle to change what it shows.",
     image: "Add a picture or screenshot to the drawing. You can also paste a screenshot straight in with Ctrl+V.",
     wl: "Click on the water line to place a water level marker, then type the level below."
   };
@@ -275,6 +277,7 @@
     var l = pts[pts.length - 1]; return d + "L" + l[0] + " " + l[1];
   }
   function hpath(it) { return poly(it.pts) + (it.holes || []).map(poly).join(""); }
+  function opath(pts) { return "M" + pts.map(function (p) { return p[0] + " " + p[1]; }).join("L"); }
   function poly(pts) { return "M" + pts.map(function (p) { return p[0] + " " + p[1]; }).join("L") + "Z"; }
   function patId(pat, c, sc) { return "hp-" + pat + "-" + c.replace(/[^0-9a-z]/gi, "") + (sc && sc !== 1 ? "-s" + String(sc).replace(".", "_") : ""); }
   function patDef(pat, c, sc) { var d0 = patDef0(pat, c); return sc && sc !== 1 ? d0.replace('<pattern id="' + patId(pat, c) + '"', '<pattern id="' + patId(pat, c, sc) + '" patternTransform="scale(' + sc + ')"') : d0; }
@@ -362,15 +365,16 @@
         var gap = side ? 7 : 19, lx = (ax1 + ax2) / 2 + dn.nx * sg * gap, ly = (ay1 + ay2) / 2 + dn.ny * sg * gap;
         var dfs = it.fs || 14, msk = it.mask ? '<rect x="' + r1(lx - tw(lab, dfs) / 2 - 3) + '" y="' + r1(ly - dfs * 0.85) + '" width="' + r1(tw(lab, dfs) + 6) + '" height="' + r1(dfs * 1.1) + '" fill="#fff" transform="rotate(' + r1(ang) + " " + r1(lx) + " " + r1(ly) + ')"/>' : "";
         return o + msk + txt(lx, ly, lab, c, dfs, "middle", ' transform="rotate(' + r1(ang) + " " + r1(lx) + " " + r1(ly) + ')"');
+      case "inset": return insetFrame(it);
       case "image": return '<image href="' + it.src + '" x="' + it.x + '" y="' + it.y + '" width="' + it.w + '" height="' + it.h + '" preserveAspectRatio="none"/>' + (it.border ? '<rect x="' + it.x + '" y="' + it.y + '" width="' + it.w + '" height="' + it.h + '" fill="none" stroke="' + c + '" stroke-width="1.5"/>' : "");
       case "text":
         var sz = it.size || 18, ls = String(it.text || "").split("\n"), mw = 0;
         if (it.mask) ls.forEach(function (l) { mw = Math.max(mw, tw(l, sz, it.bold)); });
         return (it.mask ? '<rect x="' + r1(it.x - 4) + '" y="' + r1(it.y - 2) + '" width="' + r1(mw + 8) + '" height="' + r1(ls.length * sz * 1.25 + 4) + '" fill="#fff"/>' : "") + '<text font-family="' + FONT + '" font-size="' + sz + '" fill="' + c + '"' + (it.bold ? ' font-weight="bold"' : "") + ">" + ls.map(function (l, j) { return '<tspan x="' + it.x + '" y="' + r1(it.y + sz * 0.85 + j * sz * 1.25) + '">' + (esc(l) || " ") + "</tspan>"; }).join("") + "</text>";
       case "arrow": return arrow(it.x1, it.y1, it.x2, it.y2, c, it.w, it.ah || Math.max(11, it.w * 4)).replace("<line ", "<line" + dash(it.ls, it.w) + " ");
-      case "rect": return '<rect x="' + Math.min(it.x1, it.x2) + '" y="' + Math.min(it.y1, it.y2) + '" width="' + r1(Math.abs(it.x2 - it.x1)) + '" height="' + r1(Math.abs(it.y2 - it.y1)) + '" fill="none" stroke="' + c + '" stroke-width="' + it.w + '" stroke-linejoin="round"' + dash(it.ls, it.w) + "/>";
+      case "rect": return '<rect x="' + Math.min(it.x1, it.x2) + '" y="' + Math.min(it.y1, it.y2) + '" width="' + r1(Math.abs(it.x2 - it.x1)) + '" height="' + r1(Math.abs(it.y2 - it.y1)) + '" fill="' + (it.fill ? "#fff" : "none") + '" stroke="' + c + '" stroke-width="' + it.w + '" stroke-linejoin="round"' + dash(it.ls, it.w) + "/>";
       case "circle": return '<circle cx="' + it.x1 + '" cy="' + it.y1 + '" r="' + r1(Math.hypot(it.x2 - it.x1, it.y2 - it.y1)) + '" fill="none" stroke="' + c + '" stroke-width="' + it.w + '"' + dash(it.ls, it.w) + "/>";
-      case "poly": return '<path d="' + poly(it.pts) + '" fill="none" stroke="' + c + '" stroke-width="' + it.w + '" stroke-linejoin="round"' + dash(it.ls, it.w) + "/>";
+      case "poly": return '<path d="' + (it.open ? opath(it.pts) : poly(it.pts)) + '" fill="none" stroke="' + c + '" stroke-width="' + it.w + '" stroke-linejoin="round"' + dash(it.ls, it.w) + "/>";
       case "cloud": return '<path d="' + cloudPath(it) + '" fill="none" stroke="' + c + '" stroke-width="' + (it.w || 2) + '" stroke-linejoin="round"/>';
       case "brk":
         var bn = norm(it), mx2 = (it.x1 + it.x2) / 2, my2 = (it.y1 + it.y2) / 2, zz = [[it.x1 - bn.dx * 8, it.y1 - bn.dy * 8], [mx2 - bn.dx * 9, my2 - bn.dy * 9], [mx2 - bn.dx * 4 + bn.nx * 16, my2 - bn.dy * 4 + bn.ny * 16], [mx2 + bn.dx * 4 - bn.nx * 16, my2 + bn.dy * 4 - bn.ny * 16], [mx2 + bn.dx * 9, my2 + bn.dy * 9], [it.x2 + bn.dx * 8, it.y2 + bn.dy * 8]];
@@ -436,7 +440,7 @@
       case "stroke": return '<path d="' + smooth(it.pts) + '" ' + T + Math.max(w, it.w + 8) + '"/>';
       case "rect": case "cloud": var rx1 = Math.min(it.x1, it.x2), ry1 = Math.min(it.y1, it.y2); return '<rect x="' + rx1 + '" y="' + ry1 + '" width="' + r1(Math.abs(it.x2 - it.x1)) + '" height="' + r1(Math.abs(it.y2 - it.y1)) + '" ' + T + Math.max(w, (it.w || 2) + 8) + '"/>';
       case "circle": return '<circle cx="' + it.x1 + '" cy="' + it.y1 + '" r="' + r1(Math.hypot(it.x2 - it.x1, it.y2 - it.y1)) + '" ' + T + Math.max(w, it.w + 8) + '"/>';
-      case "poly": return '<path d="' + poly(it.pts) + '" ' + T + Math.max(w, it.w + 8) + '"/>';
+      case "poly": return '<path d="' + (it.open ? opath(it.pts) : poly(it.pts)) + '" ' + T + Math.max(w, it.w + 8) + '"/>';
       case "slope": var sn = norm(it), sd = it.side === -1 ? -1 : 1, hl = 36 * (it.s || 1); return '<path d="M' + it.x1 + " " + it.y1 + "L" + it.x2 + " " + it.y2 + "L" + r1(it.x2 + sn.nx * sd * hl) + " " + r1(it.y2 + sn.ny * sd * hl) + "L" + r1(it.x1 + sn.nx * sd * hl) + " " + r1(it.y1 + sn.ny * sd * hl) + 'Z" fill="transparent" pointer-events="all"/>';
       case "arrow": case "section": case "brk":
       case "line": case "member": return '<line x1="' + it.x1 + '" y1="' + it.y1 + '" x2="' + it.x2 + '" y2="' + it.y2 + '" ' + T + Math.max(w, it.w + 8) + '"/>';
@@ -445,9 +449,38 @@
       case "hatch": return '<path d="' + hpath(it) + '" fill-rule="evenodd" fill="transparent" pointer-events="all"/>';
       case "leader": var A = anchorOf(it); return '<line x1="' + it.bx + '" y1="' + it.by + '" x2="' + A.x + '" y2="' + A.y + '" ' + T + w + '"/>';
       case "text": return "";
+      case "inset": return '<rect x="' + it.x + '" y="' + it.y + '" width="' + it.w + '" height="' + it.h + '" fill="transparent" pointer-events="all"/>';
       case "pload": var a = (it.ang == null ? 90 : it.ang) * Math.PI / 180; return '<line x1="' + it.x + '" y1="' + it.y + '" x2="' + r1(it.x - Math.cos(a) * 72) + '" y2="' + r1(it.y - Math.sin(a) * 72) + '" ' + T + Math.max(w, 18) + '"/>';
       default: return '<circle cx="' + it.x + '" cy="' + it.y + '" r="' + Math.max(26, w) + '" fill="transparent" pointer-events="all"/>';
     }
+  }
+  /* Detail windows: a framed view of the drawing and map at a larger scale. The enlarged copy is drawn
+     outside the item's own group, so selecting and moving the window works on its frame alone. */
+  function insetScale(it) { var N = doc().dscale; return N ? "1:" + Math.round(N / (it.k || 2)) : "×" + (it.k || 2); }
+  function insetFrame(it) {
+    var c = it.c || "#15233a";
+    return '<rect x="' + it.x + '" y="' + it.y + '" width="' + it.w + '" height="' + it.h + '" fill="none" stroke="' + c + '" stroke-width="2"/>' +
+      txt(it.x, it.y + it.h + 20, "DETAIL " + (it.label || "1") + "  (" + insetScale(it) + ")", c, 14, "start", ' font-weight="bold"');
+  }
+  function insetBody(it) {
+    var d = doc(), k2 = it.k || 2, cx = it.x + it.w / 2, cy = it.y + it.h / 2, cid = "ic-" + it.id, inner = "", c = it.c || "#15233a";
+    d.items.forEach(function (o) { if (o.type !== "inset") inner += draw(o); });
+    var sw = it.w / k2, sh = it.h / k2, o2 = "";
+    if (!it.nosrc) o2 += '<rect x="' + r1(it.sx - sw / 2) + '" y="' + r1(it.sy - sh / 2) + '" width="' + r1(sw) + '" height="' + r1(sh) + '" fill="none" stroke="' + c + '" stroke-width="1.2" stroke-dasharray="8 5"/>' + txt(it.sx - sw / 2, it.sy - sh / 2 - 6, it.label || "1", c, 13, "start", ' font-weight="bold"');
+    return o2 + '<clipPath id="' + cid + '"><rect x="' + it.x + '" y="' + it.y + '" width="' + it.w + '" height="' + it.h + '"/></clipPath><rect x="' + it.x + '" y="' + it.y + '" width="' + it.w + '" height="' + it.h + '" fill="#fff"/>' +
+      '<g clip-path="url(#' + cid + ')"><g transform="translate(' + r1(cx) + " " + r1(cy) + ") scale(" + r3(k2) + ") translate(" + r1(-it.sx) + " " + r1(-it.sy) + ')">' + (it.map !== false && d.map && d.map.show !== false ? '<use href="#sk-mapg"/>' : "") + inner + "</g></g>";
+  }
+  function makeInset(a, b) {
+    var d = doc(), I = geo().inner, bw = Math.abs(b.x - a.x), bh = Math.abs(b.y - a.y);
+    if (bw < 12 || bh < 12) { status("Drag a box round the part you want to enlarge."); return; }
+    var k2 = 2; if (d.dscale) { var tg = SCALES.filter(function (n) { return n <= d.dscale / 2; }).pop(); k2 = tg ? d.dscale / tg : 2; }
+    var w = bw * k2, h = bh * k2, f = Math.min(1, I.w * 0.45 / w, I.h * 0.45 / h); w = r1(w * f); h = r1(h * f);
+    var scx = r1((a.x + b.x) / 2), scy = r1((a.y + b.y) / 2), best = null, bd = -1;
+    [[I.x + 24, I.y + 24], [I.x + I.w - w - 24, I.y + 24], [I.x + 24, I.y + I.h - h - 60], [I.x + I.w - w - 24, I.y + I.h - h - 60]].forEach(function (q) { var dd = Math.hypot(q[0] + w / 2 - scx, q[1] + h / 2 - scy); if (dd > bd) { bd = dd; best = q; } });
+    var n = d.items.filter(function (x) { return x.type === "inset"; }).length + 1;
+    var it = addItem(base("inset", { x: r1(best[0]), y: r1(best[1]), w: w, h: h, sx: scx, sy: scy, k: k2, label: String(n), c: "#15233a" }));
+    selectAfterCreate(it);
+    status("Detail " + n + " added at " + insetScale(it) + (f < 1 ? ", trimmed to fit the sheet" : "") + ". Move it with Select; change its scale above.");
   }
   function shifted(o, dx, dy) {
     var n = clone(o);
@@ -468,7 +501,7 @@
     if ("x1" in n) { var a = P([n.x1, n.y1]), b = P([n.x2, n.y2]); n.x1 = a[0]; n.y1 = a[1]; n.x2 = b[0]; n.y2 = b[1]; }
     if (n.type === "leader") { var bb = P([n.bx, n.by]); n.bx = bb[0]; n.by = bb[1]; if (!n.att) { var aa = P([n.ax, n.ay]); n.ax = aa[0]; n.ay = aa[1]; } }
     else if ("x" in n) { var xy = P([n.x, n.y]); n.x = xy[0]; n.y = xy[1]; }
-    if (n.type === "image") { n.w = r1(n.w * fx); n.h = r1(n.h * fy); }
+    if (n.type === "image" || n.type === "inset") { n.w = r1(n.w * fx); n.h = r1(n.h * fy); }
     if (n.type === "text") n.size = Math.max(4, r1((n.size || 18) * m));
     if (n.fs) n.fs = Math.max(4, r1(n.fs * m));
     if (n.s != null || /^(north|wl|slope)$/.test(n.type)) n.s = r1((n.s || 1) * m * 100) / 100;
@@ -564,6 +597,7 @@
       '<div class="sk-maprow"><label class="sk-check"><input type="checkbox" id="sk-mapcont" checked> Contours</label><label class="sk-check">every <select id="sk-mapiv">' + [0.1, 0.25, 0.5, 1, 2, 5, 10].map(function (v) { return '<option value="' + v + '"' + (v === 0.5 ? " selected" : "") + ">" + v + " m</option>"; }).join("") + "</select></label>" +
         '<label class="sk-check">Fade <input type="range" id="sk-mapcop" min="0.15" max="1" step="0.05" value="1"></label>' +
         '<button type="button" class="sk-btn" id="sk-mapea" title="Fetch the EA 1 m LiDAR DTM for the map area (England only)">EA LiDAR</button><button type="button" class="sk-btn" id="sk-mapfile-b" title="Load a terrain grid you have downloaded, e.g. from the EA survey portal">Load LiDAR file</button><input type="file" id="sk-mapfile" accept=".asc,.txt,.tif,.tiff" hidden></div>' +
+      '<div class="sk-maprow"><span class="sk-lab">From the terrain</span><button type="button" class="sk-btn" id="sk-mapsect" aria-pressed="false" title="Drag a line on the map to draw a ground section from the LiDAR">Draw section</button><button type="button" class="sk-btn" id="sk-mapcatch" aria-pressed="false" title="Click a ditch, stream or low point to outline the land that drains to it">Find catchment</button><button type="button" class="sk-btn" id="sk-mapfall" title="Arrows showing which way the ground falls, with gradients">Fall arrows</button></div>' +
       '<div class="sk-maprow sk-maplayers"><span class="sk-lab">Layers</span>' + MAPL.map(function (L) { return '<label class="sk-check" title="' + esc(L.src) + '"><input type="checkbox" data-ml="' + L.id + '"> ' + L.name + "</label>"; }).join("") +
         '<label class="sk-check sk-wide">ArcGIS layer URL <input type="url" id="sk-mlurl" placeholder="https://…/FeatureServer/0"></label><button type="button" class="sk-btn" id="sk-mladd">Add layer</button><button type="button" class="sk-btn" id="sk-mlgj-b">Load GeoJSON</button><input type="file" id="sk-mlgj" accept=".geojson,.json" hidden></div>' +
       '<div id="sk-mlextra" class="sk-maprow"></div>' +
@@ -606,6 +640,7 @@
     var d = doc(), pats = {}, s = "";
     d.items.forEach(function (it) {
       if (it.type === "hatch") pats[patId(it.pat, it.c, it.ps)] = patDef(it.pat, it.c, it.ps);
+      if (it.type === "inset") s += forExport ? insetBody(it) : '<g pointer-events="none">' + insetBody(it) + "</g>";
       s += forExport ? draw(it) : '<g data-id="' + it.id + '"' + (isOn(it) ? ' class="sk-on"' : "") + '><g class="v">' + draw(it) + "</g>" + (locked(it) ? "" : hit(it)) + "</g>";
     });
     return { s: s, defs: Object.keys(pats).map(function (p) { return pats[p]; }).join("") };
@@ -742,7 +777,8 @@
           if (SEG[it.type]) { o += hnd("p1", it.x1, it.y1) + hnd("p2", it.x2, it.y2); if (it.type === "dim") { var n = norm(it), off = it.o == null ? 30 : it.o; o += hnd("off", (it.x1 + it.x2) / 2 + n.nx * off, (it.y1 + it.y2) / 2 + n.ny * off, "sq"); } }
           if ((it.type === "hatch" && !it.seed) || it.type === "poly") it.pts.forEach(function (q, i) { o += hnd("v" + i, q[0], q[1]); });
           if (it.type === "leader") { var A = anchorOf(it); o += hnd("anc", A.x, A.y); }
-          if (it.type === "image") o += hnd("isz", it.x + it.w, it.y + it.h, "sq");
+          if (it.type === "image" || it.type === "inset") o += hnd("isz", it.x + it.w, it.y + it.h, "sq");
+          if (it.type === "inset") o += '<line x1="' + r1(it.x + it.w / 2) + '" y1="' + r1(it.y + it.h / 2) + '" x2="' + it.sx + '" y2="' + it.sy + '" class="sk-sel" stroke-width="1"/>' + hnd("isrc", it.sx, it.sy);
         }
       }
     }
@@ -817,7 +853,7 @@
     $("sk-undo").disabled = !H().u.length; $("sk-redo").disabled = !H().r.length;
   }
   function setMode(m) { mode = m; S.mode = m; pend = null; sel = null; persist(); renderTools(); renderAll(); renderLive(); renderProps(); }
-  function setTool(t) { if (pend && pend.poly && t !== "poly") finishPoly(); else if (pend && !pend.poly && t !== "hatch") finishHatch(); tool[mode] = t; snapHit = null; showSnap(); renderTools(); if (t !== "select" && t !== "xform") sel = null; renderUI(); renderProps(); }
+  function setTool(t) { if (mapMode) setMapMode(mapMode); if (pend && pend.poly && t !== "poly") finishPoly(); else if (pend && !pend.poly && t !== "hatch") finishHatch(); tool[mode] = t; snapHit = null; showSnap(); renderTools(); if (t !== "select" && t !== "xform") sel = null; renderUI(); renderProps(); }
 
   /* Turning the sheet keeps everything on it, shifted so it stays centred on the new sheet. */
   function setOrient(o, paper) {
@@ -911,7 +947,7 @@
     }
     if (!it) { p.innerHTML = '<span class="small">' + esc(HINTS[tool[mode]] || "") + "</span>"; return; }
     updateCtx();
-    var NAMES = { image: "Image", arrow: "Arrow", rect: "Rectangle", circle: "Circle", poly: "Polygon", cloud: "Revision cloud", brk: "Break line", slope: "Slope marker", section: "Section marker", north: "North arrow", wl: "Water level", stroke: "Pen stroke", line: "Line", member: "Member", support: "Support", pload: "Point load", udl: "Distributed load", moment: "Moment", dim: "Dimension", text: "Text", leader: "Leader note", hatch: "Hatched area" };
+    var NAMES = { inset: "Detail window", image: "Image", arrow: "Arrow", rect: "Rectangle", circle: "Circle", poly: "Polygon", cloud: "Revision cloud", brk: "Break line", slope: "Slope marker", section: "Section marker", north: "North arrow", wl: "Water level", stroke: "Pen stroke", line: "Line", member: "Member", support: "Support", pload: "Point load", udl: "Distributed load", moment: "Moment", dim: "Dimension", text: "Text", leader: "Leader note", hatch: "Hatched area" };
     var h = '<span class="sk-lab">' + NAMES[it.type] + "</span>";
     if (locked(it)) {
       h += '<span class="small">' + (doc().lockDraw ? "The drawing is locked. Untick \"Lock drawing\" to change it." : "Locked in place.") + "</span>";
@@ -938,8 +974,15 @@
     if (it.type === "leader" && it.att) h += '<button type="button" class="sk-btn" data-act="detach">Detach arrow</button>';
     if (it.type === "text" || it.type === "dim" || (it.type === "leader" && it.nobox)) h += '<label class="sk-check"><input type="checkbox" id="skp-mask"' + (it.mask ? " checked" : "") + "> Mask behind</label>";
     if (it.type === "dim") h += '<label class="sk-check">Units <select id="skp-unit"><option value="">Auto</option><option value="m"' + (it.unit === "m" ? " selected" : "") + '>m</option><option value="mm"' + (it.unit === "mm" ? " selected" : "") + ">mm</option></select></label>";
+    if (it.type === "rect") h += '<label class="sk-check"><input type="checkbox" id="skp-rfill"' + (it.fill ? " checked" : "") + "> White fill</label>";
+    if (it.type === "inset") {
+      var N0 = doc().dscale, ks = N0 ? SCALES.filter(function (n) { return n < N0; }).map(function (n) { return [N0 / n, "1:" + n]; }) : [1.5, 2, 3, 4, 5, 10].map(function (v) { return [v, "×" + v]; });
+      if (!ks.some(function (q) { return Math.abs(q[0] - it.k) < 1e-6; })) ks.push([it.k, insetScale(it)]);
+      h += '<label class="sk-check">Detail <input type="text" id="skp-ilabel" size="4" value="' + esc(it.label || "") + '"></label><label class="sk-check">Scale <select id="skp-ik">' + ks.map(function (q) { return '<option value="' + q[0] + '"' + (Math.abs(q[0] - it.k) < 1e-6 ? " selected" : "") + ">" + q[1] + "</option>"; }).join("") + "</select></label>" +
+        '<label class="sk-check"><input type="checkbox" id="skp-isrc"' + (it.nosrc ? "" : " checked") + '> Mark the area on the drawing</label><label class="sk-check"><input type="checkbox" id="skp-imap"' + (it.map === false ? "" : " checked") + "> Show map</label>";
+    }
     if (it.type === "image") h += '<label class="sk-check"><input type="checkbox" id="skp-border"' + (it.border ? " checked" : "") + "> Border</label>";
-    if (measured() && /^(rect|circle|poly|cloud|hatch)$/.test(it.type)) { var A0 = areaOf(it); h += '<span class="small sk-area">Area ' + fmtArea(A0) + ", perimeter " + fmtM(toM(perimOf(it))) + '</span><button type="button" class="sk-btn" data-act="mklabel">Label area</button>'; }
+    if (measured() && /^(rect|circle|poly|cloud|hatch)$/.test(it.type) && !it.open) { var A0 = areaOf(it); h += '<span class="small sk-area">Area ' + fmtArea(A0) + ", perimeter " + fmtM(toM(perimOf(it))) + '</span><button type="button" class="sk-btn" data-act="mklabel">Label area</button>'; }
     h += ORDER_BTNS + '<button type="button" class="sk-btn" data-act="dup" title="Ctrl+D">Duplicate</button><button type="button" class="sk-btn" data-act="lock" title="Stop this item being moved by accident">Lock</button><button type="button" class="sk-btn danger" data-act="del">Delete</button>';
     p.innerHTML = h;
     if ($("skp-kind")) $("skp-kind").value = it.kind;
@@ -972,6 +1015,11 @@
     liveEdit("skp-mask", function (it, el) { it.mask = el.checked; });
     liveEdit("skp-unit", function (it, el) { it.unit = el.value || undefined; });
     liveEdit("skp-border", function (it, el) { it.border = el.checked; });
+    liveEdit("skp-rfill", function (it, el) { it.fill = el.checked; });
+    liveEdit("skp-ilabel", function (it, el) { it.label = el.value; });
+    liveEdit("skp-ik", function (it, el) { it.k = +el.value; });
+    liveEdit("skp-isrc", function (it, el) { it.nosrc = !el.checked; });
+    liveEdit("skp-imap", function (it, el) { it.map = el.checked; });
     liveEdit("skp-len", function (it, el) { var v = parseFloat(el.value); if (!(v > 0)) return; var n = norm(it), L = fromM(v); it.x2 = r1(it.x1 + n.dx * L); it.y2 = r1(it.y1 + n.dy * L); });
     liveEdit("skp-rw", function (it, el) { var v = parseFloat(el.value); if (!(v > 0)) return; it.x2 = r1(it.x1 + (it.x2 >= it.x1 ? 1 : -1) * fromM(v)); });
     liveEdit("skp-rh", function (it, el) { var v = parseFloat(el.value); if (!(v > 0)) return; it.y2 = r1(it.y1 + (it.y2 >= it.y1 ? 1 : -1) * fromM(v)); });
@@ -1072,7 +1120,7 @@
     if (e.button !== 0) return;
     measureK();
     var p = world(e), d = doc(), t = tool[mode];
-    if (mapMode && d.map) { e.preventDefault(); try { svg.setPointerCapture(e.pointerId); } catch (er) {} drag = mapMode === "pan" ? { type: "mappan", start: p, e0: d.map.e, n0: d.map.n } : { type: "mapbox", start: p }; return; }
+    if (mapMode && d.map) { e.preventDefault(); try { svg.setPointerCapture(e.pointerId); } catch (er) {} if (mapMode === "catch") { setMapMode("catch"); findCatchment(p); return; } drag = mapMode === "pan" ? { type: "mappan", start: p, e0: d.map.e, n0: d.map.n } : mapMode === "sect" ? { type: "mapsect", start: p } : { type: "mapbox", start: p }; return; }
     var tbc = e.target.closest("[data-tb]"); if (tbc && !pend) { e.preventDefault(); openTB(tbc.dataset.tb); return; }
     if (tbKey) closeTB(true);
     try { svg.setPointerCapture(e.pointerId); } catch (er) {}
@@ -1113,6 +1161,7 @@
     status("");
     if (t === "pen") { drag = { type: "pen", item: base("stroke", { pts: [[r1(p.x), r1(p.y)]], w: style.w, ls: style.ls }) }; drag.el = document.createElementNS(NS, "g"); gLive.appendChild(drag.el); drag.el.innerHTML = draw(drag.item); return; }
     if (t === "eraser") { begin(); drag = { type: "erase" }; eraseAt(e); return; }
+    if (t === "inset") { drag = { type: "inset0", start: p }; return; }
     if (t === "hatch") {
       var sp = snapPt(p);
       if (pend) {
@@ -1221,6 +1270,8 @@
         if (hh === "p1" || hh === "p2") { var q = snapPt(p, { skip: it.id }); var other = hh === "p1" ? { x: it.x2, y: it.y2 } : { x: it.x1, y: it.y1 }; if (e.shiftKey) q = constrain(other, q); it[hh === "p1" ? "x1" : "x2"] = q.x; it[hh === "p1" ? "y1" : "y2"] = q.y; }
         else if (hh === "off") { var nn = norm(it); it.o = r1((p.x - it.x1) * nn.nx + (p.y - it.y1) * nn.ny); }
         else if (hh === "anc") { var tg = itemAt(e, it.id); it.att = makeAttach(tg, p); var ap = tg ? p : snapPt(p); it.ax = r1(ap.x); it.ay = r1(ap.y); if (!tg) it.att = null; }
+        else if (hh === "isz" && it.type === "inset") { it.w = r1(Math.max(40, p.x - it.x)); it.h = r1(Math.max(40, p.y - it.y)); }
+        else if (hh === "isrc") { it.sx = r1(p.x); it.sy = r1(p.y); }
         else if (hh === "isz") { var ar0 = drag.orig.h / drag.orig.w, nw = Math.max(10, p.x - it.x); it.w = r1(nw); it.h = r1(e.shiftKey ? Math.max(10, p.y - it.y) : nw * ar0); }
         else if (hh[0] === "v") { var qv = snapPt(p); it.pts[+hh.slice(1)] = [qv.x, qv.y]; }
         replaceItem(it); renderContent(); return;
@@ -1229,6 +1280,10 @@
         if (!e.shiftKey) { var uf = Math.max(0.05, (fx + fy) / 2); fx = fy = uf; } else { fx = Math.max(0.05, fx); fy = Math.max(0.05, fy); }
         drag.orig.forEach(function (o) { replaceItem(scaleItem(o, drag.ax, drag.ay, fx, fy)); }); renderContent(); status("Scale ×" + (+fx.toFixed(2)) + (fx !== fy ? " by ×" + (+fy.toFixed(2)) : "")); return;
       case "mappan": mapPanning = true; var mf = mapFrame(), mpm = doc().map; mpm.e = Math.round(drag.e0 - (p.x - drag.start.x) * mf.mu); mpm.n = Math.round(drag.n0 + (p.y - drag.start.y) * mf.mu); renderAll(); return;
+      case "inset0": case "mapsect":
+        drag.cur = p; gLive.innerHTML = drag.type === "inset0" ? '<rect x="' + r1(Math.min(p.x, drag.start.x)) + '" y="' + r1(Math.min(p.y, drag.start.y)) + '" width="' + r1(Math.abs(p.x - drag.start.x)) + '" height="' + r1(Math.abs(p.y - drag.start.y)) + '" fill="rgba(11,79,108,0.06)" stroke="#0b4f6c" stroke-dasharray="6 4" vector-effect="non-scaling-stroke"/>' : ln(drag.start.x, drag.start.y, p.x, p.y, "#b84a32", 2, "dashed");
+        if (drag.type === "mapsect") status("Section " + fmtM(toM(dist(drag.start, p))) + " long. Let go to draw it.");
+        return;
       case "mapbox": drag.cur = p; gLive.innerHTML = '<rect x="' + r1(Math.min(p.x, drag.start.x)) + '" y="' + r1(Math.min(p.y, drag.start.y)) + '" width="' + r1(Math.abs(p.x - drag.start.x)) + '" height="' + r1(Math.abs(p.y - drag.start.y)) + '" fill="rgba(11,79,108,0.06)" stroke="#0b4f6c" stroke-dasharray="6 4" vector-effect="non-scaling-stroke"/>'; return;
       case "imove": var im = imgById(drag.orig.id); im.x = r1(drag.orig.x + p.x - drag.start.x); im.y = r1(drag.orig.y + p.y - drag.start.y); updImg(im); renderUI(); return;
       case "ih":
@@ -1249,6 +1304,8 @@
     switch (d.type) {
       case "pen": d.el.remove(); addItem(d.item); return;
       case "mappan": mapPanning = false; mapKeyV = ""; renderAll(); persist(); afterMapMove(); mapStatus("Map moved to " + doc().map.e + ", " + doc().map.n + "."); return;
+      case "inset0": gLive.innerHTML = ""; if (d.cur) makeInset(d.start, d.cur); return;
+      case "mapsect": gLive.innerHTML = ""; setMapMode("sect"); if (d.cur && dist(d.cur, d.start) > 20) { var sa = d.start, sb = d.cur; getFine(function (g) { makeSection(sa, sb, g); }); } else mapStatus("Drag a line across the map for the section."); return;
       case "mapbox": gLive.innerHTML = ""; if (d.cur && Math.abs(d.cur.x - d.start.x) > 20 && Math.abs(d.cur.y - d.start.y) > 20) { doc().map.box = [r1(d.start.x), r1(d.start.y), r1(d.cur.x), r1(d.cur.y)]; persist(); renderAll(); afterMapMove(); } setMapMode("box"); return;
       case "marquee": gLive.innerHTML = ""; if (d.cur && Math.abs(d.cur.x - d.start.x) + Math.abs(d.cur.y - d.start.y) > 4) setSel(d.base.concat(inBox(d.start, d.cur))); else if (!d.add) setSel([]); return;
       case "seg": renderLive(); if (Math.hypot(d.temp.x2 - d.temp.x1, d.temp.y2 - d.temp.y1) < 6) return; var it = addItem(d.temp); if (it.type !== "line") selectAfterCreate(it); if (it.type === "udl" || it.type === "dim") setTimeout(function () { var el = $("skp-label"); if (el) el.focus({ preventScroll: true }); }, 0); return;
@@ -1275,6 +1332,7 @@
     if (e.key === "Enter" && pend) { e.preventDefault(); if (pend.poly) finishPoly(); else finishHatch(); return; }
     if ((e.key === "f" || e.key === "F") && !mod && !e.altKey) { e.preventDefault(); setFull(!isFull()); return; }
     if (e.key === "Escape" && app.classList.contains("sk-full") && !pend && !sel) { setFull(false); return; }
+    if (e.key === "Escape" && mapMode) { setMapMode(mapMode); mapStatus(""); return; }
     if (e.key === "Escape") { if (pend) { pend = null; renderLive(); } else selectItem(null); return; }
     if (mod && e.key.toLowerCase() === "a") { e.preventDefault(); if (!doc().showDraw) return; setTool("select"); setSel(doc().items.filter(function (x) { return !locked(x); })); return; }
     if (mod && e.key.toLowerCase() === "c") { if (copySel()) e.preventDefault(); return; }
@@ -1341,7 +1399,7 @@
     var d = doc(), G = geo(), c = contentStr(true);
     return '<svg xmlns="' + NS + '" xmlns:xlink="http://www.w3.org/1999/xlink" width="' + G.W + '" height="' + G.H + '" viewBox="0 0 ' + G.W + " " + G.H + '">' +
       "<defs>" + (d.grid ? gridDefs() : "") + c.defs + "</defs>" + '<rect width="' + G.W + '" height="' + G.H + '" fill="#fff"/>' +
-      mapStr(true) + (d.showUnder ? underStr() : "") + (d.grid ? gridStr() : "") + (d.showDraw ? c.s : "") + frameStr(true) + "</svg>";
+      '<g id="sk-mapg">' + mapStr(true) + "</g>" + (d.showUnder ? underStr() : "") + (d.grid ? gridStr() : "") + (d.showDraw ? c.s : "") + frameStr(true) + "</svg>";
   }
   function onSheet(i, fn) { var keep = S.cur; S.cur = i; try { return fn(); } finally { S.cur = keep; } }
   function fname(ext, all) { var t = doc().tb, s = all ? (t.project || "sketches") : [t.ref, t.title].filter(Boolean).join(" "); s = s.replace(/[^\w\- ]+/g, "").trim().replace(/\s+/g, "-"); return (s || "sketch") + "." + ext; }
@@ -1613,6 +1671,7 @@
       if (!g2) { mapStatus("That terrain grid doesn't overlap the map area. Recentre the map on " + Math.round(ce) + ", " + Math.round(cn) + " or remove the map and load the file again."); return; }
       var c = traceContours(g2, iv, m.e, m.n);
       if (!c) { mapStatus("The grid has no values in the map area."); return; }
+      var Wd = C.x1 - C.x0, Hd = C.y1 - C.y0; terrain = { sheet: d, fine: g2, wide: cropGrid(g, C.x0 - Wd, C.y0 - Hd, C.x1 + Wd, C.y1 + Hd) || g2, file: true };
       c.src = f.name; m.c = c; m.cont = true; m.csrc = "file"; persist(); syncControls(); renderAll(); renderProps();
       mapStatus(c.lines.length + " contours every " + c.iv + " m from " + f.name + " (" + g.cell + " m cells)" + (placed ? "." : ", with the map placed over it at 1:" + d.dscale + "."));
     };
@@ -1646,7 +1705,7 @@
   }
   /* moving the map and limiting it to an area are done by dragging on the sheet */
   var mapMode = null, mapPanning = false;
-  function setMapMode(mm) { mapMode = mapMode === mm ? null : mm; $("sk-mappan").setAttribute("aria-pressed", mapMode === "pan"); $("sk-mapbox").setAttribute("aria-pressed", mapMode === "box"); stage.dataset.map = mapMode || ""; if (mapMode) mapStatus(mapMode === "pan" ? "Drag on the sheet to move the map. Your drawing stays where it is. Click Move map again to finish." : "Drag a box on the sheet for the map area."); }
+  function setMapMode(mm) { mapMode = mapMode === mm ? null : mm; $("sk-mappan").setAttribute("aria-pressed", mapMode === "pan"); $("sk-mapbox").setAttribute("aria-pressed", mapMode === "box"); $("sk-mapsect").setAttribute("aria-pressed", mapMode === "sect"); $("sk-mapcatch").setAttribute("aria-pressed", mapMode === "catch"); stage.dataset.map = mapMode || ""; if (mapMode === "sect" || mapMode === "catch") mapStatus(mapMode === "sect" ? "Drag a line across the map where you want the ground section." : "Click on a ditch, stream or low point. The land that drains to it is outlined. It can take a few seconds."); else if (mapMode) mapStatus(mapMode === "pan" ? "Drag on the sheet to move the map. Your drawing stays where it is. Click Move map again to finish." : "Drag a box on the sheet for the map area."); }
   $("sk-mappan").addEventListener("click", function () { if (!doc().map) { mapStatus("Place the map first."); return; } setMapMode("pan"); });
   $("sk-mapbox").addEventListener("click", function () { if (!doc().map) { mapStatus("Place the map first."); return; } setMapMode("box"); });
   $("sk-mapall").addEventListener("click", function () { var m = doc().map; if (!m) return; delete m.box; persist(); renderAll(); afterMapMove(); });
@@ -1677,7 +1736,7 @@
     mapStatus((auto ? "The sketch was not to scale, so it is now 1:500; change the scale to zoom the map. " : "") + "Map centred on " + d.map.e + ", " + d.map.n + ".");
     if (d.map.cont !== false) { if (d.map.csrc !== "file") fetchContours(); } refreshLayers();
   }
-  function fetchContours() {
+  function fetchContours(cb) {
     var d = doc(), m = d.map, F = mapFrame(); if (!m || !d.dscale) return;
     var CM = mapClipM(), Wm = CM.x1 - CM.x0, Hm = CM.y1 - CM.y0, mcx = (CM.x0 + CM.x1) / 2, mcy = (CM.y0 + CM.y1) / 2;
     if (Math.max(Wm, Hm) > 6000) { mapStatus("The sheet covers more than 6 km at this scale, too much LiDAR to fetch. Pick a larger scale (smaller number) for contours."); return; }
@@ -1688,11 +1747,158 @@
     fetch(url).then(function (r) { if (!r.ok) throw new Error("the EA service answered " + r.status); return r.text(); }).then(function (t) {
       var g = R.parseWcsText(t), c = traceContours(g, iv, m.e, m.n);
       if (!sheet.map || sheet.map.e + "," + sheet.map.n !== key) return;
+      terrain = { sheet: sheet, fine: g, wide: terrain && terrain.sheet === sheet && !terrain.file ? terrain.wide : null };
+      if (cb) cb(g);
       if (!c) { mapStatus("No LiDAR came back for this spot. The EA's LiDAR covers England only, and has a few gaps."); return; }
       c.src = "EA LiDAR DTM © Environment Agency (OGL)"; sheet.map.c = c; sheet.map.csrc = "ea"; persist(); renderAll();
       mapStatus(c.lines.length + " contour lines every " + c.iv + " m" + (c.iv !== iv ? " (widened from " + iv + " m: the ground is steep here)" : "") + ", from the EA's LiDAR terrain model.");
     }).catch(function (err) { mapStatus("Couldn't fetch LiDAR: " + err.message + ". The EA service may be busy; try again. LiDAR covers England only."); });
   }
+
+  /* ---------- From the terrain: sections, catchments and fall arrows ----------
+     The last terrain grid is kept in memory (not saved): "fine" is the one the contours came from,
+     "wide" a larger, coarser one fetched round a clicked point for catchments. */
+  var terrain = null;
+  function w2bng(p) { var m = doc().map, F = mapFrame(); return { e: m.e + (p.x - F.cx) * F.mu, n: m.n - (p.y - F.cy) * F.mu }; }
+  function bng2w(e, n) { var m = doc().map, F = mapFrame(); return { x: F.cx + (e - m.e) / F.mu, y: F.cy - (n - m.n) / F.mu }; }
+  function zAt(g, E, N) { /* bilinear, NaN off the grid or in a gap */
+    var top = g.y0 + g.ny * g.cell, fx = (E - g.x0) / g.cell - 0.5, fy = (top - N) / g.cell - 0.5, i = Math.floor(fx), j = Math.floor(fy);
+    if (i < 0 || j < 0 || i >= g.nx - 1 || j >= g.ny - 1) return NaN;
+    var tx = fx - i, ty = fy - j, z = g.z, n = g.nx, a = z[j * n + i], b = z[j * n + i + 1], c = z[(j + 1) * n + i], d = z[(j + 1) * n + i + 1];
+    return (a * (1 - tx) + b * tx) * (1 - ty) + (c * (1 - tx) + d * tx) * ty;
+  }
+  function niceStep(range, n) { var t = range / Math.max(1, n), L = [0.05, 0.1, 0.2, 0.25, 0.5, 1, 2, 2.5, 5, 10, 20, 25, 50, 100, 200, 250, 500, 1000, 2000, 5000]; for (var i = 0; i < L.length; i++) if (L[i] >= t) return L[i]; return 10000; }
+  function getFine(cb) {
+    var d = doc(); if (!d.map) { mapStatus("Place the map first."); return; }
+    if (terrain && terrain.sheet === d && terrain.fine) return cb(terrain.fine);
+    if (d.map.csrc === "file") { mapStatus("Load your LiDAR file again: files aren't kept once the page reloads."); return; }
+    fetchContours(cb);
+  }
+  function getWide(c, cb) {
+    var d = doc();
+    if (terrain && terrain.sheet === d && terrain.file) return cb(terrain.wide);
+    var w = terrain && terrain.sheet === d && terrain.wide;
+    if (w) { var fx = (c.e - w.x0) / (w.nx * w.cell), fy = (c.n - w.y0) / (w.ny * w.cell); if (fx > 0.25 && fx < 0.75 && fy > 0.25 && fy < 0.75) return cb(w); }
+    var CM = mapClipM(), ext = Math.max(800, Math.min(5000, 3 * Math.max(CM.x1 - CM.x0, CM.y1 - CM.y0))), cell = Math.max(1, Math.ceil(ext / 450)), n = Math.ceil(ext / cell), x0 = Math.round(c.e - n * cell / 2), y0 = Math.round(c.n - n * cell / 2);
+    var R = RO(), url = R.EA_WCS + "?service=WCS&version=2.0.1&request=GetCoverage&coverageId=" + R.EA_COVERAGE + "&subset=E(" + x0 + "," + (x0 + n * cell) + ")&subset=N(" + y0 + "," + (y0 + n * cell) + ")&scaleSize=i(" + n + "),j(" + n + ")&format=text%2Fplain";
+    mapStatus("Fetching " + (n * cell / 1000).toFixed(1) + " km of LiDAR round that point from the Environment Agency (" + cell + " m cells)…");
+    fetch(url).then(function (r) { if (!r.ok) throw new Error("the EA service answered " + r.status); return r.text(); }).then(function (t) {
+      var g = R.parseWcsText(t); terrain = { sheet: d, fine: terrain && terrain.sheet === d ? terrain.fine : null, wide: g }; cb(g);
+    }).catch(function (er) { mapStatus("Couldn't fetch LiDAR: " + er.message + ". The EA's LiDAR covers England only."); });
+  }
+  function terrainSrc() { var m = doc().map; return m && m.csrc === "file" && m.c && m.c.src ? m.c.src : "EA LiDAR DTM © Environment Agency (OGL)"; }
+
+  /* A ground section along a line drawn on the map: horizontal at the drawing scale (or smaller, to fit),
+     vertical exaggerated so the relief reads, with chainage and level rows. */
+  function makeSection(A, B, g) {
+    var d = doc(); if (!d.map || !g) return;
+    var a = w2bng(A), b = w2bng(B), Lm = Math.hypot(b.e - a.e, b.n - a.n), nS = Math.max(20, Math.min(400, Math.round(Lm / (g.cell / 2)))), pr = [], i;
+    var zf = function (ch) { var t = ch / Lm; return zAt(g, a.e + (b.e - a.e) * t, a.n + (b.n - a.n) * t); };
+    for (i = 0; i <= nS; i++) pr.push([Lm * i / nS, zf(Lm * i / nS)]);
+    var zs = pr.map(function (q) { return q[1]; }).filter(function (z) { return z === z; });
+    if (zs.length < 2) { mapStatus("There's no terrain along that line. Fetch EA LiDAR or load a LiDAR file that covers it."); return; }
+    var zmn = Math.min.apply(null, zs), zmx = Math.max.apply(null, zs), I = geo().inner, N = d.dscale || 500;
+    var Hs = N; if (Lm * 4000 / Hs > I.w * 0.75) Hs = SCALES.filter(function (n) { return Lm * 4000 / n <= I.w * 0.75; })[0] || 10000;
+    var R = Math.max(zmx - zmn, 0.5), Vs = SCALES.filter(function (n) { return R * 4000 / n <= 160; })[0] || Hs; if (Vs > Hs) Vs = Hs;
+    var hu = 4000 / Hs, vu = 4000 / Vs, ls = niceStep(R, Math.max(2, Math.floor(R * vu / 24))), datum = Math.floor((zmn - ls * 0.5) / ls) * ls, ztop = Math.ceil((zmx + ls * 0.2) / ls) * ls;
+    var W = Lm * hu, Hh = (ztop - datum) * vu, x0 = I.x + (I.w - W) / 2 + 50, yb = r1((A.y + B.y) / 2 < I.y + I.h / 2 ? I.y + I.h - 130 : I.y + 50 + Hh); /* on the other half of the sheet from the line */
+    var X = function (ch) { return r1(x0 + ch * hu); }, Y = function (z) { return r1(yb - (z - datum) * vu); };
+    var gid = "sec" + Date.now().toString(36), C = "#15233a", G2 = "#8a94a6", out = [], lab = nextSectionLetter();
+    var add = function (type, ex) { ex.g = gid; if (!ex.c) ex.c = C; out.push(base(type, ex)); };
+    var addT = function (x, y, t, sz, ex) { ex = ex || {}; ex.x = r1(x); ex.y = r1(y); ex.text = t; ex.size = sz; add("text", ex); };
+    add("rect", { x1: r1(X(0) - 150), y1: r1(Y(ztop) - 24), x2: r1(X(Lm) + 24), y2: r1(yb + 90), w: 1, ls: "solid", c: "#c9d1dc", fill: true });
+    var run = [], flush = function () { if (run.length > 1) add("poly", { pts: run, open: true, w: 4, ls: "solid" }); run = []; };
+    pr.forEach(function (q) { if (q[1] === q[1]) run.push([X(q[0]), Y(q[1])]); else flush(); }); flush();
+    add("line", { x1: X(0), y1: yb, x2: X(Lm), y2: yb, w: 1, ls: "solid" });
+    add("line", { x1: X(0), y1: yb, x2: X(0), y2: Y(ztop), w: 1, ls: "solid" });
+    for (var z = datum + ls; z <= ztop + 1e-6; z += ls) { var zl = z.toFixed(ls < 1 ? 2 : 1); add("line", { x1: X(0) - 8, y1: Y(z), x2: X(0), y2: Y(z), w: 1, ls: "solid" }); addT(X(0) - 12 - tw(zl, 11), Y(z) - 5, zl, 11); }
+    var cs = niceStep(Lm, Math.max(2, Math.floor(W / 70)));
+    for (var ch = 0; ch <= Lm + 1e-6; ch += cs) {
+      var zc = zf(ch), cl = ch.toFixed(cs < 1 ? 1 : 0), zt = zc === zc ? zc.toFixed(2) : "–";
+      add("line", { x1: X(ch), y1: yb, x2: X(ch), y2: yb + 6, w: 1, ls: "solid" });
+      if (zc === zc && ch > 0) add("line", { x1: X(ch), y1: Y(zc), x2: X(ch), y2: yb, w: 1, ls: "dotted", c: G2 });
+      addT(X(ch) - tw(cl, 10) / 2, yb + 10, cl, 10); addT(X(ch) - tw(zt, 10) / 2, yb + 28, zt, 10);
+    }
+    addT(X(0) - 30 - tw("Chainage (m)", 10), yb + 10, "Chainage (m)", 10); addT(X(0) - 30 - tw("Ground (m AOD)", 10), yb + 28, "Ground (m AOD)", 10);
+    var ve = Hs / Vs;
+    addT(X(0), yb + 50, "SECTION " + lab + "–" + lab, 16, { bold: true });
+    addT(X(0), yb + 72, "Ground from " + terrainSrc() + ". Horizontal 1:" + Hs + ", vertical 1:" + Vs + (ve > 1 ? " (×" + (Math.round(ve * 10) / 10) + ")" : "") + ". Datum " + datum.toFixed(2) + " m AOD. Indicative only.", 10);
+    var mk = base("section", { x1: r1(A.x), y1: r1(A.y), x2: r1(B.x), y2: r1(B.y), label: lab });
+    begin(); d.items.push(mk); out.forEach(function (x) { d.items.push(x); }); commit(); persist();
+    setSel(out);
+    mapStatus("Section " + lab + "–" + lab + " drawn: " + Math.round(Lm) + " m long, ground from " + zmn.toFixed(2) + " to " + zmx.toFixed(2) + " m AOD" + (zs.length < pr.length ? ", with gaps where there's no LiDAR" : "") + ". It's selected, so drag it where you want it.");
+  }
+
+  function clipRect(P, x0, y0, x1, y1) { /* Sutherland–Hodgman against an axis-aligned box */
+    [[0, x0, 1], [0, x1, -1], [1, y0, 1], [1, y1, -1]].forEach(function (E) {
+      var a = E[0], v = E[1], sg = E[2], out = [], ins = function (q) { return (q[a] - v) * sg >= 0; };
+      for (var i = 0; i < P.length; i++) {
+        var cur = P[i], prev = P[(i + P.length - 1) % P.length], ci = ins(cur), pi = ins(prev);
+        if (ci !== pi) { var t = (v - prev[a]) / (cur[a] - prev[a]), q = [prev[0] + (cur[0] - prev[0]) * t, prev[1] + (cur[1] - prev[1]) * t]; out.push([r1(q[0]), r1(q[1])]); }
+        if (ci) out.push(cur);
+      }
+      P = out;
+    });
+    return P;
+  }
+  /* The land draining to a clicked point, from a depression-filled D8 flow model of the LiDAR. */
+  function findCatchment(p) {
+    var d = doc(); if (!d.map) return; var c = w2bng(p);
+    getWide(c, function (g) {
+      if (doc() !== d || !d.map) return;
+      var R = RO(), top = g.y0 + g.ny * g.cell, i = Math.floor((c.e - g.x0) / g.cell), j = Math.floor((top - c.n) / g.cell);
+      if (i < 0 || j < 0 || i >= g.nx || j >= g.ny || isNaN(g.z[j * g.nx + i])) { mapStatus("There's no terrain at that point. EA LiDAR covers England only."); return; }
+      mapStatus("Working out where the water goes…");
+      setTimeout(function () {
+        if (!g.an) g.an = R.analyse(g);
+        var outlet = R.snap(g, g.an, j * g.nx + i, Math.max(2, Math.round(10 / g.cell))), cat = R.catchment(g, g.an, outlet);
+        if (cat.cells < 4) { mapStatus("Hardly any land drains to that point. Click on the line of a ditch or stream, or the lowest point of a hollow."); return; }
+        var nx = g.nx + 2, ny = g.ny + 2, z = new Float32Array(nx * ny).fill(-0.5);
+        for (var jj = 0; jj < g.ny; jj++) for (var ii = 0; ii < g.nx; ii++) if (cat.mask[jj * g.nx + ii]) z[(jj + 1) * nx + ii + 1] = 0.5;
+        var tc = traceContours({ nx: nx, ny: ny, cell: g.cell, x0: g.x0 - g.cell, y0: g.y0 - g.cell, z: z }, 1, 0, 0);
+        var loops = (tc ? tc.lines : []).map(function (l) { return l.p.map(function (q) { var w = bng2w(q[0], q[1]); return [r1(w.x), r1(w.y)]; }); }).filter(function (l) { return l.length > 3; });
+        if (!loops.length) { mapStatus("Couldn't outline that catchment."); return; }
+        var CI = mapClipM().I, inI = function (q) { return q[0] >= CI.x && q[0] <= CI.x + CI.w && q[1] >= CI.y && q[1] <= CI.y + CI.h; };
+        loops = loops.map(function (l) { return clipRect(l, CI.x, CI.y, CI.x + CI.w, CI.y + CI.h); }).filter(function (l) { return l.length > 2; });
+        if (!loops.length) { mapStatus("That catchment lies outside the map area."); return; }
+        loops.sort(function (a2, b2) { return shoelace(b2) - shoelace(a2); });
+        var gid = "cat" + Date.now().toString(36), B = "#3f6fd1", out = [], cell2 = function (k2) { var w = bng2w(g.x0 + (k2 % g.nx + 0.5) * g.cell, top - (Math.floor(k2 / g.nx) + 0.5) * g.cell); return [r1(w.x), r1(w.y)]; };
+        out.push(base("hatch", { pts: loops[0], holes: loops.slice(1), pat: "diag", ps: 2, outline: true, w: 2, ls: "dashed", c: B, g: gid }));
+        var fp = dpS(cat.path.map(cell2).filter(inI), Math.max(1, g.cell / mapFrame().mu * 0.6));
+        if (fp.length > 1) {
+          out.push(base("poly", { pts: fp, open: true, w: 2, ls: "solid", c: "#0d6b78", g: gid }));
+          var q1 = fp[fp.length - 2], q2 = fp[fp.length - 1]; out.push(base("arrow", { x1: q1[0], y1: q1[1], x2: q2[0], y2: q2[1], w: 2, ls: "solid", c: "#0d6b78", g: gid }));
+        }
+        var A = cat.area, fall = cat.zTop - cat.zOut, at = A >= 10000 ? (A / 10000).toFixed(2) + " ha" : Math.round(A) + " m²";
+        var tl = ["Catchment " + at + " (" + (A / 1e6).toFixed(3) + " km²)", "Longest flow path " + Math.round(cat.L) + " m, fall " + fall.toFixed(1) + " m" + (fall > 0.05 ? " (1:" + Math.round(cat.L / fall) + ")" : "")];
+        var cx = 0, cy = 0; loops[0].forEach(function (q) { cx += q[0]; cy += q[1]; }); cx /= loops[0].length; cy /= loops[0].length;
+        var twm = Math.max(tw(tl[0], 12), tw(tl[1], 12));
+        out.push(base("text", { x: r1(cx - twm / 2), y: r1(cy - 15), text: tl.join("\n"), size: 12, mask: true, c: "#15233a", g: gid }));
+        begin(); out.forEach(function (x) { d.items.push(x); }); commit(); persist(); setSel(out);
+        mapStatus("Catchment of " + at + " found from " + g.cell + " m LiDAR cells; the click was moved onto the nearest flow line. " + (cat.touchesEdge ? "It runs off the edge of the terrain fetched, so the real catchment is bigger: pick a smaller drawing scale (a larger number) and try again, or load a larger LiDAR file. " : "") + "Indicative only: drains, culverts and buildings aren't in the terrain model, so check it on site.");
+      }, 30);
+    });
+  }
+
+  /* Arrows pointing down the steepest fall across the map area, labelled with the gradient. */
+  function fallArrows(g) {
+    var d = doc(); if (!d.map) return;
+    var F = mapFrame(), I = mapClipM().I, sp = 120, hm = Math.max(g.cell * 2, sp * F.mu / 4), out = [], gid = "fa" + Date.now().toString(36), C = "#0d6b78";
+    for (var y = I.y + sp / 2; y < I.y + I.h; y += sp) for (var x = I.x + sp / 2; x < I.x + I.w; x += sp) {
+      var c = w2bng({ x: x, y: y }), zx1 = zAt(g, c.e - hm, c.n), zx2 = zAt(g, c.e + hm, c.n), zy1 = zAt(g, c.e, c.n - hm), zy2 = zAt(g, c.e, c.n + hm);
+      if (!(zx1 === zx1 && zx2 === zx2 && zy1 === zy1 && zy2 === zy2)) continue;
+      var gx = (zx2 - zx1) / (2 * hm), gy = (zy2 - zy1) / (2 * hm), s = Math.hypot(gx, gy); if (s < 0.002) continue;
+      var ux = -gx / s, uy = gy / s, L = 28, n = 1 / s, lab = "1:" + (n < 10 ? (Math.round(n * 10) / 10) : Math.round(n));
+      out.push(base("arrow", { x1: r1(x - ux * L), y1: r1(y - uy * L), x2: r1(x + ux * L), y2: r1(y + uy * L), w: 1.5, ls: "solid", c: C, g: gid }));
+      out.push(base("text", { x: r1(x - uy * 14 - tw(lab, 10) / 2), y: r1(y + ux * 14 - 5), text: lab, size: 10, mask: true, c: C, g: gid }));
+    }
+    if (!out.length) { mapStatus("The ground in the map area is flat (flatter than 1:500) or has no terrain."); return; }
+    begin(); out.forEach(function (it) { d.items.push(it); }); commit(); persist(); setSel(out);
+    mapStatus(out.length / 2 + " fall arrows added, pointing downhill and labelled with the gradient over about " + Math.round(2 * hm) + " m. They're grouped: select one to move or delete them all.");
+  }
+  $("sk-mapsect").addEventListener("click", function () { if (!doc().map) { mapStatus("Place the map first."); return; } setMapMode("sect"); });
+  $("sk-mapcatch").addEventListener("click", function () { if (!doc().map) { mapStatus("Place the map first."); return; } if (!doc().dscale) { mapStatus("Set a drawing scale first."); return; } setMapMode("catch"); });
+  $("sk-mapfall").addEventListener("click", function () { if (!doc().map) { mapStatus("Place the map first."); return; } getFine(fallArrows); });
 
   /* ---------- DXF export ----------
      Writes an AutoCAD R12 (AC1009) ASCII DXF, which every CAD package reads. Each item is drawn to a
@@ -1787,7 +1993,7 @@
         }
       });
     }
-    var layers = {}, skipped = 0;
+    var layers = {}, skipped = 0, insetSkipped = 0;
     try {
       if (d.showDraw) d.items.forEach(function (it) {
         var L = DXF_LAYER[it.type] || "SK-OTHER", col = aci(it.c || "#15233a"); layers[L] = 1;
@@ -1797,6 +2003,7 @@
           hatchLines(it, L, col); if (!HP[it.pat]) skipped++;
           return;
         }
+        if (it.type === "inset") { insetSkipped++; layers["SK-DETAILS"] = 1; walk(insetFrame(it), "SK-DETAILS"); return; }
         walk(draw(it), L, it.ls);
       });
       if (d.map && d.map.show !== false && d.map.cont !== false && d.map.c && d.dscale) {
@@ -1817,7 +2024,7 @@
     Object.keys(layers).forEach(function (L) { tb.push("0", "LAYER", "2", L, "70", "0", "62", L === "SK-WATERMARK" ? "9" : L === "SK-HATCH" || L === "SK-HATCH-BOUNDARY" ? "8" : "7", "6", "CONTINUOUS"); });
     tb.push("0", "ENDTAB", "0", "TABLE", "2", "STYLE", "70", "1", "0", "STYLE", "2", "STANDARD", "70", "0", "40", "0", "41", "1", "50", "0", "71", "0", "42", "2.5", "3", "txt", "4", "", "0", "ENDTAB", "0", "ENDSEC");
     var all = hd.concat(tb, ["0", "SECTION", "2", "ENTITIES"], out, ["0", "ENDSEC", "0", "EOF"]);
-    var note = (d.map && d.map.osm !== false ? "The OpenStreetMap backdrop isn't included in the DXF. " : "") + "DXF saved: " + n + " objects on " + Object.keys(layers).length + " layers, in millimetres " + (d.dscale ? "at true size (1:" + N + ")." : "at paper size (the sketch is not to scale).") + " Line weights, images and the underlay aren't included." + (skipped ? " Concrete, sand, granular and solid hatches come out as their boundary only." : "");
+    var note = (d.map && d.map.osm !== false ? "The OpenStreetMap backdrop isn't included in the DXF. " : "") + "DXF saved: " + n + " objects on " + Object.keys(layers).length + " layers, in millimetres " + (d.dscale ? "at true size (1:" + N + ")." : "at paper size (the sketch is not to scale).") + " Line weights, images and the underlay aren't included." + (insetSkipped ? " Detail windows go in as their frame and title only." : "") + (skipped ? " Concrete, sand, granular and solid hatches come out as their boundary only." : "");
     return { text: all.join("\r\n") + "\r\n", note: note, count: n };
   }
 
