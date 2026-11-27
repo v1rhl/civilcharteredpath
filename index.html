@@ -857,6 +857,16 @@ nav a[aria-current="page"][aria-expanded="true"] { color: var(--accent-ink); bac
 #view-sketch.wrap { max-width: 1320px; }
 #view-sketch .view-head .eyebrow a { color: inherit; text-decoration: none; }
 .sk-app { display: flex; flex-direction: column; gap: 10px; }
+.sk-head { display: flex; flex-direction: column; gap: 8px; position: sticky; top: var(--sk-top, 56px); z-index: 4; background: var(--paper); padding: 8px 0; margin-top: -8px; border-bottom: 1px solid var(--line); }
+.sk-tabs { display: flex; flex-wrap: wrap; gap: 4px; align-items: flex-end; margin-bottom: -11px; position: relative; z-index: 1; padding-left: 8px; }
+.sk-tab { display: inline-flex; align-items: center; border: 1px solid var(--line); border-bottom-color: transparent; border-radius: var(--radius) var(--radius) 0 0; background: var(--paper); }
+.sk-tab.on { background: #e9edec; border-color: var(--line); border-bottom-color: #e9edec; }
+.sk-tab button { font: 600 0.82rem var(--font-body); border: 0; background: transparent; color: var(--ink); padding: 6px 10px; cursor: pointer; display: inline-flex; gap: 6px; align-items: baseline; }
+.sk-tab small { font-weight: 400; color: var(--muted); }
+.sk-tab.on [role="tab"] { color: #15233a; } .sk-tab.on small { color: #5a6677; }
+.sk-tab .sk-tabx { padding: 4px 8px 4px 0; color: var(--muted); font-size: 1rem; line-height: 1; }
+.sk-tabadd { font: 600 0.82rem var(--font-body); border: 1px dashed var(--line); background: transparent; color: var(--accent); padding: 5px 10px; border-radius: var(--radius) var(--radius) 0 0; cursor: pointer; }
+@media (max-width: 760px) { .sk-head { position: static; } }
 .sk-top, .sk-style, .sk-toolrow, .sk-props { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; }
 .sk-top { justify-content: space-between; }
 .sk-sheets, .sk-actions, .sk-group, .sk-layers { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
@@ -870,6 +880,16 @@ nav a[aria-current="page"][aria-expanded="true"] { color: var(--accent-ink); bac
 .sk-btn.danger { color: var(--review); }
 .sk-app select { padding: 6px 8px; font-size: 0.88rem; }
 .sk-tools { display: flex; flex-wrap: wrap; gap: 4px; background: var(--tool-bg); border: 1px solid var(--tool-line); border-radius: var(--radius); padding: 4px; }
+.sk-tools2 .sk-tool { min-width: 54px; }
+.sk-mappanel { border: 1px solid var(--tool-line); background: var(--tool-bg); border-radius: var(--radius); padding: 8px 10px; margin-top: 8px; }
+.sk-maprow { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; }
+.sk-mappanel p { margin: 6px 0 0; }
+.sk-snapwrap { display: inline-flex; align-items: center; gap: 6px; position: relative; }
+.sk-snapmenu summary { cursor: pointer; font-size: 0.85rem; color: var(--accent); list-style: none; padding: 4px 8px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); }
+.sk-snapmenu summary::-webkit-details-marker { display: none; }
+.sk-snapmenu[open] > div { position: absolute; z-index: 20; top: calc(100% + 4px); left: 0; display: grid; gap: 6px; min-width: 210px; padding: 10px 12px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: 0 6px 20px rgba(0,0,0,.12); }
+.sk-snapmenu p { margin: 4px 0 0; }
+.sk-toolrow { align-items: stretch; }
 .sk-tool { display: inline-flex; flex-direction: column; align-items: center; gap: 2px; min-width: 62px; font: 600 0.72rem var(--font-body); border: 1px solid transparent; background: transparent; color: var(--ink); padding: 5px 6px; border-radius: calc(var(--radius) - 2px); cursor: pointer; }
 .sk-tool svg { width: 22px; height: 22px; }
 .sk-tool:hover { background: var(--surface); }
@@ -888,8 +908,7 @@ nav a[aria-current="page"][aria-expanded="true"] { color: var(--accent-ink); bac
 .sk-check input[type="number"] { padding: 4px 6px; }
 .sk-layers { padding-left: 10px; border-left: 1px solid var(--line); }
 .sk-stage { position: relative; background: #e9edec; border: 1px solid var(--line); border-radius: var(--radius); padding: 10px; }
-.sk-stage.port #sk-svg { max-width: min(860px, calc((100vh - 60px) * 0.7071)); }
-#sk-svg { display: block; width: 100%; max-width: calc((100vh - 60px) * 1.4143); margin: 0 auto; height: auto; background: #fff; box-shadow: 0 1px 4px rgba(0,0,0,.18); touch-action: none; user-select: none; -webkit-user-select: none; }
+#sk-svg { display: block; width: 100%; margin: 0 auto; height: auto; background: #fff; box-shadow: 0 1px 4px rgba(0,0,0,.18); touch-action: none; user-select: none; -webkit-user-select: none; }
 .sk-stage[data-tool="pen"] #sk-svg, .sk-stage[data-tool="line"] #sk-svg, .sk-stage[data-tool="member"] #sk-svg, .sk-stage[data-tool="hatch"] #sk-svg, .sk-stage[data-tool="udl"] #sk-svg, .sk-stage[data-tool="dim"] #sk-svg, .sk-stage[data-tool="leader"] #sk-svg { cursor: crosshair; }
 .sk-stage[data-tool="text"] #sk-svg { cursor: text; }
 .sk-stage[data-tool="eraser"] #sk-svg { cursor: cell; }
@@ -2550,8 +2569,8 @@ footer .wrap { font-family: var(--font-body); }
 <script src="js/news-feed.js?v=20261122b"></script>
 <script src="js/news-archive.js?v=20261122b"></script>
 <script src="js/pages.js?v=20261122b"></script>
-<script src="js/tools/sketch-templates.js?v=20261127a"></script>
-<script src="js/tools/sketch.js?v=20261127a"></script>
+<script src="js/tools/sketch-templates.js?v=20261127h"></script>
+<script src="js/tools/sketch.js?v=20261127h"></script>
 <script src="js/tools/hydraulics.js?v=20261127a"></script>
 <script src="js/tools/pipeflow.js?v=20261127a"></script>
 <script src="js/tools/drawing-check.js?v=20261127a"></script>
