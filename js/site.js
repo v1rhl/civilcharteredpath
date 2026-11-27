@@ -574,7 +574,7 @@
   /* Routing on the hash */
   var views = ["home", "route", "careers", "resources", "attributes", "planner", "flashcards", "review", "presentation", "questions", "news", "check", "cheat-sheet", "community", "tools"].concat(toolIds);
   function route() {
-    var v = (location.hash || "#home").slice(1);
+    var v = (location.hash || "#home").slice(1).split("?")[0]; /* tools may pass parameters, e.g. #pipeflow?Q=12 */
     if (v === "reference") { v = "cheat-sheet"; history.replaceState(null, "", "#cheat-sheet"); }
     var am = /^attributes-([1-7])$/.exec(v); if (am) { v = "attributes"; goAttr(+am[1] - 1); }
     if (views.indexOf(v) < 0) v = "home";
@@ -617,7 +617,7 @@
   function closeMenu() { if (!openFor) return; openFor.setAttribute("aria-expanded", "false"); openFor = null; menu.hidden = true; }
   function openMenu(a) {
     closeMenu(); openFor = a; a.setAttribute("aria-expanded", "true");
-    var here = location.hash.slice(1) || "home";
+    var here = location.hash.slice(1).split("?")[0] || "home";
     menu.innerHTML = '<ul role="list">' + MENUS[a.dataset.menu].map(function (x) { return '<li><a href="#' + x[0] + '"' + (x[0] === here ? ' aria-current="page"' : "") + ">" + esc(x[1]) + "</a></li>"; }).join("") + "</ul>";
     menu.hidden = false;
     var bar = menu.parentNode.getBoundingClientRect(), r = a.getBoundingClientRect();
