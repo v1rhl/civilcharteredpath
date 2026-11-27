@@ -35,11 +35,11 @@
     struct: [["select", "Select"], ["member", "Member"], ["pin", "Pin"], ["roller", "Roller"], ["fixed", "Fixed"], ["pload", "Point load"], ["udl", "UDL"], ["moment", "Moment"], ["dim", "Dimension"], ["hatch", "Hatch"], ["text", "Text"], ["leader", "Leader"]]
   };
   var HINTS = {
-    select: "Click something to select it, then drag to move it or drag its round handles. Delete removes it. Click a title block field to edit it.",
+    select: "Click to select, drag a box to select several, Shift or Ctrl click to add or remove. Drag to move, Delete removes, Ctrl+C / Ctrl+V copy and paste, Ctrl+D duplicates, Ctrl+A selects all, Esc clears.",
     pen: "Draw freehand. Ctrl+Z undoes the last stroke.",
     line: "Drag to draw a straight line. Hold Shift to keep it horizontal, vertical or at 45°.",
     eraser: "Drag over anything to rub it out. Locked items are left alone.",
-    hatch: "Drag for a hatched rectangle, or click points round a shape and click the first point (or press Enter) to close it.",
+    hatch: "Click inside any area enclosed by lines or strokes to hatch it (small gaps are bridged, shapes inside are left clear). Or drag for a rectangle. Switch to \"Draw a shape\" to click points round your own outline.",
     text: "Click where the text should go, then type in the box below the sheet.",
     leader: "Press on the point you're labelling and drag to where the note box should sit. Start on a member or symbol and the arrow stays attached to it.",
     member: "Drag to draw a beam or column. Ends snap to the grid and to the ends of other members.",
@@ -94,7 +94,7 @@
   function snap() { var d = doc(); return JSON.stringify({ items: d.items, under: d.under, tb: d.tb, orient: d.orient }); }
   function begin() { if (before === null) before = snap(); }
   function commit() {
-    syncLeaders();
+    syncLeaders(); reHatch();
     var now = snap(), h = H();
     if (before !== null && now !== before) { h.u.push(before); if (h.u.length > 60) h.u.shift(); h.r = []; }
     before = null; persist(); renderAll();
@@ -146,6 +146,7 @@
     for (var i = 1; i < pts.length - 1; i++) { var a = pts[i], b = pts[i + 1]; d += "Q" + a[0] + " " + a[1] + " " + r1((a[0] + b[0]) / 2) + " " + r1((a[1] + b[1]) / 2); }
     var l = pts[pts.length - 1]; return d + "L" + l[0] + " " + l[1];
   }
+  function hpath(it) { return poly(it.pts) + (it.holes || []).map(poly).join(""); }
   function poly(pts) { return "M" + pts.map(function (p) { return p[0] + " " + p[1]; }).join("L") + "Z"; }
   function patId(pat, c) { return "hp-" + pat + "-" + c.replace(/[^0-9a-z]/gi, ""); }
   function patDef(pat, c) {
@@ -192,7 +193,7 @@
       case "stroke": return '<path d="' + smooth(it.pts) + '" fill="none" stroke="' + c + '" stroke-width="' + it.w + '" stroke-linecap="round" stroke-linejoin="round"' + dash(it.ls, it.w) + "/>";
       case "line": case "member": return ln(it.x1, it.y1, it.x2, it.y2, c, it.w, it.ls);
       case "hatch":
-        return '<path d="' + poly(it.pts) + '" fill="url(#' + patId(it.pat, c) + ')" stroke="' + (it.outline ? it.oc || c : "none") + '" stroke-width="' + (it.w || 2) + '" stroke-linejoin="round"' + (it.outline ? dash(it.ls, it.w || 2) : "") + "/>";
+        return '<path d="' + hpath(it) + '" fill-rule="evenodd" fill="url(#' + patId(it.pat, c) + ')" stroke="' + (it.outline ? it.oc || c : "none") + '" stroke-width="' + (it.w || 2) + '" stroke-linejoin="round"' + (it.outline ? dash(it.ls, it.w || 2) : "") + "/>";
       case "support":
         o = '<g transform="translate(' + it.x + " " + it.y + ") rotate(" + (it.rot || 0) + ')" stroke="' + c + '" fill="none" stroke-linecap="round" stroke-linejoin="round">';
         var ground = function (y) { var g = '<path d="M-24 ' + y + "H24"; for (i = -18; i <= 24; i += 8) g += "M" + i + " " + y + "l-7 8"; return g + '" stroke-width="1.6"/>'; };
@@ -247,7 +248,7 @@
       case "line": case "member": return '<line x1="' + it.x1 + '" y1="' + it.y1 + '" x2="' + it.x2 + '" y2="' + it.y2 + '" ' + T + Math.max(w, it.w + 8) + '"/>';
       case "udl": var n = norm(it), sd = it.side === -1 ? -1 : 1; return '<path d="M' + r1(it.x1 + n.nx * sd * 8) + " " + r1(it.y1 + n.ny * sd * 8) + "L" + r1(it.x2 + n.nx * sd * 8) + " " + r1(it.y2 + n.ny * sd * 8) + "L" + r1(it.x2 + n.nx * sd * 42) + " " + r1(it.y2 + n.ny * sd * 42) + "L" + r1(it.x1 + n.nx * sd * 42) + " " + r1(it.y1 + n.ny * sd * 42) + 'Z" fill="transparent" pointer-events="all"/>';
       case "dim": var dn = norm(it), off = it.o == null ? 30 : it.o; return '<line x1="' + r1(it.x1 + dn.nx * off) + '" y1="' + r1(it.y1 + dn.ny * off) + '" x2="' + r1(it.x2 + dn.nx * off) + '" y2="' + r1(it.y2 + dn.ny * off) + '" ' + T + w + '"/>';
-      case "hatch": return '<path d="' + poly(it.pts) + '" fill="transparent" pointer-events="all"/>';
+      case "hatch": return '<path d="' + hpath(it) + '" fill-rule="evenodd" fill="transparent" pointer-events="all"/>';
       case "leader": var A = anchorOf(it); return '<line x1="' + it.bx + '" y1="' + it.by + '" x2="' + A.x + '" y2="' + A.y + '" ' + T + w + '"/>';
       case "text": return "";
       case "pload": var a = (it.ang == null ? 90 : it.ang) * Math.PI / 180; return '<line x1="' + it.x + '" y1="' + it.y + '" x2="' + r1(it.x - Math.cos(a) * 72) + '" y2="' + r1(it.y - Math.sin(a) * 72) + '" ' + T + Math.max(w, 18) + '"/>';
@@ -256,7 +257,10 @@
   }
   function shifted(o, dx, dy) {
     var n = clone(o);
-    if (n.pts) n.pts = n.pts.map(function (p) { return [r1(p[0] + dx), r1(p[1] + dy)]; });
+    var sh = function (p) { return [r1(p[0] + dx), r1(p[1] + dy)]; };
+    if (n.pts) n.pts = n.pts.map(sh);
+    if (n.holes) n.holes = n.holes.map(function (h) { return h.map(sh); });
+    if (n.seed) n.seed = { x: n.seed.x + dx, y: n.seed.y + dy };
     if ("x1" in n) { n.x1 += dx; n.y1 += dy; n.x2 += dx; n.y2 += dy; }
     if (n.type === "leader") { n.bx += dx; n.by += dy; if (!n.att) { n.ax += dx; n.ay += dy; } }
     else if ("x" in n) { n.x += dx; n.y += dy; }
@@ -266,7 +270,40 @@
   function removeItem(id) { syncLeaders(); doc().items = doc().items.filter(function (it) { return it.id !== id; }); }
   function locked(it) { return !!(it && (it.lock || doc().lockDraw)); }
   function groupItems(g) { return doc().items.filter(function (it) { return it.g === g; }); }
-  function isOn(it) { return sel && ((sel.k === "item" && sel.id === it.id) || (sel.k === "group" && it.g === sel.g)); }
+  function isOn(it) { return sel && ((sel.k === "item" && sel.id === it.id) || (sel.k === "group" && it.g === sel.g) || (sel.k === "multi" && sel.ids.indexOf(it.id) > -1)); }
+  /* Selection: one item, a template group, several items (multi), or an underlay image. */
+  function selList() {
+    if (!sel) return [];
+    if (sel.k === "group") return groupItems(sel.g);
+    if (sel.k === "multi") return sel.ids.map(byId).filter(Boolean);
+    if (sel.k === "item") { var i = byId(sel.id); return i ? [i] : []; }
+    return [];
+  }
+  function isSet() { return sel && (sel.k === "group" || sel.k === "multi"); }
+  /* Turns a list of items into the simplest selection; picking any part of a template group takes the whole group. */
+  function setSel(list) {
+    var ids = [], seen = {};
+    list.forEach(function (it) { (it.g ? groupItems(it.g) : [it]).forEach(function (x) { if (!seen[x.id]) { seen[x.id] = 1; ids.push(x.id); } }); });
+    if (!ids.length) sel = null;
+    else if (ids.length === 1) sel = { k: "item", id: ids[0] };
+    else { var g0 = byId(ids[0]).g; sel = g0 && ids.every(function (id) { return byId(id).g === g0; }) && groupItems(g0).length === ids.length ? { k: "group", g: g0 } : { k: "multi", ids: ids }; }
+    renderContent(); renderProps();
+  }
+  var clip = null, pasteN = 0;
+  function copySel() { var l = selList(); if (!l.length) return false; syncLeaders(); clip = clone(l); pasteN = 0; status(l.length + (l.length === 1 ? " item" : " items") + " copied. Ctrl+V pastes."); return true; }
+  function paste(list, off) {
+    if (!list || !list.length) return;
+    var map = {}, gmap = {}, out = [];
+    begin();
+    list.forEach(function (o) { map[o.id] = newId(); if (o.g && !gmap[o.g]) gmap[o.g] = newId("g"); });
+    list.forEach(function (o) {
+      var n = shifted(o, off, off); n.id = map[o.id]; n.lock = false;
+      if (n.g) n.g = gmap[n.g];
+      if (n.type === "leader" && n.att) { if (map[n.att.id]) n.att.id = map[n.att.id]; else { n.att = null; n.ax = o.ax + off; n.ay = o.ay + off; } }
+      doc().items.push(n); out.push(n);
+    });
+    commit(); setTool("select"); setSel(out);
+  }
 
   /* ---------- Build the page ---------- */
   function iconSvg(name) { return '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="stroke:currentColor">' + IC[name] + "</svg>"; }
@@ -286,7 +323,8 @@
       '<div class="sk-group"><span class="sk-lab">Colour</span><div class="sk-swatches" id="sk-swatches"></div><label class="sk-pick" title="Pick any colour"><span class="sr-only">Custom colour</span><input type="color" id="sk-color"></label></div>' +
       '<div class="sk-group"><span class="sk-lab">Weight</span><div class="sk-chips" id="sk-widths"></div></div>' +
       '<div class="sk-group"><label class="sk-lab" for="sk-ls">Line</label><select id="sk-ls">' + LINES.map(function (l) { return '<option value="' + l[0] + '">' + l[1] + "</option>"; }).join("") + "</select></div>" +
-      '<div class="sk-group"><label class="sk-lab" for="sk-pat">Hatch</label><select id="sk-pat">' + PATS.map(function (l) { return '<option value="' + l[0] + '">' + l[1] + "</option>"; }).join("") + "</select></div>" +
+      '<div class="sk-group"><label class="sk-lab" for="sk-pat">Hatch</label><select id="sk-pat">' + PATS.map(function (l) { return '<option value="' + l[0] + '">' + l[1] + "</option>"; }).join("") + "</select>" +
+        '<label class="sr-only" for="sk-hby">Hatch by</label><select id="sk-hby"><option value="pick">Click inside an area</option><option value="shape">Draw a shape</option></select></div>' +
     "</div>" +
     '<div class="sk-style sk-sheetopts">' +
       '<div class="sk-seg sk-seg-sm" role="group" aria-label="Orientation"><button type="button" data-orient="land">Landscape</button><button type="button" data-orient="port">Portrait</button></div>' +
@@ -386,10 +424,10 @@
         o += '<path d="M' + c4.map(function (p) { return r1(p.x) + " " + r1(p.y); }).join("L") + 'Z" class="sk-sel" stroke-width="' + sw + '"/>';
         if (!doc().lockUnder) o += '<line x1="' + r1(tm.x) + '" y1="' + r1(tm.y) + '" x2="' + r1(top.x) + '" y2="' + r1(top.y) + '" class="sk-sel" stroke-width="' + sw + '"/>' + hnd("irot", top.x, top.y) + hnd("isc", c4[2].x, c4[2].y, "sq");
       }
-    } else if (sel && sel.k === "group") {
-      var bx = null, gl = groupItems(sel.g), anyLock = gl.some(locked);
+    } else if (isSet()) {
+      var bx = null, gl = selList(), anyLock = gl.some(locked);
       gl.forEach(function (gi) { var e2 = gContent.querySelector('[data-id="' + gi.id + '"] .v'); if (!e2) return; try { var b2 = e2.getBBox(); if (!b2.width && !b2.height) return; if (!bx) bx = { x1: b2.x, y1: b2.y, x2: b2.x + b2.width, y2: b2.y + b2.height }; else { bx.x1 = Math.min(bx.x1, b2.x); bx.y1 = Math.min(bx.y1, b2.y); bx.x2 = Math.max(bx.x2, b2.x + b2.width); bx.y2 = Math.max(bx.y2, b2.y + b2.height); } } catch (er) {} });
-      if (bx) { var pg = 8 * Math.max(k, 1); o += '<rect x="' + r1(bx.x1 - pg) + '" y="' + r1(bx.y1 - pg) + '" width="' + r1(bx.x2 - bx.x1 + 2 * pg) + '" height="' + r1(bx.y2 - bx.y1 + 2 * pg) + '" class="sk-sel grp' + (anyLock ? " lk" : "") + '" stroke-width="' + sw + '"/>'; }
+      if (bx) { var pg = 8 * Math.max(k, 1); o += '<rect x="' + r1(bx.x1 - pg) + '" y="' + r1(bx.y1 - pg) + '" width="' + r1(bx.x2 - bx.x1 + 2 * pg) + '" height="' + r1(bx.y2 - bx.y1 + 2 * pg) + '" class="sk-sel' + (sel.k === "group" ? " grp" : "") + (anyLock ? " lk" : "") + '" stroke-width="' + sw + '"/>'; }
     } else if (sel) {
       var it = byId(sel.id), el = gContent.querySelector('[data-id="' + sel.id + '"] .v');
       if (it && el) {
@@ -397,7 +435,7 @@
         if (bb) { var p = 6 * Math.max(k, 1); o += '<rect x="' + r1(bb.x - p) + '" y="' + r1(bb.y - p) + '" width="' + r1(bb.width + 2 * p) + '" height="' + r1(bb.height + 2 * p) + '" class="sk-sel' + (locked(it) ? " lk" : "") + '" stroke-width="' + sw + '"/>'; }
         if (!locked(it)) {
           if (SEG[it.type]) { o += hnd("p1", it.x1, it.y1) + hnd("p2", it.x2, it.y2); if (it.type === "dim") { var n = norm(it), off = it.o == null ? 30 : it.o; o += hnd("off", (it.x1 + it.x2) / 2 + n.nx * off, (it.y1 + it.y2) / 2 + n.ny * off, "sq"); } }
-          if (it.type === "hatch") it.pts.forEach(function (q, i) { o += hnd("v" + i, q[0], q[1]); });
+          if (it.type === "hatch" && !it.seed) it.pts.forEach(function (q, i) { o += hnd("v" + i, q[0], q[1]); });
           if (it.type === "leader") { var A = anchorOf(it); o += hnd("anc", A.x, A.y); }
         }
       }
@@ -448,7 +486,7 @@
     commit();
   }
   /* Applying a colour, weight, line type or pattern also restyles the selected item. */
-  function restyle(fn) { if (!sel || sel.k !== "item") return; var it = byId(sel.id); if (!it || locked(it)) return; begin(); fn(it); commit(); }
+  function restyle(fn) { var l = selList().filter(function (it) { return !locked(it); }); if (!l.length) return; begin(); l.forEach(fn); commit(); }
   app.addEventListener("click", function (e) {
     var b = e.target.closest("button"); if (!b || !app.contains(b)) return;
     if (b.dataset.mode) return setMode(b.dataset.mode);
@@ -488,10 +526,13 @@
         '<span class="small">Drag to move, the square handle to scale, the round one to rotate. Tick "Lock underlay" when it is in place.</span>';
       return;
     }
-    if (sel && sel.k === "group") {
-      var gl = groupItems(sel.g), lk = gl.some(locked);
-      p.innerHTML = '<span class="sk-lab">Typical detail</span><span class="small">' + gl.length + " parts, moving together. " + (lk ? (doc().lockDraw ? "The drawing is locked." : "Locked in place.") : "Click a part again to edit just that part.") + "</span>" +
-        (lk ? (doc().lockDraw ? "" : '<button type="button" class="sk-btn" data-act="gunlock">Unlock</button>') : '<button type="button" class="sk-btn" data-act="ungroup">Ungroup</button><button type="button" class="sk-btn" data-act="glock">Lock</button><button type="button" class="sk-btn danger" data-act="gdel">Delete</button>');
+    if (isSet()) {
+      var gl = selList(), lk = gl.some(locked), grp = sel.k === "group";
+      p.innerHTML = '<span class="sk-lab">' + (grp ? "Group" : gl.length + " selected") + '</span><span class="small">' + (grp ? gl.length + " parts, moving together. " : "") +
+        (lk ? (doc().lockDraw ? "The drawing is locked." : "Some of these are locked.") : grp ? "Click a part again to edit just that part." : "Drag any of them to move them all. Colour, weight and line type apply to all of them.") + "</span>" +
+        (lk ? (doc().lockDraw ? "" : '<button type="button" class="sk-btn" data-act="gunlock">Unlock</button>') :
+          (grp ? '<button type="button" class="sk-btn" data-act="ungroup">Ungroup</button>' : '<button type="button" class="sk-btn" data-act="group">Group</button>') +
+          '<button type="button" class="sk-btn" data-act="dup" title="Ctrl+D">Duplicate</button><button type="button" class="sk-btn" data-act="glock">Lock</button><button type="button" class="sk-btn danger" data-act="gdel">Delete</button>');
       return;
     }
     if (!it) { p.innerHTML = '<span class="small">' + esc(HINTS[tool[mode]] || "") + "</span>"; return; }
@@ -512,7 +553,7 @@
     if (it.type === "hatch") h += '<select id="skp-pat" aria-label="Hatch pattern">' + PATS.map(function (x) { return '<option value="' + x[0] + '"' + (it.pat === x[0] ? " selected" : "") + ">" + x[1] + "</option>"; }).join("") + '</select><label class="sk-check"><input type="checkbox" id="skp-outline"' + (it.outline ? " checked" : "") + "> Outline</label>";
     if (it.type === "leader") h += '<label class="sk-check"><input type="checkbox" id="skp-box"' + (it.nobox ? "" : " checked") + "> Box</label>";
     if (it.type === "leader" && it.att) h += '<button type="button" class="sk-btn" data-act="detach">Detach arrow</button>';
-    h += '<button type="button" class="sk-btn" data-act="lock" title="Stop this item being moved by accident">Lock</button><button type="button" class="sk-btn danger" data-act="del">Delete</button>';
+    h += '<button type="button" class="sk-btn" data-act="dup" title="Ctrl+D">Duplicate</button><button type="button" class="sk-btn" data-act="lock" title="Stop this item being moved by accident">Lock</button><button type="button" class="sk-btn danger" data-act="del">Delete</button>';
     p.innerHTML = h;
     if ($("skp-kind")) $("skp-kind").value = it.kind;
   }
@@ -543,15 +584,20 @@
       if (a === "irot90") im.rot = ((im.rot || 0) + 90) % 360; else if (a === "ireset") im.rot = 0; else if (a === "del") { doc().under = doc().under.filter(function (x) { return x.id !== im.id; }); sel = null; }
       commit(); renderProps(); return;
     }
-    if (sel.k === "group") {
-      var gl = groupItems(sel.g); begin();
-      if (a === "ungroup") { gl.forEach(function (x) { delete x.g; }); sel = null; }
+    if (isSet()) {
+      var gl = selList(), ids = gl.map(function (x) { return x.id; });
+      if (a === "dup") { syncLeaders(); paste(clone(gl), GRID); return; }
+      begin();
+      if (a === "ungroup") { gl.forEach(function (x) { delete x.g; }); sel = { k: "multi", ids: ids }; }
+      else if (a === "group") { var ng = newId("g"); gl.forEach(function (x) { x.g = ng; }); sel = { k: "group", g: ng }; }
       else if (a === "glock") gl.forEach(function (x) { x.lock = true; });
       else if (a === "gunlock") gl.forEach(function (x) { x.lock = false; });
-      else if (a === "gdel") { syncLeaders(); doc().items = doc().items.filter(function (x) { return x.g !== sel.g; }); sel = null; }
+      else if (a === "gdel") { deleteSel(); }
       commit(); renderProps(); return;
     }
-    var it = byId(sel.id); if (!it) return; begin();
+    var it = byId(sel.id); if (!it) return;
+    if (a === "dup") { syncLeaders(); paste([clone(it)], GRID); return; }
+    begin();
     if (a === "rot") it[it.type === "pload" ? "ang" : "rot"] = (((it.type === "pload" ? (it.ang == null ? 90 : it.ang) : (it.rot || 0)) + ROT_TYPES[it.type]) % 360);
     else if (a === "flip") { if (it.type === "udl") it.side = it.side === -1 ? 1 : -1; else it.o = -(it.o == null ? 30 : it.o); }
     else if (a === "dir") it.dir = it.dir === "ccw" ? "cw" : "ccw";
@@ -587,6 +633,17 @@
     for (var i = 0; i < els.length; i++) { var g = els[i].closest && els[i].closest("[data-id]"); if (g && svg.contains(g) && g.dataset.id !== skip) return byId(g.dataset.id); }
     return null;
   }
+  /* Items lying wholly inside a dragged box; locked items are left out. */
+  function inBox(a, b) {
+    var x1 = Math.min(a.x, b.x), y1 = Math.min(a.y, b.y), x2 = Math.max(a.x, b.x), y2 = Math.max(a.y, b.y);
+    if (!doc().showDraw) return [];
+    return doc().items.filter(function (it) {
+      if (locked(it)) return false;
+      var el = gContent.querySelector('[data-id="' + it.id + '"] .v'); if (!el) return false;
+      try { var bb = el.getBBox(); return bb.x >= x1 && bb.y >= y1 && bb.x + bb.width <= x2 && bb.y + bb.height <= y2; } catch (er) { return false; }
+    });
+  }
+  function deleteSel() { var l = selList().filter(function (x) { return !locked(x); }), ids = l.map(function (x) { return x.id; }); syncLeaders(); doc().items = doc().items.filter(function (x) { return ids.indexOf(x.id) < 0; }); sel = null; }
   function selectItem(it) { sel = it ? { k: "item", id: it.id } : null; renderContent(); renderProps(); }
   function base(type, extra) { var o = { id: newId(), type: type, c: style.c }; for (var p in extra) o[p] = extra[p]; return o; }
   function addItem(it) { begin(); doc().items.push(it); commit(); return it; }
@@ -614,6 +671,15 @@
     }
     if (t === "select") {
       var g = e.target.closest("[data-id]"), u = e.target.closest("[data-uid]");
+      var add = e.shiftKey || e.ctrlKey || e.metaKey;
+      if (g && d.showDraw && add) { /* Shift or Ctrl click adds or removes an item (or its whole group) */
+        var ti = byId(g.dataset.id); if (locked(ti) && !locked(selList()[0])) { status("That item is locked."); return; }
+        var unit = ti.g ? groupItems(ti.g) : [ti], curL = selList(), inSel = unit.every(function (x) { return curL.indexOf(x) > -1; });
+        setSel(inSel ? curL.filter(function (x) { return unit.indexOf(x) < 0; }) : curL.concat(unit)); return;
+      }
+      if (g && d.showDraw && sel && sel.k === "multi" && sel.ids.indexOf(g.dataset.id) > -1) {
+        var ml = selList(); if (!ml.some(locked)) { begin(); drag = { type: "gmove", orig: clone(ml), start: p }; } return;
+      }
       if (g && d.showDraw) {
         var it = byId(g.dataset.id), cur = sel && sel.k === "item" ? byId(sel.id) : null;
         if (it.g && !(sel && sel.k === "group" && sel.g === it.g) && !(cur && cur.g === it.g)) {
@@ -623,6 +689,7 @@
         }
         selectItem(it); if (!locked(it)) { begin(); drag = { type: "move", orig: clone(it), start: p }; } return;
       }
+      if (!u || add) { if (!add) { sel = null; renderContent(); renderProps(); } drag = { type: "marquee", start: p, add: add, base: add ? selList() : [] }; return; }
       if (u && d.showUnder && !d.lockUnder) { sel = { k: "img", id: u.dataset.uid }; renderUI(); renderProps(); begin(); drag = { type: "imove", orig: clone(imgById(u.dataset.uid)), start: p }; return; }
       selectItem(null); return;
     }
@@ -636,7 +703,7 @@
         if (pend.pts.length >= 3 && dist(sp, { x: pend.pts[0][0], y: pend.pts[0][1] }) < 14 * Math.max(k, 1)) { finishHatch(); return; }
         var last = pend.pts[pend.pts.length - 1]; if (dist(sp, { x: last[0], y: last[1] }) > 2) pend.pts.push([sp.x, sp.y]); renderLive(); return;
       }
-      drag = { type: "hatch0", start: sp }; return;
+      drag = { type: "hatch0", start: sp, raw: { x: p.x, y: p.y } }; return;
     }
     if (t === "member" || t === "line" || t === "udl" || t === "dim") {
       var a = snapPt(p), ex = { x1: a.x, y1: a.y, x2: a.x, y2: a.y };
@@ -675,6 +742,8 @@
         if (drag.type !== "hatchR") return;
         var c = snapPt(p), s = drag.start; drag.temp = base("hatch", { pts: [[s.x, s.y], [c.x, s.y], [c.x, c.y], [s.x, c.y]], pat: style.pat, outline: true, w: Math.min(style.w, 4), ls: style.ls }); renderLive(); return;
       case "leader": if (dist(p, drag.start) > 10) { drag.temp.bx = r1(p.x); drag.temp.by = r1(p.y); drag.moved = true; } renderLive(); return;
+      case "marquee": drag.cur = p; var m0 = drag.start, wq = Math.abs(p.x - m0.x), hq = Math.abs(p.y - m0.y);
+        gLive.innerHTML = '<rect x="' + r1(Math.min(p.x, m0.x)) + '" y="' + r1(Math.min(p.y, m0.y)) + '" width="' + r1(wq) + '" height="' + r1(hq) + '" class="sk-marq"/>'; return;
       case "gmove":
         var gdx = snapDelta(p.x - drag.start.x), gdy = snapDelta(p.y - drag.start.y); drag.orig.forEach(function (o) { replaceItem(shifted(o, gdx, gdy)); }); renderContent(); return;
       case "move":
@@ -698,8 +767,11 @@
     if (!drag) return; var d = drag; drag = null;
     switch (d.type) {
       case "pen": d.el.remove(); addItem(d.item); return;
+      case "marquee": gLive.innerHTML = ""; if (d.cur && Math.abs(d.cur.x - d.start.x) + Math.abs(d.cur.y - d.start.y) > 4) setSel(d.base.concat(inBox(d.start, d.cur))); else if (!d.add) setSel([]); return;
       case "seg": renderLive(); if (Math.hypot(d.temp.x2 - d.temp.x1, d.temp.y2 - d.temp.y1) < 6) return; var it = addItem(d.temp); if (it.type !== "line") selectAfterCreate(it); if (it.type === "udl" || it.type === "dim") setTimeout(function () { var el = $("skp-label"); if (el) el.focus(); }, 0); return;
-      case "hatch0": pend = { pts: [[d.start.x, d.start.y]], cur: d.start }; renderLive(); return;
+      case "hatch0":
+        if (hatchBy === "pick") { pickHatch(d.raw || d.start); return; }
+        pend = { pts: [[d.start.x, d.start.y]], cur: d.start }; renderLive(); return;
       case "hatchR": renderLive(); var w = Math.abs(d.temp.pts[2][0] - d.temp.pts[0][0]), h = Math.abs(d.temp.pts[2][1] - d.temp.pts[0][1]); if (w > 4 && h > 4) selectAfterCreate(addItem(d.temp)); return;
       case "leader": renderLive(); selectAfterCreate(addItem(d.temp)); focusText(); return;
       default: commit(); renderProps();
@@ -719,12 +791,21 @@
     if (mod && e.key.toLowerCase() === "y") { e.preventDefault(); redo(); return; }
     if (e.key === "Enter" && pend) { e.preventDefault(); finishHatch(); return; }
     if (e.key === "Escape") { if (pend) { pend = null; renderLive(); } else selectItem(null); return; }
+    if (mod && e.key.toLowerCase() === "a") { e.preventDefault(); if (!doc().showDraw) return; setTool("select"); setSel(doc().items.filter(function (x) { return !locked(x); })); return; }
+    if (mod && e.key.toLowerCase() === "c") { if (copySel()) e.preventDefault(); return; }
+    if (mod && e.key.toLowerCase() === "x") { if (copySel()) { e.preventDefault(); begin(); deleteSel(); commit(); renderProps(); } return; }
+    if (mod && e.key.toLowerCase() === "v") { if (clip) { e.preventDefault(); pasteN++; paste(clip, GRID * pasteN); } return; }
+    if (mod && e.key.toLowerCase() === "d") { var dl = selList(); if (dl.length) { e.preventDefault(); syncLeaders(); paste(clone(dl), GRID); } return; }
+    if (sel && sel.k !== "img" && /^Arrow/.test(e.key)) { /* nudge the selection */
+      var nl = selList(); if (!nl.length || nl.some(locked)) return; e.preventDefault();
+      var st = (e.shiftKey ? 5 : 1) * (mode === "struct" && doc().snap ? GRID : 4), ddx = e.key === "ArrowLeft" ? -st : e.key === "ArrowRight" ? st : 0, ddy = e.key === "ArrowUp" ? -st : e.key === "ArrowDown" ? st : 0;
+      begin(); nl.forEach(function (o) { replaceItem(shifted(o, ddx, ddy)); }); commit(); return;
+    }
     if ((e.key === "Delete" || e.key === "Backspace") && sel) {
       e.preventDefault(); begin();
-      if (sel.k === "img") { if (!doc().lockUnder) doc().under = doc().under.filter(function (x) { return x.id !== sel.id; }); }
-      else if (sel.k === "group") { var gl = groupItems(sel.g); if (!gl.some(locked)) { syncLeaders(); doc().items = doc().items.filter(function (x) { return x.g !== sel.g; }); } }
-      else { var it = byId(sel.id); if (it && !locked(it)) removeItem(it.id); }
-      sel = null; commit(); renderProps();
+      if (sel.k === "img") { if (!doc().lockUnder) doc().under = doc().under.filter(function (x) { return x.id !== sel.id; }); sel = null; }
+      else deleteSel();
+      commit(); renderProps();
     }
   });
 
@@ -812,6 +893,120 @@
     if (f === "png" || f === "jpeg") raster(exportSvg(), G.W, G.H, 2, "image/" + f, 0.92, function (b) { if (!b) return fail(); status(""); download(b, fname(f === "jpeg" ? "jpg" : "png")); });
     else exportPdf(f === "pdfall", function (b) { if (!b) return fail(); status(f === "pdfall" ? S.sheets.length + " sheets saved as one PDF, one A4 page each." : ""); download(b, fname("pdf", f === "pdfall")); });
   });
+
+  /* ---------- Pick-point hatch ----------
+     Rasterises the lines and strokes (thickened by a small gap tolerance), flood-fills from the clicked point
+     inside the drawing frame, then traces the filled region back into outline loops. Loops inside the region
+     (islands) become holes. The hatch remembers the point and the items that bound it, and is traced again
+     whenever one of those items changes. */
+  var hatchBy = "pick", GAP = 4; /* 4 units = 1 mm on the printed sheet */
+  $("sk-hby").addEventListener("change", function () { hatchBy = this.value; pend = null; renderLive(); setTool("hatch"); });
+  function bndCandidates() { return doc().items.filter(function (it) { return it.type === "stroke" || it.type === "line" || it.type === "member" || (it.type === "hatch" && it.outline && !it.seed); }); }
+  function strokeItem(cx, it) {
+    cx.lineWidth = (it.w || 2) + 2 * GAP; cx.beginPath();
+    if (it.type === "stroke" || it.type === "hatch") {
+      var loops = [it.pts].concat(it.holes || []);
+      loops.forEach(function (pts) { pts.forEach(function (q, i) { if (i) cx.lineTo(q[0], q[1]); else cx.moveTo(q[0], q[1]); }); if (it.type === "hatch") cx.closePath(); if (pts.length === 1) cx.lineTo(pts[0][0] + 0.01, pts[0][1]); });
+    } else { cx.moveTo(it.x1, it.y1); cx.lineTo(it.x2, it.y2); }
+    cx.stroke();
+  }
+  function traceRegion(seed) {
+    var G = geo(), W = G.W, Hh = G.H, cv = document.createElement("canvas"); cv.width = W; cv.height = Hh;
+    var cx = cv.getContext("2d"); cx.lineCap = "round"; cx.lineJoin = "round"; cx.strokeStyle = "#000";
+    var cands = bndCandidates(); cands.forEach(function (it) { strokeItem(cx, it); });
+    var px = cx.getImageData(0, 0, W, Hh).data, wall = new Uint8Array(W * Hh), i;
+    for (i = 0; i < W * Hh; i++) wall[i] = px[i * 4 + 3] > 40 ? 1 : 0;
+    var x0 = Math.ceil(G.inner.x), y0 = Math.ceil(G.inner.y), x1 = Math.floor(G.inner.x + G.inner.w) - 1, y1 = Math.floor(G.inner.y + G.inner.h) - 1;
+    var sx = Math.round(seed.x), sy = Math.round(seed.y);
+    if (sx < x0 || sx > x1 || sy < y0 || sy > y1) return { err: "Click inside the drawing frame." };
+    if (wall[sy * W + sx]) return { err: "That's on a line. Click inside the area you want hatched." };
+    /* scanline flood fill */
+    var fill = new Uint8Array(W * Hh), stack = [sx, sy], open = false, count = 0;
+    while (stack.length) {
+      var y = stack.pop(), x = stack.pop(), xl = x, xr = x;
+      if (fill[y * W + x]) continue;
+      while (xl > x0 && !wall[y * W + xl - 1] && !fill[y * W + xl - 1]) xl--;
+      while (xr < x1 && !wall[y * W + xr + 1] && !fill[y * W + xr + 1]) xr++;
+      if (xl === x0 || xr === x1 || y === y0 || y === y1) { open = true; break; }
+      for (var xx = xl; xx <= xr; xx++) {
+        fill[y * W + xx] = 1; count++;
+        if (!wall[(y - 1) * W + xx] && !fill[(y - 1) * W + xx]) stack.push(xx, y - 1);
+        if (!wall[(y + 1) * W + xx] && !fill[(y + 1) * W + xx]) stack.push(xx, y + 1);
+      }
+    }
+    if (open) return { err: "That area isn't closed, so the hatch would spill across the sheet. Close the gap (gaps under about 2 mm are bridged) or drag a rectangle instead." };
+    if (count < 30) return { err: "That area is too small to hatch." };
+    /* grow the region back out to the line centres, which also closes the bridged gaps */
+    var r = GAP + 1, tmp = new Uint8Array(W * Hh), grown = new Uint8Array(W * Hh), yy;
+    for (yy = 0; yy < Hh; yy++) { var run = -1e9; for (xx = 0; xx < W; xx++) { if (fill[yy * W + xx]) run = xx; if (xx - run <= r) tmp[yy * W + xx] = 1; } run = 1e9; for (xx = W - 1; xx >= 0; xx--) { if (fill[yy * W + xx]) run = xx; if (run - xx <= r) tmp[yy * W + xx] = 1; } }
+    for (xx = 0; xx < W; xx++) { var rn = -1e9; for (yy = 0; yy < Hh; yy++) { if (tmp[yy * W + xx]) rn = yy; if (yy - rn <= r) grown[yy * W + xx] = 1; } rn = 1e9; for (yy = Hh - 1; yy >= 0; yy--) { if (tmp[yy * W + xx]) rn = yy; if (rn - yy <= r) grown[yy * W + xx] = 1; } }
+    /* which items bound it: any sample along an item that the grown region reaches */
+    var bids = cands.filter(function (it) {
+      var segs = it.type === "stroke" ? it.pts : it.type === "hatch" ? it.pts.concat([it.pts[0]]) : [[it.x1, it.y1], [it.x2, it.y2]], d = (it.w || 2) / 2 + 1;
+      for (var j = 0; j < segs.length; j++) {
+        var a = segs[j], b = segs[j + 1] || a, n = Math.max(1, Math.ceil(Math.hypot(b[0] - a[0], b[1] - a[1]) / 3));
+        for (var t = 0; t <= n; t++) { var qx = Math.round(a[0] + (b[0] - a[0]) * t / n), qy = Math.round(a[1] + (b[1] - a[1]) * t / n);
+          for (var o = -d; o <= d; o += d) { var ix = Math.min(W - 1, Math.max(0, qx + Math.round(o))), iy = Math.min(Hh - 1, Math.max(0, qy)); if (grown[iy * W + ix]) return true; ix = Math.min(W - 1, Math.max(0, qx)); iy = Math.min(Hh - 1, Math.max(0, qy + Math.round(o))); if (grown[iy * W + ix]) return true; } }
+        if (!segs[j + 1]) break;
+      }
+      return false;
+    }).map(function (it) { return it.id; });
+    return { loops: contours(grown, W, Hh), bids: bids };
+  }
+  /* Pixel-edge contour tracing, then straight runs merged and the outline simplified. */
+  function contours(m, W, Hh) {
+    var nxt = {}, x, y, W1 = W + 1;
+    function add(ax, ay, bx, by) { var k1 = ay * W1 + ax; (nxt[k1] || (nxt[k1] = [])).push(by * W1 + bx); }
+    for (y = 1; y < Hh - 1; y++) for (x = 1; x < W - 1; x++) {
+      if (!m[y * W + x]) continue;
+      if (!m[(y - 1) * W + x]) add(x, y, x + 1, y);
+      if (!m[y * W + x + 1]) add(x + 1, y, x + 1, y + 1);
+      if (!m[(y + 1) * W + x]) add(x + 1, y + 1, x, y + 1);
+      if (!m[y * W + x - 1]) add(x, y + 1, x, y);
+    }
+    var loops = [];
+    Object.keys(nxt).forEach(function (sk) {
+      var start = +sk;
+      while (nxt[start] && nxt[start].length) {
+        var loop = [], cur = start, guard = 0;
+        do { loop.push([cur % W1, Math.floor(cur / W1)]); var l = nxt[cur]; var nk = l.pop(); if (!l.length) delete nxt[cur]; cur = nk; } while (cur !== start && nxt[cur] && ++guard < 2e6);
+        if (loop.length > 3) loops.push(loop);
+      }
+    });
+    function area(L) { var a = 0; for (var i = 0; i < L.length; i++) { var p = L[i], q = L[(i + 1) % L.length]; a += p[0] * q[1] - q[0] * p[1]; } return Math.abs(a / 2); }
+    function dp(P, eps) {
+      if (P.length < 3) return P;
+      var a = P[0], b = P[P.length - 1], dx = b[0] - a[0], dy = b[1] - a[1], L = Math.hypot(dx, dy) || 1, md = 0, mi = 0;
+      for (var i = 1; i < P.length - 1; i++) { var d = L > 1e-9 ? Math.abs(dy * P[i][0] - dx * P[i][1] + b[0] * a[1] - b[1] * a[0]) / L : Math.hypot(P[i][0] - a[0], P[i][1] - a[1]); if (d > md) { md = d; mi = i; } }
+      if (md <= eps) return [a, b];
+      return dp(P.slice(0, mi + 1), eps).slice(0, -1).concat(dp(P.slice(mi), eps));
+    }
+    return loops.filter(function (L) { return area(L) > 12; }).map(function (L) {
+      var far = 0, fd = 0; L.forEach(function (p, i) { var d = Math.hypot(p[0] - L[0][0], p[1] - L[0][1]); if (d > fd) { fd = d; far = i; } });
+      var s1 = dp(L.slice(0, far + 1), 0.9), s2 = dp(L.slice(far).concat([L[0]]), 0.9);
+      return s1.slice(0, -1).concat(s2.slice(0, -1));
+    }).sort(function (a, b) { return area(b) - area(a); });
+  }
+  function sigOf(ids) { var s = ids.map(function (id) { var it = byId(id); return it ? JSON.stringify([it.pts, it.holes, it.x1, it.y1, it.x2, it.y2, it.w]) : "x"; }).join("|"), h = 5381; for (var i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) | 0; return String(h); }
+  function pickHatch(p) {
+    var t0 = Date.now(), r = traceRegion(p);
+    if (r.err) { status(r.err); return; }
+    var it = base("hatch", { pts: r.loops[0], holes: r.loops.slice(1), pat: style.pat, outline: false, w: Math.min(style.w, 4), ls: style.ls, seed: { x: r1(p.x), y: r1(p.y) }, bids: r.bids, sig: sigOf(r.bids) });
+    begin(); doc().items.unshift(it); commit(); selectAfterCreate(it); /* picked hatches sit under the lines that bound them */
+    status("Hatched " + (r.loops.length > 1 ? "the area, leaving " + (r.loops.length - 1) + (r.loops.length === 2 ? " island" : " islands") + " clear" : "the area") + ". It follows its boundary if you edit those lines." + (Date.now() - t0 > 1500 ? "" : ""));
+  }
+  /* Called on every commit: re-trace any picked hatch whose boundary items have changed. */
+  function reHatch() {
+    var warn = false;
+    doc().items.forEach(function (it) {
+      if (it.type !== "hatch" || !it.seed || !it.bids) return;
+      var sg = sigOf(it.bids); if (sg === it.sig) return;
+      var r = traceRegion(it.seed);
+      if (r.err) { it.sig = sg; warn = true; return; }
+      it.pts = r.loops[0]; it.holes = r.loops.slice(1); it.bids = r.bids; it.sig = sigOf(r.bids);
+    });
+    if (warn) status("A hatch kept its last shape because its boundary is no longer closed.");
+  }
 
   /* ---------- Typical details ---------- */
   var TPL = window.CPSketchTemplates || [];
