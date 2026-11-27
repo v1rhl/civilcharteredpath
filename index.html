@@ -1871,6 +1871,89 @@ nav a[aria-current="page"][aria-expanded="true"] { color: var(--accent-ink); bac
   </div>
 </section>
 
+<!-- MANHOLE DETAIL GENERATOR (logic in js/tools/manhole.js; styles kept with the section so tool PRs don't collide) -->
+<section class="view wrap" id="view-manhole" data-view="manhole" hidden>
+  <style>
+    #view-manhole .mh-layout { display: grid; grid-template-columns: minmax(0, 330px) minmax(0, 1fr); gap: 16px; align-items: start; }
+    #view-manhole .mh-inputs { gap: 0; padding: 8px 14px; position: sticky; top: 70px; max-height: calc(100vh - 86px); overflow-y: auto; }
+    #view-manhole .mh-group { border-bottom: 1px solid var(--tool-line); padding: 8px 0; }
+    #view-manhole .mh-group summary { cursor: pointer; font-weight: 600; color: var(--ink); }
+    #view-manhole .mh-fields { display: flex; flex-direction: column; gap: 10px; padding-top: 10px; }
+    #view-manhole .field label { font-size: 0.86rem; }
+    #view-manhole .field input, #view-manhole .field select, #view-manhole .mh-pipe input, #view-manhole .mh-pipe select { width: 100%; min-width: 0; }
+    #view-manhole .mh-u { font: 500 0.75rem var(--font-mono); color: var(--muted); }
+    #view-manhole .mh-std { font: 500 0.68rem var(--font-mono); text-transform: uppercase; letter-spacing: 0.04em; color: var(--flag); border: 1px solid var(--flag); border-radius: 3px; padding: 0 4px; margin-left: 4px; }
+    #view-manhole .mh-chk { display: flex; gap: 8px; align-items: center; font-weight: 600; font-size: 0.9rem; }
+    #view-manhole .mh-pipe { border: 1px solid var(--tool-line); border-radius: var(--radius); padding: 8px 10px 10px; margin: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 6px 8px; background: var(--surface); }
+    #view-manhole .mh-pipe legend { font-weight: 600; font-size: 0.85rem; padding: 0 4px; }
+    #view-manhole .mh-pipe label { display: flex; flex-direction: column; gap: 2px; font-size: 0.78rem; color: var(--muted); }
+    #view-manhole .mh-pipe input, #view-manhole .mh-pipe select { font: 400 0.9rem var(--font-body); padding: 6px 8px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); color: var(--ink); }
+    #view-manhole .mh-x { grid-column: 1 / -1; justify-self: start; background: none; border: 0; color: var(--accent-2); font: 600 0.82rem var(--font-body); cursor: pointer; padding: 2px 0; }
+    #view-manhole #mh-reset { margin: 12px 0 6px; align-self: flex-start; }
+    #view-manhole .mh-out { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+    #view-manhole .mh-sheet { padding: 8px; background: #fff; }
+    #view-manhole .mh-sheet svg { width: 100%; height: auto; display: block; }
+    #view-manhole .mh-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+    #view-manhole .mh-actions .btn { padding: 8px 12px; font-size: 0.88rem; }
+    #view-manhole .mh-stats { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; }
+    #view-manhole .mh-stats div { display: flex; flex-direction: column; border-left: 3px solid var(--accent); padding-left: 10px; }
+    #view-manhole .mh-stats strong { font-size: 1.05rem; }
+    #view-manhole .mh-flags { list-style: none; margin: 6px 0 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+    #view-manhole .mh-flags li { display: flex; gap: 10px; align-items: flex-start; font-size: 0.92rem; }
+    #view-manhole .mh-pill { display: inline-block; min-width: 46px; text-align: center; font: 600 0.72rem var(--font-mono); padding: 2px 6px; border-radius: 3px; background: #dff0e2; color: #1b5e2a; }
+    #view-manhole .mh-check .mh-pill { background: var(--flag-soft); color: var(--ink); border: 1px solid var(--flag); }
+    #view-manhole .mh-fail .mh-pill { background: var(--accent-2); color: var(--accent-2-ink); }
+    #view-manhole .mh-why { color: var(--muted); font-size: 0.84rem; }
+    #view-manhole .mh-calc-table { font-size: 0.86rem; min-width: 760px; }
+    #view-manhole .mh-calc-table td { width: auto; padding: 5px 10px 5px 0; color: var(--ink); font-weight: 400; }
+    #view-manhole .mh-calc-table td:first-child { font-size: 0.75rem; color: var(--muted); white-space: nowrap; }
+    #view-manhole .mh-calc-table td:last-child { color: var(--muted); max-width: 420px; }
+    #view-manhole .mh-calc-table code { font: 500 0.74rem var(--font-mono); word-break: break-word; }
+    #view-manhole .mh-calc-table .mh-v { text-align: right; white-space: nowrap; }
+    #view-manhole .mh-calc-table tr.mh-in td { background: var(--tool-bg); }
+    #view-manhole .mh-sec th { text-align: left; font: 700 0.95rem var(--font-display); padding: 16px 0 6px; }
+    #view-manhole .mh-assume ul { margin: 4px 0 0; padding-left: 1.1em; display: flex; flex-direction: column; gap: 3px; color: var(--muted); font-size: 0.92rem; }
+    @media (max-width: 900px) { #view-manhole .mh-layout { grid-template-columns: minmax(0, 1fr); } #view-manhole .mh-inputs { position: static; max-height: none; } }
+  </style>
+  <div class="view-head">
+    <span class="eyebrow"><a href="#tools">Tools</a> / Manhole detail</span>
+    <h2>Manhole detail generator</h2>
+    <p class="lede">Enter the cover level, the pipes and the chamber, and the section, plan and calculation sheet redraw as you type. It flags clashes and anything outside the limits you set, and exports the detail and the calcs.</p>
+  </div>
+  <details class="panel ref mh-assume">
+    <summary><strong>What this is, and what it isn't</strong> <span class="small">tap to read the assumptions</span></summary>
+    <ul>
+      <li>Everything is drawn and calculated from first principles using your inputs. It doesn't reproduce any standard and doesn't check compliance with one.</li>
+      <li>Inputs marked <span class="mh-std" style="font:500 0.68rem var(--font-mono);color:var(--flag);border:1px solid var(--flag);border-radius:3px;padding:0 4px">default</span> are placeholders. Set them from the governing documents for your job (for example the sewer adoption or highway specification) and the supplier's data.</li>
+      <li>Pipe outside diameters are estimated from the bore with a rough ratio for each material unless you enter the manufacturer's figure.</li>
+      <li>Ground is taken as cover level, the excavation as a rectangular pit, and the chamber walls as seated at the outlet invert. The channel runs straight through on the centreline, with a half-round invert and vertical sides up to the benching.</li>
+      <li>Rest platforms, backdrops, pipe joints near the chamber and reinforcement aren't drawn. The checks tell you when they're needed by your own limits.</li>
+      <li>Your inputs are saved in this browser only.</li>
+    </ul>
+  </details>
+  <div class="mh-layout">
+    <form class="panel tool mh-inputs" id="mh-form" aria-label="Manhole inputs"></form>
+    <div class="mh-out">
+      <div class="panel mh-sheet"><div id="mh-svg" aria-live="polite"></div></div>
+      <div class="mh-actions">
+        <button type="button" class="btn" id="mh-pdf">PDF (drawing and calcs)</button>
+        <button type="button" class="btn ghost" id="mh-png">PNG</button>
+        <button type="button" class="btn ghost" id="mh-svgdl">SVG</button>
+        <button type="button" class="btn ghost" id="mh-xlsx">XLSX with formulas</button>
+        <button type="button" class="btn ghost" id="mh-csv">CSV</button>
+        <button type="button" class="btn ghost" id="mh-sketch" hidden>Send to sketch sheet</button>
+        <span class="small" id="mh-status" aria-live="polite"></span>
+      </div>
+      <div class="panel" id="mh-summary"></div>
+    </div>
+  </div>
+  <div class="panel">
+    <h3>Calculation sheet</h3>
+    <p class="small">Shaded rows are your inputs. Each result shows the formula it uses, in the same form the XLSX export writes into Excel, so you can follow and check every step.</p>
+    <div class="table-wrap"><table class="mh-calc-table"><tbody id="mh-calc-body"></tbody></table></div>
+  </div>
+</section>
+
 </main>
 
 <aside class="sources" id="sources" aria-label="Official sources" hidden>
@@ -1909,6 +1992,7 @@ nav a[aria-current="page"][aria-expanded="true"] { color: var(--accent-ink); bac
 <script src="js/news-feed.js?v=20261122b"></script>
 <script src="js/news-archive.js?v=20261122b"></script>
 <script src="js/config.js?v=20261122b"></script>
+<script src="js/tools/manhole.js?v=20261127a"></script>
 <script src="js/pages.js?v=20261122b"></script>
 <script src="js/site.js?v=20261122b"></script>
 <script src="js/art.js?v=20261122b"></script>
