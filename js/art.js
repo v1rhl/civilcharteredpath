@@ -24,7 +24,7 @@
       '<path d="M0 50Q20 34 40 50M40 50Q60 34 80 50M80 50Q100 34 120 50M120 50Q140 34 160 50M160 50Q180 34 200 50M200 50Q220 34 240 50" stroke="var(--accent)" stroke-width="1.5"/>' +
       '<path d="M140 24V14Q140 10 146 10H214V24" stroke="var(--accent-2)" stroke-width="2"/>'
   };
-  var FOR = { route: "road", planner: "road", careers: "crane", resources: "bridge", attributes: "viaduct", news: "tunnel", review: "dam", presentation: "bridge", flashcards: "viaduct", questions: "dam", "cheat-sheet": "crane", community: "viaduct", check: "tunnel" };
+  var FOR = { route: "road", planner: "road", careers: "crane", resources: "bridge", attributes: "viaduct", news: "tunnel", review: "dam", presentation: "bridge", flashcards: "viaduct", questions: "dam", "cheat-sheet": "crane", community: "viaduct", check: "tunnel", learning: "viaduct", nec4: "road", cdm: "crane", "learn-theory": "bridge" };
   function svg(name, cls) { return '<svg class="' + cls + '" viewBox="0 0 240 72" ' + G + ' aria-hidden="true" focusable="false">' + ART[name] + "</svg>"; }
   Object.keys(FOR).forEach(function (v) {
     var h = document.querySelector("#view-" + v + " .view-head"); if (h && !h.querySelector(".vh-art")) h.insertAdjacentHTML("afterbegin", svg(FOR[v], "vh-art"));
