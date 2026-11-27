@@ -17,6 +17,7 @@ static host (GitHub Pages, Netlify, Cloudflare Pages).
 | News | Latest headlines (links out) and a weekly briefing | `js/news-feed.js`, `NEWS` in `js/content.js` |
 | Report check | Marked as coming soon; shows an example only | not live yet |
 | Community | Forum and mock-review partners, design only, posting off | `FORUM_CATEGORIES`, `EXAMPLE_THREADS` |
+| Tools: Retaining wall | Indicative first-pass check of cantilever and gravity retaining walls, with a live section, calc sheet and CSV/XLSX/PNG/PDF export. Not for construction. | `js/tools/retaining-wall.js` (page), `js/tools/retaining-wall-calc.js` (engine, tested by `node tools/test_retaining_wall.js`), `js/tools/export.js` (shared `CPExport`) |
 
 ## Things that need a decision or a service before going public
 1. **Name.** The site is called "Civil Chartered Path". To rename it, change `SITE.name` in `js/content.js` and the title in `index.html`.
