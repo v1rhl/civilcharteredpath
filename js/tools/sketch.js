@@ -406,6 +406,18 @@
     return "";
   }
   /* Drawing scale: with 1:N set, one sheet unit (0.25 mm on paper) is 0.25·N mm on the ground. */
+  /* Extra map layers. Natural England publishes its open data as ArcGIS feature services; BGS publishes the
+     1:50k geology as a WMS; OS Open Rivers is only a download from OS, so the live option is a 2017 copy
+     hosted by the Catchment Based Approach (CaBA), and you can load your own GeoJSON instead. */
+  var NE = "https://services.arcgis.com/JJzESW51TqeY9uat/ArcGIS/rest/services/";
+  var MAPL = [
+    { id: "bgsb", name: "BGS bedrock", kind: "wms", url: "https://map.bgs.ac.uk/arcgis/services/BGS_Detailed_Geology/MapServer/WMSServer", layer: "BGS.50k.Bedrock", src: "BGS Geology 50k WMS", attr: "Geology: contains British Geological Survey materials © UKRI" },
+    { id: "bgss", name: "BGS superficial", kind: "wms", url: "https://map.bgs.ac.uk/arcgis/services/BGS_Detailed_Geology/MapServer/WMSServer", layer: "BGS.50k.Superficial.deposits", src: "BGS Geology 50k WMS", attr: "Geology: contains British Geological Survey materials © UKRI" },
+    { id: "sssi", name: "SSSI", kind: "fs", url: NE + "SSSI_England/FeatureServer/0", src: "Natural England, Sites of Special Scientific Interest", stroke: "#b84a32", fill: "#b84a32", fo: 0.12, dash: "6 3", attr: "Contains Natural England data © Natural England" },
+    { id: "awi", name: "Ancient woodland", kind: "fs", url: NE + "Ancient_Woodland_England/FeatureServer/0", src: "Natural England, Ancient Woodland Inventory", stroke: "#2e7d32", fill: "#2e7d32", fo: 0.15, attr: "Contains Natural England data © Natural England" },
+    { id: "phi", name: "Priority habitats", kind: "fs", url: NE + "Priority_Habitats_Inventory_England/FeatureServer/0", src: "Natural England, Priority Habitats Inventory", stroke: "#7a9a2b", fill: "#9bbf3b", fo: 0.12, attr: "Contains Natural England data © Natural England" },
+    { id: "rivers", name: "OS Open Rivers (2017 copy)", kind: "fs", url: "https://services3.arcgis.com/Bb8lfThdhugyc4G3/ArcGIS/rest/services/OSOpenRiversCaBA2017/FeatureServer/0", src: "OS Open Rivers 2017, hosted by the Catchment Based Approach (CaBA). OS publishes the current version only as a download.", stroke: "#3f6fd1", line: true, attr: "Contains OS data © Crown copyright and database right" }
+  ];
   var SCALES = [1, 2, 5, 10, 20, 25, 50, 100, 200, 250, 500, 1000, 1250, 2000, 2500, 5000, 10000];
   function toM(u) { var N = doc().dscale; return N ? u / 4 * N / 1000 : u / GRID * (doc().scale || 0.2); }
   function fromM(m) { var N = doc().dscale; return N ? m * 1000 / N * 4 : m / (doc().scale || 0.2) * GRID; }
@@ -545,11 +557,17 @@
         '<label class="sk-check" id="sk-mapshow-l" hidden><input type="checkbox" id="sk-mapshow"> Map</label><button type="button" class="sk-btn" id="sk-map-btn" aria-expanded="false">Map and contours</button></span>' +
     "</div>" +
     '<div class="sk-mappanel" id="sk-mappanel" hidden>' +
-      '<div class="sk-maprow"><label class="sk-check">Location <input type="text" id="sk-maploc" placeholder="Grid ref, e.g. SK 012 813, or E, N, or lat, long" style="width:20em"></label><button type="button" class="sk-btn" id="sk-mapgeo">Use my location</button>' +
-        '<label class="sk-check"><input type="checkbox" id="sk-maposm" checked> OpenStreetMap</label><label class="sk-check">Fade <input type="range" id="sk-mapop" min="0.15" max="1" step="0.05" value="0.55"></label><label class="sk-check"><input type="checkbox" id="sk-mapgrey" checked> Greyscale</label>' +
-        '<label class="sk-check"><input type="checkbox" id="sk-mapcont" checked> LiDAR contours</label><label class="sk-check">every <select id="sk-mapiv">' + [0.1, 0.25, 0.5, 1, 2, 5, 10].map(function (v) { return '<option value="' + v + '"' + (v === 0.5 ? " selected" : "") + ">" + v + " m</option>"; }).join("") + "</select></label>" +
-        '<button type="button" class="btn" id="sk-mapgo">Place map</button><button type="button" class="sk-btn danger" id="sk-mapdel">Remove map</button></div>' +
-      '<p class="small">Centres the map on the sheet at the drawing scale, grid north up. The map tiles come from OpenStreetMap and the contours from the Environment Agency\'s 1 m LiDAR terrain model, so the location is sent to them. <strong>LiDAR covers England only.</strong> Map data © OpenStreetMap contributors (ODbL). LiDAR © Environment Agency, Open Government Licence. Treat contours as indicative: they come from a bare-earth model, smoothed by the cell size.</p>' +
+      '<div class="sk-maprow"><label class="sk-check sk-wide">Location <input type="text" id="sk-maploc" placeholder="Postcode, grid ref (SK 012 813), E, N or lat, long"></label>' +
+        '<button type="button" class="btn" id="sk-mapgo">Place or recentre map</button><button type="button" class="sk-btn" id="sk-mapgeo">Use my location</button><button type="button" class="sk-btn danger" id="sk-mapdel">Remove map</button></div>' +
+      '<div class="sk-maprow"><button type="button" class="sk-btn" id="sk-mappan" aria-pressed="false" title="Drag on the sheet to move the map under the drawing">Move map</button><button type="button" class="sk-btn" id="sk-mapbox" aria-pressed="false" title="Drag a box on the sheet to limit the map to it">Draw map area</button><button type="button" class="sk-btn" id="sk-mapall">Whole sheet</button></div>' +
+      '<div class="sk-maprow"><label class="sk-check"><input type="checkbox" id="sk-maposm" checked> OpenStreetMap</label><label class="sk-check">Fade <input type="range" id="sk-mapop" min="0.15" max="1" step="0.05" value="0.55"></label><label class="sk-check"><input type="checkbox" id="sk-mapgrey" checked> Greyscale</label></div>' +
+      '<div class="sk-maprow"><label class="sk-check"><input type="checkbox" id="sk-mapcont" checked> Contours</label><label class="sk-check">every <select id="sk-mapiv">' + [0.1, 0.25, 0.5, 1, 2, 5, 10].map(function (v) { return '<option value="' + v + '"' + (v === 0.5 ? " selected" : "") + ">" + v + " m</option>"; }).join("") + "</select></label>" +
+        '<label class="sk-check">Fade <input type="range" id="sk-mapcop" min="0.15" max="1" step="0.05" value="1"></label>' +
+        '<button type="button" class="sk-btn" id="sk-mapea" title="Fetch the EA 1 m LiDAR DTM for the map area (England only)">EA LiDAR</button><button type="button" class="sk-btn" id="sk-mapfile-b" title="Load a terrain grid you have downloaded, e.g. from the EA survey portal">Load LiDAR file</button><input type="file" id="sk-mapfile" accept=".asc,.txt,.tif,.tiff" hidden></div>' +
+      '<div class="sk-maprow sk-maplayers"><span class="sk-lab">Layers</span>' + MAPL.map(function (L) { return '<label class="sk-check" title="' + esc(L.src) + '"><input type="checkbox" data-ml="' + L.id + '"> ' + L.name + "</label>"; }).join("") +
+        '<label class="sk-check sk-wide">ArcGIS layer URL <input type="url" id="sk-mlurl" placeholder="https://…/FeatureServer/0"></label><button type="button" class="sk-btn" id="sk-mladd">Add layer</button><button type="button" class="sk-btn" id="sk-mlgj-b">Load GeoJSON</button><input type="file" id="sk-mlgj" accept=".geojson,.json" hidden></div>' +
+      '<div id="sk-mlextra" class="sk-maprow"></div>' +
+      '<p class="small">Grid north up, centred on the drawing frame (or the map area you draw) at the drawing scale. Map tiles come from OpenStreetMap, terrain from the Environment Agency, postcodes from postcodes.io, geology from BGS and designations from Natural England, so the location is sent to them. <strong>EA LiDAR covers England only.</strong> Files you load stay in this browser. Contours, designations and geology are indicative: check them against the source before relying on them. © OpenStreetMap contributors (ODbL). LiDAR © Environment Agency, OGL. Contains Natural England data © Natural England, OGL. Contains British Geological Survey materials © UKRI, OGL. Contains OS data © Crown copyright and database right, OGL.</p>' +
     "</div>" +
     "</div>" +
     '<div class="sk-tabs" id="sk-tabs" role="tablist" aria-label="Sheets"></div>' +
@@ -783,7 +801,9 @@
     Array.prototype.forEach.call(app.querySelectorAll("[data-orient]"), function (b) { b.setAttribute("aria-pressed", b.dataset.orient === d.orient); });
     $("sk-color").value = style.c; $("sk-ls").value = style.ls; $("sk-pat").value = style.pat;
     $("sk-grid").checked = d.grid; $("sk-snap").checked = d.snap; $("sk-scale").value = d.scale; $("sk-dscale").value = d.dscale || 0; $("sk-sbar-l").hidden = !d.dscale; $("sk-sbar").checked = d.sbar !== false;
-    $("sk-gsq").hidden = !!d.dscale || mode !== "struct"; $("sk-mapshow-l").hidden = !d.map; if (d.map) { $("sk-mapshow").checked = d.map.show !== false; $("sk-maposm").checked = d.map.osm !== false; $("sk-mapcont").checked = d.map.cont !== false; $("sk-mapgrey").checked = d.map.grey !== false; $("sk-mapop").value = d.map.op || 0.55; } $("sk-gridinfo").textContent = d.dscale ? "grid " + fmtM(toM(GRID)) : "";
+    $("sk-gsq").hidden = !!d.dscale || mode !== "struct"; $("sk-mapshow-l").hidden = !d.map; if (d.map) { $("sk-mapshow").checked = d.map.show !== false; $("sk-maposm").checked = d.map.osm !== false; $("sk-mapcont").checked = d.map.cont !== false; $("sk-mapgrey").checked = d.map.grey !== false; $("sk-mapop").value = d.map.op || 0.55; $("sk-mapcop").value = d.map.cop || 1; }
+    renderMapExtra();
+    Array.prototype.forEach.call(app.querySelectorAll("[data-ml]"), function (c) { c.checked = !!(d.map && d.map.on && d.map.on[c.dataset.ml]); }); $("sk-gridinfo").textContent = d.dscale ? "grid " + fmtM(toM(GRID)) : "";
     Array.prototype.forEach.call(app.querySelectorAll("[data-snap]"), function (c) { c.checked = !!S.snaps[c.dataset.snap]; c.disabled = !d.snap; });
     $("sk-show-draw").checked = d.showDraw; $("sk-lock-draw").checked = d.lockDraw; $("sk-show-under").checked = d.showUnder; $("sk-lock-under").checked = d.lockUnder;
     Array.prototype.forEach.call(app.querySelectorAll("[data-paper]"), function (b) { b.setAttribute("aria-pressed", b.dataset.paper === (d.paper || "A4")); });
@@ -1052,6 +1072,7 @@
     if (e.button !== 0) return;
     measureK();
     var p = world(e), d = doc(), t = tool[mode];
+    if (mapMode && d.map) { e.preventDefault(); try { svg.setPointerCapture(e.pointerId); } catch (er) {} drag = mapMode === "pan" ? { type: "mappan", start: p, e0: d.map.e, n0: d.map.n } : { type: "mapbox", start: p }; return; }
     var tbc = e.target.closest("[data-tb]"); if (tbc && !pend) { e.preventDefault(); openTB(tbc.dataset.tb); return; }
     if (tbKey) closeTB(true);
     try { svg.setPointerCapture(e.pointerId); } catch (er) {}
@@ -1207,6 +1228,8 @@
         var fx = (p.x - drag.ax) / ((drag.cx - drag.ax) || 1), fy = (p.y - drag.ay) / ((drag.cy - drag.ay) || 1);
         if (!e.shiftKey) { var uf = Math.max(0.05, (fx + fy) / 2); fx = fy = uf; } else { fx = Math.max(0.05, fx); fy = Math.max(0.05, fy); }
         drag.orig.forEach(function (o) { replaceItem(scaleItem(o, drag.ax, drag.ay, fx, fy)); }); renderContent(); status("Scale ×" + (+fx.toFixed(2)) + (fx !== fy ? " by ×" + (+fy.toFixed(2)) : "")); return;
+      case "mappan": mapPanning = true; var mf = mapFrame(), mpm = doc().map; mpm.e = Math.round(drag.e0 - (p.x - drag.start.x) * mf.mu); mpm.n = Math.round(drag.n0 + (p.y - drag.start.y) * mf.mu); renderAll(); return;
+      case "mapbox": drag.cur = p; gLive.innerHTML = '<rect x="' + r1(Math.min(p.x, drag.start.x)) + '" y="' + r1(Math.min(p.y, drag.start.y)) + '" width="' + r1(Math.abs(p.x - drag.start.x)) + '" height="' + r1(Math.abs(p.y - drag.start.y)) + '" fill="rgba(11,79,108,0.06)" stroke="#0b4f6c" stroke-dasharray="6 4" vector-effect="non-scaling-stroke"/>'; return;
       case "imove": var im = imgById(drag.orig.id); im.x = r1(drag.orig.x + p.x - drag.start.x); im.y = r1(drag.orig.y + p.y - drag.start.y); updImg(im); renderUI(); return;
       case "ih":
         var im2 = imgById(sel.id), o = drag.orig;
@@ -1225,6 +1248,8 @@
     if (!drag) return; var d = drag; drag = null;
     switch (d.type) {
       case "pen": d.el.remove(); addItem(d.item); return;
+      case "mappan": mapPanning = false; mapKeyV = ""; renderAll(); persist(); afterMapMove(); mapStatus("Map moved to " + doc().map.e + ", " + doc().map.n + "."); return;
+      case "mapbox": gLive.innerHTML = ""; if (d.cur && Math.abs(d.cur.x - d.start.x) > 20 && Math.abs(d.cur.y - d.start.y) > 20) { doc().map.box = [r1(d.start.x), r1(d.start.y), r1(d.cur.x), r1(d.cur.y)]; persist(); renderAll(); afterMapMove(); } setMapMode("box"); return;
       case "marquee": gLive.innerHTML = ""; if (d.cur && Math.abs(d.cur.x - d.start.x) + Math.abs(d.cur.y - d.start.y) > 4) setSel(d.base.concat(inBox(d.start, d.cur))); else if (!d.add) setSel([]); return;
       case "seg": renderLive(); if (Math.hypot(d.temp.x2 - d.temp.x1, d.temp.y2 - d.temp.y1) < 6) return; var it = addItem(d.temp); if (it.type !== "line") selectAfterCreate(it); if (it.type === "udl" || it.type === "dim") setTimeout(function () { var el = $("skp-label"); if (el) el.focus({ preventScroll: true }); }, 0); return;
       case "hatch0":
@@ -1381,7 +1406,50 @@
   var mapKeyV = "", tileCache = {}, tilePending = {};
   function RO() { return window.Runoff; }
   function mapFrame() { var d = doc(), G = geo(), mu = (d.dscale || 0) / 4000; return { cx: G.inner.x + G.inner.w / 2, cy: G.inner.y + G.inner.h / 2, mu: mu, inner: G.inner }; }
-  function mapKey() { var d = doc(), m = d.map; return m ? [m.e, m.n, d.dscale, d.paper, d.orient, d.tbs, m.show, m.osm, m.cont, m.op, m.grey, m.c ? m.c.lines.length + ":" + m.c.iv : ""].join("|") : ""; }
+  function mapKey() { var d = doc(), m = d.map; return m ? [m.e, m.n, d.dscale, d.paper, d.orient, d.tbs, m.show, m.osm, m.cont, m.op, m.cop, m.grey, m.box, m.c ? m.c.lines.length + ":" + m.c.iv + ":" + m.c.oe : "", JSON.stringify(m.on || {}), Object.keys(m.L || {}).map(function (k2) { return k2 + (m.L[k2].f || []).length; }).join()].join("|") : ""; }
+  /* contours and vector layers are stored in metres from their own origin, so the map can move under them */
+  function cOff(m, c) { return [(c.oe == null ? m.e : c.oe) - m.e, (c.on == null ? m.n : c.on) - m.n]; }
+  function mapLayers() { return MAPL.concat(doc().map && doc().map.extra || []); }
+  function layerAttr(m) { var seen = {}, out = []; mapLayers().forEach(function (L) { if (m.on && m.on[L.id] && L.attr && !seen[L.attr]) { seen[L.attr] = 1; out.push(L.attr); } }); return out; }
+  function mapClipM() { /* the map area in BNG metres */
+    var d = doc(), m = d.map, F = mapFrame(), I = m.box ? { x: Math.min(m.box[0], m.box[2]), y: Math.min(m.box[1], m.box[3]), w: Math.abs(m.box[2] - m.box[0]), h: Math.abs(m.box[3] - m.box[1]) } : F.inner;
+    return { x0: m.e + (I.x - F.cx) * F.mu, x1: m.e + (I.x + I.w - F.cx) * F.mu, y0: m.n - (I.y + I.h - F.cy) * F.mu, y1: m.n - (I.y - F.cy) * F.mu, I: I };
+  }
+  function mapLayersStr(m, F, I, forExport) {
+    var o = ""; if (!m.on) return o; m.L = m.L || {};
+    mapLayers().forEach(function (L) {
+      if (!m.on[L.id]) return;
+      if (L.kind === "wms") {
+        if (mapPanning) return; /* fetched again when the drag ends */
+        /* BGS draws the 1:50k geology only at 1:25,000 or smaller, so ask for no more than about 6 m per pixel */
+        var C = mapClipM(), px = Math.max(2, Math.min(2048, Math.round((C.x1 - C.x0) / 6))), py = Math.max(2, Math.round(px * I.h / I.w));
+        var url = L.url + "?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=" + encodeURIComponent(L.layer) + "&STYLES=&CRS=EPSG:27700&BBOX=" + [C.x0, C.y0, C.x1, C.y1].map(function (v) { return Math.round(v); }).join(",") + "&WIDTH=" + px + "&HEIGHT=" + py + "&FORMAT=image/png&TRANSPARENT=TRUE";
+        var src = tileCache[url] || (forExport ? "" : url); if (!forExport) cacheTile(url); if (!src) { mapMissing++; return; }
+        o += '<image href="' + esc(src) + '" x="' + r1(I.x) + '" y="' + r1(I.y) + '" width="' + r1(I.w) + '" height="' + r1(I.h) + '" preserveAspectRatio="none" opacity="' + (m.lop || 0.6) + '"/>';
+        return;
+      }
+      var lay = m.L[L.id]; if (!lay || !lay.f) return; var oO = cOff(m, lay), P = function (q) { return r1(F.cx + (q[0] + oO[0]) / F.mu) + " " + r1(F.cy - (q[1] + oO[1]) / F.mu); };
+      o += '<g fill="' + (L.line ? "none" : L.fill || "#3f6fd1") + '" fill-opacity="' + (L.fo || 0.12) + '" fill-rule="evenodd" stroke="' + (L.stroke || "#3f6fd1") + '" stroke-width="' + (L.line ? 1.6 : 1.1) + '"' + (L.dash ? ' stroke-dasharray="' + L.dash + '"' : "") + ' stroke-linejoin="round">';
+      lay.f.forEach(function (f) { o += '<path d="' + f.r.map(function (rg) { return "M" + rg.map(P).join("L") + (L.line ? "" : "Z"); }).join("") + '"/>'; });
+      o += "</g>";
+      lay.f.forEach(function (f) { if (f.n && !L.line && f.r[0].length > 3) { var c = f.r[0].reduce(function (a, q) { return [a[0] + q[0] / f.r[0].length, a[1] + q[1] / f.r[0].length]; }, [0, 0]), xy = P(c).split(" "); o += txt(+xy[0], +xy[1], f.n.length > 40 ? f.n.slice(0, 39) + "…" : f.n, L.stroke || "#333", 8.5, "middle", ' stroke="#fff" stroke-width="2.5" paint-order="stroke"'); } });
+    });
+    return o;
+  }
+  /* ArcGIS feature service query for the map area, in British National Grid, simplified to the drawing scale */
+  function fetchLayer(L) {
+    var d = doc(), m = d.map; if (!m || !d.dscale) return; var C = mapClipM(), F = mapFrame();
+    var url = L.url + "/query?where=1%3D1&geometry=" + [C.x0, C.y0, C.x1, C.y1].map(function (v) { return Math.round(v); }).join(",") + "&geometryType=esriGeometryEnvelope&inSR=27700&spatialRel=esriSpatialRelIntersects&outFields=*&returnGeometry=true&outSR=27700&maxAllowableOffset=" + (+(F.mu * 0.8).toFixed(2)) + "&geometryPrecision=1&resultRecordCount=2000&f=json";
+    mapStatus("Fetching " + L.name + "…"); var sheet = d;
+    fetch(url).then(function (r) { if (!r.ok) throw new Error("the service answered " + r.status); return r.json(); }).then(function (j) {
+      if (j.error) throw new Error(j.error.message || "the service refused the request");
+      var nameF = null; (j.fields || []).some(function (f) { if (/^(name|.*_name|sssi_name|name1)$/i.test(f.name) && f.type === "esriFieldTypeString") { nameF = f.name; return true; } return false; });
+      var feats = (j.features || []).map(function (f) { var g = f.geometry || {}, rings = g.rings || g.paths || []; return { n: nameF ? f.attributes[nameF] : null, r: rings.map(function (rg) { return rg.map(function (q) { return [Math.round((q[0] - m.e) * 10) / 10, Math.round((q[1] - m.n) * 10) / 10]; }); }) }; }).filter(function (f) { return f.r.length; });
+      if (!sheet.map) return; sheet.map.L = sheet.map.L || {}; sheet.map.L[L.id] = { f: feats, oe: m.e, on: m.n }; persist(); renderAll();
+      mapStatus(feats.length ? feats.length + " " + L.name + " feature" + (feats.length > 1 ? "s" : "") + " in the map area." + (j.exceededTransferLimit ? " There are more than this; zoom in to see them all." : "") : "No " + L.name + " in the map area.");
+    }).catch(function (err) { mapStatus("Couldn't fetch " + L.name + ": " + err.message + "."); });
+  }
+  function refreshLayers() { var m = doc().map; if (!m || !m.on) return; mapLayers().forEach(function (L) { if (m.on[L.id] && L.kind !== "wms" && !L.local) fetchLayer(L); }); }
   function merc(lat, lon, z) { var n = 256 * Math.pow(2, z), la = lat * Math.PI / 180; return [(lon + 180) / 360 * n, (1 - Math.log(Math.tan(la) + 1 / Math.cos(la)) / Math.PI) / 2 * n]; }
   function cacheTile(url) {
     if (tileCache[url] || tilePending[url] || !window.fetch) return; tilePending[url] = 1;
@@ -1390,7 +1458,7 @@
   var mapMissing = 0;
   function mapStr(forExport) {
     var d = doc(), m = d.map; mapMissing = 0; if (!m || m.show === false || !d.dscale || !RO()) return "";
-    var F = mapFrame(), I = F.inner, o = '<clipPath id="sk-mapclipg' + (forExport ? "x" : "") + '"><rect x="' + I.x + '" y="' + I.y + '" width="' + I.w + '" height="' + I.h + '"/></clipPath><g clip-path="url(#sk-mapclipg' + (forExport ? "x" : "") + ')">';
+    var F = mapFrame(), I = m.box ? { x: Math.min(m.box[0], m.box[2]), y: Math.min(m.box[1], m.box[3]), w: Math.abs(m.box[2] - m.box[0]), h: Math.abs(m.box[3] - m.box[1]) } : F.inner, o = '<clipPath id="sk-mapclipg' + (forExport ? "x" : "") + '"><rect x="' + I.x + '" y="' + I.y + '" width="' + I.w + '" height="' + I.h + '"/></clipPath><g clip-path="url(#sk-mapclipg' + (forExport ? "x" : "") + ')">';
     if (m.osm !== false) {
       var ll = RO().bngToWgs(m.e, m.n), z = Math.round(Math.log2(156543.034 * Math.cos(ll.lat * Math.PI / 180) / (F.mu * 1.2))); z = Math.max(8, Math.min(19, z));
       var p1 = RO().bngToWgs(m.e + 200, m.n), p2 = RO().bngToWgs(m.e, m.n + 200), m0 = merc(ll.lat, ll.lon, z), m1 = merc(p1.lat, p1.lon, z), m2 = merc(p2.lat, p2.lon, z);
@@ -1414,18 +1482,20 @@
         o += "</g>";
       }
     }
+    o += mapLayersStr(m, F, I, forExport);
     if (m.cont !== false && m.c && m.c.lines.length) {
-      var W2 = function (q) { return r1(F.cx + q[0] / F.mu) + " " + r1(F.cy - q[1] / F.mu); }, idx = m.c.iv * 5, lab = "";
-      o += '<g fill="none" stroke="#8a5a2b" stroke-linejoin="round">';
+      var cO = cOff(m, m.c), W2 = function (q) { return r1(F.cx + (q[0] + cO[0]) / F.mu) + " " + r1(F.cy - (q[1] + cO[1]) / F.mu); }, idx = m.c.iv * 5, lab = "";
+      o += '<g opacity="' + (m.cop || 1) + '"><g fill="none" stroke="#8a5a2b" stroke-linejoin="round">';
       m.c.lines.forEach(function (l) {
         var major = Math.abs(l.z / idx - Math.round(l.z / idx)) < 1e-6;
         o += '<path d="M' + l.p.map(W2).join("L") + '" stroke-width="' + (major ? 1.3 : 0.6) + '"/>';
-        if (major && l.p.length > 4) { var q = l.p[Math.floor(l.p.length / 2)], q2 = l.p[Math.floor(l.p.length / 2) + 1], x = F.cx + q[0] / F.mu, y = F.cy - q[1] / F.mu, ang = Math.atan2(-(q2[1] - q[1]), q2[0] - q[0]) * 180 / Math.PI; if (ang > 90) ang -= 180; if (ang < -90) ang += 180;
+        if (major && l.p.length > 4) { var q = l.p[Math.floor(l.p.length / 2)], q2 = l.p[Math.floor(l.p.length / 2) + 1], x = F.cx + (q[0] + cO[0]) / F.mu, y = F.cy - (q[1] + cO[1]) / F.mu, ang = Math.atan2(-(q2[1] - q[1]), q2[0] - q[0]) * 180 / Math.PI; if (ang > 90) ang -= 180; if (ang < -90) ang += 180;
           lab += '<text x="' + r1(x) + '" y="' + r1(y + 3) + '" transform="rotate(' + r1(ang) + " " + r1(x) + " " + r1(y) + ')" font-family="' + FONT + '" font-size="9" fill="#8a5a2b" text-anchor="middle" stroke="#fff" stroke-width="3" paint-order="stroke">' + (+l.z.toFixed(2)) + "</text>"; }
       });
-      o += "</g>" + lab;
+      o += "</g>" + lab + "</g>";
     }
-    var attr = [m.osm !== false ? "Map © OpenStreetMap contributors" : "", m.cont !== false && m.c ? "Contours " + m.c.iv + " m from EA LiDAR DTM © Environment Agency (OGL), indicative" : ""].filter(Boolean).join(" · ");
+    var attr = [m.osm !== false ? "Map © OpenStreetMap contributors" : "", m.cont !== false && m.c ? "Contours " + m.c.iv + " m from " + (m.c.src || "EA LiDAR DTM © Environment Agency (OGL)") + ", indicative" : ""].concat(layerAttr(m)).filter(Boolean).join(" · ");
+    if (m.box) o += '<rect x="' + r1(I.x) + '" y="' + r1(I.y) + '" width="' + r1(I.w) + '" height="' + r1(I.h) + '" fill="none" stroke="#15233a" stroke-width="1.2"/>';
     if (attr) o += txt(I.x + 6, I.y + I.h - 6, attr, "#5a6677", 8, "start", ' stroke="#fff" stroke-width="3" paint-order="stroke"');
     return o + "</g>";
   }
@@ -1462,7 +1532,7 @@
         }
       });
     }
-    return { iv: iv, lines: out };
+    return { iv: iv, lines: out, oe: e0, on: n0 };
   }
   function dpS(P, eps) {
     if (P.length < 3) return P;
@@ -1492,24 +1562,126 @@
   $("sk-mapgrey").addEventListener("change", function () { var v = this.checked; mapSet(function (m) { m.grey = v; }); });
   $("sk-mapop").addEventListener("input", function () { var v = +this.value; mapSet(function (m) { m.op = v; }); });
   $("sk-mapcont").addEventListener("change", function () { var v = this.checked; mapSet(function (m) { m.cont = v; }); if (v && doc().map && !doc().map.c) fetchContours(); });
+  $("sk-mapcop").addEventListener("input", function () { var v = +this.value; mapSet(function (m) { m.cop = v; }); });
+  $("sk-mapea").addEventListener("click", function () { if (!doc().map) { mapStatus("Place the map first."); return; } fetchContours(); });
+  $("sk-mapfile-b").addEventListener("click", function () { $("sk-mapfile").click(); });
+  $("sk-mapfile").addEventListener("change", function () { var f = this.files[0]; this.value = ""; if (f) loadTerrainFile(f); });
+  app.addEventListener("change", function (e) {
+    var id = e.target.dataset && e.target.dataset.ml; if (!id) return; var m = doc().map; if (!m) { e.target.checked = false; mapStatus("Place the map first."); return; }
+    m.on = m.on || {}; m.on[id] = e.target.checked; persist(); renderAll();
+    var L = mapLayers().filter(function (x) { return x.id === id; })[0]; if (e.target.checked && L && L.kind === "fs" && !L.local) fetchLayer(L);
+  });
+  $("sk-mladd").addEventListener("click", function () {
+    var u = ($("sk-mlurl").value || "").trim().replace(/\/query.*$/, "").replace(/\/+$/, ""), m = doc().map;
+    if (!m) { mapStatus("Place the map first."); return; }
+    if (!/^https:\/\/[^\s]+\/(FeatureServer|MapServer)\/\d+$/i.test(u)) { mapStatus("Paste an ArcGIS layer address ending in /FeatureServer/0 or /MapServer/0 (with the layer number). Natural England's open data pages give one under \"I want to use this\" > \"View API resources\"."); return; }
+    var L = { id: "x" + Date.now().toString(36), name: u.split("/").slice(-3, -2)[0].replace(/_/g, " "), kind: "fs", url: u, src: u, stroke: "#6a3fa0", fill: "#6a3fa0", fo: 0.1, attr: "Layer: " + u.split("/")[2] };
+    m.extra = (m.extra || []).concat([L]); m.on = m.on || {}; m.on[L.id] = true; persist(); renderMapExtra(); fetchLayer(L); $("sk-mlurl").value = "";
+  });
+  $("sk-mlgj-b").addEventListener("click", function () { $("sk-mlgj").click(); });
+  $("sk-mlgj").addEventListener("change", function () { var f = this.files[0]; this.value = ""; if (f) f.text().then(loadGeoJson).catch(function (er) { mapStatus("Couldn't read that file: " + er.message); }); });
+  function loadGeoJson(t) {
+    var m = doc().map; if (!m) { mapStatus("Place the map first."); return; }
+    var j = JSON.parse(t), feats = [], ll = null;
+    function conv(q) { if (ll === null) ll = Math.abs(q[0]) <= 180 && Math.abs(q[1]) <= 90; var b = ll ? RO().wgsToBng(q[1], q[0]) : { e: q[0], n: q[1] }; return [Math.round((b.e - m.e) * 10) / 10, Math.round((b.n - m.n) * 10) / 10]; }
+    var line = false;
+    (j.features || [j]).forEach(function (f) {
+      var g = f.geometry || f, nm = f.properties ? f.properties.name || f.properties.NAME || f.properties.name1 || null : null, cs = g.coordinates; if (!cs) return;
+      var add = function (rings) { feats.push({ n: nm, r: rings.map(function (rg) { return rg.map(conv); }) }); };
+      if (g.type === "Polygon") add(cs); else if (g.type === "MultiPolygon") cs.forEach(add); else if (g.type === "LineString") { line = true; add([cs]); } else if (g.type === "MultiLineString") { line = true; add(cs); }
+    });
+    if (!feats.length) { mapStatus("No lines or areas found in that GeoJSON."); return; }
+    if (feats.length > 5000) feats = feats.slice(0, 5000);
+    var L = { id: "g" + Date.now().toString(36), name: "GeoJSON layer", kind: "fs", local: true, line: line, stroke: line ? "#3f6fd1" : "#6a3fa0", fill: "#6a3fa0", fo: 0.1, src: "Loaded from a file", attr: "" };
+    m.extra = (m.extra || []).concat([L]); m.on = m.on || {}; m.on[L.id] = true; m.L = m.L || {}; m.L[L.id] = { f: feats, oe: m.e, on: m.n }; persist(); renderMapExtra(); renderAll();
+    mapStatus(feats.length + " features loaded" + (ll ? " (converted from lat/long)" : " (read as British National Grid)") + ". Add an attribution in a note if the data needs one.");
+  }
+  function renderMapExtra() { var m = doc().map, ex = m && m.extra || []; $("sk-mlextra").innerHTML = ex.map(function (L) { return '<label class="sk-check" title="' + esc(L.src) + '"><input type="checkbox" data-ml="' + L.id + '"' + (m.on && m.on[L.id] ? " checked" : "") + "> " + esc(L.name) + '</label><button type="button" class="sk-btn danger" data-mlx="' + L.id + '" aria-label="Remove layer">×</button>'; }).join(""); }
+  $("sk-mlextra").addEventListener("click", function (e) { var b = e.target.closest("[data-mlx]"); if (!b) return; var m = doc().map, id = b.dataset.mlx; m.extra = m.extra.filter(function (x) { return x.id !== id; }); if (m.L) delete m.L[id]; if (m.on) delete m.on[id]; persist(); renderMapExtra(); renderAll(); });
+  /* contours from a terrain file: ESRI ASCII grid, or GeoTIFF read with geotiff.js (loaded on first use) */
+  function loadTerrainFile(f) {
+    var iv = +$("sk-mapiv").value;
+    mapStatus("Reading " + f.name + "…");
+    var done = function (g) {
+      if (g.x0 < 0 || g.x0 > 800000 || g.y0 < 0 || g.y0 > 1400000) { mapStatus("That grid isn't in British National Grid (EPSG:27700) metres, so it can't be placed. Reproject it first, e.g. in QGIS."); return; }
+      var d = doc(), ce = g.x0 + g.nx * g.cell / 2, cn = g.y0 + g.ny * g.cell / 2, placed = !!d.map;
+      if (!d.map) {
+        var G = geo(), need = Math.max(g.nx * g.cell / (G.inner.w / 4000), g.ny * g.cell / (G.inner.h / 4000)); d.dscale = SCALES.filter(function (n) { return n >= need; })[0] || 10000;
+        d.map = { e: Math.round(ce), n: Math.round(cn), osm: $("sk-maposm").checked, cont: true, op: +$("sk-mapop").value, grey: true, show: true };
+      }
+      var m = d.map, C = mapClipM(), g2 = cropGrid(g, C.x0, C.y0, C.x1, C.y1);
+      if (!g2) { mapStatus("That terrain grid doesn't overlap the map area. Recentre the map on " + Math.round(ce) + ", " + Math.round(cn) + " or remove the map and load the file again."); return; }
+      var c = traceContours(g2, iv, m.e, m.n);
+      if (!c) { mapStatus("The grid has no values in the map area."); return; }
+      c.src = f.name; m.c = c; m.cont = true; m.csrc = "file"; persist(); syncControls(); renderAll(); renderProps();
+      mapStatus(c.lines.length + " contours every " + c.iv + " m from " + f.name + " (" + g.cell + " m cells)" + (placed ? "." : ", with the map placed over it at 1:" + d.dscale + "."));
+    };
+    if (/\.tiff?$/i.test(f.name)) {
+      loadGeoTiff(function (ok) {
+        if (!ok) { mapStatus("Couldn't load the GeoTIFF reader. Check your connection, or convert the file to .asc."); return; }
+        f.arrayBuffer().then(function (buf) { return window.GeoTIFF.fromArrayBuffer(buf); }).then(function (tf) { return tf.getImage(); }).then(function (img) {
+          var w = img.getWidth(), h = img.getHeight(), o = img.getOrigin(), r = img.getResolution(), st = Math.max(1, Math.ceil(Math.sqrt(w * h / 2.5e6))), nw = Math.floor(w / st), nh = Math.floor(h / st), nod = img.getGDALNoData();
+          return img.readRasters({ samples: [0], interleave: true, width: nw, height: nh }).then(function (rs) {
+            var z = new Float32Array(nw * nh); for (var i = 0; i < z.length; i++) { var v = rs[i]; z[i] = (nod != null && v === nod) || !isFinite(v) || v < -1000 ? NaN : v; }
+            var cell = Math.abs(r[0]) * w / nw; done({ nx: nw, ny: nh, x0: o[0], y0: o[1] - Math.abs(r[1]) * h, cell: cell, z: z });
+          });
+        }).catch(function (er) { mapStatus("Couldn't read that GeoTIFF: " + er.message); });
+      });
+    } else f.text().then(function (t) { done(RO().parseAsc(t)); }).catch(function (er) { mapStatus("Couldn't read that grid: " + er.message); });
+  }
+  var gtState = 0, gtWait = [];
+  function loadGeoTiff(cb) {
+    if (window.GeoTIFF) return cb(true); gtWait.push(cb); if (gtState) return; gtState = 1;
+    var sc = document.createElement("script"); sc.src = "https://cdn.jsdelivr.net/npm/geotiff@2.1.3/dist-browser/geotiff.js";
+    sc.onload = function () { gtWait.splice(0).forEach(function (f) { f(!!window.GeoTIFF); }); gtState = 0; }; sc.onerror = function () { gtWait.splice(0).forEach(function (f) { f(false); }); gtState = 0; };
+    document.head.appendChild(sc);
+  }
+  function cropGrid(g, x0, y0, x1, y1) {
+    var i0 = Math.max(0, Math.floor((x0 - g.x0) / g.cell) - 1), i1 = Math.min(g.nx - 1, Math.ceil((x1 - g.x0) / g.cell) + 1);
+    var top = g.y0 + g.ny * g.cell, j0 = Math.max(0, Math.floor((top - y1) / g.cell) - 1), j1 = Math.min(g.ny - 1, Math.ceil((top - y0) / g.cell) + 1);
+    if (i1 - i0 < 2 || j1 - j0 < 2) return null;
+    var st = Math.max(1, Math.ceil(Math.sqrt((i1 - i0 + 1) * (j1 - j0 + 1) / 400000))), nx = Math.floor((i1 - i0) / st) + 1, ny = Math.floor((j1 - j0) / st) + 1, z = new Float32Array(nx * ny);
+    for (var j = 0; j < ny; j++) for (var i = 0; i < nx; i++) z[j * nx + i] = g.z[(j0 + j * st) * g.nx + i0 + i * st];
+    return { nx: nx, ny: ny, cell: g.cell * st, x0: g.x0 + i0 * g.cell, y0: top - (j0 + ny * st) * g.cell, z: z };
+  }
+  /* moving the map and limiting it to an area are done by dragging on the sheet */
+  var mapMode = null, mapPanning = false;
+  function setMapMode(mm) { mapMode = mapMode === mm ? null : mm; $("sk-mappan").setAttribute("aria-pressed", mapMode === "pan"); $("sk-mapbox").setAttribute("aria-pressed", mapMode === "box"); stage.dataset.map = mapMode || ""; if (mapMode) mapStatus(mapMode === "pan" ? "Drag on the sheet to move the map. Your drawing stays where it is. Click Move map again to finish." : "Drag a box on the sheet for the map area."); }
+  $("sk-mappan").addEventListener("click", function () { if (!doc().map) { mapStatus("Place the map first."); return; } setMapMode("pan"); });
+  $("sk-mapbox").addEventListener("click", function () { if (!doc().map) { mapStatus("Place the map first."); return; } setMapMode("box"); });
+  $("sk-mapall").addEventListener("click", function () { var m = doc().map; if (!m) return; delete m.box; persist(); renderAll(); afterMapMove(); });
+  function afterMapMove() { var m = doc().map; if (!m) return; if (m.cont !== false && m.csrc !== "file") fetchContours(); refreshLayers(); }
   $("sk-mapiv").addEventListener("change", function () { if (doc().map && doc().map.cont !== false) fetchContours(); });
   $("sk-mapshow").addEventListener("change", function () { var v = this.checked; mapSet(function (m) { m.show = v; }); });
   $("sk-mapdel").addEventListener("click", function () { if (!doc().map) return; delete doc().map; persist(); renderAll(); mapStatus("Map removed."); });
   $("sk-mapgo").addEventListener("click", function () {
     if (!RO()) { mapStatus("The map helpers didn't load. Reload the page and try again."); return; }
-    var c = parseLoc($("sk-maploc").value);
+    var raw = $("sk-maploc").value, pc = /^\s*([A-Za-z]{1,2}\d[A-Za-z\d]?)\s*(\d[A-Za-z]{2})\s*$/.exec(raw);
+    if (pc) {
+      mapStatus("Looking up " + raw.toUpperCase() + "…");
+      fetch("https://api.postcodes.io/postcodes/" + encodeURIComponent(pc[1] + pc[2])).then(function (r) { return r.json(); }).then(function (j) {
+        if (!j.result || j.result.eastings == null) throw new Error(j.error || "postcode not found");
+        $("sk-maploc").value = j.result.postcode + " (" + j.result.eastings + ", " + j.result.northings + ")"; placeMap({ e: j.result.eastings, n: j.result.northings });
+      }).catch(function (er) { mapStatus("Couldn't find that postcode: " + er.message + ". Try a grid reference instead."); });
+      return;
+    }
+    var mm2 = /\((\d{5,6}), (\d{5,7})\)\s*$/.exec(raw); placeMap(mm2 ? { e: +mm2[1], n: +mm2[2] } : parseLoc(raw));
+  });
+  function placeMap(c) {
     if (!c || !(c.e > 0 && c.e < 700000 && c.n > 0 && c.n < 1300000)) { mapStatus("That location wasn't understood. Try a grid reference like SK 012 813, eastings and northings like 401200, 381300, or a latitude and longitude."); return; }
     var d = doc(), auto = !d.dscale; if (auto) d.dscale = 500;
-    d.map = { e: Math.round(c.e), n: Math.round(c.n), osm: $("sk-maposm").checked, cont: $("sk-mapcont").checked, op: +$("sk-mapop").value, grey: $("sk-mapgrey").checked, show: true };
+    if (d.map) { /* recentre: keep layers, area and settings; file contours stay put on the ground */
+      d.map.e = Math.round(c.e); d.map.n = Math.round(c.n);
+    } else d.map = { e: Math.round(c.e), n: Math.round(c.n), osm: $("sk-maposm").checked, cont: $("sk-mapcont").checked, op: +$("sk-mapop").value, grey: $("sk-mapgrey").checked, show: true };
     persist(); renderAll(); renderProps();
-    mapStatus((auto ? "The sketch was not to scale, so it is now 1:500; change the scale to zoom the map. " : "") + "Map placed at " + d.map.e + ", " + d.map.n + ".");
-    if (d.map.cont) fetchContours();
-  });
+    mapStatus((auto ? "The sketch was not to scale, so it is now 1:500; change the scale to zoom the map. " : "") + "Map centred on " + d.map.e + ", " + d.map.n + ".");
+    if (d.map.cont !== false) { if (d.map.csrc !== "file") fetchContours(); } refreshLayers();
+  }
   function fetchContours() {
     var d = doc(), m = d.map, F = mapFrame(); if (!m || !d.dscale) return;
-    var Wm = F.inner.w * F.mu, Hm = F.inner.h * F.mu;
+    var CM = mapClipM(), Wm = CM.x1 - CM.x0, Hm = CM.y1 - CM.y0, mcx = (CM.x0 + CM.x1) / 2, mcy = (CM.y0 + CM.y1) / 2;
     if (Math.max(Wm, Hm) > 6000) { mapStatus("The sheet covers more than 6 km at this scale, too much LiDAR to fetch. Pick a larger scale (smaller number) for contours."); return; }
-    var cell = Math.max(1, Math.ceil(Math.max(Wm, Hm) / 300)), x0 = Math.floor(m.e - Wm / 2 - cell), y0 = Math.floor(m.n - Hm / 2 - cell), nx = Math.ceil((Wm + 2 * cell) / cell), ny = Math.ceil((Hm + 2 * cell) / cell);
+    var cell = Math.max(1, Math.ceil(Math.max(Wm, Hm) / 300)), x0 = Math.floor(mcx - Wm / 2 - cell), y0 = Math.floor(mcy - Hm / 2 - cell), nx = Math.ceil((Wm + 2 * cell) / cell), ny = Math.ceil((Hm + 2 * cell) / cell);
     var R = RO(), url = R.EA_WCS + "?service=WCS&version=2.0.1&request=GetCoverage&coverageId=" + R.EA_COVERAGE + "&subset=E(" + x0 + "," + (x0 + nx * cell) + ")&subset=N(" + y0 + "," + (y0 + ny * cell) + ")&scaleSize=i(" + nx + "),j(" + ny + ")&format=text%2Fplain";
     var iv = +$("sk-mapiv").value, sheet = d, key = m.e + "," + m.n;
     mapStatus("Fetching LiDAR terrain from the Environment Agency (" + nx + " × " + ny + " cells at " + cell + " m)…");
@@ -1517,7 +1689,7 @@
       var g = R.parseWcsText(t), c = traceContours(g, iv, m.e, m.n);
       if (!sheet.map || sheet.map.e + "," + sheet.map.n !== key) return;
       if (!c) { mapStatus("No LiDAR came back for this spot. The EA's LiDAR covers England only, and has a few gaps."); return; }
-      sheet.map.c = c; persist(); renderAll();
+      c.src = "EA LiDAR DTM © Environment Agency (OGL)"; sheet.map.c = c; sheet.map.csrc = "ea"; persist(); renderAll();
       mapStatus(c.lines.length + " contour lines every " + c.iv + " m" + (c.iv !== iv ? " (widened from " + iv + " m: the ground is steep here)" : "") + ", from the EA's LiDAR terrain model.");
     }).catch(function (err) { mapStatus("Couldn't fetch LiDAR: " + err.message + ". The EA service may be busy; try again. LiDAR covers England only."); });
   }
@@ -1629,7 +1801,8 @@
       });
       if (d.map && d.map.show !== false && d.map.cont !== false && d.map.c && d.dscale) {
         var MF = mapFrame(); layers["SK-CONTOURS"] = 1;
-        d.map.c.lines.forEach(function (l) { pline(l.p.map(function (q) { return [MF.cx + q[0] / MF.mu, MF.cy - q[1] / MF.mu]; }), false, "SK-CONTOURS", 34, null, l.z); });
+        var dO = cOff(d.map, d.map.c); d.map.c.lines.forEach(function (l) { pline(l.p.map(function (q) { return [MF.cx + (q[0] + dO[0]) / MF.mu, MF.cy - (q[1] + dO[1]) / MF.mu]; }), false, "SK-CONTOURS", 34, null, l.z); });
+        if (d.map.on) mapLayers().forEach(function (L) { var lay = d.map.L && d.map.L[L.id]; if (!d.map.on[L.id] || !lay || !lay.f) return; var lo = cOff(d.map, lay), LN = "SK-MAP-" + L.id.toUpperCase(); layers[LN] = 1; lay.f.forEach(function (f) { f.r.forEach(function (rg) { pline(rg.map(function (q) { return [MF.cx + (q[0] + lo[0]) / MF.mu, MF.cy - (q[1] + lo[1]) / MF.mu]; }), !L.line, LN, aci(L.stroke)); }); }); });
       }
       walk(frameStr(true), "SK-FRAME"); layers["SK-FRAME"] = 1; if (d.wm) layers["SK-WATERMARK"] = 1;
     } finally { host.remove(); }

@@ -922,6 +922,12 @@ nav a[aria-current="page"][aria-expanded="true"] { color: var(--accent-ink); bac
 .sk-tools { display: flex; flex-wrap: wrap; gap: 4px; background: var(--tool-bg); border: 1px solid var(--tool-line); border-radius: var(--radius); padding: 4px; }
 .sk-tools2 .sk-tool { min-width: 54px; }
 .sk-mappanel { border: 1px solid var(--tool-line); background: var(--tool-bg); border-radius: var(--radius); padding: 8px 10px; margin-top: 8px; }
+.sk-wide { flex: 1 1 100%; }
+.sk-wide input { flex: 1; min-width: 0; padding: 5px 8px; }
+.sk-mappanel .sk-maprow + .sk-maprow { margin-top: 6px; }
+.sk-maplayers { border-top: 1px solid var(--line); padding-top: 6px; }
+.sk-stage[data-map="pan"] #sk-svg, .sk-stage[data-map="pan"] #sk-svg * { cursor: move !important; }
+.sk-stage[data-map="box"] #sk-svg, .sk-stage[data-map="box"] #sk-svg * { cursor: crosshair !important; }
 .sk-maprow { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; }
 .sk-mappanel p { margin: 6px 0 0; }
 .sk-snapwrap { display: inline-flex; align-items: center; gap: 6px; position: relative; }
@@ -2753,8 +2759,8 @@ footer .wrap { font-family: var(--font-body); }
 <script src="js/news-feed.js?v=20261122b"></script>
 <script src="js/news-archive.js?v=20261122b"></script>
 <script src="js/pages.js?v=20261122b"></script>
-<script src="js/tools/sketch-templates.js?v=20261128b"></script>
-<script src="js/tools/sketch.js?v=20261128b"></script>
+<script src="js/tools/sketch-templates.js?v=20261128d"></script>
+<script src="js/tools/sketch.js?v=20261128d"></script>
 <script src="js/tools/hydraulics.js?v=20261127a"></script>
 <script src="js/tools/pipeflow.js?v=20261127a"></script>
 <script src="js/tools/drawing-check.js?v=20261127a"></script>
