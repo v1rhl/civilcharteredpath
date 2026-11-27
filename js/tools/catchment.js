@@ -586,7 +586,7 @@
     if (!map || !centre) return;
     var half = SIZES[+$("ct-size").value][0] / 2, pts = [[-1, -1], [1, -1], [1, 1], [-1, 1]].map(function (c) { var ll = R.bngToWgs(centre.e + c[0] * half, centre.n + c[1] * half); return [ll.lat, ll.lon]; });
     if (mapSq) mapSq.remove();
-    mapSq = window.L.polygon(pts, { color: "#0d6b78", weight: 2, fillOpacity: 0.08 }).addTo(map);
+    mapSq = window.L.polygon(pts, { color: "#0b4f6c", weight: 2, fillOpacity: 0.08 }).addTo(map);
   }
 
   $("ct-fetch").addEventListener("click", function () {
