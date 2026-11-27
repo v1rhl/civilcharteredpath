@@ -608,7 +608,7 @@
   function useGrid(g, source) {
     var t0 = Date.now(); grid = g; an = R.analyse(g); cat = null; outlet = -1;
     if (an.valid < g.nx * g.ny * 0.05) { status("There's almost no LiDAR data in this square. EA coverage is England only, and a few areas are missing."); $("ct-dem").hidden = true; return; }
-    status(source + ". " + g.nx + " × " + g.ny + " cells analysed in " + ((Date.now() - t0) / 1000).toFixed(1) + " s. Tap the map below on a flow line to set the outlet.");
+    status(source + ". " + g.nx + " × " + g.ny + " cells analysed in " + Math.max(1, Date.now() - t0) + " ms. Tap the map below on a flow line to set the outlet.");
     $("ct-dem").hidden = false; $("ct-legend").hidden = false; $("ct-catch").innerHTML = "";
     draw();
   }
