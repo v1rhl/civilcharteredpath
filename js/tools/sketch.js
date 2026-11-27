@@ -870,10 +870,10 @@
   function importDetail(o) {
     if (!o || !o.svg) return false;
     var m = /viewBox="\s*([-\d.]+)[\s,]+([-\d.]+)[\s,]+([\d.]+)[\s,]+([\d.]+)/.exec(o.svg), G = geo();
-    var wmm = m ? +m[3] : 200, hmm = m ? +m[4] : 150, w = wmm * 4, h = hmm * 4, f = Math.min(1, G.inner.w * 0.9 / w, G.inner.h * 0.9 / h);
+    var wmm = m ? +m[3] : 200, hmm = m ? +m[4] : 150, w = wmm * 4, h = hmm * 4, ah = G.inner.h - G.tb.h, f = Math.min(1, G.inner.w * 0.94 / w, ah * 0.94 / h);
     var svgStr = /xmlns=/.test(o.svg) ? o.svg : o.svg.replace("<svg", '<svg xmlns="' + NS + '"');
     var src = "data:image/svg+xml;base64," + btoa(unescape(encodeURIComponent(svgStr)));
-    var im = { id: newId("u"), src: src, x: r1(G.inner.x + G.inner.w / 2), y: r1(G.inner.y + G.inner.h / 2), w: r1(w * f), h: r1(h * f), rot: 0, op: 1, from: o.source || "" };
+    var im = { id: newId("u"), src: src, x: r1(G.inner.x + G.inner.w / 2), y: r1(G.inner.y + ah / 2), w: r1(w * f), h: r1(h * f), rot: 0, op: 1, from: o.source || "" };
     begin(); doc().under.push(im); doc().showUnder = true; doc().lockUnder = false;
     if (o.title && !doc().tb.title) doc().tb.title = String(o.title);
     commit();
