@@ -859,6 +859,12 @@ nav a[aria-current="page"][aria-expanded="true"] { color: var(--accent-ink); bac
 .sk-app { display: flex; flex-direction: column; gap: 10px; }
 .sk-head { display: flex; flex-direction: column; gap: 8px; position: sticky; top: var(--sk-top, 56px); z-index: 4; background: var(--paper); padding: 8px 0; margin-top: -8px; border-bottom: 1px solid var(--line); }
 .sk-tabs { display: flex; flex-wrap: wrap; gap: 4px; align-items: flex-end; margin-bottom: -11px; position: relative; z-index: 1; padding-left: 8px; }
+.sk-tab.dropl { box-shadow: inset 3px 0 0 var(--accent); }
+.sk-tab.dropr { box-shadow: inset -3px 0 0 var(--accent); }
+.sk-tab.dragging { opacity: 0.5; }
+.sk-tab[draggable="true"] { cursor: grab; }
+.sk-order { display: inline-flex; gap: 2px; }
+.sk-order .sk-btn { padding: 6px 8px; }
 .sk-tab { display: inline-flex; align-items: center; border: 1px solid var(--line); border-bottom-color: transparent; border-radius: var(--radius) var(--radius) 0 0; background: var(--paper); }
 .sk-tab.on { background: #e9edec; border-color: var(--line); border-bottom-color: #e9edec; }
 .sk-tab button { font: 600 0.82rem var(--font-body); border: 0; background: transparent; color: var(--ink); padding: 6px 10px; cursor: pointer; display: inline-flex; gap: 6px; align-items: baseline; }
@@ -2713,8 +2719,8 @@ footer .wrap { font-family: var(--font-body); }
 <script src="js/news-feed.js?v=20261122b"></script>
 <script src="js/news-archive.js?v=20261122b"></script>
 <script src="js/pages.js?v=20261122b"></script>
-<script src="js/tools/sketch-templates.js?v=20261127h"></script>
-<script src="js/tools/sketch.js?v=20261127h"></script>
+<script src="js/tools/sketch-templates.js?v=20261128a"></script>
+<script src="js/tools/sketch.js?v=20261128a"></script>
 <script src="js/tools/hydraulics.js?v=20261127a"></script>
 <script src="js/tools/pipeflow.js?v=20261127a"></script>
 <script src="js/tools/drawing-check.js?v=20261127a"></script>
