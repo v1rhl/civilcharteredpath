@@ -29,6 +29,7 @@
     hatch: '<rect x="4" y="4" width="16" height="16"/><path d="M4 12l8-8M4 20L20 4M12 20l8-8"/>',
     member: '<path d="M3 12h18" stroke-width="3"/>',
     pin: '<path d="M12 6l-6 10h12z"/><path d="M4 19h16"/>',
+    xform: '<path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5"/><path d="M12 8v8M8 12h8"/>',
     image: '<rect x="3" y="5" width="18" height="14" rx="1"/><circle cx="9" cy="10" r="1.8"/><path d="M3 17l5-5 4 4 3-3 6 6"/>',
     roller: '<path d="M12 5l-6 9h12z"/><circle cx="9" cy="17" r="1.6"/><circle cx="15" cy="17" r="1.6"/><path d="M4 20h16"/>',
     fixed: '<path d="M6 4v16" stroke-width="2.4"/><path d="M6 7L3 10M6 12l-3 3M6 17l-3 3"/><path d="M6 12h14"/>',
@@ -48,8 +49,8 @@
     wl: '<path d="M7 5h10l-5 7z"/><path d="M5 15h14M8 18h8M10.5 21h3"/>'
   };
   var TOOLS = {
-    free: [["select", "Select"], ["pen", "Pen"], ["eraser", "Eraser"], ["hatch", "Hatch"], ["text", "Text"], ["leader", "Leader"], ["dim", "Dimension"]],
-    struct: [["select", "Select"], ["member", "Member"], ["pin", "Pin"], ["roller", "Roller"], ["fixed", "Fixed"], ["pload", "Point load"], ["udl", "UDL"], ["moment", "Moment"], ["dim", "Dimension"], ["hatch", "Hatch"], ["text", "Text"], ["leader", "Leader"], ["eraser", "Eraser"]],
+    free: [["select", "Select"], ["xform", "Move/resize"], ["pen", "Pen"], ["eraser", "Eraser"], ["hatch", "Hatch"], ["text", "Text"], ["leader", "Leader"], ["dim", "Dimension"]],
+    struct: [["select", "Select"], ["xform", "Move/resize"], ["member", "Member"], ["pin", "Pin"], ["roller", "Roller"], ["fixed", "Fixed"], ["pload", "Point load"], ["udl", "UDL"], ["moment", "Moment"], ["dim", "Dimension"], ["hatch", "Hatch"], ["text", "Text"], ["leader", "Leader"], ["eraser", "Eraser"]],
     shapes: [["line", "Line"], ["arrow", "Arrow"], ["rect", "Rectangle"], ["circle", "Circle"], ["poly", "Polygon"], ["section", "Section"], ["north", "North"], ["brk", "Break line"], ["cloud", "Rev cloud"], ["slope", "Slope"], ["wl", "Water level"], ["image", "Image"]]
   };
   var HINTS = {
@@ -77,6 +78,7 @@
     brk: "Drag where the break line should run; the zigzag goes in the middle.",
     cloud: "Drag a box round the change to draw a revision cloud.",
     slope: "Drag along the top of the slope. The ticks point down the slope; Flip side if they're the wrong way.",
+    xform: "Click or box-select items, then drag them to move, or drag a corner handle to resize them all together (Shift to stretch). Works on typical details and groups too.",
     image: "Add a picture or screenshot to the drawing. You can also paste a screenshot straight in with Ctrl+V.",
     wl: "Click on the water line to place a water level marker, then type the level below."
   };
@@ -446,6 +448,21 @@
     else if ("x" in n) { n.x += dx; n.y += dy; }
     return n;
   }
+  /* Scale an item about a point. Text, symbols and arrowheads grow with the geometric mean of the factors. */
+  function scaleItem(o, ax, ay, fx, fy) {
+    var n = clone(o), m = Math.sqrt(fx * fy), P = function (q) { return [r1(ax + (q[0] - ax) * fx), r1(ay + (q[1] - ay) * fy)]; };
+    if (n.pts) n.pts = n.pts.map(P); if (n.holes) n.holes = n.holes.map(function (h) { return h.map(P); });
+    if (n.seed) { var sd = P([n.seed.x, n.seed.y]); n.seed = { x: sd[0], y: sd[1] }; }
+    if ("x1" in n) { var a = P([n.x1, n.y1]), b = P([n.x2, n.y2]); n.x1 = a[0]; n.y1 = a[1]; n.x2 = b[0]; n.y2 = b[1]; }
+    if (n.type === "leader") { var bb = P([n.bx, n.by]); n.bx = bb[0]; n.by = bb[1]; if (!n.att) { var aa = P([n.ax, n.ay]); n.ax = aa[0]; n.ay = aa[1]; } }
+    else if ("x" in n) { var xy = P([n.x, n.y]); n.x = xy[0]; n.y = xy[1]; }
+    if (n.type === "image") { n.w = r1(n.w * fx); n.h = r1(n.h * fy); }
+    if (n.type === "text") n.size = Math.max(4, r1((n.size || 18) * m));
+    if (n.fs) n.fs = Math.max(4, r1(n.fs * m));
+    if (n.s != null || /^(north|wl|slope)$/.test(n.type)) n.s = r1((n.s || 1) * m * 100) / 100;
+    if (n.type === "dim" && n.o != null) n.o = r1(n.o * m);
+    return n;
+  }
   function replaceItem(n) { var a = doc().items; for (var i = 0; i < a.length; i++) if (a[i].id === n.id) { a[i] = n; return; } }
   function removeItem(id) { syncLeaders(); doc().items = doc().items.filter(function (it) { return it.id !== id; }); }
   function locked(it) { return !!(it && (it.lock || doc().lockDraw)); }
@@ -501,12 +518,13 @@
       '<label class="sr-only" for="sk-tpl">Insert a typical detail</label><select id="sk-tpl" class="sk-tpl"></select></div>' +
     '<div class="sk-style">' +
       '<div class="sk-group"><span class="sk-lab">Colour</span><div class="sk-swatches" id="sk-swatches"></div><label class="sk-pick" title="Pick any colour"><span class="sr-only">Custom colour</span><input type="color" id="sk-color"></label></div>' +
-      '<div class="sk-group"><span class="sk-lab">Weight</span><div class="sk-chips" id="sk-widths"></div></div>' +
-      '<div class="sk-group"><label class="sk-lab" for="sk-ls">Line</label><select id="sk-ls">' + LINES.map(function (l) { return '<option value="' + l[0] + '">' + l[1] + "</option>"; }).join("") + "</select></div>" +
-      '<div class="sk-group"><label class="sk-lab" for="sk-fs">Text</label><select id="sk-fs">' + [8, 10, 12, 14, 16, 18, 24, 32].map(function (v) { return '<option value="' + v + '">' + v + "</option>"; }).join("") + "</select></div>" +
-      '<div class="sk-group"><label class="sk-lab" for="sk-pat">Hatch</label><select id="sk-pat">' + PATS.map(function (l) { return '<option value="' + l[0] + '">' + l[1] + "</option>"; }).join("") + "</select>" +
+      '<div class="sk-group" data-ctx="line"><span class="sk-lab">Weight</span><div class="sk-chips" id="sk-widths"></div></div>' +
+      '<div class="sk-group" data-ctx="line"><label class="sk-lab" for="sk-ls">Line</label><select id="sk-ls">' + LINES.map(function (l) { return '<option value="' + l[0] + '">' + l[1] + "</option>"; }).join("") + "</select></div>" +
+      '<div class="sk-group" data-ctx="text"><label class="sk-lab" for="sk-fs">Text</label><select id="sk-fs">' + [8, 10, 12, 14, 16, 18, 24, 32].map(function (v) { return '<option value="' + v + '">' + v + "</option>"; }).join("") + "</select></div>" +
+      '<div class="sk-group" data-ctx="hatch"><label class="sk-lab" for="sk-pat">Hatch</label><select id="sk-pat">' + PATS.map(function (l) { return '<option value="' + l[0] + '">' + l[1] + "</option>"; }).join("") + "</select>" +
         '<label class="sr-only" for="sk-hsc">Hatch scale</label><select id="sk-hsc" title="Hatch pattern scale">' + [0.1, 0.25, 0.5, 0.75, 1, 1.5, 2, 3, 4].map(function (v) { return '<option value="' + v + '">×' + v + "</option>"; }).join("") + "</select>" +
         '<label class="sr-only" for="sk-hby">Hatch by</label><select id="sk-hby"><option value="pick">Click inside an area</option><option value="shape">Draw a shape</option></select></div>' +
+      '<p class="small" id="sk-ctxhint" hidden>Pick a drawing tool or select something to see its line, text and hatch options.</p>' +
     "</div>" +
     '<div class="sk-style sk-sheetopts">' +
       '<div class="sk-seg sk-seg-sm" role="group" aria-label="Paper size"><button type="button" data-paper="A4">A4</button><button type="button" data-paper="A3">A3</button></div>' +
@@ -544,6 +562,25 @@
     '<p class="small sk-status" id="sk-status" role="status"></p>';
 
   var svg = $("sk-svg"), gDefs = $("sk-defs"), gUnder = $("sk-under"), gGrid = $("sk-gridg"), gContent = $("sk-content"), gFrame = $("sk-frame"), gLive = $("sk-live"), gUI = $("sk-ui"), stage = $("sk-stage");
+  /* Layout: tools and options in a side bar, the sheet in the main column with its action bar and
+     properties above it, so the drawing sits at the top of the screen without scrolling. */
+  (function () {
+    function mk(tag, cls, html) { var e = document.createElement(tag); if (cls) e.className = cls; if (html) e.innerHTML = html; return e; }
+    function sec(name, title, open, nodes) { var dd = mk("details", "sk-sec"); dd.dataset.sec = name; var st = null; try { st = localStorage.getItem("cp-sketch-sec-" + name); } catch (e) {} dd.open = st == null ? open : st === "1"; dd.appendChild(mk("summary", "", title)); nodes.forEach(function (n) { if (n) dd.appendChild(n); }); dd.addEventListener("toggle", function () { try { localStorage.setItem("cp-sketch-sec-" + name, dd.open ? "1" : "0"); } catch (e) {} if (window.innerWidth > 1000) fitSheet(); }); return dd; }
+    var head = $("sk-head"), top = head.querySelector(".sk-top"), modes = top.querySelector(".sk-seg"), toolrow = head.querySelector(".sk-toolrow"), styleEl = head.querySelector(".sk-style:not(.sk-sheetopts)"), sheet = head.querySelector(".sk-sheetopts"), layers = sheet.querySelector(".sk-layers"), mp = $("sk-mappanel");
+    var side = mk("aside", "sk-side"); side.id = "sk-side"; side.setAttribute("aria-label", "Tools and options");
+    side.appendChild(modes); side.appendChild(toolrow);
+    side.appendChild(sec("style", "Style", true, [styleEl]));
+    side.appendChild(sec("sheet", "Sheet", true, [sheet]));
+    side.appendChild(sec("layers", "Layers and map", false, [layers, mp]));
+    var main = mk("div", "sk-main"); main.id = "sk-main";
+    top.insertAdjacentHTML("beforeend", '<button type="button" class="sk-btn" id="sk-full" title="Full screen (F)" aria-pressed="false">Full screen</button>');
+    top.querySelector(".sk-actions").appendChild($("sk-full"));
+    [top, $("sk-props"), $("sk-tabs"), $("sk-stage"), $("sk-status")].forEach(function (n) { main.appendChild(n); });
+    var lay = mk("div", "sk-layout"); lay.appendChild(side); lay.appendChild(main);
+    head.remove(); app.innerHTML = ""; app.appendChild(lay);
+    top.id = "sk-head"; /* the bar above the sheet: kept in view on wide screens */
+  })();
   function status(msg) { $("sk-status").textContent = msg || ""; }
 
   /* ---------- Rendering ---------- */
@@ -627,9 +664,9 @@
   }
   /* Keep the whole sheet in view under the sticky toolbars on a desktop screen. */
   function fitSheet() {
-    var G = geo(), top = document.querySelector(".topbar"), th = top ? top.offsetHeight : 0, hh = window.innerWidth > 760 ? $("sk-head").offsetHeight : 0;
+    var G = geo(), full = isFull(), top = full ? null : document.querySelector(".topbar"), th = top ? top.offsetHeight : 0, wide = window.innerWidth > 1000, hh = wide ? $("sk-head").offsetHeight + $("sk-props").offsetHeight + 16 : window.innerWidth > 760 ? $("sk-head").offsetHeight : 0;
     app.style.setProperty("--sk-top", th + "px");
-    var avail = window.innerHeight - th - hh - $("sk-tabs").offsetHeight - 36;
+    var avail = window.innerHeight - th - hh - $("sk-tabs").offsetHeight - (full ? 24 : 36);
     svg.style.maxWidth = Math.max(320, avail * G.W / G.H) + "px";
   }
   function measureK() { var w = svg.getBoundingClientRect().width; k = w ? geo().W / w : 1; }
@@ -691,8 +728,20 @@
         }
       }
     }
+    xbox = null;
+    if (tool[mode] === "xform" && sel && sel.k !== "img") {
+      var xl = selList(); if (xl.length && !xl.some(locked)) {
+        var xb = null; xl.forEach(function (gi) { var e3 = gContent.querySelector('[data-id="' + gi.id + '"] .v'); if (!e3) return; try { var b3 = e3.getBBox(); if (!xb) xb = { x1: b3.x, y1: b3.y, x2: b3.x + b3.width, y2: b3.y + b3.height }; else { xb.x1 = Math.min(xb.x1, b3.x); xb.y1 = Math.min(xb.y1, b3.y); xb.x2 = Math.max(xb.x2, b3.x + b3.width); xb.y2 = Math.max(xb.y2, b3.y + b3.height); } } catch (er) {} });
+        if (xb && xb.x2 - xb.x1 + xb.y2 - xb.y1 > 2) {
+          xbox = xb; o = o.replace(/<(circle|rect) data-h="(?!xs)[^"]*"[^>]*\/>/g, "");
+          o += '<rect x="' + r1(xb.x1) + '" y="' + r1(xb.y1) + '" width="' + r1(xb.x2 - xb.x1) + '" height="' + r1(xb.y2 - xb.y1) + '" class="sk-sel" stroke-width="1.5"/>';
+          [[xb.x1, xb.y1], [xb.x2, xb.y1], [xb.x2, xb.y2], [xb.x1, xb.y2]].forEach(function (q, i) { o += hnd("xs" + i, q[0], q[1], "sq"); });
+        }
+      }
+    }
     gUI.innerHTML = o;
   }
+  var xbox = null;
   function renderLive() {
     var o = "";
     if (pend && pend.pts.length) {
@@ -705,6 +754,16 @@
   }
 
   /* ---------- Toolbar ---------- */
+  /* Show only the style options that matter for the active tool or the selected items. */
+  var CTX_TOOL = { line: /^(pen|line|arrow|rect|circle|poly|member|brk|cloud|hatch)$/, text: /^(text|leader|dim|udl|pload|moment|section|wl)$/, hatch: /^hatch$/ };
+  var CTX_TYPE = { line: /^(stroke|line|arrow|rect|circle|poly|member|brk|cloud|hatch)$/, text: /^(text|leader|dim|udl|pload|moment|section|wl)$/, hatch: /^hatch$/ };
+  function updateCtx() {
+    var t = tool[mode], l = sel && sel.k !== "img" ? selList() : [], any = false;
+    Array.prototype.forEach.call(app.querySelectorAll("[data-ctx]"), function (el) {
+      var c = el.dataset.ctx, on = CTX_TOOL[c].test(t) || l.some(function (it) { return CTX_TYPE[c].test(it.type); }); el.hidden = !on; if (on) any = true;
+    });
+    var hint = $("sk-ctxhint"); if (hint) hint.hidden = any;
+  }
   function renderTools() {
     var tb = function (t) { return '<button type="button" class="sk-tool" data-tool="' + t[0] + '" aria-pressed="' + (tool[mode] === t[0]) + '" title="' + esc(HINTS[t[0]]) + '">' + iconSvg(t[0]) + "<span>" + t[1] + "</span></button>"; };
     $("sk-tools").innerHTML = TOOLS[mode].map(tb).join("");
@@ -713,6 +772,7 @@
     Array.prototype.forEach.call(app.querySelectorAll("[data-mode]"), function (b) { b.setAttribute("aria-pressed", b.dataset.mode === mode); });
     Array.prototype.forEach.call(app.querySelectorAll("[data-only]"), function (el) { el.hidden = el.dataset.only !== mode; });
     stage.dataset.tool = tool[mode];
+    updateCtx();
   }
   $("sk-swatches").innerHTML = COLORS.map(function (c) { return '<button type="button" class="sk-sw" data-color="' + c[0] + '" style="background:' + c[0] + '" title="' + c[1] + '" aria-label="' + c[1] + '"></button>'; }).join("");
   $("sk-widths").innerHTML = WIDTHS.map(function (w) { return '<button type="button" class="sk-chip" data-w="' + w[0] + '" title="' + w[1] + '" aria-label="' + w[1] + '"><i style="height:' + Math.min(w[0], 10) + 'px"></i></button>'; }).join("");
@@ -737,7 +797,7 @@
     $("sk-undo").disabled = !H().u.length; $("sk-redo").disabled = !H().r.length;
   }
   function setMode(m) { mode = m; S.mode = m; pend = null; sel = null; persist(); renderTools(); renderAll(); renderLive(); renderProps(); }
-  function setTool(t) { if (pend && pend.poly && t !== "poly") finishPoly(); else if (pend && !pend.poly && t !== "hatch") finishHatch(); tool[mode] = t; snapHit = null; showSnap(); renderTools(); if (t !== "select") sel = null; renderUI(); renderProps(); }
+  function setTool(t) { if (pend && pend.poly && t !== "poly") finishPoly(); else if (pend && !pend.poly && t !== "hatch") finishHatch(); tool[mode] = t; snapHit = null; showSnap(); renderTools(); if (t !== "select" && t !== "xform") sel = null; renderUI(); renderProps(); }
 
   /* Turning the sheet keeps everything on it, shifted so it stays centred on the new sheet. */
   function setOrient(o, paper) {
@@ -811,7 +871,8 @@
 
   /* ---------- Properties bar ---------- */
   var ROT_TYPES = { support: 90, pload: 45, north: 45 };
-  function renderProps() {
+  function renderProps() { updateCtx(); renderProps0(); }
+  function renderProps0() {
     var p = $("sk-props"), it = sel && sel.k === "item" ? byId(sel.id) : null, im = sel && sel.k === "img" ? imgById(sel.id) : null;
     if (im) {
       p.innerHTML = '<span class="sk-lab">Image</span><label class="sk-check">Opacity <input type="range" id="skp-op" min="0.1" max="1" step="0.05" value="' + (im.op == null ? 0.5 : im.op) + '"></label>' +
@@ -829,6 +890,7 @@
       return;
     }
     if (!it) { p.innerHTML = '<span class="small">' + esc(HINTS[tool[mode]] || "") + "</span>"; return; }
+    updateCtx();
     var NAMES = { image: "Image", arrow: "Arrow", rect: "Rectangle", circle: "Circle", poly: "Polygon", cloud: "Revision cloud", brk: "Break line", slope: "Slope marker", section: "Section marker", north: "North arrow", wl: "Water level", stroke: "Pen stroke", line: "Line", member: "Member", support: "Support", pload: "Point load", udl: "Distributed load", moment: "Moment", dim: "Dimension", text: "Text", leader: "Leader note", hatch: "Hatched area" };
     var h = '<span class="sk-lab">' + NAMES[it.type] + "</span>";
     if (locked(it)) {
@@ -995,13 +1057,14 @@
     try { svg.setPointerCapture(e.pointerId); } catch (er) {}
     e.preventDefault();
     var h = e.target.closest("[data-h]");
+    if (h && /^xs\d$/.test(h.dataset.h) && sel && xbox) { begin(); var ci = +h.dataset.h[2], cx0 = ci === 0 || ci === 3 ? xbox.x2 : xbox.x1, cy0 = ci < 2 ? xbox.y2 : xbox.y1; drag = { type: "xs", orig: clone(selList()), ax: cx0, ay: cy0, cx: ci === 0 || ci === 3 ? xbox.x1 : xbox.x2, cy: ci < 2 ? xbox.y1 : xbox.y2 }; return; }
     if (h && h.dataset.h !== "first" && sel) {
       begin();
       if (sel.k === "img") { var im = imgById(sel.id); drag = { type: "ih", h: h.dataset.h, orig: clone(im), d0: Math.hypot(p.x - im.x, p.y - im.y) || 1 }; }
       else drag = { type: "h", h: h.dataset.h, orig: clone(byId(sel.id)) };
       return;
     }
-    if (t === "select") {
+    if (t === "select" || t === "xform") {
       var g = e.target.closest("[data-id]"), u = e.target.closest("[data-uid]");
       var add = e.shiftKey || e.ctrlKey || e.metaKey;
       if (g && d.showDraw && add) { /* Shift or Ctrl click adds or removes an item (or its whole group) */
@@ -1140,6 +1203,10 @@
         else if (hh === "isz") { var ar0 = drag.orig.h / drag.orig.w, nw = Math.max(10, p.x - it.x); it.w = r1(nw); it.h = r1(e.shiftKey ? Math.max(10, p.y - it.y) : nw * ar0); }
         else if (hh[0] === "v") { var qv = snapPt(p); it.pts[+hh.slice(1)] = [qv.x, qv.y]; }
         replaceItem(it); renderContent(); return;
+      case "xs":
+        var fx = (p.x - drag.ax) / ((drag.cx - drag.ax) || 1), fy = (p.y - drag.ay) / ((drag.cy - drag.ay) || 1);
+        if (!e.shiftKey) { var uf = Math.max(0.05, (fx + fy) / 2); fx = fy = uf; } else { fx = Math.max(0.05, fx); fy = Math.max(0.05, fy); }
+        drag.orig.forEach(function (o) { replaceItem(scaleItem(o, drag.ax, drag.ay, fx, fy)); }); renderContent(); status("Scale ×" + (+fx.toFixed(2)) + (fx !== fy ? " by ×" + (+fy.toFixed(2)) : "")); return;
       case "imove": var im = imgById(drag.orig.id); im.x = r1(drag.orig.x + p.x - drag.start.x); im.y = r1(drag.orig.y + p.y - drag.start.y); updImg(im); renderUI(); return;
       case "ih":
         var im2 = imgById(sel.id), o = drag.orig;
@@ -1181,6 +1248,8 @@
     if (mod && e.key.toLowerCase() === "z") { e.preventDefault(); if (e.shiftKey) redo(); else undo(); return; }
     if (mod && e.key.toLowerCase() === "y") { e.preventDefault(); redo(); return; }
     if (e.key === "Enter" && pend) { e.preventDefault(); if (pend.poly) finishPoly(); else finishHatch(); return; }
+    if ((e.key === "f" || e.key === "F") && !mod && !e.altKey) { e.preventDefault(); setFull(!isFull()); return; }
+    if (e.key === "Escape" && app.classList.contains("sk-full") && !pend && !sel) { setFull(false); return; }
     if (e.key === "Escape") { if (pend) { pend = null; renderLive(); } else selectItem(null); return; }
     if (mod && e.key.toLowerCase() === "a") { e.preventDefault(); if (!doc().showDraw) return; setTool("select"); setSel(doc().items.filter(function (x) { return !locked(x); })); return; }
     if (mod && e.key.toLowerCase() === "c") { if (copySel()) e.preventDefault(); return; }
@@ -1778,6 +1847,14 @@
 
   window.addEventListener("resize", function () { if (!view.hidden) { renderAll(); if (tbKey) closeTB(true); } });
   /* On opening, scroll so the toolbars sit at the top of the window with the sheet below them. */
+  function isFull() { return document.fullscreenElement === app || app.classList.contains("sk-full"); }
+  function setFull(on) {
+    if (on) { if (app.requestFullscreen) app.requestFullscreen().catch(function () { app.classList.add("sk-full"); afterFull(); }); else { app.classList.add("sk-full"); afterFull(); } }
+    else { if (document.fullscreenElement) document.exitFullscreen(); app.classList.remove("sk-full"); afterFull(); }
+  }
+  function afterFull() { var f = isFull(); $("sk-full").setAttribute("aria-pressed", f); $("sk-full").textContent = f ? "Exit full screen" : "Full screen"; app.style.setProperty("--sk-top", f ? "0px" : ((document.querySelector(".topbar") || {}).offsetHeight || 0) + "px"); setTimeout(function () { renderAll(); measureK(); renderUI(); }, 60); }
+  $("sk-full").addEventListener("click", function () { setFull(!isFull()); });
+  document.addEventListener("fullscreenchange", afterFull);
   function toTop() { var top = document.querySelector(".topbar"), th = top ? top.offsetHeight : 0; window.scrollTo(0, Math.max(0, app.getBoundingClientRect().top + window.scrollY - th - 8)); }
   new MutationObserver(function () { if (!view.hidden) setTimeout(function () { renderAll(); if (window.innerWidth > 760) toTop(); }, 30); }).observe(view, { attributes: true, attributeFilter: ["hidden"] });
   renderTools(); renderAll(); renderProps();
