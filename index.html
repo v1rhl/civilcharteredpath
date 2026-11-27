@@ -1824,6 +1824,16 @@ nav a[aria-current="page"][aria-expanded="true"] { color: var(--accent-ink); bac
   </div>
 </section>
 
+<!-- TOOL: CATCHMENT RUNOFF (js/tools/catchment.js builds the page) -->
+<section class="view wrap" id="view-catchment" data-view="catchment" hidden>
+  <div class="view-head">
+    <span class="eyebrow"><a href="#tools">Tools</a> / Catchment runoff</span>
+    <h2>Catchment runoff</h2>
+    <p class="lede">Indicative peak flow and runoff volume for one or more sub-catchments, compared with greenfield. Optionally find the catchment, its flow path and slope from open LiDAR.</p>
+  </div>
+  <div id="catchment-app" style="display:flex;flex-direction:column;gap:16px"></div>
+</section>
+
 <!-- COMMUNITY -->
 <section class="view wrap" id="view-community" data-view="community" hidden>
   <div class="view-head">
@@ -1910,6 +1920,7 @@ nav a[aria-current="page"][aria-expanded="true"] { color: var(--accent-ink); bac
 <script src="js/news-archive.js?v=20261122b"></script>
 <script src="js/config.js?v=20261122b"></script>
 <script src="js/pages.js?v=20261122b"></script>
+<script src="js/tools/catchment.js?v=20261127a"></script>
 <script src="js/site.js?v=20261122b"></script>
 <script src="js/art.js?v=20261122b"></script>
 </body>
