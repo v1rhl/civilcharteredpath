@@ -478,7 +478,7 @@
 
       '<div class="sk-actions"><button type="button" class="sk-btn" id="sk-undo" title="Undo (Ctrl+Z)">Undo</button><button type="button" class="sk-btn" id="sk-redo" title="Redo (Ctrl+Y)">Redo</button>' +
         '<button type="button" class="sk-btn" id="sk-clear">Clear</button>' +
-        '<label class="sr-only" for="sk-fmt">Export format</label><select id="sk-fmt"><option value="png">PNG image</option><option value="jpeg">JPEG image</option><option value="svg">SVG drawing</option><option value="pdf">PDF, this sheet</option><option value="pdfall">PDF, all sheets</option></select><button type="button" class="btn" id="sk-export">Export</button></div>' +
+        '<label class="sr-only" for="sk-fmt">Export format</label><select id="sk-fmt"><option value="png">PNG image</option><option value="jpeg">JPEG image</option><option value="svg">SVG drawing</option><option value="pdf">PDF, this sheet</option><option value="pdfall">PDF, all sheets</option><option value="dxf">DXF for CAD, this sheet</option></select><button type="button" class="btn" id="sk-export">Export</button></div>' +
     "</div>" +
     '<div class="sk-toolrow"><div class="sk-tools" id="sk-tools" role="toolbar" aria-label="Drawing tools"></div><div class="sk-tools sk-tools2" id="sk-tools2" role="toolbar" aria-label="Shapes and symbols"></div>' +
       '<label class="sk-check" id="sk-ermode" hidden>Erase <select id="sk-erm"><option value="whole">Whole item</option><option value="part">Part of a line</option></select></label>' +
@@ -542,7 +542,7 @@
     var G = geo(), d = doc(), c = "#15233a", o = "";
     if (d.wm) { /* watermark: big, pale and diagonal across the drawing area */
       var wi = G.inner, wcx = wi.x + wi.w / 2, wcy = wi.y + wi.h / 2, wang = -Math.atan2(wi.h, wi.w) * 180 / Math.PI, wlen = Math.hypot(wi.w, wi.h) * 0.8, wsz = Math.min(wi.h * 0.22, wlen / Math.max(4, d.wm.length * 0.62));
-      o += '<g opacity="0.13" pointer-events="none" transform="rotate(' + r1(wang) + " " + r1(wcx) + " " + r1(wcy) + ')">' + txt(wcx, wcy + wsz * 0.35, d.wm, "#7a1f1f", r1(wsz), "middle", ' font-weight="bold" letter-spacing="2"') + "</g>";
+      o += '<g class="sk-wm" opacity="0.13" pointer-events="none" transform="rotate(' + r1(wang) + " " + r1(wcx) + " " + r1(wcy) + ')">' + txt(wcx, wcy + wsz * 0.35, d.wm, "#7a1f1f", r1(wsz), "middle", ' font-weight="bold" letter-spacing="2"') + "</g>";
     }
     if (d.frame !== false) o += '<rect x="' + G.inner.x + '" y="' + G.inner.y + '" width="' + G.inner.w + '" height="' + G.inner.h + '" fill="none" stroke="' + c + '" stroke-width="2"/>';
     if (G.tb.off) return o;
@@ -1211,10 +1211,133 @@
   $("sk-export").addEventListener("click", function () {
     var f = $("sk-fmt").value, G = geo(), fail = function () { status("Couldn't export in this browser. Try SVG instead."); };
     if (f === "svg") return download(new Blob([exportSvg()], { type: "image/svg+xml" }), fname("svg"));
+    if (f === "dxf") { try { var dx = exportDxf(); download(new Blob([dx.text], { type: "application/dxf" }), fname("dxf")); status(dx.note); } catch (er) { status("Couldn't build the DXF: " + er.message); } return; }
     status("Preparing your export…");
     if (f === "png" || f === "jpeg") raster(exportSvg(), G.W, G.H, 2, "image/" + f, 0.92, function (b) { if (!b) return fail(); status(""); download(b, fname(f === "jpeg" ? "jpg" : "png")); });
     else exportPdf(f === "pdfall", function (b) { if (!b) return fail(); status(f === "pdfall" ? S.sheets.length + " sheets saved as one PDF, one A4 page each." : ""); download(b, fname("pdf", f === "pdfall")); });
   });
+
+  /* ---------- DXF export ----------
+     Writes an AutoCAD R12 (AC1009) ASCII DXF, which every CAD package reads. Each item is drawn to a
+     hidden SVG and its lines, shapes and text are read back with their transforms applied, so symbols
+     come out exactly as on screen. Units are millimetres: real-world mm at the drawing scale, or paper
+     mm when the sketch is not to scale. Layers follow the kind of item; colours map to the nearest
+     AutoCAD colour; line types are carried. Hatches are written as their boundary plus pattern lines. */
+  var DXF_LAYER = { stroke: "SK-SKETCH", line: "SK-LINES", arrow: "SK-LINES", rect: "SK-LINES", circle: "SK-LINES", poly: "SK-LINES", brk: "SK-LINES",
+    cloud: "SK-REVISION", member: "SK-STRUCTURE", support: "SK-STRUCTURE", pload: "SK-LOADS", udl: "SK-LOADS", moment: "SK-LOADS", dim: "SK-DIMS",
+    text: "SK-TEXT", leader: "SK-NOTES", hatch: "SK-HATCH", section: "SK-SYMBOLS", north: "SK-SYMBOLS", slope: "SK-SYMBOLS", wl: "SK-SYMBOLS" };
+  var DXF_LT = { dashed: "DASHED", dashdot: "DASHDOT", dotted: "DOTTED", centre: "CENTER" };
+  function aci(col) {
+    var m = /^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(col || ""), rgb = /rgba?\((\d+),\s*(\d+),\s*(\d+)/.exec(col || ""), r, g, b;
+    if (m) { r = parseInt(m[1], 16); g = parseInt(m[2], 16); b = parseInt(m[3], 16); } else if (rgb) { r = +rgb[1]; g = +rgb[2]; b = +rgb[3]; } else return 256;
+    var mx = Math.max(r, g, b), mn = Math.min(r, g, b), l = (mx + mn) / 510, sat = mx === mn ? 0 : (mx - mn) / (255 - Math.abs(mx + mn - 255));
+    if (sat < 0.25 || mx - mn < 40) return l > 0.75 ? 9 : l > 0.35 ? 8 : 7;
+    var h = mx === r ? ((g - b) / (mx - mn) + 6) % 6 : mx === g ? (b - r) / (mx - mn) + 2 : (r - g) / (mx - mn) + 4; h *= 60;
+    return h < 18 || h >= 330 ? 1 : h < 48 ? 30 : h < 70 ? 2 : h < 165 ? 3 : h < 200 ? 4 : h < 260 ? 5 : 6;
+  }
+  function dxfText(t) { return String(t).replace(/[^\x20-\x7e]/g, function (ch) { return "\\U+" + ("000" + ch.charCodeAt(0).toString(16).toUpperCase()).slice(-4); }); }
+  function exportDxf() {
+    var d = doc(), G = geo(), N = d.dscale || 1, f = 0.25 * N, out = [], n = 0, ext = [1e9, 1e9, -1e9, -1e9];
+    function X(x) { return x * f; } function Y(y) { return (G.H - y) * f; }
+    function num(v) { return (Math.round(v * 1e4) / 1e4).toString(); }
+    function pair(code, x, y) { var px = X(x), py = Y(y); ext[0] = Math.min(ext[0], px); ext[1] = Math.min(ext[1], py); ext[2] = Math.max(ext[2], px); ext[3] = Math.max(ext[3], py); out.push(code, num(px), code + 10, num(py), code + 20, "0"); }
+    function head0(type, L, col, lt) { out.push("0", type, "8", L); if (lt) out.push("6", lt); if (col !== 256) out.push("62", String(col)); n++; }
+    function line(a, b, L, col, lt) { head0("LINE", L, col, lt); pair(10, a[0], a[1]); pair(11, b[0], b[1]); }
+    function pline(pts, closed, L, col, lt) {
+      if (pts.length < 2) return; if (pts.length === 2 && !closed) return line(pts[0], pts[1], L, col, lt);
+      head0("POLYLINE", L, col, lt); out.push("66", "1", "70", closed ? "1" : "0", "10", "0", "20", "0", "30", "0");
+      pts.forEach(function (q) { out.push("0", "VERTEX", "8", L); pair(10, q[0], q[1]); }); out.push("0", "SEQEND", "8", L);
+    }
+    function solid(pts, L, col) { head0("SOLID", L, col); var q = pts.length === 3 ? [pts[0], pts[1], pts[2], pts[2]] : [pts[0], pts[1], pts[3], pts[2]]; q.forEach(function (v, i) { pair(10 + i, v[0], v[1]); }); }
+    function circle(c, r, L, col) { head0("CIRCLE", L, col); pair(10, c[0], c[1]); out.push("40", num(r * f)); }
+    function text(p, h, s2, rot, just, L, col) {
+      head0("TEXT", L, col); pair(10, p[0], p[1]); out.push("40", num(h * f), "1", dxfText(s2)); if (rot) out.push("50", num(rot));
+      if (just) { out.push("72", String(just)); pair(11, p[0], p[1]); }
+    }
+    /* walk an SVG fragment drawn into a hidden sheet-sized SVG */
+    var host = document.createElementNS(NS, "svg"); host.setAttribute("viewBox", "0 0 " + G.W + " " + G.H); host.setAttribute("width", G.W); host.setAttribute("height", G.H);
+    host.style.cssText = "position:absolute;left:-100000px;top:0;visibility:hidden"; document.body.appendChild(host);
+    function walk(markup, L0, ls) {
+      host.innerHTML = markup;
+      Array.prototype.forEach.call(host.querySelectorAll("line,rect,circle,path,polygon,polyline,text"), function (el) {
+        var L = el.closest(".sk-wm") ? "SK-WATERMARK" : L0, cs = getComputedStyle(el), st = cs.stroke, fl = cs.fill, hasS = st && st !== "none", hasF = fl && fl !== "none" && !/url\(/.test(fl);
+        var col = aci(hasS ? st : fl), white = !hasS && hasF && aci(fl) === 9 && /255, 255, 255/.test(fl);
+        if (white) return; if (L === "SK-WATERMARK") col = 9;
+        var M = el.getCTM(), T = function (x, y) { return [M.a * x + M.c * y + M.e, M.b * x + M.d * y + M.f]; }, sc = Math.sqrt(Math.abs(M.a * M.d - M.b * M.c));
+        var da = el.getAttribute("stroke-dasharray"), lt = da ? (DXF_LT[ls] || "CENTER") : null, tag = el.tagName.toLowerCase(), A = function (k2) { return +el.getAttribute(k2) || 0; };
+        if (tag === "text") {
+          var fs = parseFloat(el.getAttribute("font-size")) || 14, an = el.getAttribute("text-anchor"), rot = -Math.atan2(M.b, M.a) * 180 / Math.PI;
+          text(T(A("x"), A("y")), fs * 0.72 * sc, el.textContent, Math.abs(rot) > 0.01 ? rot : 0, an === "middle" ? 1 : an === "end" ? 2 : 0, L, col); return;
+        }
+        if (tag === "line") { line(T(A("x1"), A("y1")), T(A("x2"), A("y2")), L, col, lt); return; }
+        if (tag === "circle") { var r = A("r") * sc; if (r > 0) circle(T(A("cx"), A("cy")), r, L, col); return; }
+        if (tag === "rect") { var x = A("x"), y = A("y"), w = A("width"), h = A("height"); if (!w || !h) return; pline([T(x, y), T(x + w, y), T(x + w, y + h), T(x, y + h)], true, L, col, lt); return; }
+        var dd = tag === "path" ? el.getAttribute("d") || "" : "M" + (el.getAttribute("points") || "") + (tag === "polygon" ? "Z" : "");
+        var loops = [];
+        if (/[ACQSTacqst]/.test(dd)) { /* curves: sample along the path */
+          var tl = el.getTotalLength(), steps = Math.max(8, Math.ceil(tl / 3)), pts = [];
+          for (var i = 0; i <= steps; i++) { var q = el.getPointAtLength(tl * i / steps); pts.push(T(q.x, q.y)); }
+          loops.push({ pts: pts, closed: /[Zz]\s*$/.test(dd) });
+        } else {
+          var tok = dd.match(/[MLHVZmlhvz]|-?[\d.]+(?:e-?\d+)?/g) || [], cur = null, cx2 = 0, cy2 = 0, cmd = "M", sx = 0, sy = 0;
+          for (var j = 0; j < tok.length;) {
+            var t2 = tok[j]; if (/[A-Za-z]/.test(t2)) { cmd = t2; j++; if (cmd === "Z" || cmd === "z") { if (cur) { cur.closed = true; } cx2 = sx; cy2 = sy; cur = null; } continue; }
+            var rel = cmd === cmd.toLowerCase(), C = cmd.toUpperCase();
+            if (C === "H") { cx2 = (rel ? cx2 : 0) + +tok[j++]; } else if (C === "V") { cy2 = (rel ? cy2 : 0) + +tok[j++]; } else { cx2 = (rel ? cx2 : 0) + +tok[j++]; cy2 = (rel ? cy2 : 0) + +tok[j++]; }
+            if (C === "M" || !cur) { cur = { pts: [], closed: false }; loops.push(cur); sx = cx2; sy = cy2; if (C === "M") cmd = rel ? "l" : "L"; }
+            cur.pts.push(T(cx2, cy2));
+          }
+        }
+        loops.forEach(function (lp) {
+          if (hasF && !hasS && lp.pts.length >= 3 && lp.pts.length <= 4) solid(lp.pts, L, col);
+          else pline(lp.pts, lp.closed || (hasF && !hasS), L, col, lt);
+        });
+      });
+    }
+    /* hatch pattern lines: parallel lines clipped to the hatch loops (even-odd) */
+    var HP = { diag: [[-45, 14]], cross: [[-45, 14], [45, 14]], steel: [[-45, 6]], earth: [[-45, 10]] };
+    function hatchLines(it, L, col) {
+      var spec = HP[it.pat]; if (!spec) return; var loops = [it.pts].concat(it.holes || []), ps = it.ps || 1;
+      spec.forEach(function (sp) {
+        var a = sp[0] * Math.PI / 180, ca = Math.cos(a), sa = Math.sin(a), gap = sp[1] / Math.SQRT2 * ps;
+        var rot = loops.map(function (lp) { return lp.map(function (q) { return [q[0] * ca + q[1] * sa, -q[0] * sa + q[1] * ca]; }); });
+        var y0 = 1e9, y1 = -1e9; rot.forEach(function (lp) { lp.forEach(function (q) { y0 = Math.min(y0, q[1]); y1 = Math.max(y1, q[1]); }); });
+        for (var yy = Math.ceil(y0 / gap) * gap; yy <= y1; yy += gap) {
+          var xs = [];
+          rot.forEach(function (lp) { for (var i = 0; i < lp.length; i++) { var p1 = lp[i], p2 = lp[(i + 1) % lp.length]; if ((p1[1] <= yy) !== (p2[1] <= yy)) xs.push(p1[0] + (yy - p1[1]) / (p2[1] - p1[1]) * (p2[0] - p1[0])); } });
+          xs.sort(function (u, v) { return u - v; });
+          for (var k2 = 0; k2 + 1 < xs.length; k2 += 2) line([xs[k2] * ca - yy * sa, xs[k2] * sa + yy * ca], [xs[k2 + 1] * ca - yy * sa, xs[k2 + 1] * sa + yy * ca], L, col);
+        }
+      });
+    }
+    var layers = {}, skipped = 0;
+    try {
+      if (d.showDraw) d.items.forEach(function (it) {
+        var L = DXF_LAYER[it.type] || "SK-OTHER", col = aci(it.c || "#15233a"); layers[L] = 1;
+        if (it.type === "hatch") {
+          [it.pts].concat(it.holes || []).forEach(function (lp) { if (it.outline) pline(lp, true, L, col, DXF_LT[it.ls]); else pline(lp, true, "SK-HATCH-BOUNDARY", col); });
+          if (!it.outline) layers["SK-HATCH-BOUNDARY"] = 1;
+          hatchLines(it, L, col); if (!HP[it.pat]) skipped++;
+          return;
+        }
+        walk(draw(it), L, it.ls);
+      });
+      walk(frameStr(true), "SK-FRAME"); layers["SK-FRAME"] = 1; if (d.wm) layers["SK-WATERMARK"] = 1;
+    } finally { host.remove(); }
+    /* the file */
+    var LT = [["CONTINUOUS", "Solid line", []], ["DASHED", "Dashed __ __ __", [5, -3]], ["DASHDOT", "Dash dot __ . __ .", [8, -3, 0, -3]], ["DOTTED", "Dotted . . . .", [0, -2.4]], ["CENTER", "Centre ____ _ ____", [14, -3, 3, -3]]];
+    var hd = ["0", "SECTION", "2", "HEADER", "9", "$ACADVER", "1", "AC1009", "9", "$INSBASE", "10", "0", "20", "0", "30", "0",
+      "9", "$EXTMIN", "10", num(ext[0]), "20", num(ext[1]), "30", "0", "9", "$EXTMAX", "10", num(ext[2]), "20", num(ext[3]), "30", "0",
+      "9", "$LIMMIN", "10", "0", "20", "0", "9", "$LIMMAX", "10", num(G.W * f), "20", num(G.H * f), "9", "$LTSCALE", "40", num(N * 1.5), "9", "$INSUNITS", "70", "4", "0", "ENDSEC"];
+    var tb = ["0", "SECTION", "2", "TABLES", "0", "TABLE", "2", "LTYPE", "70", String(LT.length)];
+    LT.forEach(function (l) { tb.push("0", "LTYPE", "2", l[0], "70", "0", "3", l[1], "72", "65", "73", String(l[2].length), "40", num(l[2].reduce(function (a, b) { return a + Math.abs(b); }, 0))); l[2].forEach(function (v) { tb.push("49", num(v)); }); });
+    tb.push("0", "ENDTAB", "0", "TABLE", "2", "LAYER", "70", String(Object.keys(layers).length + 1), "0", "LAYER", "2", "0", "70", "0", "62", "7", "6", "CONTINUOUS");
+    Object.keys(layers).forEach(function (L) { tb.push("0", "LAYER", "2", L, "70", "0", "62", L === "SK-WATERMARK" ? "9" : L === "SK-HATCH" || L === "SK-HATCH-BOUNDARY" ? "8" : "7", "6", "CONTINUOUS"); });
+    tb.push("0", "ENDTAB", "0", "TABLE", "2", "STYLE", "70", "1", "0", "STYLE", "2", "STANDARD", "70", "0", "40", "0", "41", "1", "50", "0", "71", "0", "42", "2.5", "3", "txt", "4", "", "0", "ENDTAB", "0", "ENDSEC");
+    var all = hd.concat(tb, ["0", "SECTION", "2", "ENTITIES"], out, ["0", "ENDSEC", "0", "EOF"]);
+    var note = "DXF saved: " + n + " objects on " + Object.keys(layers).length + " layers, in millimetres " + (d.dscale ? "at true size (1:" + N + ")." : "at paper size (the sketch is not to scale).") + " Line weights and the underlay image aren't included." + (skipped ? " Solid and concrete hatches come out as their boundary only." : "");
+    return { text: all.join("\r\n") + "\r\n", note: note, count: n };
+  }
 
   /* ---------- Pick-point hatch ----------
      Rasterises the lines and strokes (thickened by a small gap tolerance), flood-fills from the clicked point
@@ -1411,7 +1534,7 @@
   }
 
   /* For tests and the example sheet */
-  window.CPSketch = { importDetail: importDetail, exportSvg: exportSvg, toPng: toPng, exportPdf: exportPdf, insertTemplate: insertTemplate, state: function () { return S; }, setMode: setMode, setTool: setTool, render: function () { underKey = ""; renderAll(); renderProps(); } };
+  window.CPSketch = { importDetail: importDetail, exportSvg: exportSvg, exportDxf: exportDxf, toPng: toPng, exportPdf: exportPdf, insertTemplate: insertTemplate, state: function () { return S; }, setMode: setMode, setTool: setTool, render: function () { underKey = ""; renderAll(); renderProps(); } };
 
   window.addEventListener("resize", function () { if (!view.hidden) { renderAll(); if (tbKey) closeTB(true); } });
   /* On opening, scroll so the toolbars sit at the top of the window with the sheet below them. */
