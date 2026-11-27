@@ -19,6 +19,7 @@ static host (GitHub Pages, Netlify, Cloudflare Pages).
 | Community | Forum and mock-review partners, design only, posting off | `FORUM_CATEGORIES`, `EXAMPLE_THREADS` |
 | Tools | Hub listing every tool; built from `window.CP_TOOLS` | `js/site.js` |
 | Sketch pad | Freehand and beam/frame diagram sketching on A4 sheets with a title block, typical details, image underlay, PNG/JPEG/SVG/PDF export; saved in the visitor's browser | `js/tools/sketch.js`, `js/tools/sketch-templates.js` |
+| Retaining wall | Indicative first-pass check of cantilever and gravity retaining walls, with a live section, calc sheet and CSV/XLSX/PNG/PDF export. Not for construction. | `js/tools/retaining-wall.js` (page), `js/tools/retaining-wall-calc.js` (engine, tested by `node tools/test_retaining_wall.js`), `js/tools/export.js` (shared `CPExport`) |
 
 ## Adding a tool
 Put the script in `js/tools/<id>.js`, load it before `js/site.js` in `index.html`, and add a
