@@ -944,7 +944,7 @@
     var b = dd.querySelector(".sk-sec-body"), n = dd.querySelector(".sk-sec-in"), h = dd.querySelector(".sk-win-h"), side = $("sk-side"), w = winState(dd.dataset.sec);
     var pin = h.querySelector('[data-win="pin"]'); pin.setAttribute("aria-pressed", !!w.pin);
     var r = side.getBoundingClientRect(), VW = window.innerWidth, VH = window.innerHeight, x = w.x, y = w.y, left = dd.dataset.sec !== "style";
-    if (y == null) { var tb = $("sk-tbar"), tr = tb && !tb.hidden && !/sk-tbar-(float|left|bottom)/.test(tb.className) ? tb.getBoundingClientRect() : null; y = tr ? tr.bottom + 8 : Math.max($("sk-stage").getBoundingClientRect().top, 8); } /* first time: under the toolbar */
+    if (y == null) { var tb = $("sk-tbar"), tr = tb && !tb.hidden && !/sk-tbar-(float|left|bottom)/.test(tb.className) ? tb.getBoundingClientRect() : null; var tlb = tb && !tb.hidden && tb.classList.contains("sk-tbar-left") ? tb.getBoundingClientRect() : null; y = tr ? tr.bottom + 8 : tlb ? Math.max(tlb.top, 8) : Math.max($("sk-stage").getBoundingClientRect().top, 8); } /* first time: under the toolbar */
     y = Math.max(8, Math.min(y, VH - 160));
     b.style.zIndex = ++winZ; b._placing = true;
     var hh0 = h.offsetHeight || 34;
@@ -958,7 +958,7 @@
       n.style.height = Math.min(H, Math.max(60, my - n0.top + 16)) + "px"; b.style.width = cw + "px";
     }
     var bw = b.offsetWidth, bh = b.offsetHeight;
-    if (x == null) { var tbl = $("sk-tbar"); x = left ? (tbl && tbl.classList.contains("sk-tbar-left") ? tbl.getBoundingClientRect().right : r.right) + 8 : VW - bw - 16; } /* Style opens at the right; the others at the left, beside the side bar */
+    if (x == null) { var tbl = $("sk-tbar"), tl = tbl && !tbl.hidden && tbl.classList.contains("sk-tbar-left") ? tbl.getBoundingClientRect() : null; x = left ? (tl ? tl.left : r.right + 8) : VW - bw - 16; } /* left-hand windows open over the toolbar column, leaving the drawing clear */ /* Style opens at the right; the others at the left, beside the side bar */
     x = Math.max(8, Math.min(x, VW - bw - 8)); y = Math.max(8, Math.min(y, VH - bh - 8));
     b.style.left = x + "px"; b.style.top = y + "px";
     b._size = [b.offsetWidth, b.offsetHeight]; setTimeout(function () { b._placing = false; }, 0);
