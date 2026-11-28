@@ -126,7 +126,7 @@
   /* ---------- State ---------- */
   var mode = S.mode === "struct" ? "struct" : "free";
   var tool = { free: "pen", struct: "member" };
-  var style = { c: COLORS[0][0], w: 2, ls: "solid", pat: "diag", fs: 14, veg: "tree" };
+  var style = { c: COLORS[0][0], w: 2, ls: "solid", pat: "diag", fs: 14, veg: "tree", op: 1 };
   var sel = null; /* {k:"item"|"img", id} */
   var drag = null, pend = null, before = null, k = 1;
   var hist = {}; function H() { var id = S.cur; return hist[id] || (hist[id] = { u: [], r: [] }); }
@@ -684,6 +684,7 @@
       '<label class="sr-only" for="sk-tpl">Insert a typical detail</label><select id="sk-tpl" class="sk-tpl"></select></div>' +
     '<div class="sk-style">' +
       '<div class="sk-group"><span class="sk-lab">Colour</span><div class="sk-swatches" id="sk-swatches"></div><label class="sk-pick" title="Pick any colour"><span class="sr-only">Custom colour</span><input type="color" id="sk-color"></label></div>' +
+      '<div class="sk-group"><label class="sk-lab" for="sk-op">Transparency</label><select id="sk-op"><option value="1">None</option><option value="0.75">25%</option><option value="0.5">50%</option><option value="0.25">75%</option></select></div>' +
       '<div class="sk-group" data-ctx="line"><span class="sk-lab">Weight</span><div class="sk-chips" id="sk-widths"></div></div>' +
       '<div class="sk-group" data-ctx="line"><label class="sk-lab" for="sk-ls">Line</label><select id="sk-ls">' + LINES.map(function (l) { return '<option value="' + l[0] + '">' + l[1] + "</option>"; }).join("") + "</select></div>" +
       '<div class="sk-group" data-ctx="text"><label class="sk-lab" for="sk-fs">Text</label><select id="sk-fs">' + [8, 10, 12, 14, 16, 18, 24, 32].map(function (v) { return '<option value="' + v + '">' + v + "</option>"; }).join("") + "</select></div>" +
@@ -796,7 +797,8 @@
     d.items.forEach(function (it) {
       if (it.type === "hatch") pats[patId(it.pat, it.c, it.ps, it.ha)] = patDef(it.pat, it.c, it.ps, it.ha);
       if (it.type === "inset") s += forExport ? insetBody(it) : '<g pointer-events="none">' + insetBody(it) + "</g>";
-      s += forExport ? draw(it) : '<g data-id="' + it.id + '"' + (isOn(it) ? ' class="sk-on"' : "") + '><g class="v">' + draw(it) + "</g>" + (locked(it) ? "" : hit(it)) + "</g>";
+      var opA = it.op != null && it.op < 1 ? ' opacity="' + it.op + '"' : "";
+      s += forExport ? (opA ? "<g" + opA + ">" + draw(it) + "</g>" : draw(it)) : '<g data-id="' + it.id + '"' + (isOn(it) ? ' class="sk-on"' : "") + '><g class="v"' + opA + ">" + draw(it) + "</g>" + (locked(it) ? "" : hit(it)) + "</g>";
     });
     return { s: s, defs: Object.keys(pats).map(function (p) { return pats[p]; }).join("") };
   }
@@ -932,6 +934,29 @@
     Array.prototype.forEach.call(bar.querySelectorAll("[data-dock]"), function (b) { b.addEventListener("click", function () { var w = tbState(); w.float = false; w.dock = b.dataset.dock; tbSave(w); placeTools(); fitSheet(); }); });
     $("sk-tbvert").addEventListener("click", function () { var w = tbState(); w.vert = !w.vert; tbSave(w); placeTools(); });
     $("sk-tball").addEventListener("click", function () { var d = app.querySelector('details.sk-sec[data-sec="alltools"]'); if (!d) return; if (isMob()) { d.open = true; setDrawer(true); return; } if (d.open) closeWin(d); else openWin(d); });
+  })();
+  /* Right-click a tool on the toolbar: its style options (colour, weight, line type, text size,
+     transparency) open in a small pop-out beside it. On wide screens this replaces the Style window. */
+  (function () {
+    var pop = document.createElement("div"); pop.className = "sk-toolpop"; pop.id = "sk-toolpop"; pop.hidden = true; pop.setAttribute("role", "dialog"); pop.setAttribute("aria-label", "Tool options");
+    pop.innerHTML = '<div class="sk-toolpop-h"><span id="sk-toolpop-t"></span><button type="button" class="sk-win-b" data-tp="x" aria-label="Close">×</button></div>';
+    app.appendChild(pop); var stEl = app.querySelector(".sk-style:not(.sk-sheetopts)"), home = null, at = null;
+    var close = function () { if (pop.hidden) return; pop.hidden = true; if (home && stEl.parentNode === pop) home.appendChild(stEl); at = null; };
+    var open = function (btn) {
+      var t = btn.dataset.tool; if (t !== tool[mode]) { setTool(t); btn = $("sk-tbar").querySelector('.sk-tool[data-tool="' + t + '"]') || btn; } updateCtx(); /* the toolbar redraws when the tool changes */
+      if (stEl.parentNode !== pop) { home = stEl.parentNode; pop.appendChild(stEl); }
+      $("sk-toolpop-t").textContent = (btn.textContent || "").trim() + (t === "select" || t === "xform" ? ": selected items" : ""); pop.hidden = false; at = btn;
+      var r = btn.getBoundingClientRect(), bar = $("sk-tbar"), pw = pop.offsetWidth, ph = pop.offsetHeight, VW = window.innerWidth, VH = window.innerHeight, x, y;
+      if (bar.classList.contains("sk-tbar-left") || bar.classList.contains("sk-tbar-vert")) { x = r.right + 6; y = r.top; }
+      else if (bar.classList.contains("sk-tbar-bottom")) { x = r.left; y = r.top - ph - 6; }
+      else { x = r.left; y = r.bottom + 6; }
+      pop.style.left = Math.max(8, Math.min(x, VW - pw - 8)) + "px"; pop.style.top = Math.max(8, Math.min(y, VH - ph - 8)) + "px";
+    };
+    $("sk-tbar").addEventListener("contextmenu", function (e) { var b = e.target.closest(".sk-tool[data-tool]"); if (!b || isMob()) return; e.preventDefault(); open(b); });
+    pop.addEventListener("click", function (e) { if (e.target.closest('[data-tp="x"]')) close(); });
+    document.addEventListener("pointerdown", function (e) { if (!pop.hidden && !pop.contains(e.target) && !(at && at.contains(e.target))) close(); }, true);
+    document.addEventListener("keydown", function (e) { if (e.key === "Escape") close(); });
+    window.addEventListener("resize", close);
   })();
   /* the site bar and tool links stay at the top; only the sketch pad's own panels scroll */
   window.addEventListener("scroll", function () { var hc = document.documentElement.classList; if ((hc.contains("sk-lock") || hc.contains("sk-mob")) && window.scrollY) window.scrollTo(0, 0); });
@@ -1219,7 +1244,7 @@
   function pinsFor(md) { S.pins = S.pins || {}; return S.pins[md] || PIN_DEF[md].slice(); }
   function togglePin(id) { var p = pinsFor(mode), i = p.indexOf(id); if (i > -1) { if (p.length > 1) p.splice(i, 1); } else p.push(id); S.pins[mode] = p; persist(); renderTools(); }
   function renderTools() {
-    var tb = function (t, pinUI) { var pinned = pinUI && pinsFor(mode).indexOf(t[0]) > -1; return '<button type="button" class="sk-tool' + (toolLock === t[0] ? " sk-locked" : "") + '" data-tool="' + t[0] + '" aria-pressed="' + (tool[mode] === t[0]) + '" title="' + esc(HINTS[t[0]]) + '">' + iconSvg(t[0]) + "<span>" + t[1] + "</span>" + (pinUI ? '<span class="sk-pin' + (pinned ? " on" : "") + '" data-pin="' + t[0] + '" role="button" tabindex="0" title="' + (pinned ? "Unpin from" : "Pin to") + ' the tools at the top" aria-label="' + (pinned ? "Unpin " : "Pin ") + t[1] + '">' + (pinned ? "★" : "☆") + "</span>" : "") + "</button>"; };
+    var tb = function (t, pinUI) { var pinned = pinUI && pinsFor(mode).indexOf(t[0]) > -1; return '<button type="button" class="sk-tool' + (toolLock === t[0] ? " sk-locked" : "") + '" data-tool="' + t[0] + '" aria-pressed="' + (tool[mode] === t[0]) + '" title="' + esc(HINTS[t[0]] + (pinUI ? "" : " Right-click for its colour, width, line type, text size and transparency.")) + '">' + iconSvg(t[0]) + "<span>" + t[1] + "</span>" + (pinUI ? '<span class="sk-pin' + (pinned ? " on" : "") + '" data-pin="' + t[0] + '" role="button" tabindex="0" title="' + (pinned ? "Unpin from" : "Pin to") + ' the tools at the top" aria-label="' + (pinned ? "Unpin " : "Pin ") + t[1] + '">' + (pinned ? "★" : "☆") + "</span>" : "") + "</button>"; };
     var all = TOOLS[mode].concat(TOOLS.shapes), byT = {}; all.forEach(function (t) { byT[t[0]] = t; });
     $("sk-tools").innerHTML = pinsFor(mode).filter(function (id) { return byT[id]; }).map(function (id) { return tb(byT[id]); }).join("");
     $("sk-tools2").innerHTML = all.map(function (t) { return tb(t, true); }).join("");
@@ -1237,7 +1262,7 @@
     Array.prototype.forEach.call(app.querySelectorAll("[data-color]"), function (b) { b.setAttribute("aria-pressed", b.dataset.color === style.c); });
     Array.prototype.forEach.call(app.querySelectorAll("[data-w]"), function (b) { b.setAttribute("aria-pressed", +b.dataset.w === style.w); });
     Array.prototype.forEach.call(app.querySelectorAll("[data-orient]"), function (b) { b.setAttribute("aria-pressed", b.dataset.orient === d.orient); });
-    $("sk-color").value = style.c; $("sk-ls").value = style.ls; $("sk-pat").value = style.pat;
+    $("sk-color").value = style.c; $("sk-ls").value = style.ls; $("sk-op").value = String(style.op || 1); $("sk-pat").value = style.pat;
     $("sk-grid").checked = d.grid; $("sk-chkw").checked = S.chkw !== false; $("sk-spell").checked = S.spell !== false; $("sk-snap").checked = d.snap; $("sk-scale").value = d.scale; $("sk-dscale").value = d.dscale || 0; $("sk-sbar-l").hidden = !d.dscale; $("sk-sbar").checked = d.sbar !== false;
     $("sk-gsq").hidden = !!d.dscale || mode !== "struct"; $("sk-mapshow-l").hidden = !d.map; if (d.map) { $("sk-mapshow").checked = d.map.show !== false; $("sk-mapleg").checked = !!d.map.leg; $("sk-mapbase").value = d.map.base || "osm"; $("sk-mapflow").checked = !!d.map.fl && d.map.flow !== false; $("sk-mapflow").disabled = !d.map.fl; $("sk-maplegpos").value = d.map.legpos || "br"; $("sk-maposm").checked = d.map.osm !== false; $("sk-mapcont").checked = d.map.cont !== false; $("sk-mapgrey").checked = d.map.grey !== false; if (document.activeElement !== $("sk-maprot")) $("sk-maprot").value = d.map.rot || 0; $("sk-maprot-r").value = d.map.rot || 0; $("sk-mapop").value = d.map.op || 0.55; $("sk-mapcop").value = d.map.cop || 1; }
     renderMapExtra();
@@ -1291,6 +1316,7 @@
   $("sk-wmtext").addEventListener("input", function () { doc().wm = this.value; persist(); renderAll(); });
   $("sk-color").addEventListener("input", function () { style.c = this.value; syncControls(); });
   $("sk-color").addEventListener("change", function () { style.c = this.value; restyle(function (it) { it.c = style.c; }); });
+  $("sk-op").addEventListener("change", function () { style.op = +this.value; restyle(function (it) { if (style.op < 1) it.op = style.op; else delete it.op; }); });
   $("sk-ls").addEventListener("change", function () { style.ls = this.value; restyle(function (it) { if (/^(stroke|line|member|hatch|arrow|rect|circle|poly)$/.test(it.type)) it.ls = style.ls; }); });
   $("sk-veg").addEventListener("change", function () { style.veg = this.value; if (tool[mode] === "veg") return; /* while placing, it just sets the next stamp */ if (!(sel && byId(sel.id) && byId(sel.id).type === "veg")) { setTool("veg"); return; } restyle(function (it) { if (it.type === "veg") it.kind = style.veg; }); renderProps(); });
   $("sk-pat").addEventListener("change", function () { style.pat = this.value; if (tool[mode] !== "hatch" && !(sel && byId(sel.id) && byId(sel.id).type === "hatch")) setTool("hatch"); restyle(function (it) { if (it.type === "hatch") it.pat = style.pat; }); renderProps(); });
@@ -1557,7 +1583,7 @@
   }
   function deleteSel() { var l = selList().filter(function (x) { return !locked(x); }), ids = l.map(function (x) { return x.id; }); syncLeaders(); doc().items = doc().items.filter(function (x) { return ids.indexOf(x.id) < 0; }); sel = null; }
   function selectItem(it) { sel = it ? { k: "item", id: it.id } : null; renderContent(); renderProps(); }
-  function base(type, extra) { var o = { id: newId(), type: type, c: style.c }; if (/^(leader|pload|udl|moment|dim)$/.test(type)) o.fs = style.fs; if (type === "hatch" && style.hsc && style.hsc !== 1) o.ps = style.hsc; if (type === "hatch" && style.ha) o.ha = style.ha; if (type === "hatch" && style.hbg) { o.bg = style.hbg; o.bo = style.hbo == null ? 1 : style.hbo; } for (var p in extra) o[p] = extra[p]; return o; }
+  function base(type, extra) { var o = { id: newId(), type: type, c: style.c }; if (style.op && style.op < 1) o.op = style.op; if (/^(leader|pload|udl|moment|dim)$/.test(type)) o.fs = style.fs; if (type === "hatch" && style.hsc && style.hsc !== 1) o.ps = style.hsc; if (type === "hatch" && style.ha) o.ha = style.ha; if (type === "hatch" && style.hbg) { o.bg = style.hbg; o.bo = style.hbo == null ? 1 : style.hbo; } for (var p in extra) o[p] = extra[p]; return o; }
   function addItem(it) { begin(); doc().items.push(it); commit(); return it; }
   function constrain(a, p) { var dx = p.x - a.x, dy = p.y - a.y, ang = Math.round(Math.atan2(dy, dx) / (Math.PI / 4)) * (Math.PI / 4), L = Math.hypot(dx, dy); return { x: r1(a.x + Math.cos(ang) * L), y: r1(a.y + Math.sin(ang) * L) }; }
   function nextSectionLetter() { var used = doc().items.filter(function (x) { return x.type === "section"; }).map(function (x) { return x.label; }), L = "ABCDEFGHJKLMNPQRSTUVWXYZ"; for (var i = 0; i < L.length; i++) if (used.indexOf(L[i]) < 0) return L[i]; return "A"; }

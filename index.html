@@ -1159,6 +1159,13 @@ html.sk-lock .sk-main > .sk-top, html.sk-lock .sk-main > .sk-props { top: 0; }
 .sk-snapmenu summary::-webkit-details-marker { display: none; }
 .sk-snapmenu[open] > div { position: absolute; z-index: 20; top: calc(100% + 4px); left: 0; display: grid; gap: 6px; min-width: 210px; padding: 10px 12px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: 0 6px 20px rgba(0,0,0,.12); }
 .sk-snapmenu p { margin: 4px 0 0; }
+html:not(.sk-mob) .sk-side > details.sk-sec[data-sec="style"] { display: none; } /* wide screens: right-click a tool instead */
+.sk-toolpop { position: fixed; z-index: 60; max-width: min(560px, calc(100vw - 16px)); background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: 0 6px 24px rgba(0,0,0,.18); padding: 0 0 6px; font-size: 0.8rem; }
+.sk-toolpop[hidden] { display: none; }
+.sk-toolpop-h { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 3px 4px 3px 10px; border-bottom: 1px solid var(--line); font: 600 0.72rem var(--font-mono); text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); }
+.sk-toolpop .sk-style { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; padding: 8px 10px 0; }
+.sk-toolpop .sk-group { display: flex; align-items: center; gap: 6px; }
+.sk-toolpop .sk-group[hidden], .sk-toolpop [hidden] { display: none; }
 .sk-sheetopts .sk-snapwrap svg { display: none; }
 .sk-tbar .sk-snapwrap { gap: 2px; }
 .sk-tbar .sk-snapmenu summary { font-size: 0.6rem; padding: 2px 5px; }
@@ -2997,9 +3004,9 @@ footer .wrap { font-family: var(--font-body); }
 <script src="js/news-feed.js?v=20261122b"></script>
 <script src="js/news-archive.js?v=20261122b"></script>
 <script src="js/pages.js?v=20261122b"></script>
-<script src="js/tools/sketch-templates.js?v=20261128zu"></script>
-<script src="js/tools/sketch.js?v=20261128zu"></script>
-<script src="js/tools/drawing-check.js?v=20261128zu"></script>
+<script src="js/tools/sketch-templates.js?v=20261128zv"></script>
+<script src="js/tools/sketch.js?v=20261128zv"></script>
+<script src="js/tools/drawing-check.js?v=20261128zv"></script>
 <script src="js/tools/hydraulics.js?v=20261127a"></script>
 <script src="js/tools/pipeflow.js?v=20261127a"></script>
 <script src="js/tools/catchment.js?v=20261127a"></script>
@@ -3011,7 +3018,7 @@ footer .wrap { font-family: var(--font-body); }
 <script src="js/tools/culvert.js?v=20261127a"></script>
 <script src="js/tools/site-diary.js?v=20261127a"></script>
 <script src="js/learn.js?v=20261127m"></script>
-<script src="js/site.js?v=20261128zu"></script>
+<script src="js/site.js?v=20261128zv"></script>
 <script src="js/art.js?v=20261127m"></script>
 </body>
 </html>
