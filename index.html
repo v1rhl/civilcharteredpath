@@ -1524,18 +1524,20 @@ html:not(.sk-mob) #sk-tbar.sk-tbar-left .sk-tools:not(.sk-tools2), html:not(.sk-
 html:not(.sk-mob) #sk-tbar.sk-tbar-side > .sk-side { width: 72px; display: grid; grid-template-columns: repeat(2, 34px); gap: 2px; justify-content: center; align-content: start; }
 html:not(.sk-mob) #sk-tbar.sk-tbar-side > .sk-side > :not(details.sk-sec) { grid-column: 1 / -1; }
 html:not(.sk-mob) #sk-tbar.sk-tbar-side > .sk-side > details.sk-sec { padding: 0; }
-html:not(.sk-mob) #sk-tbar.sk-tbar-side > .sk-side > .sk-toolrow { grid-column: auto; display: flex; justify-content: center; }
+html:not(.sk-mob) #sk-tbar.sk-tbar-side > .sk-side > select.sk-tpl { grid-column: auto !important; justify-self: stretch; width: 34px !important; }
+html:not(.sk-mob) #sk-tbar.sk-tbar-side > .sk-side > .sk-toolrow:not(:has(> :not([hidden]):not(.sr-only):not(.sk-more))) { display: none; }
+html:not(.sk-mob) #sk-tbar.sk-tbar-side .sk-sideacts .sk-actions { gap: 2px !important; }
 html:not(.sk-mob) #sk-tbar.sk-tbar-side #sk-tball { display: none; }
-html:not(.sk-mob) #sk-tbar > .sk-side > details.sk-sec > summary, html:not(.sk-mob) #sk-tbar .sk-snapmenu > summary { list-style: none; display: flex; align-items: center; justify-content: center; width: 34px; height: 30px; padding: 0 !important; border-radius: 4px; cursor: pointer; }
+html:not(.sk-mob) #sk-tbar > .sk-side > details.sk-sec > summary, html:not(.sk-mob) #sk-tbar .sk-snapmenu > summary { list-style: none; display: flex; align-items: center; justify-content: center; width: 34px; height: 32px; box-sizing: border-box; padding: 0 !important; border-radius: 4px; cursor: pointer; }
 html:not(.sk-mob) #sk-tbar > .sk-side > details.sk-sec > summary::-webkit-details-marker, html:not(.sk-mob) #sk-tbar .sk-snapmenu > summary::-webkit-details-marker { display: none; }
 html:not(.sk-mob) #sk-tbar > .sk-side > details.sk-sec > summary:hover, html:not(.sk-mob) #sk-tbar .sk-snapmenu > summary:hover { background: var(--line); }
 html:not(.sk-mob) #sk-tbar > .sk-side > details.sk-sec[open] > summary { color: var(--accent); }
 html:not(.sk-mob) #sk-tbar .sk-sideacts .sk-actions { grid-template-columns: repeat(2, 34px) !important; justify-content: center; }
-html:not(.sk-mob) #sk-tbar .sk-sideacts .sk-actions > * { grid-column: auto !important; width: 34px; height: 30px; min-height: 0; padding: 0 !important; display: inline-flex; align-items: center; justify-content: center; }
+html:not(.sk-mob) #sk-tbar .sk-sideacts .sk-actions > * { grid-column: auto !important; width: 34px; height: 32px; box-sizing: border-box; min-height: 0; padding: 0 !important; display: inline-flex; align-items: center; justify-content: center; }
 html:not(.sk-mob) #sk-tbar .sk-sideacts .sk-actions svg { width: 16px; height: 16px; }
 html:not(.sk-mob) #sk-tbar .sk-tbar-all { width: 34px; height: 30px; padding: 0 !important; display: inline-flex; align-items: center; justify-content: center; align-self: center; }
 html:not(.sk-mob) #sk-tbar .sk-snapwrap { display: flex; justify-content: center; gap: 2px; }
-html:not(.sk-mob) #sk-tbar select.sk-tpl { width: 34px !important; height: 30px; padding: 0 !important; color: transparent; appearance: none; -webkit-appearance: none; background: var(--surface) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2315233a' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='4' y='4' width='16' height='16' rx='2'/%3E%3Cpath d='M4 10h16M10 10v10'/%3E%3C/svg%3E") center / 18px no-repeat; border: 1px solid var(--tool-line); border-radius: 4px; cursor: pointer; justify-self: center; }
+html:not(.sk-mob) #sk-tbar select.sk-tpl { width: 34px !important; height: 32px; box-sizing: border-box; padding: 0 !important; color: transparent; appearance: none; -webkit-appearance: none; background: var(--surface) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2315233a' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='4' y='4' width='16' height='16' rx='2'/%3E%3Cpath d='M4 10h16M10 10v10'/%3E%3C/svg%3E") center / 18px no-repeat; border: 1px solid var(--tool-line); border-radius: 4px; cursor: pointer; justify-self: center; }
 html:not(.sk-mob) #sk-tbar select.sk-tpl option { color: var(--ink); }
 html[data-theme="dark"]:not(.sk-mob) #sk-tbar select.sk-tpl { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23dbe7f0' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='4' y='4' width='16' height='16' rx='2'/%3E%3Cpath d='M4 10h16M10 10v10'/%3E%3C/svg%3E"); }
 /* All tools window: one compact grid that fills the window and reflows with it */
@@ -3149,9 +3151,9 @@ html:not(.sk-mob) .sk-tabs .sk-tabadd { padding: 2px 8px !important; font-size: 
 <script src="js/news-feed.js?v=20261122b"></script>
 <script src="js/news-archive.js?v=20261122b"></script>
 <script src="js/pages.js?v=20261122b"></script>
-<script src="js/tools/sketch-templates.js?v=20261129r"></script>
-<script src="js/tools/sketch.js?v=20261129r"></script>
-<script src="js/tools/drawing-check.js?v=20261129r"></script>
+<script src="js/tools/sketch-templates.js?v=20261129s"></script>
+<script src="js/tools/sketch.js?v=20261129s"></script>
+<script src="js/tools/drawing-check.js?v=20261129s"></script>
 <script src="js/tools/hydraulics.js?v=20261127a"></script>
 <script src="js/tools/pipeflow.js?v=20261127a"></script>
 <script src="js/tools/catchment.js?v=20261127a"></script>
@@ -3163,7 +3165,7 @@ html:not(.sk-mob) .sk-tabs .sk-tabadd { padding: 2px 8px !important; font-size: 
 <script src="js/tools/culvert.js?v=20261127a"></script>
 <script src="js/tools/site-diary.js?v=20261127a"></script>
 <script src="js/learn.js?v=20261127m"></script>
-<script src="js/site.js?v=20261129r"></script>
+<script src="js/site.js?v=20261129s"></script>
 <script src="js/art.js?v=20261127m"></script>
 </body>
 </html>
