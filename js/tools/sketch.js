@@ -929,8 +929,8 @@
     side.insertBefore(sec("sheet", "Page settings", false, [sheet]), side.querySelector('[data-sec="layers"]'));
     var more = mk("button", "sk-btn sk-more", "More"); more.type = "button"; more.id = "sk-more"; more.setAttribute("aria-expanded", "false"); more.title = "All tools, style, view, page and layers"; toolrow.appendChild(more); /* phones: opens the side bar as a drawer */
     var main = mk("div", "sk-main"); main.id = "sk-main";
-    top.insertAdjacentHTML("beforeend", '<button type="button" class="sk-btn" id="sk-fit" title="See the whole sheet (0)" disabled>Fit sheet</button><button type="button" class="sk-btn" id="sk-full" title="Full screen (F)" aria-pressed="false">Full screen</button>');
-    top.querySelector(".sk-actions").appendChild($("sk-fit")); top.querySelector(".sk-actions").appendChild($("sk-full"));
+    top.insertAdjacentHTML("beforeend", '<button type="button" class="sk-btn" id="sk-fit" title="See the whole sheet (0)" disabled>Fit sheet</button><button type="button" class="sk-btn" id="sk-full" title="Full screen (F)" aria-pressed="false">Full screen</button><button type="button" class="sk-btn" id="sk-help" title="A quick tour of the sketch pad">Tour</button>');
+    top.querySelector(".sk-actions").appendChild($("sk-fit")); top.querySelector(".sk-actions").appendChild($("sk-full")); top.querySelector(".sk-actions").appendChild($("sk-help"));
     var hint = mk("p", "small sk-hint"); hint.id = "sk-hint";
     var row1 = mk("div", "sk-row1"); row1.appendChild($("sk-tabs")); row1.appendChild(top); /* sheet tabs and the undo/export bar share one row */
     var tbar = mk("div", "sk-tbar"); tbar.id = "sk-tbar"; tbar.setAttribute("role", "group"); tbar.setAttribute("aria-label", "Starred tools");
@@ -1471,6 +1471,7 @@
       "sk-clear": S('<path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/>'),
       "sk-fit": S('<path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5"/><rect x="8" y="8" width="8" height="8" rx="1"/>'),
       "sk-full": S('<path d="M3 8V3h5M16 3h5v5M21 16v5h-5M8 21H3v-5"/>'),
+      "sk-help": S('<circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .8-1 1.5v.7M12 17h.01"/>'),
       "sk-fullx": S('<path d="M8 3v5H3M16 3v5h5M21 16h-5v5M3 16h5v5"/>'),
       "sk-tball": S('<rect x="4" y="4" width="6" height="6" rx="1"/><rect x="14" y="4" width="6" height="6" rx="1"/><rect x="4" y="14" width="6" height="6" rx="1"/><path d="M17 14v6M14 17h6"/>'),
       snaps: S('<path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/>') }; })();
@@ -1481,7 +1482,7 @@
     bar.querySelectorAll(".sk-ltog").forEach(function (l) { var sp = l.querySelector("span"); if (sp) tip(l, sp.textContent); });
     var wrap = function (el, key) { if (!el || el.dataset.ib) return; el.dataset.ib = "1"; var t = el.textContent.replace(/[\u25BE\u25B8]/g, "").trim(); el.innerHTML = TBI[key] + '<span class="sk-tlab">' + el.innerHTML + "</span>"; tip(el, t); };
     bar.querySelectorAll(".sk-side > details.sk-sec > summary").forEach(function (sm) { var k = sm.parentNode.dataset.sec; if (TBI[k]) wrap(sm, k); });
-    ["sk-undo", "sk-redo", "sk-clear", "sk-fit", "sk-full", "sk-tball"].forEach(function (id) { wrap($(id), id); });
+    ["sk-undo", "sk-redo", "sk-clear", "sk-fit", "sk-full", "sk-help", "sk-tball"].forEach(function (id) { wrap($(id), id); });
     var sn = bar.querySelector(".sk-snapmenu > summary"); if (sn) wrap(sn, "snaps");
     var tp = $("sk-tpl"); if (tp && bar.contains(tp)) tip(tp, "Insert a typical detail");
     var ex = $("sk-export"); if (ex) { ex.setAttribute("data-tip", "Export"); ex.removeAttribute("title"); }
@@ -3591,6 +3592,38 @@
   }, true);
   function tUp(e) { if (e.pointerType !== "touch") return; delete touches[e.pointerId]; if (pinch) { e.stopImmediatePropagation(); if (!tN()) { pinch = null; status(zv ? "Zoom " + Math.round(zv.s * 100) + "%. Pinch or drag with two fingers; press Fit sheet to see it all." : ""); } } }
   window.addEventListener("pointerup", tUp, true); window.addEventListener("pointercancel", tUp, true);
+  /* A short tour for first-time visitors: a small card that points at each part in turn. Shown once; Tour reopens it. */
+  var TOUR = [
+    [null, "Welcome to the sketch pad", "A quick look round in a few steps. Skip it any time, and reopen it from the ? button in the toolbar."],
+    ["#sk-tools", "Draw with the tools", "Pick a tool from the toolbar. Point at an icon to see its name. Tools are grouped: lines, shapes and fills, text and dimensions, objects and symbols."],
+    ["#sk-tools", "Right-click for formatting", "Right-click a tool to set its colour, weight, line type, text size or mode, such as polyline or angle dimension. Right-click the sheet to go back to Select. Double-click anything you've drawn to change it."],
+    ['.sk-side > details.sk-sec[data-sec="alltools"] > summary', "All tools", "Every tool is in here. Click the star on a tool to put it on the toolbar."],
+    ["#sk-snap", "Snapping", "Snap ties points to the grid and to ends, middles and crossings of what you've drawn. Snaps chooses which. Hold Alt to draw freely."],
+    ['.sk-side > details.sk-sec[data-sec="layers"] > summary', "Layers and map", "Trace over a photo, or place a map under the drawing, with LiDAR contours, hillshade, geology, flood and designation layers. The map's location is sent to the services listed there."],
+    ["#sk-tpl", "Typical details", "Drop in a starting sketch of a common detail, then edit it to suit."],
+    ["#sk-vbar", "View settings", "Grid, the checks list, spelling, scale, scale bar and watermark sit along the bottom. Checks flags drawing checklist items the sheet seems to miss."],
+    ["#sk-export", "Export", "Save as PNG, JPEG, SVG, PDF or DXF for CAD. Your drawing stays in this browser: nothing is uploaded."]
+  ];
+  var tourEl = null, tourI = 0, tourRing = null;
+  function tourEnd() { if (tourEl) tourEl.hidden = true; if (tourRing) tourRing.hidden = true; try { localStorage.setItem("cp-sketch-tour", "1"); } catch (e) {} window.removeEventListener("resize", tourShow); }
+  function tourShow() {
+    if (!tourEl || tourEl.hidden) return; var st = TOUR[tourI], tg = st[0] ? document.querySelector(st[0]) : null; if (tg && (!tg.getClientRects().length || tg.closest("[hidden]"))) tg = tg.closest("label") || null; if (tg && !tg.getClientRects().length) tg = null;
+    tourEl.innerHTML = '<div class="sk-tour-n">' + (tourI + 1) + " of " + TOUR.length + '</div><h4>' + st[1] + "</h4><p>" + st[2] + '</p><div class="sk-tour-b">' + (tourI < TOUR.length - 1 ? '<button type="button" class="sk-btn" data-tour="skip">Skip tour</button>' : "") + '<span></span>' + (tourI ? '<button type="button" class="sk-btn" data-tour="prev">Back</button>' : "") + (tourI < TOUR.length - 1 ? '<button type="button" class="btn" data-tour="next">Next</button>' : '<button type="button" class="btn" data-tour="skip">Start drawing</button>') + "</div>";
+    var W = tourEl.offsetWidth, H = tourEl.offsetHeight, VW = innerWidth, VH = innerHeight, x, y;
+    if (tg) { var r = tg.getBoundingClientRect(); tourRing.hidden = false; tourRing.style.left = (r.left - 4) + "px"; tourRing.style.top = (r.top - 4) + "px"; tourRing.style.width = (r.width + 8) + "px"; tourRing.style.height = (r.height + 8) + "px";
+      x = r.right + 14; y = r.top; if (x + W > VW - 8) { x = r.left - W - 14; } if (x < 8) { x = Math.min(VW - W - 8, Math.max(8, r.left)); y = r.bottom + 12 + H > VH ? r.top - H - 12 : r.bottom + 12; } }
+    else { tourRing.hidden = true; x = (VW - W) / 2; y = (VH - H) / 2; }
+    tourEl.style.left = Math.max(8, Math.min(VW - W - 8, x)) + "px"; tourEl.style.top = Math.max(8, Math.min(VH - H - 8, y)) + "px";
+    var nb = tourEl.querySelector('[data-tour="next"]') || tourEl.querySelector(".btn"); if (nb) nb.focus({ preventScroll: true });
+  }
+  function tourStart() {
+    if (!tourEl) { tourEl = document.createElement("div"); tourEl.className = "sk-tour"; tourEl.setAttribute("role", "dialog"); tourEl.setAttribute("aria-label", "Sketch pad tour"); tourRing = document.createElement("div"); tourRing.className = "sk-tour-ring"; app.appendChild(tourRing); app.appendChild(tourEl);
+      tourEl.addEventListener("click", function (e) { var b = e.target.closest("[data-tour]"); if (!b) return; var a = b.dataset.tour; if (a === "skip") tourEnd(); else { tourI = Math.max(0, Math.min(TOUR.length - 1, tourI + (a === "next" ? 1 : -1))); tourShow(); } });
+      tourEl.addEventListener("keydown", function (e) { if (e.key === "Escape") { e.stopPropagation(); tourEnd(); } else if (e.key === "ArrowRight" && tourI < TOUR.length - 1) { tourI++; tourShow(); } else if (e.key === "ArrowLeft" && tourI) { tourI--; tourShow(); } }); }
+    closeFly(); closeCtx(); tourI = 0; tourEl.hidden = false; window.addEventListener("resize", tourShow); tourShow();
+  }
+  $("sk-help").addEventListener("click", tourStart);
+  (function () { var seen = null; try { seen = localStorage.getItem("cp-sketch-tour"); } catch (e) {} if (!seen) setTimeout(function () { if (app.offsetParent || document.fullscreenElement === app) tourStart(); }, 900); })();
   window.CPSketch = { importDetail: importDetail, exportSvg: exportSvg, exportDxf: exportDxf, toPng: toPng, exportPdf: exportPdf, insertTemplate: insertTemplate, state: function () { return S; }, setMode: setMode, setTool: setTool, render: function () { underKey = ""; renderAll(); renderProps(); } };
 
   window.addEventListener("resize", function () { if (!view.hidden) { renderAll(); if (tbKey) closeTB(true); } });

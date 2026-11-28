@@ -1575,6 +1575,16 @@ html:not(.sk-mob) .sk-sec.sk-attached > .sk-sec-body { border-top-left-radius: 0
 .sk-tgh:first-child { margin-top: 0; }
 html.sk-mob .sk-tsep { display: none; }
 html.sk-mob .sk-tgh { flex: 1 1 100%; }
+/* first-visit tour */
+.sk-tour { position: fixed; z-index: 2147483600; width: min(320px, calc(100vw - 16px)); background: var(--paper); color: var(--ink); border: 1px solid var(--line); border-radius: 10px; box-shadow: 0 10px 34px rgba(0,0,0,.28); padding: 12px 14px; font-size: 12px; line-height: 1.45; }
+.sk-tour[hidden], .sk-tour-ring[hidden] { display: none; }
+.sk-tour h4 { margin: 2px 0 4px; font-size: 14px; }
+.sk-tour p { margin: 0 0 10px; }
+.sk-tour-n { font: 600 10px var(--font-mono); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.sk-tour-b { display: flex; align-items: center; gap: 6px; }
+.sk-tour-b > span { flex: 1 1 auto; }
+.sk-tour-b .btn, .sk-tour-b .sk-btn { font-size: 12px !important; padding: 4px 10px !important; min-height: 0; }
+.sk-tour-ring { position: fixed; z-index: 2147483500; border: 2px solid var(--accent); border-radius: 8px; box-shadow: 0 0 0 4000px rgba(10,20,30,.25); pointer-events: none; transition: all .2s; }
 /* icon buttons in the map panel */
 .sk-app .sk-btn.sk-ibtn, html:not(.sk-mob) .sk-app :is(.sk-sec-in, .sk-dlg, .sk-toolpop, .sk-props) .sk-btn.sk-ibtn { width: 32px !important; max-width: 32px !important; height: 28px; min-height: 28px; padding: 0 !important; display: inline-flex; align-items: center; justify-content: center; flex: 0 0 auto; }
 .sk-app .sk-btn.sk-icbtn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
@@ -3162,9 +3172,9 @@ html.sk-mob .sk-tgh { flex: 1 1 100%; }
 <script src="js/news-feed.js?v=20261122b"></script>
 <script src="js/news-archive.js?v=20261122b"></script>
 <script src="js/pages.js?v=20261122b"></script>
-<script src="js/tools/sketch-templates.js?v=20261129v"></script>
-<script src="js/tools/sketch.js?v=20261129v"></script>
-<script src="js/tools/drawing-check.js?v=20261129v"></script>
+<script src="js/tools/sketch-templates.js?v=20261129x"></script>
+<script src="js/tools/sketch.js?v=20261129x"></script>
+<script src="js/tools/drawing-check.js?v=20261129x"></script>
 <script src="js/tools/hydraulics.js?v=20261127a"></script>
 <script src="js/tools/pipeflow.js?v=20261127a"></script>
 <script src="js/tools/catchment.js?v=20261127a"></script>
@@ -3176,7 +3186,7 @@ html.sk-mob .sk-tgh { flex: 1 1 100%; }
 <script src="js/tools/culvert.js?v=20261127a"></script>
 <script src="js/tools/site-diary.js?v=20261127a"></script>
 <script src="js/learn.js?v=20261127m"></script>
-<script src="js/site.js?v=20261129v"></script>
+<script src="js/site.js?v=20261129x"></script>
 <script src="js/art.js?v=20261127m"></script>
 </body>
 </html>
