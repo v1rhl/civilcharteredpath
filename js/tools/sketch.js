@@ -734,6 +734,7 @@
       '<div class="sk-maprow"><label class="sk-check"><input type="checkbox" id="sk-mapcont" checked> Contours</label><label class="sk-check">every <select id="sk-mapiv">' + [0.1, 0.25, 0.5, 1, 2, 5, 10].map(function (v) { return '<option value="' + v + '"' + (v === 0.5 ? " selected" : "") + ">" + v + " m</option>"; }).join("") + "</select></label>" +
         '<label class="sk-check">Fade <input type="range" id="sk-mapcop" min="0.15" max="1" step="0.05" value="1"></label>' +
         '<button type="button" class="sk-btn" id="sk-mapea" title="Fetch the EA 1 m LiDAR DTM for the map area (England only)">EA LiDAR</button><button type="button" class="sk-btn" id="sk-mapfile-b" title="Load a terrain grid you have downloaded, e.g. from the EA survey portal">Load LiDAR file</button><input type="file" id="sk-mapfile" accept=".asc,.txt,.tif,.tiff" hidden></div>' +
+      '<div class="sk-maprow"><label class="sk-check" title="Shaded relief worked out from the same LiDAR as the contours, lit from the north-west"><input type="checkbox" id="sk-maphs"> Hillshade</label><label class="sk-check">Fade <input type="range" id="sk-maphop" min="0.15" max="1" step="0.05" value="0.5"></label></div>' +
       '<div class="sk-maprow"><span class="sk-lab">From the terrain</span><button type="button" class="sk-btn" id="sk-mapsect" aria-pressed="false" title="Drag a line on the map to draw a ground section from the LiDAR">Draw section</button><button type="button" class="sk-btn" id="sk-mapcatch" aria-pressed="false" title="Click a ditch, stream or low point to outline the land that drains to it">Find catchment</button><button type="button" class="sk-btn" id="sk-mapfall" aria-pressed="false" title="Click on the map to add an arrow showing which way the ground falls there, with its gradient">Fall arrow</button><label class="sk-check"><input type="checkbox" id="sk-mapflow"> Flow lines</label></div>' +
       '<p class="small">Find catchment works like the Catchment runoff tool: it shows the flow lines, then outlines the land draining to the point you click, with the longest flow path and outlet. It uses EA LiDAR, or your file if you loaded one with Load LiDAR file.</p>' +
       '<div class="sk-maprow sk-maplayers"><details class="sk-mldd" id="sk-mldd"><summary>Map layers <span class="small" id="sk-mlcount"></span></summary><div class="sk-mldd-in">' + MAPL.map(function (L) { return (L.grp ? '<span class="sk-lab sk-mlgrp">' + L.grp + "</span>" : "") + '<label class="sk-check" title="' + esc(L.src) + '"><input type="checkbox" data-ml="' + L.id + '"> ' + L.name + ' <span data-mls="' + L.id + '"></span></label>'; }).join("") + "</div></details>" +
@@ -1287,7 +1288,7 @@
     Array.prototype.forEach.call(app.querySelectorAll("[data-orient]"), function (b) { b.setAttribute("aria-pressed", b.dataset.orient === d.orient); });
     $("sk-color").value = style.c; $("sk-ls").value = style.ls; $("sk-op").value = String(style.op || 1); $("sk-pat").value = style.pat;
     $("sk-grid").checked = d.grid; $("sk-chkw").checked = S.chkw !== false; $("sk-spell").checked = S.spell !== false; $("sk-snap").checked = d.snap; $("sk-scale").value = d.scale; $("sk-dscale").value = d.dscale || 0; $("sk-sbar-l").hidden = !d.dscale; $("sk-sbar").checked = d.sbar !== false;
-    $("sk-gsq").hidden = !!d.dscale || !kitOn(); $("sk-mapshow-l").hidden = !d.map; if (d.map) { $("sk-mapshow").checked = d.map.show !== false; $("sk-mapleg").checked = !!d.map.leg; $("sk-mapbase").value = d.map.base || "osm"; $("sk-mapflow").checked = !!d.map.fl && d.map.flow !== false; $("sk-mapflow").disabled = !d.map.fl; $("sk-maplegpos").value = d.map.legpos || "br"; $("sk-maposm").checked = d.map.osm !== false; $("sk-mapcont").checked = d.map.cont !== false; $("sk-mapgrey").checked = d.map.grey !== false; if (document.activeElement !== $("sk-maprot")) $("sk-maprot").value = d.map.rot || 0; $("sk-maprot-r").value = d.map.rot || 0; $("sk-mapop").value = d.map.op || 0.55; $("sk-mapcop").value = d.map.cop || 1; }
+    $("sk-gsq").hidden = !!d.dscale || !kitOn(); $("sk-mapshow-l").hidden = !d.map; if (d.map) { $("sk-mapshow").checked = d.map.show !== false; $("sk-mapleg").checked = !!d.map.leg; $("sk-mapbase").value = d.map.base || "osm"; $("sk-mapflow").checked = !!d.map.fl && d.map.flow !== false; $("sk-mapflow").disabled = !d.map.fl; $("sk-maplegpos").value = d.map.legpos || "br"; $("sk-maposm").checked = d.map.osm !== false; $("sk-mapcont").checked = d.map.cont !== false; $("sk-mapgrey").checked = d.map.grey !== false; if (document.activeElement !== $("sk-maprot")) $("sk-maprot").value = d.map.rot || 0; $("sk-maprot-r").value = d.map.rot || 0; $("sk-mapop").value = d.map.op || 0.55; $("sk-mapcop").value = d.map.cop || 1; $("sk-maphs").checked = !!d.map.hsOn; $("sk-maphop").value = d.map.hop || 0.5; }
     renderMapExtra();
     Array.prototype.forEach.call(app.querySelectorAll("[data-ml]"), function (c) { c.checked = !!(d.map && d.map.on && d.map.on[c.dataset.ml]); });
     var nOn = MAPL.filter(function (L) { return d.map && d.map.on && d.map.on[L.id]; }).length; $("sk-mlcount").textContent = nOn ? "(" + nOn + " on)" : "(" + MAPL.length + " available)"; $("sk-gridinfo").textContent = d.dscale ? "grid " + fmtM(toM(GRID)) : "";
@@ -2040,7 +2041,7 @@
   function rotS(F, x, y, sg) { var a = (sg || 1) * F.rot * Math.PI / 180, c = Math.cos(a), s2 = Math.sin(a), dx = x - F.cx, dy = y - F.cy; return { x: F.cx + dx * c - dy * s2, y: F.cy + dx * s2 + dy * c }; }
   function unrotS(F, x, y) { return rotS(F, x, y, -1); }
   function rotBox(F, I) { if (!F.rot) return I; var cs = [[I.x, I.y], [I.x + I.w, I.y], [I.x, I.y + I.h], [I.x + I.w, I.y + I.h]].map(function (q) { return unrotS(F, q[0], q[1]); }), x0 = Math.min.apply(null, cs.map(function (q) { return q.x; })), x1 = Math.max.apply(null, cs.map(function (q) { return q.x; })), y0 = Math.min.apply(null, cs.map(function (q) { return q.y; })), y1 = Math.max.apply(null, cs.map(function (q) { return q.y; })); return { x: x0, y: y0, w: x1 - x0, h: y1 - y0 }; }
-  function mapKey() { var d = doc(), m = d.map; return m ? [m.e, m.n, m.rot || 0, d.dscale, d.paper, d.orient, d.tbs, m.show, m.osm, m.base, m.cont, m.op, m.cop, m.grey, m.box, m.c ? m.c.lines.length + ":" + m.c.iv + ":" + m.c.oe : "", JSON.stringify(m.on || {}), Object.keys(m.L || {}).map(function (k2) { return k2 + (m.L[k2].f || []).length; }).join(), m.leg, m.legpos, legVer, JSON.stringify(d.legItems || []), m.flow, m.fl ? m.fl.lines.length + ":" + m.fl.oe + ":" + m.fl.on : ""].join("|") : ""; }
+  function mapKey() { var d = doc(), m = d.map; return m ? [m.e, m.n, m.rot || 0, d.dscale, d.paper, d.orient, d.tbs, m.show, m.osm, m.base, m.cont, m.op, m.cop, m.grey, m.box, m.c ? m.c.lines.length + ":" + m.c.iv + ":" + m.c.oe : "", JSON.stringify(m.on || {}), Object.keys(m.L || {}).map(function (k2) { return k2 + (m.L[k2].f || []).length; }).join(), m.leg, m.legpos, legVer, JSON.stringify(d.legItems || []), m.flow, m.fl ? m.fl.lines.length + ":" + m.fl.oe + ":" + m.fl.on : "", m.hsOn, m.hop, m.hs ? m.hs.x0 + ":" + m.hs.yt + ":" + m.hs.w : ""].join("|") : ""; }
   /* contours and vector layers are stored in metres from their own origin, so the map can move under them */
   function cOff(m, c) { return [(c.oe == null ? m.e : c.oe) - m.e, (c.on == null ? m.n : c.on) - m.n]; }
   function mapLayers() { return MAPL.concat(doc().map && doc().map.extra || []); }
@@ -2159,6 +2160,7 @@
         o += "</g>";
       }
     }
+    if (m.hsOn && m.hs) o += '<image href="' + m.hs.url + '" x="' + r1(F.cx + (m.hs.x0 - m.e) / F.mu) + '" y="' + r1(F.cy - (m.hs.yt - m.n) / F.mu) + '" width="' + r1(m.hs.w / F.mu) + '" height="' + r1(m.hs.h / F.mu) + '" preserveAspectRatio="none" opacity="' + (m.hop || 0.5) + '"/>';
     o += mapLayersStr(m, F, I, forExport);
     if (m.cont !== false && m.c && m.c.lines.length) {
       var cO = cOff(m, m.c), W2 = function (q) { return r1(F.cx + (q[0] + cO[0]) / F.mu) + " " + r1(F.cy - (q[1] + cO[1]) / F.mu); }, idx = m.c.iv * 5, lab = "";
@@ -2174,7 +2176,7 @@
     o += flowStr(m, F);
     if (F.rot) o += "</g>";
     I = I0;
-    var attr = [m.osm !== false ? (m.base === "sat" ? "Imagery © Esri, Maxar, Earthstar Geographics and the GIS User Community" : "Map © OpenStreetMap contributors") : "", m.cont !== false && m.c ? "Contours " + m.c.iv + " m from " + (m.c.src || "EA LiDAR DTM © Environment Agency (OGL)") + ", indicative" : ""].concat(layerAttr(m)).filter(Boolean).join(" · ");
+    var attr = [m.osm !== false ? (m.base === "sat" ? "Imagery © Esri, Maxar, Earthstar Geographics and the GIS User Community" : "Map © OpenStreetMap contributors") : "", m.cont !== false && m.c ? "Contours " + m.c.iv + " m from " + (m.c.src || "EA LiDAR DTM © Environment Agency (OGL)") + ", indicative" : "", m.hsOn && m.hs ? "Hillshade from " + (m.hs.src || "EA LiDAR DTM © Environment Agency (OGL)") : ""].concat(layerAttr(m)).filter(Boolean).join(" · ");
     if (m.box) o += '<rect x="' + r1(I.x) + '" y="' + r1(I.y) + '" width="' + r1(I.w) + '" height="' + r1(I.h) + '" fill="none" stroke="#15233a" stroke-width="1.2"/>';
     if (m.leg) o += legendStr(m, I, forExport);
     if (attr) o += txt(I.x + 6, I.y + I.h - 6, attr, "#5a6677", 8, "start", ' stroke="#fff" stroke-width="3" paint-order="stroke"');
@@ -2378,6 +2380,33 @@
   $("sk-mapop").addEventListener("input", function () { var v = +this.value; mapSet(function (m) { m.op = v; }); });
   $("sk-mapcont").addEventListener("change", function () { var v = this.checked; mapSet(function (m) { m.cont = v; }); if (v && doc().map && !doc().map.c) fetchContours(); });
   $("sk-mapcop").addEventListener("input", function () { var v = +this.value; mapSet(function (m) { m.cop = v; }); });
+  $("sk-maphop").addEventListener("input", function () { var v = +this.value; mapSet(function (m) { m.hop = v; }); });
+  $("sk-maphs").addEventListener("change", function () {
+    var v = this.checked, d = doc(); if (!d.map) { this.checked = false; mapStatus("Place the map first."); return; }
+    mapSet(function (m) { m.hsOn = v; });
+    if (!v) return;
+    var hsMsg = function () { mapStatus("Hillshade from the LiDAR, lit from the north-west with heights exaggerated 2× so gentle slopes show. Use Fade to make it lighter or stronger."); };
+    if (d.map.csrc === "file") { if (terrain && terrain.sheet === d && terrain.fine) { setHs(d, terrain.fine); hsMsg(); } else mapStatus("Load your LiDAR file again: files aren't kept once the page reloads."); }
+    else fetchContours(function () { setTimeout(hsMsg, 0); }); /* fresh terrain for the map area as it is now */
+  });
+  /* Hillshade: shaded relief from a terrain grid (Horn's method, sun in the north-west at 45°), kept as a small greyscale PNG with the sheet */
+  function hillshade(g) {
+    var nx = g.nx, ny = g.ny, z = g.z, cv = document.createElement("canvas"); cv.width = nx; cv.height = ny;
+    var cx = cv.getContext("2d"), im = cx.createImageData(nx, ny), D = im.data, zen = Math.PI / 4, az = 135 * Math.PI / 180;
+    var at = function (i, j) { i = Math.max(0, Math.min(nx - 1, i)); j = Math.max(0, Math.min(ny - 1, j)); return z[j * nx + i]; };
+    for (var j = 0; j < ny; j++) for (var i = 0; i < nx; i++) {
+      var e = z[j * nx + i], k = (j * nx + i) * 4; if (!isFinite(e)) { D[k + 3] = 0; continue; }
+      var nb = function (di, dj) { var v = at(i + di, j + dj); return isFinite(v) ? v : e; };
+      var a = nb(-1, -1), b = nb(0, -1), c = nb(1, -1), dd = nb(-1, 0), f = nb(1, 0), gg = nb(-1, 1), h = nb(0, 1), ii = nb(1, 1);
+      var dx = 2 * ((c + 2 * f + ii) - (a + 2 * dd + gg)) / (8 * g.cell), dy = 2 * ((gg + 2 * h + ii) - (a + 2 * b + c)) / (8 * g.cell); /* heights × 2 */
+      var sl = Math.atan(Math.hypot(dx, dy)), asp = Math.atan2(dy, -dx);
+      var v = 255 * (Math.cos(zen) * Math.cos(sl) + Math.sin(zen) * Math.sin(sl) * Math.cos(az - asp));
+      v = Math.max(0, Math.min(255, Math.round(v))); D[k] = D[k + 1] = D[k + 2] = v; D[k + 3] = 255;
+    }
+    cx.putImageData(im, 0, 0);
+    return { url: cv.toDataURL("image/png"), x0: g.x0, yt: g.y0 + ny * g.cell, w: nx * g.cell, h: ny * g.cell, cell: g.cell };
+  }
+  function setHs(sheet, g, src) { if (!sheet.map) return; try { sheet.map.hs = hillshade(g); sheet.map.hs.src = src || (sheet.map.csrc === "file" && sheet.map.c ? sheet.map.c.src : ""); } catch (e) { mapStatus("Couldn't draw the hillshade in this browser."); return; } persist(); renderAll(); }
   $("sk-mapea").addEventListener("click", function () { if (!doc().map) { mapStatus("Place the map first."); return; } fetchContours(); });
   $("sk-mapfile-b").addEventListener("click", function () { $("sk-mapfile").click(); });
   $("sk-mapfile").addEventListener("change", function () { var f = this.files[0]; this.value = ""; if (f) loadTerrainFile(f); });
@@ -2463,7 +2492,7 @@
       var c = traceContours(g2, iv, m.e, m.n);
       if (!c) { mapStatus("The grid has no values in the map area."); return; }
       var Wd = C.x1 - C.x0, Hd = C.y1 - C.y0; terrain = { sheet: d, fine: g2, wide: cropGrid(g, C.x0 - Wd, C.y0 - Hd, C.x1 + Wd, C.y1 + Hd) || g2, file: true };
-      c.src = f.name; m.c = c; m.cont = true; m.csrc = "file"; persist(); syncControls(); renderAll(); renderProps();
+      c.src = f.name; m.c = c; m.cont = true; m.csrc = "file"; if (m.hsOn) setHs(d, g2, f.name); persist(); syncControls(); renderAll(); renderProps();
       mapStatus(c.lines.length + " contours every " + c.iv + " m from " + f.name + " (" + g.cell + " m cells)" + (placed ? "." : ", with the map placed over it at 1:" + d.dscale + "."));
     };
     if (/\.tiff?$/i.test(f.name)) {
@@ -2501,7 +2530,7 @@
   $("sk-mappan").addEventListener("click", function () { if (!doc().map) { mapStatus("Place the map first."); return; } setMapMode("pan"); });
   $("sk-mapbox").addEventListener("click", function () { if (!doc().map) { mapStatus("Place the map first."); return; } setMapMode("box"); });
   $("sk-mapall").addEventListener("click", function () { var m = doc().map; if (!m) return; delete m.box; persist(); renderAll(); afterMapMove(); });
-  function afterMapMove() { var m = doc().map; if (!m) return; if (m.cont !== false && m.csrc !== "file") fetchContours(); refreshLayers(); }
+  function afterMapMove() { var m = doc().map; if (!m) return; if ((m.cont !== false || m.hsOn) && m.csrc !== "file") fetchContours(); refreshLayers(); }
   $("sk-mapiv").addEventListener("change", function () { if (doc().map && doc().map.cont !== false) fetchContours(); });
   $("sk-mapshow").addEventListener("change", function () { var v = this.checked; mapSet(function (m) { m.show = v; }); });
   $("sk-mapdel").addEventListener("click", function () { if (!doc().map) return; delete doc().map; persist(); renderAll(); mapStatus("Map removed."); });
@@ -2543,8 +2572,9 @@
       terrain = { sheet: sheet, fine: g, wide: terrain && terrain.sheet === sheet && !terrain.file ? terrain.wide : null };
       if (cb) cb(g);
       if (!c) { mapStatus("No LiDAR came back for this spot. The EA's LiDAR covers England only, and has a few gaps."); return; }
-      c.src = "EA LiDAR DTM © Environment Agency (OGL)"; sheet.map.c = c; sheet.map.csrc = "ea"; persist(); renderAll();
-      mapStatus(c.lines.length + " contour lines every " + c.iv + " m" + (c.iv !== iv ? " (widened from " + iv + " m: the ground is steep here)" : "") + ", from the EA's LiDAR terrain model" + (cell > 1 ? ", thinned to " + cell + " m spacing to cover this big an area, so they're smoother than the 1 m data" : " at 1 m spacing") + ".");
+      c.src = "EA LiDAR DTM © Environment Agency (OGL)"; sheet.map.c = c; sheet.map.csrc = "ea"; if (sheet.map.hsOn) setHs(sheet, g, c.src); persist(); renderAll();
+      if (sheet.map.cont === false) mapStatus("Hillshade from the EA's LiDAR terrain model at " + cell + " m spacing.");
+      else mapStatus(c.lines.length + " contour lines every " + c.iv + " m" + (c.iv !== iv ? " (widened from " + iv + " m: the ground is steep here)" : "") + ", from the EA's LiDAR terrain model" + (cell > 1 ? ", thinned to " + cell + " m spacing to cover this big an area, so they're smoother than the 1 m data" : " at 1 m spacing") + ".");
     }).catch(function (err) { mapStatus("Couldn't fetch LiDAR: " + err.message + ". The EA service may be busy; try again. LiDAR covers England only."); });
   }
 
