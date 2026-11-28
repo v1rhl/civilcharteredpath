@@ -948,7 +948,7 @@ html.sk-lock .sk-main > *:not(.sk-stage), .sk-app:fullscreen .sk-main > *:not(.s
 .sk-tbdocks .sk-win-b[aria-pressed="true"] { background: var(--line); }
 .sk-layout.sk-tl { grid-template-columns: 340px auto minmax(0, 1fr); }
 html.sk-lock .sk-layout.sk-tl, .sk-app:fullscreen .sk-layout.sk-tl, .sk-app.sk-full .sk-layout.sk-tl { grid-template-columns: 210px auto minmax(0, 1fr); }
-.sk-tbar-left { flex-direction: column; align-items: stretch; align-self: stretch; min-height: 0; max-height: 100%; padding: 4px 3px; gap: 4px; }
+.sk-tbar-left { flex-direction: column; align-items: stretch; align-self: stretch; min-height: 0; max-height: 100%; position: relative; z-index: 30; padding: 4px 3px; gap: 4px; }
 html:not(.sk-lock) .sk-tbar-left { position: sticky; top: var(--sk-top, 56px); max-height: calc(100vh - var(--sk-top, 56px) - 16px); align-self: start; z-index: 30; } /* above the sheet, so windows opened from it are never under the stage or the tabs */
 .sk-tbar-left .sk-tbar-grip { padding: 3px 0; }
 .sk-tbar-left .sk-tbar-grip svg { transform: rotate(90deg); }
@@ -1025,6 +1025,21 @@ html:not(.sk-mob) .sk-main > .sk-hint, html:not(.sk-mob) .sk-main > .sk-status {
 .sk-sideacts .sk-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; width: 100%; }
 .sk-sideacts .sk-actions > * { width: 100%; min-width: 0; padding: 4px 6px !important; font-size: 0.76rem; }
 .sk-sideacts .sk-actions select { grid-column: 1 / -1; }
+/* View settings: a slim bar of small icons along the bottom of the drawing on wide screens */
+.sk-vbar { display: flex; align-items: center; min-height: 34px; padding: 3px 6px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); position: sticky; bottom: 0; z-index: 3; }
+.sk-vbar[hidden] { display: none; }
+.sk-vbar .sk-viewopts { display: flex !important; flex-direction: row !important; flex-wrap: wrap; align-items: center; gap: 2px 6px !important; padding: 0 !important; margin: 0; border: 0; background: none; width: 100%; }
+.sk-vbar .sk-ltog { position: relative; display: inline-flex; flex-direction: row; align-items: center; gap: 4px; padding: 3px 7px; font-size: 0.72rem; line-height: 1; border-radius: calc(var(--radius) - 2px); cursor: pointer; color: var(--muted); border: 1px solid transparent; }
+.sk-vbar .sk-ltog input { position: absolute; opacity: 0; width: 1px; height: 1px; pointer-events: none; }
+.sk-vbar .sk-ltog svg { display: block; }
+.sk-vbar .sk-ltog:has(input:checked) { color: var(--ink); background: var(--paper); border-color: var(--tool-line); }
+.sk-vbar .sk-ltog:has(input:focus-visible) { outline: 2px solid var(--accent); }
+.sk-vbar .sk-vsel { font-size: 0.72rem; gap: 4px; color: var(--muted); }
+.sk-vbar select, .sk-vbar input[type="number"], .sk-vbar input[type="text"] { font-size: 0.74rem !important; line-height: 1.2 !important; padding: 3px 22px 3px 6px !important; min-height: 0 !important; height: 26px !important; width: auto !important; max-width: 11em; color: var(--ink); background-color: var(--surface); background-position: right 6px center !important; }
+.sk-vbar input[type="number"], .sk-vbar input[type="text"] { padding-right: 6px !important; }
+.sk-vbar #sk-gridinfo { font-size: 0.7rem; }
+.sk-vbar .sk-ltog[hidden], .sk-vbar label[hidden] { display: none !important; }
+html:not(.sk-mob) .sk-side [data-sec="view"] { display: none; }
 .sk-ivprev { display: flex; flex-direction: column; gap: 4px; }
 .sk-ivprev[hidden] { display: none; }
 .sk-ivrow { display: grid; grid-template-columns: repeat(3, auto); gap: 4px; justify-content: start; }
@@ -3040,9 +3055,9 @@ footer .wrap { font-family: var(--font-body); }
 <script src="js/news-feed.js?v=20261122b"></script>
 <script src="js/news-archive.js?v=20261122b"></script>
 <script src="js/pages.js?v=20261122b"></script>
-<script src="js/tools/sketch-templates.js?v=20261129g"></script>
-<script src="js/tools/sketch.js?v=20261129g"></script>
-<script src="js/tools/drawing-check.js?v=20261129g"></script>
+<script src="js/tools/sketch-templates.js?v=20261129h"></script>
+<script src="js/tools/sketch.js?v=20261129h"></script>
+<script src="js/tools/drawing-check.js?v=20261129h"></script>
 <script src="js/tools/hydraulics.js?v=20261127a"></script>
 <script src="js/tools/pipeflow.js?v=20261127a"></script>
 <script src="js/tools/catchment.js?v=20261127a"></script>
@@ -3054,7 +3069,7 @@ footer .wrap { font-family: var(--font-body); }
 <script src="js/tools/culvert.js?v=20261127a"></script>
 <script src="js/tools/site-diary.js?v=20261127a"></script>
 <script src="js/learn.js?v=20261127m"></script>
-<script src="js/site.js?v=20261129g"></script>
+<script src="js/site.js?v=20261129h"></script>
 <script src="js/art.js?v=20261127m"></script>
 </body>
 </html>

@@ -868,6 +868,17 @@
     var viewEl = mk("div", "sk-style sk-sheetopts sk-viewopts"), kids = Array.prototype.slice.call(sheet.children), wm0 = kids.indexOf($("sk-wm").closest("label"));
     kids.slice(wm0).forEach(function (c) { viewEl.appendChild(c); });
     side.insertBefore(sec("view", "View settings", false, [viewEl]), side.querySelector('[data-sec="layers"]'));
+    /* On wide screens the view settings live in a bar of small icons along the bottom, always in reach */
+    viewEl.id = "sk-viewopts";
+    var VI = function (d) { return '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + d + "</svg>"; };
+    [["sk-grid", "Grid", VI('<path d="M4 4h16v16H4zM4 9.3h16M4 14.6h16M9.3 4v16M14.6 4v16"/>')], ["sk-chkw", "Checks", VI('<path d="M9 6h11M9 12h11M9 18h11M3.5 6l1.2 1.2L7 5M3.5 12l1.2 1.2L7 11M3.5 18l1.2 1.2L7 17"/>')],
+     ["sk-spell", "Spelling", VI('<path d="M3 15l3.2-9 3.2 9M4.2 12h4M12 6v9h2.6a2.2 2.2 0 0 0 0-4.5H12M14.4 10.5a2.2 2.2 0 0 0 0-4.5H12"/><path d="M14 19l2 2 5-5"/>')], ["sk-sbar", "Scale bar", VI('<path d="M3 15h18v4H3zM3 15v-3M9 15v-2M15 15v-2M21 15v-3M9 15v4M15 15v4"/>')]].forEach(function (x) {
+      var cb = viewEl.querySelector("#" + x[0]), lb = cb && cb.closest("label"); if (!lb) return;
+      lb.classList.add("sk-ltog", "sk-vt"); Array.prototype.slice.call(lb.childNodes).forEach(function (n) { if (n !== cb && n.nodeType === 3) lb.removeChild(n); });
+      lb.insertAdjacentHTML("beforeend", x[2] + "<span>" + x[1] + "</span>");
+    });
+    var wmL = viewEl.querySelector("#sk-wm").closest("label"), wmT = viewEl.querySelector("#sk-wmtext"); viewEl.appendChild(wmL); viewEl.appendChild(wmT); /* watermark last */
+    ["#sk-dscale", "#sk-wm"].forEach(function (q) { var e0 = viewEl.querySelector(q), l0 = e0 && e0.closest("label"); if (l0) l0.classList.add("sk-vsel"); });
     side.insertBefore(sec("sheet", "Page settings", false, [sheet]), side.querySelector('[data-sec="layers"]'));
     var more = mk("button", "sk-btn sk-more", "More"); more.type = "button"; more.id = "sk-more"; more.setAttribute("aria-expanded", "false"); more.title = "All tools, style, view, page and layers"; toolrow.appendChild(more); /* phones: opens the side bar as a drawer */
     var main = mk("div", "sk-main"); main.id = "sk-main";
@@ -878,7 +889,8 @@
     var tbar = mk("div", "sk-tbar"); tbar.id = "sk-tbar"; tbar.setAttribute("role", "group"); tbar.setAttribute("aria-label", "Starred tools");
     tbar.innerHTML = '<button type="button" class="sk-tbar-grip" id="sk-tbgrip" title="Drag to move the toolbar anywhere" aria-label="Move toolbar"><svg viewBox="0 0 8 16" width="8" height="16" aria-hidden="true"><g fill="currentColor"><circle cx="2" cy="3" r="1.2"/><circle cx="6" cy="3" r="1.2"/><circle cx="2" cy="8" r="1.2"/><circle cx="6" cy="8" r="1.2"/><circle cx="2" cy="13" r="1.2"/><circle cx="6" cy="13" r="1.2"/></g></svg></button><div class="sk-tbar-slot" id="sk-tbslot"></div>' +
       '<div class="sk-tbar-lay" id="sk-tblay"></div><div class="sk-tbar-end"><button type="button" class="sk-btn sk-tbar-all" id="sk-tball" title="All tools: star the ones you want on this toolbar">All tools</button><span class="sk-tbdocks"><button type="button" class="sk-win-b" id="sk-tbvert" aria-pressed="false" title="Stand the toolbar up as a column" aria-label="Vertical toolbar" hidden>⇅</button><button type="button" class="sk-win-b" data-dock="left" title="Dock the toolbar at the left of the drawing" aria-label="Dock toolbar at the left">⇤</button><button type="button" class="sk-win-b" data-dock="top" title="Dock the toolbar along the top of the drawing" aria-label="Dock toolbar at the top">⤒</button><button type="button" class="sk-win-b" data-dock="bottom" title="Dock the toolbar along the bottom of the drawing" aria-label="Dock toolbar at the bottom">⤓</button></span></div>';
-    [row1, tbar, $("sk-stage"), $("sk-props"), hint, $("sk-status")].forEach(function (n) { main.appendChild(n); }); /* the item options and messages sit under the sheet, kept small */
+    var vbar = mk("div", "sk-vbar"); vbar.id = "sk-vbar"; vbar.setAttribute("role", "group"); vbar.setAttribute("aria-label", "View settings");
+    [row1, tbar, $("sk-stage"), $("sk-props"), hint, $("sk-status"), vbar].forEach(function (n) { main.appendChild(n); }); /* the item options and messages sit under the sheet, kept small */
     var lay = mk("div", "sk-layout"); lay.appendChild(side); lay.appendChild(main);
     head.remove(); app.innerHTML = ""; app.appendChild(lay);
     top.id = "sk-head"; /* the bar above the sheet: kept in view on wide screens */
@@ -1004,6 +1016,8 @@
     if (lt && ls && tl) { if (isMob()) { if (lt.parentNode !== ls) ls.insertBefore(lt, ls.children[1] || null); } else if (lt.parentNode !== tl) tl.appendChild(lt); } /* drawing and underlay show / lock: toolbar icons on wide screens */
     var sw = $("sk-snapwrap"), gsq = $("sk-gsq"); /* snapping sits with them */
     if (sw && tl && gsq) { if (isMob()) { if (sw.previousElementSibling !== gsq) gsq.parentNode.insertBefore(sw, gsq.nextSibling); } else if (sw.parentNode !== tl) tl.appendChild(sw); }
+    var vo = $("sk-viewopts"), vb = $("sk-vbar"), vin = app.querySelector('[data-sec="view"] .sk-sec-in');
+    if (vo && vb && vin) { if (isMob()) { if (vo.parentNode !== vin) vin.appendChild(vo); vb.hidden = true; } else { if (vo.parentNode !== vb) vb.appendChild(vo); vb.hidden = false; } }
     var lay = app.querySelector(".sk-layout"), main = $("sk-main");
     if (isMob()) { if (t.parentNode !== row) row.insertBefore(t, row.firstChild); bar.hidden = true; if (lay) { lay.classList.remove("sk-tl"); lay.classList.remove("sk-tl2"); var sd = $("sk-side"); if (sd && sd.parentNode !== lay) lay.insertBefore(sd, lay.firstChild); } if (bar.parentNode !== main) main.insertBefore(bar, $("sk-stage")); return; }
     if (t.parentNode !== slot) slot.appendChild(t);
