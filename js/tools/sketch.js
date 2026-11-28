@@ -124,6 +124,7 @@
   function doc() { return S.sheets[S.cur]; }
   var saveWarned = false;
   function persist() {
+    autoStep();
     try { localStorage.setItem(KEY, JSON.stringify(S)); saveWarned = false; }
     catch (e) { if (!saveWarned) status("This browser's storage is full, so the latest changes aren't saved. Remove an image or a sheet, or export your work."); saveWarned = true; }
   }
@@ -146,17 +147,35 @@
   function newId(p) { var d = doc(); return (p || "i") + (d.seq++); }
 
   /* ---------- Undo ---------- */
-  function snap() { var d = doc(); return JSON.stringify({ items: d.items, under: d.under, tb: d.tb, orient: d.orient, legItems: d.legItems || [], legpos: d.legpos }); }
+  /* Undo covers the whole sheet: drawing, underlays, title block and every page, view and map setting. The bulky
+     map data fetched from services (contours, flow lines, hillshade, layer features) stays out of it. */
+  var HEAVY = /^(c|fl|hs|L|csrc|ivSet)$/;
+  function snap() { var d = doc(), o = {}, k; for (k in d) if (k !== "map") o[k] = d[k]; if (d.map) { o.map = {}; for (k in d.map) if (!HEAVY.test(k)) o.map[k] = d.map[k]; } return JSON.stringify(o); }
+  function restore(str) {
+    var o = JSON.parse(str), d = doc(), old = d.map, k;
+    for (k in d) if (!(k in o)) delete d[k];
+    for (k in o) d[k] = o[k];
+    if (d.map && old) for (k in old) if (HEAVY.test(k)) d.map[k] = old[k];
+    try { syncControls(); } catch (e) {}
+  }
+  /* Settings changed straight from a control (no begin/commit round them) still get an undo step: the state before
+     is pushed when the change is saved. Quick runs, like dragging a slider, make one step. */
+  var lastS = {}, lastAuto = 0;
+  function autoStep() {
+    if (typeof hist !== "object" || !hist || before !== null) return;
+    var now = snap(), prev = lastS[S.cur];
+    if (prev != null && prev !== now) { var h = H(), t = Date.now(); if (t - lastAuto > 800 || !h.u.length) { h.u.push(prev); if (h.u.length > 60) h.u.shift(); } h.r = []; lastAuto = t; }
+    lastS[S.cur] = now;
+  }
   function begin() { if (before === null) before = snap(); }
   function commit() {
     syncLeaders(); reHatch(); try { syncSections(); } catch (er) {}
     var now = snap(), h = H();
     if (before !== null && now !== before) { h.u.push(before); if (h.u.length > 60) h.u.shift(); h.r = []; }
-    before = null; persist(); renderAll();
+    before = null; lastS[S.cur] = now; persist(); renderAll();
   }
-  function restore(str) { var o = JSON.parse(str), d = doc(); d.items = o.items; d.under = o.under; d.tb = o.tb; d.orient = o.orient; d.legItems = o.legItems || []; if (o.legpos) d.legpos = o.legpos; }
-  function undo() { var h = H(); if (!h.u.length) return; h.r.push(snap()); restore(h.u.pop()); sel = null; pend = null; persist(); renderAll(); renderProps(); }
-  function redo() { var h = H(); if (!h.r.length) return; h.u.push(snap()); restore(h.r.pop()); sel = null; persist(); renderAll(); renderProps(); }
+  function undo() { var h = H(); if (!h.u.length) return; h.r.push(snap()); restore(h.u.pop()); lastS[S.cur] = snap(); sel = null; pend = null; persist(); renderAll(); renderProps(); }
+  function redo() { var h = H(); if (!h.r.length) return; h.u.push(snap()); restore(h.r.pop()); lastS[S.cur] = snap(); sel = null; persist(); renderAll(); renderProps(); }
 
   /* ---------- Geometry ---------- */
   function size() { var p = PAPER[doc().paper] || PAPER.A4; return doc().orient === "port" ? [p[1], p[0]] : [p[0], p[1]]; }
