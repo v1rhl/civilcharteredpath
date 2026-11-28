@@ -690,9 +690,10 @@
       '<label class="sk-check">Title block <select id="sk-tbs"><option value="small">Small</option><option value="medium">Medium</option><option value="large">Large</option><option value="off">Off</option></select></label>' +
       '<label class="sk-check"><input type="checkbox" id="sk-rev"> Revisions</label><button type="button" class="sk-btn" id="sk-addrev">Add revision</button><button type="button" class="sk-btn" id="sk-delrev" title="Remove the last revision row">Remove last</button>' +
       '<button type="button" class="sk-btn" id="sk-legedit" title="Build a legend from the line types and hatches on the drawing">Legend editor</button>' +
-      '<label class="sk-check">Watermark <select id="sk-wm"><option value="">None</option><option>DRAFT</option><option>NOT FOR CONSTRUCTION</option><option>PRELIMINARY</option><option>FOR INFORMATION</option><option value="*">Your own text…</option></select></label><input type="text" id="sk-wmtext" placeholder="Watermark text" hidden style="width:12em">' +
+      '<label class="sk-check">Watermark <select id="sk-wm"><option value="">None</option><option>DRAFT</option><option>NOT FOR CONSTRUCTION</option><option>PRELIMINARY</option><option>FOR INFORMATION</option><option value="*">Your own text…</option></select></label><input type="text" id="sk-wmtext" spellcheck="true" lang="en-GB" placeholder="Watermark text" hidden style="width:12em">' +
       '<label class="sk-check"><input type="checkbox" id="sk-grid"> Grid</label>' +
       '<label class="sk-check" title="A small bar at the right of the sheet listing drawing checklist items the sheet seems to miss, numbered like the checklist. Point at one to see where. Never exported."><input type="checkbox" id="sk-chkw"> Checklist warnings</label>' +
+      '<label class="sk-check" title="Flags words in your text, labels and title block that aren\'t in the British English dictionary. The dictionary is part of this site, so nothing is sent anywhere."><input type="checkbox" id="sk-spell"> Check spelling</label>' +
       '<label class="sk-check">Scale <select id="sk-dscale"><option value="0">Not to scale</option>' + SCALES.map(function (n) { return '<option value="' + n + '">' + nS(n) + "</option>"; }).join("") + '</select></label><span class="small" id="sk-gridinfo"></span><label class="sk-check" id="sk-sbar-l"><input type="checkbox" id="sk-sbar"> Scale bar</label>' +
       '<label class="sk-check" id="sk-gsq">Grid square = <input type="number" id="sk-scale" min="0.01" step="0.05" style="width:5.5em"> m</label>' +
       '<span class="sk-snapwrap"><label class="sk-check"><input type="checkbox" id="sk-snap"> Snap</label><details class="sk-snapmenu"><summary>Snaps</summary><div>' +
@@ -1066,16 +1067,51 @@
   }
   /* The warnings sit in a narrow bar down the right of the sheet area. Hovering or clicking a row
      shows its marker on the sheet, so the drawing itself stays clear. */
+  /* Spelling: British English, using the SCOWL en_GB Hunspell dictionary with Typo.js (js/vendor/spell).
+     Both load from this site the first time they're needed; no text leaves the browser. */
+  var SPELL = { st: 0, t: null, ok: {} };
+  var SP_OK = ("kn knm kpa mpa udl udls aod osgb bng lidar dtm dsm geotextile geogrid geocomposite benching precast insitu cl il fl gl ffl sfl tbc tba nts rev dia suds hdpe upvc pvc mdpe rc rcc gga dpc dpm csa dwg dxf pdf png svg jpeg sssi rofrs ea bgs os osm cbr spt cpt ssl mh ic ch chainage kerb kerbs kerbing gully gullies soakaway soakaways culvert culverts headwall headwalls attenuation outfall outfalls invert inverts formwork rebar blinding sulfate sulphate thk approx typ nom ctrs crs exg exist reinf conc bldg ugl rwp svp fw sw ic/mh").split(" ");
+  function spellMine() { try { return JSON.parse(localStorage.getItem("cp-sketch-dict")) || []; } catch (e) { return []; } }
+  function spellLoad() {
+    if (SPELL.st) return; SPELL.st = 1; var base = "js/vendor/spell/";
+    var get = function (u) { return fetch(base + u).then(function (r) { if (!r.ok) throw new Error(r.status); return r.text(); }); };
+    var go = function () { Promise.all([get("en_GB.aff"), get("en_GB.dic")]).then(function (a) { setTimeout(function () { try { SPELL.t = new window.Typo("en_GB", a[0], a[1]); SPELL.st = 2; } catch (e) { SPELL.st = 3; } renderWarn(); }, 0); }).catch(function () { SPELL.st = 3; status("Couldn't load the spelling dictionary."); }); };
+    if (window.Typo) { go(); return; }
+    var js = document.createElement("script"); js.src = base + "typo.js"; js.onload = go; js.onerror = function () { SPELL.st = 3; status("Couldn't load the spell checker."); }; document.head.appendChild(js);
+  }
+  function spellOk(w) {
+    if (SPELL.ok[w] != null) return SPELL.ok[w];
+    var lw = w.toLowerCase().replace(/’/g, "'"), r;
+    if (/\d/.test(w) || w.length < 2 || /[a-z][A-Z]/.test(w) || SP_OK.indexOf(lw) > -1 || spellMine().indexOf(lw) > -1) r = true; /* numbers, codes like kNm, and known engineering words */
+    else { r = SPELL.t.check(w) || SPELL.t.check(lw) || SPELL.t.check(lw.charAt(0).toUpperCase() + lw.slice(1)); if (!r && /^[A-Z]+s?$/.test(w) && w.length <= 5) r = true; /* short capitals: abbreviations */ if (!r && /'s$/i.test(lw)) r = spellOk(w.slice(0, -2)); }
+    return (SPELL.ok[w] = r);
+  }
+  function spellList() {
+    var d = doc(), texts = [], out = [], seen = {}, G = geo(), t = G.tbBlock;
+    d.items.forEach(function (it) { var s0 = [it.text, it.label].filter(function (v) { return typeof v === "string" && v; }).join(" "); if (s0) texts.push({ s: s0, id: it.id }); });
+    [["project", 0], ["title", 1], ["note", 4]].forEach(function (f) { var v = f[0] === "note" ? (d.tb.note == null ? "" : d.tb.note) : tbGet(f[0]); if (v) texts.push({ s: v, x: G.tb.off ? G.inner.x + G.inner.w - 40 : t.x - 18, y: G.tb.off ? G.inner.y + G.inner.h - 20 : t.y + Math.min(f[1], 3) * G.rh + G.rh / 2 }); });
+    if (!texts.length) return out;
+    if (SPELL.st !== 2) { spellLoad(); return out; }
+    texts.forEach(function (tx) {
+      (tx.s.match(/[A-Za-z][A-Za-z'’]*[A-Za-z]|[A-Za-z]/g) || []).forEach(function (w) {
+        if (seen[w.toLowerCase()] || spellOk(w) || out.length >= 15) return; seen[w.toLowerCase()] = 1;
+        var x = tx.x, y = tx.y; if (tx.id) { var e = gContent.querySelector('[data-id="' + tx.id + '"] .v'); try { var bb = e.getBBox(); x = bb.x - 12; y = bb.y - 10; } catch (er) { x = 0; y = 0; } }
+        out.push({ id: "sp", word: w, x: x, y: y, why: "\"" + w + "\" isn't in the dictionary." });
+      });
+    });
+    return out;
+  }
   var warnCur = [], warnShow = null;
-  function warnTxt(w) { return window.CPDrawCheck.ref(w.id) + " " + window.CPDrawCheck.text(w.id) + ". " + w.why; }
+  function wRef(w) { return w.id === "sp" ? "Sp" : window.CPDrawCheck.ref(w.id); }
+  function warnTxt(w) { return w.id === "sp" ? "Spelling: " + w.why : window.CPDrawCheck.ref(w.id) + " " + window.CPDrawCheck.text(w.id) + ". " + w.why; }
   function warnStr() {
     if (warnShow == null || !warnCur[warnShow]) return "";
-    var w = warnCur[warnShow], rf = window.CPDrawCheck.ref(w.id), wd = 10 + rf.length * 6.4, tt = warnTxt(w);
+    var w = warnCur[warnShow], rf = wRef(w), wd = 10 + rf.length * 6.4, tt = warnTxt(w);
     return '<g class="sk-warn" data-warn="' + esc(tt) + '" transform="translate(' + r1(w.x) + " " + r1(w.y) + ')"><title>' + esc(tt) + '</title><circle r="16" fill="none" stroke="#f08a00" stroke-width="2" opacity=".6"/><rect x="' + r1(-wd / 2) + '" y="-9" width="' + r1(wd) + '" height="18" rx="9" fill="#f08a00" stroke="#fff" stroke-width="1.5"/>' + txt(0, 4, rf, "#fff", 10.5, "middle", ' font-weight="bold"') + "</g>";
   }
   function renderWarn() {
     var bar = $("sk-warnbar"), on = S.chkw !== false && !!window.CPDrawCheck;
-    warnCur = on ? warnList() : [];
+    warnCur = (on ? warnList() : []).concat(S.spell !== false ? spellList() : []);
     if (warnShow != null && !warnCur[warnShow]) warnShow = null;
     $("sk-warng").innerHTML = warnStr();
     bar.hidden = !warnCur.length;
@@ -1083,8 +1119,8 @@
     var key = JSON.stringify(warnCur.map(function (w) { return w.id + w.why; })) + !!S.chkwc;
     if (bar._key === key) return; bar._key = key;
     bar.classList.toggle("sk-warnbar-min", !!S.chkwc);
-    bar.innerHTML = '<button type="button" class="sk-warnbar-h" id="sk-warnmin" aria-expanded="' + !S.chkwc + '" title="' + (S.chkwc ? "Show the checklist warnings" : "Fold the checklist warnings away") + '"><span class="sk-warnpill">' + warnCur.length + "</span>" + (S.chkwc ? "" : "<span>Checklist</span><span aria-hidden=\"true\">›</span>") + "</button>" +
-      (S.chkwc ? "" : '<ol class="sk-warnlist">' + warnCur.map(function (w, i) { return '<li><button type="button" data-wi="' + i + '" title="' + esc(warnTxt(w)) + '"><span class="sk-warnpill">' + esc(window.CPDrawCheck.ref(w.id)) + "</span><span>" + esc(w.why) + "</span></button></li>"; }).join("") + "</ol>");
+    bar.innerHTML = '<button type="button" class="sk-warnbar-h" id="sk-warnmin" aria-expanded="' + !S.chkwc + '" title="' + (S.chkwc ? "Show the checklist warnings" : "Fold the checklist warnings away") + '"><span class="sk-warnpill">' + warnCur.length + "</span>" + (S.chkwc ? "" : "<span>Checks</span><span aria-hidden=\"true\">›</span>") + "</button>" +
+      (S.chkwc ? "" : '<ol class="sk-warnlist">' + warnCur.map(function (w, i) { return '<li><button type="button" data-wi="' + i + '" title="' + esc(warnTxt(w)) + '"><span class="sk-warnpill' + (w.id === "sp" ? " sp" : "") + '">' + esc(wRef(w)) + "</span><span>" + esc(w.why) + "</span></button>" + (w.id === "sp" ? '<button type="button" class="sk-addw" data-addw="' + esc(w.word) + '" title="Add &quot;' + esc(w.word) + '&quot; to your dictionary (kept in this browser)">+</button>' : "") + "</li>"; }).join("") + "</ol>");
   }
   function renderUI() {
     var o = "", sw = 1.5; /* screen px: these outlines use non-scaling strokes */
@@ -1183,7 +1219,7 @@
     Array.prototype.forEach.call(app.querySelectorAll("[data-w]"), function (b) { b.setAttribute("aria-pressed", +b.dataset.w === style.w); });
     Array.prototype.forEach.call(app.querySelectorAll("[data-orient]"), function (b) { b.setAttribute("aria-pressed", b.dataset.orient === d.orient); });
     $("sk-color").value = style.c; $("sk-ls").value = style.ls; $("sk-pat").value = style.pat;
-    $("sk-grid").checked = d.grid; $("sk-chkw").checked = S.chkw !== false; $("sk-snap").checked = d.snap; $("sk-scale").value = d.scale; $("sk-dscale").value = d.dscale || 0; $("sk-sbar-l").hidden = !d.dscale; $("sk-sbar").checked = d.sbar !== false;
+    $("sk-grid").checked = d.grid; $("sk-chkw").checked = S.chkw !== false; $("sk-spell").checked = S.spell !== false; $("sk-snap").checked = d.snap; $("sk-scale").value = d.scale; $("sk-dscale").value = d.dscale || 0; $("sk-sbar-l").hidden = !d.dscale; $("sk-sbar").checked = d.sbar !== false;
     $("sk-gsq").hidden = !!d.dscale || mode !== "struct"; $("sk-mapshow-l").hidden = !d.map; if (d.map) { $("sk-mapshow").checked = d.map.show !== false; $("sk-mapleg").checked = !!d.map.leg; $("sk-mapbase").value = d.map.base || "osm"; $("sk-mapflow").checked = !!d.map.fl && d.map.flow !== false; $("sk-mapflow").disabled = !d.map.fl; $("sk-maplegpos").value = d.map.legpos || "br"; $("sk-maposm").checked = d.map.osm !== false; $("sk-mapcont").checked = d.map.cont !== false; $("sk-mapgrey").checked = d.map.grey !== false; if (document.activeElement !== $("sk-maprot")) $("sk-maprot").value = d.map.rot || 0; $("sk-maprot-r").value = d.map.rot || 0; $("sk-mapop").value = d.map.op || 0.55; $("sk-mapcop").value = d.map.cop || 1; }
     renderMapExtra();
     Array.prototype.forEach.call(app.querySelectorAll("[data-ml]"), function (c) { c.checked = !!(d.map && d.map.on && d.map.on[c.dataset.ml]); });
@@ -1250,11 +1286,15 @@
   });
   $("sk-sbar").addEventListener("change", function () { begin(); doc().sbar = this.checked; commit(); });
   $("sk-chkw").addEventListener("change", function () { S.chkw = this.checked; persist(); renderAll(); });
+  $("sk-spell").addEventListener("change", function () { S.spell = this.checked; persist(); renderAll(); });
   (function () {
     var bar = $("sk-warnbar"), show = function (i) { if (warnShow === i) return; warnShow = i; $("sk-warng").innerHTML = warnStr(); };
     bar.addEventListener("click", function (e) {
       if (e.target.closest("#sk-warnmin")) { S.chkwc = !S.chkwc; persist(); renderWarn(); return; }
-      var b = e.target.closest("[data-wi]"); if (!b) return; var i = +b.dataset.wi; show(i); status("Drawing checklist " + warnTxt(warnCur[i]) + " See Guidance › Drawing checklist.");
+      var aw = e.target.closest("[data-addw]"); if (aw) { var mine = spellMine(), lw = aw.dataset.addw.toLowerCase(); if (mine.indexOf(lw) < 0) mine.push(lw); try { localStorage.setItem("cp-sketch-dict", JSON.stringify(mine)); } catch (er) {} SPELL.ok = {}; show(null); renderWarn(); status("\"" + aw.dataset.addw + "\" added to your dictionary in this browser."); return; }
+      var b = e.target.closest("[data-wi]"); if (!b) return; var i = +b.dataset.wi, w = warnCur[i]; show(i);
+      if (w.id === "sp") { var sg = []; try { sg = SPELL.t.suggest(w.word, 4); } catch (er) {} status("Spelling: \"" + w.word + "\"" + (sg.length ? ". Did you mean " + sg.join(", ") + "?" : " isn't in the dictionary.") + " Click + to add it to your dictionary."); }
+      else status("Drawing checklist " + warnTxt(w) + " See Guidance › Drawing checklist.");
     });
     bar.addEventListener("pointerover", function (e) { var b = e.target.closest("[data-wi]"); if (b) show(+b.dataset.wi); });
     bar.addEventListener("pointerleave", function () { show(null); });
@@ -1348,13 +1388,13 @@
     if (it.type === "dim") h += '<label class="sk-check">Units <select id="skp-unit"><option value="">Auto</option><option value="m"' + (it.unit === "m" ? " selected" : "") + '>m</option><option value="mm"' + (it.unit === "mm" ? " selected" : "") + ">mm</option></select></label>";
     if (it.type === "rect") h += '<label class="sk-check"><input type="checkbox" id="skp-rfill"' + (it.fill ? " checked" : "") + "> White fill</label>";
     if (it.type === "inset" && it.blank) {
-      h += '<label class="sk-check">Title <input type="text" id="skp-ilabel" size="12" value="' + esc(it.label || "") + '"></label><label class="sk-check">Scale <select id="skp-iN">' + SCALES.map(function (n) { return '<option value="' + n + '"' + (n === it.N ? " selected" : "") + ">" + nS(n) + "</option>"; }).join("") + "</select></label>" +
+      h += '<label class="sk-check">Title <input type="text" id="skp-ilabel" spellcheck="true" lang="en-GB" size="12" value="' + esc(it.label || "") + '"></label><label class="sk-check">Scale <select id="skp-iN">' + SCALES.map(function (n) { return '<option value="' + n + '"' + (n === it.N ? " selected" : "") + ">" + nS(n) + "</option>"; }).join("") + "</select></label>" +
         '<label class="sk-check"><input type="checkbox" id="skp-isbar"' + (it.sbar === false ? "" : " checked") + "> Scale bar</label>";
     }
     if (it.type === "inset" && !it.blank) {
       var N0 = doc().dscale, ks = N0 ? SCALES.filter(function (n) { return n < N0; }).map(function (n) { return [N0 / n, nS(n)]; }) : [1.5, 2, 3, 4, 5, 10].map(function (v) { return [v, "×" + v]; });
       if (!ks.some(function (q) { return Math.abs(q[0] - it.k) < 1e-6; })) ks.push([it.k, insetScale(it)]);
-      h += '<label class="sk-check">Detail <input type="text" id="skp-ilabel" size="4" value="' + esc(it.label || "") + '"></label><label class="sk-check">Scale <select id="skp-ik">' + ks.map(function (q) { return '<option value="' + q[0] + '"' + (Math.abs(q[0] - it.k) < 1e-6 ? " selected" : "") + ">" + q[1] + "</option>"; }).join("") + "</select></label>" +
+      h += '<label class="sk-check">Detail <input type="text" id="skp-ilabel" spellcheck="true" lang="en-GB" size="4" value="' + esc(it.label || "") + '"></label><label class="sk-check">Scale <select id="skp-ik">' + ks.map(function (q) { return '<option value="' + q[0] + '"' + (Math.abs(q[0] - it.k) < 1e-6 ? " selected" : "") + ">" + q[1] + "</option>"; }).join("") + "</select></label>" +
         '<label class="sk-check"><input type="checkbox" id="skp-isrc"' + (it.nosrc ? "" : " checked") + '> Mark the area on the drawing</label><label class="sk-check"><input type="checkbox" id="skp-imap"' + (it.map === false ? "" : " checked") + "> Show map</label>" + (N0 ? '<label class="sk-check"><input type="checkbox" id="skp-isbar"' + (it.sbar === false ? "" : " checked") + "> Scale bar</label>" : "");
     }
     if (it.type === "image") h += '<label class="sk-check"><input type="checkbox" id="skp-border"' + (it.border ? " checked" : "") + "> Border</label>";
@@ -1378,8 +1418,8 @@
   function liveEdit(id, fn) {
     var el = $(id); if (!el) return;
     el.addEventListener("focus", begin);
-    el.addEventListener("input", function () { var it = byId(sel.id); if (!it) return; keepTL(it, function (x) { fn(x, el); }); renderContent(); });
-    el.addEventListener("change", function () { var it = byId(sel.id); if (!it) return; keepTL(it, function (x) { fn(x, el); }); commit(); });
+    el.addEventListener("input", function () { var it = sel && byId(sel.id); if (!it) return; keepTL(it, function (x) { fn(x, el); }); renderContent(); });
+    el.addEventListener("change", function () { var it = sel && byId(sel.id); if (!it) return; keepTL(it, function (x) { fn(x, el); }); commit(); });
     el.addEventListener("blur", function () { if (before !== null) commit(); });
   }
   var propsEl = $("sk-props");

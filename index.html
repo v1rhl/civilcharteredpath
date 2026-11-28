@@ -1001,6 +1001,11 @@ html:not(.sk-mob) .sk-main > .sk-hint, html:not(.sk-mob) .sk-main > .sk-status {
 .sk-warnlist button { display: flex; gap: 6px; align-items: flex-start; width: 100%; padding: 4px 3px; border: 0; border-top: 1px solid var(--line); background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; }
 .sk-warnlist button:hover, .sk-warnlist button:focus-visible { background: rgba(240,138,0,.1); }
 .sk-warnpill { flex: 0 0 auto; min-width: 18px; padding: 0 5px; border-radius: 9px; background: #f08a00; color: #fff; font-weight: 700; font-size: 10px; line-height: 16px; text-align: center; }
+.sk-warnpill.sp { background: #c2410c; }
+.sk-warnlist li { display: flex; align-items: stretch; }
+.sk-warnlist li > [data-wi] { flex: 1 1 auto; min-width: 0; }
+.sk-warnlist .sk-addw { flex: 0 0 auto; width: 22px; border: 0; border-top: 1px solid var(--line); background: none; color: var(--muted); font: inherit; font-weight: 700; cursor: pointer; }
+.sk-warnlist .sk-addw:hover { color: var(--ink); background: rgba(240,138,0,.1); }
 #sk-svg .sk-warn * { cursor: help !important; }
 /* Layers and map window: compact, 11 px text */
 .sk-sec[data-sec="layers"] .sk-sec-in { font-size: 11px; line-height: 1.3; gap: 4px 14px; }
@@ -2985,9 +2990,9 @@ footer .wrap { font-family: var(--font-body); }
 <script src="js/news-feed.js?v=20261122b"></script>
 <script src="js/news-archive.js?v=20261122b"></script>
 <script src="js/pages.js?v=20261122b"></script>
-<script src="js/tools/sketch-templates.js?v=20261128zl"></script>
-<script src="js/tools/sketch.js?v=20261128zl"></script>
-<script src="js/tools/drawing-check.js?v=20261128zl"></script>
+<script src="js/tools/sketch-templates.js?v=20261128zm"></script>
+<script src="js/tools/sketch.js?v=20261128zm"></script>
+<script src="js/tools/drawing-check.js?v=20261128zm"></script>
 <script src="js/tools/hydraulics.js?v=20261127a"></script>
 <script src="js/tools/pipeflow.js?v=20261127a"></script>
 <script src="js/tools/catchment.js?v=20261127a"></script>
@@ -2999,7 +3004,7 @@ footer .wrap { font-family: var(--font-body); }
 <script src="js/tools/culvert.js?v=20261127a"></script>
 <script src="js/tools/site-diary.js?v=20261127a"></script>
 <script src="js/learn.js?v=20261127m"></script>
-<script src="js/site.js?v=20261128zl"></script>
+<script src="js/site.js?v=20261128zm"></script>
 <script src="js/art.js?v=20261127m"></script>
 </body>
 </html>
