@@ -953,7 +953,7 @@ html:not(.sk-lock) .sk-tbar-left { position: sticky; top: var(--sk-top, 56px); m
 .sk-tbar-left .sk-tbar-grip { padding: 3px 0; }
 .sk-tbar-left .sk-tbar-grip svg { transform: rotate(90deg); }
 .sk-tbar-left .sk-tbar-slot { flex: 1 1 auto; min-height: 0; overflow-y: auto; scrollbar-width: thin; }
-.sk-tbar-left .sk-tools { display: grid; grid-template-columns: repeat(2, 48px); gap: 2px; }
+.sk-tbar-left .sk-tools:not(.sk-tools2) { display: grid; grid-template-columns: repeat(2, 48px); gap: 2px; }
 .sk-tbar-left .sk-tool { min-width: 0; }
 .sk-tbar-left .sk-tbar-lay { border-left: 0; border-top: 1px solid var(--tool-line); padding: 4px 0 0; display: grid; grid-template-columns: repeat(2, 48px); gap: 2px; }
 .sk-tbar-left .sk-tbar-lay .sk-laytogs { display: contents; }
@@ -1520,7 +1520,7 @@ html:not(.sk-mob) .sk-app .sk-tabs button { font-size: var(--sk-t) !important; }
 html:not(.sk-mob) #sk-tbar .sk-tool:not(.sk-sec-body .sk-tool) > span:not(.sk-pin), html:not(.sk-mob) #sk-tbar .sk-ltog > span, html:not(.sk-mob) #sk-tbar .sk-tlab { display: none !important; }
 html:not(.sk-mob) #sk-tbar .sk-tool:not(.sk-sec-body .sk-tool), html:not(.sk-mob) #sk-tbar .sk-ltog { width: 34px; height: 32px; min-width: 0 !important; padding: 0 !important; display: inline-flex; align-items: center; justify-content: center; }
 html:not(.sk-mob) #sk-tbar .sk-tool:not(.sk-sec-body .sk-tool) svg, html:not(.sk-mob) #sk-tbar .sk-ltog svg { width: 18px; height: 18px; }
-html:not(.sk-mob) #sk-tbar.sk-tbar-left .sk-tools, html:not(.sk-mob) #sk-tbar.sk-tbar-left .sk-tbar-lay { grid-template-columns: repeat(2, 34px); justify-content: center; }
+html:not(.sk-mob) #sk-tbar.sk-tbar-left .sk-tools:not(.sk-tools2), html:not(.sk-mob) #sk-tbar.sk-tbar-left .sk-tbar-lay { grid-template-columns: repeat(2, 34px); justify-content: center; }
 html:not(.sk-mob) #sk-tbar.sk-tbar-side > .sk-side { width: 72px; display: grid; grid-template-columns: repeat(2, 34px); gap: 2px; justify-content: center; align-content: start; }
 html:not(.sk-mob) #sk-tbar.sk-tbar-side > .sk-side > :not(details.sk-sec) { grid-column: 1 / -1; }
 html:not(.sk-mob) #sk-tbar.sk-tbar-side > .sk-side > details.sk-sec { padding: 0; }
@@ -1538,6 +1538,14 @@ html:not(.sk-mob) #sk-tbar .sk-snapwrap { display: flex; justify-content: center
 html:not(.sk-mob) #sk-tbar select.sk-tpl { width: 34px !important; height: 30px; padding: 0 !important; color: transparent; appearance: none; -webkit-appearance: none; background: var(--surface) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2315233a' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='4' y='4' width='16' height='16' rx='2'/%3E%3Cpath d='M4 10h16M10 10v10'/%3E%3C/svg%3E") center / 18px no-repeat; border: 1px solid var(--tool-line); border-radius: 4px; cursor: pointer; justify-self: center; }
 html:not(.sk-mob) #sk-tbar select.sk-tpl option { color: var(--ink); }
 html[data-theme="dark"]:not(.sk-mob) #sk-tbar select.sk-tpl { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23dbe7f0' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='4' y='4' width='16' height='16' rx='2'/%3E%3Cpath d='M4 10h16M10 10v10'/%3E%3C/svg%3E"); }
+/* All tools window: one compact grid that fills the window and reflows with it */
+.sk-sec[data-sec="alltools"].sk-fly .sk-sec-in { display: block !important; overflow-x: hidden; }
+.sk-sec[data-sec="alltools"].sk-fly .sk-sec-in > * { width: auto !important; max-width: none !important; }
+.sk-sec[data-sec="alltools"].sk-fly .sk-alltip { margin: 0 0 8px; }
+.sk-app .sk-sec[data-sec="alltools"].sk-fly .sk-tools2.sk-tools { display: grid !important; grid-template-columns: repeat(auto-fill, minmax(76px, 1fr)); gap: 2px; margin: 0; }
+.sk-sec[data-sec="alltools"].sk-fly .sk-tools2 .sk-tool { min-width: 0; width: auto; padding: 4px 2px; }
+.sk-sec[data-sec="alltools"].sk-fly .sk-tools2 .sk-tool > span:not(.sk-pin) { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+.sk-sec[data-sec="alltools"].sk-fly .sk-kitt { grid-template-columns: repeat(auto-fill, minmax(76px, 1fr)); }
 /* icon buttons in the map panel */
 .sk-app .sk-btn.sk-ibtn, html:not(.sk-mob) .sk-app :is(.sk-sec-in, .sk-dlg, .sk-toolpop, .sk-props) .sk-btn.sk-ibtn { width: 32px !important; max-width: 32px !important; height: 28px; min-height: 28px; padding: 0 !important; display: inline-flex; align-items: center; justify-content: center; flex: 0 0 auto; }
 .sk-app .sk-btn.sk-icbtn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
@@ -3125,9 +3133,9 @@ html[data-theme="dark"]:not(.sk-mob) #sk-tbar select.sk-tpl { background-image: 
 <script src="js/news-feed.js?v=20261122b"></script>
 <script src="js/news-archive.js?v=20261122b"></script>
 <script src="js/pages.js?v=20261122b"></script>
-<script src="js/tools/sketch-templates.js?v=20261129p"></script>
-<script src="js/tools/sketch.js?v=20261129p"></script>
-<script src="js/tools/drawing-check.js?v=20261129p"></script>
+<script src="js/tools/sketch-templates.js?v=20261129q"></script>
+<script src="js/tools/sketch.js?v=20261129q"></script>
+<script src="js/tools/drawing-check.js?v=20261129q"></script>
 <script src="js/tools/hydraulics.js?v=20261127a"></script>
 <script src="js/tools/pipeflow.js?v=20261127a"></script>
 <script src="js/tools/catchment.js?v=20261127a"></script>
@@ -3139,7 +3147,7 @@ html[data-theme="dark"]:not(.sk-mob) #sk-tbar select.sk-tpl { background-image: 
 <script src="js/tools/culvert.js?v=20261127a"></script>
 <script src="js/tools/site-diary.js?v=20261127a"></script>
 <script src="js/learn.js?v=20261127m"></script>
-<script src="js/site.js?v=20261129p"></script>
+<script src="js/site.js?v=20261129q"></script>
 <script src="js/art.js?v=20261127m"></script>
 </body>
 </html>
