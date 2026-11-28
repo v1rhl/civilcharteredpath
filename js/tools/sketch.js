@@ -67,6 +67,9 @@
     kit: [["member", "Member"], ["pin", "Pin"], ["roller", "Roller"], ["fixed", "Fixed"], ["pload", "Point load"], ["udl", "UDL"], ["moment", "Moment"]], /* beam and frame diagram kit, a group in All tools */
     shapes: [["line", "Line"], ["arrow", "Arrow"], ["rect", "Rectangle"], ["circle", "Circle"], ["poly", "Polygon"], ["curve", "Curve"], ["section", "Section"], ["north", "North"], ["veg", "Vegetation"], ["fig", "Scale figure"], ["brk", "Break line"], ["cloud", "Rev cloud"], ["slope", "Slope"], ["wl", "Water level"], ["image", "Image"], ["inset", "Detail window"], ["window", "New viewport"]]
   };
+  /* tool groups, in order: the toolbar and All tools both follow them */
+  var TGRP = [["base", "", ["select", "eraser"]], ["lines", "Lines", ["pen", "line", "curve", "arrow", "leader", "brk", "section"]], ["shapes", "Shapes and fills", ["rect", "circle", "poly", "hatch", "cloud"]],
+    ["notes", "Text and dimensions", ["text", "dim"]], ["objects", "Objects and symbols", ["north", "veg", "fig", "wl", "slope", "image", "inset", "window"]], ["kit", "Beam and frame kit", ["member", "pin", "roller", "fixed", "pload", "udl", "moment"]]];
   var HINTS = {
     select: "Click to select, drag a box to select several, Shift or Ctrl click to add or remove. Drag to move, drag a corner square to resize, drag the round grip above to rotate (Shift for 15° steps). Delete removes, Ctrl+C / Ctrl+V copy and paste, Ctrl+D duplicates, Ctrl+A selects all, Esc clears.",
     pen: "Draw freehand. Ctrl+Z undoes the last stroke.",
@@ -1444,9 +1447,11 @@
   function renderTools() {
     var tb = function (t, pinUI) { var pinned = pinUI && pinsFor(mode).indexOf(t[0]) > -1; return '<button type="button" class="sk-tool' + (toolLock === t[0] ? " sk-locked" : "") + '" data-tool="' + t[0] + '" aria-pressed="' + (tool[mode] === t[0]) + '" title="' + esc(HINTS[t[0]] + (pinUI ? "" : " Right-click for its colour, width, line type, text size and transparency.")) + '">' + iconSvg(t[0]) + "<span>" + t[1] + "</span>" + (pinUI ? '<span class="sk-pin' + (pinned ? " on" : "") + '" data-pin="' + t[0] + '" role="button" tabindex="0" title="' + (pinned ? "Unpin from" : "Pin to") + ' the tools at the top" aria-label="' + (pinned ? "Unpin " : "Pin ") + t[1] + '">' + (pinned ? "★" : "☆") + "</span>" : "") + "</button>"; };
     var all = TOOLS.free.concat(TOOLS.shapes, TOOLS.kit), byT = {}; all.forEach(function (t) { byT[t[0]] = t; });
-    $("sk-tools").innerHTML = pinsFor(mode).filter(function (id) { return byT[id]; }).map(function (id) { return tb(byT[id]); }).join("");
+    var pins = pinsFor(mode), bar = [];
+    TGRP.forEach(function (g) { var inG = g[2].filter(function (id) { return byT[id] && pins.indexOf(id) > -1; }); if (!inG.length) return; if (bar.length) bar.push('<span class="sk-tsep" role="separator" aria-hidden="true"></span>'); inG.forEach(function (id) { bar.push(tb(byT[id])); }); });
+    $("sk-tools").innerHTML = bar.join(""); /* starred tools, in their groups, a thin rule between groups */
     var kitAll = KIT.every(function (k) { return pinsFor(mode).indexOf(k) > -1; });
-    $("sk-tools2").innerHTML = TOOLS.free.concat(TOOLS.shapes).map(function (t) { return tb(t, true); }).join("") +
+    $("sk-tools2").innerHTML = TGRP.filter(function (g) { return g[0] !== "kit"; }).map(function (g) { return (g[1] ? '<span class="sk-tgh">' + g[1] + "</span>" : "") + g[2].filter(function (id) { return byT[id]; }).map(function (id) { return tb(byT[id], true); }).join(""); }).join("") +
       '<div class="sk-kit"><label class="sk-check sk-kith" title="Star the whole beam and frame kit onto the toolbar, or take it all off"><input type="checkbox" id="sk-kit"' + (kitAll ? " checked" : "") + '> Beam and frame kit</label><div class="sk-kitt">' + TOOLS.kit.map(function (t) { return tb(t, true); }).join("") + "</div></div>";
     $("sk-ermode").hidden = tool[mode] !== "eraser";
     Array.prototype.forEach.call(app.querySelectorAll("[data-mode]"), function (b) { b.setAttribute("aria-pressed", b.dataset.mode === mode); });

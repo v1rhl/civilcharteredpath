@@ -1568,6 +1568,13 @@ html:not(.sk-mob) .sk-tabs .sk-tabadd { padding: 2px 8px !important; font-size: 
 html:not(.sk-mob) .sk-sec.sk-attached > summary { position: relative; z-index: 2147483000; background: var(--paper) !important; color: var(--accent) !important; border: 1px solid var(--line); border-right: 0; border-radius: 6px 0 0 6px !important; box-shadow: -2px 2px 8px rgba(0,0,0,.08); }
 html:not(.sk-mob) .sk-sec.sk-attached > summary::after { content: ""; position: absolute; top: 0; bottom: 0; right: -3px; width: 4px; background: var(--paper); }
 html:not(.sk-mob) .sk-sec.sk-attached > .sk-sec-body { border-top-left-radius: 0 !important; }
+/* tool groups */
+.sk-tsep { display: block; flex: 0 0 auto; align-self: stretch; width: 1px; margin: 3px 2px; background: var(--tool-line); }
+.sk-tbar-left .sk-tsep, .sk-tbar-vert .sk-tsep { grid-column: 1 / -1; width: auto; height: 1px; margin: 3px 2px; }
+.sk-tgh { grid-column: 1 / -1; display: block; margin: 6px 0 2px; font: 600 11px var(--font-body); letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); }
+.sk-tgh:first-child { margin-top: 0; }
+html.sk-mob .sk-tsep { display: none; }
+html.sk-mob .sk-tgh { flex: 1 1 100%; }
 /* icon buttons in the map panel */
 .sk-app .sk-btn.sk-ibtn, html:not(.sk-mob) .sk-app :is(.sk-sec-in, .sk-dlg, .sk-toolpop, .sk-props) .sk-btn.sk-ibtn { width: 32px !important; max-width: 32px !important; height: 28px; min-height: 28px; padding: 0 !important; display: inline-flex; align-items: center; justify-content: center; flex: 0 0 auto; }
 .sk-app .sk-btn.sk-icbtn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
@@ -3155,9 +3162,9 @@ html:not(.sk-mob) .sk-sec.sk-attached > .sk-sec-body { border-top-left-radius: 0
 <script src="js/news-feed.js?v=20261122b"></script>
 <script src="js/news-archive.js?v=20261122b"></script>
 <script src="js/pages.js?v=20261122b"></script>
-<script src="js/tools/sketch-templates.js?v=20261129t"></script>
-<script src="js/tools/sketch.js?v=20261129t"></script>
-<script src="js/tools/drawing-check.js?v=20261129t"></script>
+<script src="js/tools/sketch-templates.js?v=20261129u"></script>
+<script src="js/tools/sketch.js?v=20261129u"></script>
+<script src="js/tools/drawing-check.js?v=20261129u"></script>
 <script src="js/tools/hydraulics.js?v=20261127a"></script>
 <script src="js/tools/pipeflow.js?v=20261127a"></script>
 <script src="js/tools/catchment.js?v=20261127a"></script>
@@ -3169,7 +3176,7 @@ html:not(.sk-mob) .sk-sec.sk-attached > .sk-sec-body { border-top-left-radius: 0
 <script src="js/tools/culvert.js?v=20261127a"></script>
 <script src="js/tools/site-diary.js?v=20261127a"></script>
 <script src="js/learn.js?v=20261127m"></script>
-<script src="js/site.js?v=20261129t"></script>
+<script src="js/site.js?v=20261129u"></script>
 <script src="js/art.js?v=20261127m"></script>
 </body>
 </html>
