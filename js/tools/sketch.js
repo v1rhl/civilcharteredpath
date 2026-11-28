@@ -374,14 +374,14 @@
         var lab = it.label || dimAuto(it), ang = Math.atan2(dn.dy, dn.dx) * 180 / Math.PI; if (ang > 90.5 || ang < -89.5) ang += 180;
         var ar = ang * Math.PI / 180, upx = Math.sin(ar), upy = -Math.cos(ar), side = (dn.nx * sg * upx + dn.ny * sg * upy) > 0;
         var gap = side ? 7 : 19, lx = (ax1 + ax2) / 2 + dn.nx * sg * gap, ly = (ay1 + ay2) / 2 + dn.ny * sg * gap;
-        var dfs = it.fs || 14, msk = it.mask ? '<rect x="' + r1(lx - tw(lab, dfs) / 2 - 3) + '" y="' + r1(ly - dfs * 0.85) + '" width="' + r1(tw(lab, dfs) + 6) + '" height="' + r1(dfs * 1.1) + '" fill="#fff" transform="rotate(' + r1(ang) + " " + r1(lx) + " " + r1(ly) + ')"/>' : "";
+        var dfs = it.fs || 14, msk = it.mask !== false ? '<rect x="' + r1(lx - tw(lab, dfs) / 2 - 3) + '" y="' + r1(ly - dfs * 0.85) + '" width="' + r1(tw(lab, dfs) + 6) + '" height="' + r1(dfs * 1.1) + '" fill="#fff" transform="rotate(' + r1(ang) + " " + r1(lx) + " " + r1(ly) + ')"/>' : "";
         return o + msk + txt(lx, ly, lab, c, dfs, "middle", ' transform="rotate(' + r1(ang) + " " + r1(lx) + " " + r1(ly) + ')"');
       case "inset": return insetFrame(it);
       case "image": return '<image href="' + it.src + '" x="' + it.x + '" y="' + it.y + '" width="' + it.w + '" height="' + it.h + '" preserveAspectRatio="none"/>' + (it.border ? '<rect x="' + it.x + '" y="' + it.y + '" width="' + it.w + '" height="' + it.h + '" fill="none" stroke="' + c + '" stroke-width="1.5"/>' : "");
       case "text":
         var sz = it.size || 18, ls = String(it.text || "").split("\n"), mw = 0;
-        if (it.mask) ls.forEach(function (l) { mw = Math.max(mw, tw(l, sz, it.bold)); });
-        return (it.mask ? '<rect x="' + r1(it.x - 4) + '" y="' + r1(it.y - 2) + '" width="' + r1(mw + 8) + '" height="' + r1(ls.length * sz * 1.25 + 4) + '" fill="#fff"/>' : "") + '<text font-family="' + FONT + '" font-size="' + sz + '" fill="' + c + '"' + (it.bold ? ' font-weight="bold"' : "") + ">" + ls.map(function (l, j) { return '<tspan x="' + it.x + '" y="' + r1(it.y + sz * 0.85 + j * sz * 1.25) + '">' + (esc(l) || " ") + "</tspan>"; }).join("") + "</text>";
+        if (it.mask !== false) ls.forEach(function (l) { mw = Math.max(mw, tw(l, sz, it.bold)); });
+        return (it.mask !== false ? '<rect x="' + r1(it.x - 4) + '" y="' + r1(it.y - 2) + '" width="' + r1(mw + 8) + '" height="' + r1(ls.length * sz * 1.25 + 4) + '" fill="#fff"/>' : "") + '<text font-family="' + FONT + '" font-size="' + sz + '" fill="' + c + '"' + (it.bold ? ' font-weight="bold"' : "") + ">" + ls.map(function (l, j) { return '<tspan x="' + it.x + '" y="' + r1(it.y + sz * 0.85 + j * sz * 1.25) + '">' + (esc(l) || " ") + "</tspan>"; }).join("") + "</text>";
       case "arrow": return arrow(it.x1, it.y1, it.x2, it.y2, c, it.w, it.ah || Math.max(11, it.w * 4)).replace("<line ", "<line" + dash(it.ls, it.w) + " ");
       case "rect": return '<rect x="' + Math.min(it.x1, it.x2) + '" y="' + Math.min(it.y1, it.y2) + '" width="' + r1(Math.abs(it.x2 - it.x1)) + '" height="' + r1(Math.abs(it.y2 - it.y1)) + '" fill="' + (it.fill ? "#fff" : "none") + '" stroke="' + c + '" stroke-width="' + it.w + '" stroke-linejoin="round"' + dash(it.ls, it.w) + "/>";
       case "circle": return '<circle cx="' + it.x1 + '" cy="' + it.y1 + '" r="' + r1(Math.hypot(it.x2 - it.x1, it.y2 - it.y1)) + '" fill="none" stroke="' + c + '" stroke-width="' + it.w + '"' + dash(it.ls, it.w) + "/>";
@@ -413,7 +413,7 @@
         return o;
       case "leader":
         var b = leaderBox(it), A = anchorOf(it), cx = it.bx, cy = it.by, ddx = A.x - cx, ddy = A.y - cy, f = Math.min(Math.abs(ddx) > 0.01 ? (b.w / 2) / Math.abs(ddx) : 1e9, Math.abs(ddy) > 0.01 ? (b.h / 2) / Math.abs(ddy) : 1e9);
-        if (it.nobox) { if (it.mask) o += '<rect x="' + r1(b.x + 5) + '" y="' + r1(b.y + 4) + '" width="' + r1(b.w - 8) + '" height="' + r1(b.h - 6) + '" fill="#fff"/>'; var ex = A.x < b.x ? b.x - 3 : A.x > b.x + b.w ? b.x + b.w + 3 : null; if (ex !== null) o += ldrEnd(ex, cy, A.x, A.y, c, it.ah, 1.2, 10); b.lines.forEach(function (l, j) { o += txt(b.x + 9, b.y + 6 + b.sz * 1.3 * j + b.sz, l, c, b.sz); }); return o; }
+        if (it.nobox) { if (it.mask !== false) o += '<rect x="' + r1(b.x + 5) + '" y="' + r1(b.y + 4) + '" width="' + r1(b.w - 8) + '" height="' + r1(b.h - 6) + '" fill="#fff"/>'; var ex = A.x < b.x ? b.x - 3 : A.x > b.x + b.w ? b.x + b.w + 3 : null; if (ex !== null) o += ldrEnd(ex, cy, A.x, A.y, c, it.ah, 1.2, 10); b.lines.forEach(function (l, j) { o += txt(b.x + 9, b.y + 6 + b.sz * 1.3 * j + b.sz, l, c, b.sz); }); return o; }
         if (f < 1) o += ldrEnd(cx + ddx * f, cy + ddy * f, A.x, A.y, c, it.ah, 1.5);
         o += '<rect x="' + r1(b.x) + '" y="' + r1(b.y) + '" width="' + r1(b.w) + '" height="' + r1(b.h) + '" rx="3" fill="#fff" stroke="' + c + '" stroke-width="1.5"/>';
         b.lines.forEach(function (l, j) { o += txt(b.x + 9, b.y + 6 + b.sz * 1.3 * j + b.sz, l, c, b.sz); });
@@ -1342,7 +1342,7 @@
       '<label class="sk-check">Angle <select id="skp-ha">' + [0, 15, 30, 45, 60, 75, 90, 105, 120, 135, 150, 165].map(function (v) { return '<option value="' + v + '"' + ((it.ha || 0) === v ? " selected" : "") + ">" + v + "°</option>"; }).join("") + "</select></label>";
     if (it.type === "leader") h += '<label class="sk-check"><input type="checkbox" id="skp-box"' + (it.nobox ? "" : " checked") + "> Box</label>";
     if (it.type === "leader" && it.att) h += '<button type="button" class="sk-btn" data-act="detach">Detach arrow</button>';
-    if (it.type === "text" || it.type === "dim" || (it.type === "leader" && it.nobox)) h += '<label class="sk-check"><input type="checkbox" id="skp-mask"' + (it.mask ? " checked" : "") + "> Mask behind</label>";
+    if (it.type === "text" || it.type === "dim" || (it.type === "leader" && it.nobox)) h += '<label class="sk-check"><input type="checkbox" id="skp-mask"' + (it.mask !== false ? " checked" : "") + "> Mask behind</label>";
     if (it.type === "dim") h += '<label class="sk-check">Units <select id="skp-unit"><option value="">Auto</option><option value="m"' + (it.unit === "m" ? " selected" : "") + '>m</option><option value="mm"' + (it.unit === "mm" ? " selected" : "") + ">mm</option></select></label>";
     if (it.type === "rect") h += '<label class="sk-check"><input type="checkbox" id="skp-rfill"' + (it.fill ? " checked" : "") + "> White fill</label>";
     if (it.type === "inset" && it.blank) {
