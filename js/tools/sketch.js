@@ -1059,7 +1059,7 @@
     var legOn = (d.legItems || []).length || mapLegOn(), lx = I.x + I.w - 26, ly = tbOff ? I.y + I.h - 50 : t.y - 26;
     if (!legOn && (hasHatch || Object.keys(styles).length > 2)) at("lg1", lx, ly, "Hatches or several line types are used but there's no legend.");
     if (legOn) { var have = {}; (d.legItems || []).forEach(function (L) { have[legKey(L)] = 1; }); var miss = Object.keys(styles).filter(function (k2) { return !have[k2]; }).length; if (miss) at("lg2", lx - 34, ly, miss + " line type" + (miss > 1 ? "s or hatches aren't" : " or hatch isn't") + " in the legend."); }
-    d.items.forEach(function (it) { var tx = it.type === "text" || it.type === "leader" ? it.text || "" : ""; if (/\b(TBC|TBA|XX+|check)\b|\?\?/i.test(tx)) { var bx = it.type === "leader" ? it.x : it.x; at("an10", (bx || 0) - 14, (it.y || 0) - 14, "Draft text left in: \"" + tx.slice(0, 40) + "\"."); } });
+    d.items.forEach(function (it) { var tx = it.type === "text" || it.type === "leader" ? it.text || "" : ""; if (/\b(TBC|TBA|XX+)\b|\?\?/i.test(tx)) { var bx = it.type === "leader" ? it.x : it.x; at("an10", (bx || 0) - 14, (it.y || 0) - 14, "Draft text left in: \"" + tx.slice(0, 40) + "\"."); } });
     return out;
   }
   /* The warnings sit in a narrow bar down the right of the sheet area. Hovering or clicking a row
@@ -1121,7 +1121,7 @@
       }
     }
     xbox = null;
-    if (tool[mode] === "xform" && sel && sel.k !== "img") {
+    if (sel && sel.k !== "img" && (tool[mode] === "xform" || (tool[mode] === "select" && isSet()))) { /* a detail, group or several items: move and resize grips straight away */
       var xl = selList(); if (xl.length && !xl.some(locked)) {
         var xb = null; xl.forEach(function (gi) { var e3 = gContent.querySelector('[data-id="' + gi.id + '"] .v'); if (!e3) return; try { var b3 = e3.getBBox(); if (!xb) xb = { x1: b3.x, y1: b3.y, x2: b3.x + b3.width, y2: b3.y + b3.height }; else { xb.x1 = Math.min(xb.x1, b3.x); xb.y1 = Math.min(xb.y1, b3.y); xb.x2 = Math.max(xb.x2, b3.x + b3.width); xb.y2 = Math.max(xb.y2, b3.y + b3.height); } } catch (er) {} });
         if (xb && xb.x2 - xb.x1 + xb.y2 - xb.y1 > 2) {
@@ -2930,7 +2930,7 @@
     items.forEach(function (it) { var n = shifted(it, dx, dy); n.id = newId(); n.g = g; doc().items.push(n); });
     commit();
     setTool("select"); sel = { k: "group", g: g }; renderContent(); renderProps();
-    status(t.name + " added as an indicative sketch. Click a part twice to edit its label, or Ungroup it. Check it against the governing standard before you rely on it.");
+    status(t.name + " added as an indicative sketch. Drag the middle grip to move it or a corner to resize it. Click a part twice to edit its label, or Ungroup it. Check it against the governing standard before you rely on it.");
   }
   $("sk-tpl").addEventListener("change", function () { var v = this.value; this.value = ""; if (v !== "") insertTemplate(+v); });
 
