@@ -62,6 +62,7 @@
   var TOOLS = {
     free: [["select", "Select"], ["xform", "Move/resize"], ["pen", "Pen"], ["eraser", "Eraser"], ["hatch", "Hatch"], ["text", "Text"], ["leader", "Leader"], ["dim", "Dimension"]],
     struct: [["select", "Select"], ["xform", "Move/resize"], ["member", "Member"], ["pin", "Pin"], ["roller", "Roller"], ["fixed", "Fixed"], ["pload", "Point load"], ["udl", "UDL"], ["moment", "Moment"], ["dim", "Dimension"], ["hatch", "Hatch"], ["text", "Text"], ["leader", "Leader"], ["eraser", "Eraser"]],
+    kit: [["member", "Member"], ["pin", "Pin"], ["roller", "Roller"], ["fixed", "Fixed"], ["pload", "Point load"], ["udl", "UDL"], ["moment", "Moment"]], /* beam and frame diagram kit, a group in All tools */
     shapes: [["line", "Line"], ["arrow", "Arrow"], ["rect", "Rectangle"], ["circle", "Circle"], ["poly", "Polygon"], ["section", "Section"], ["north", "North"], ["veg", "Vegetation"], ["brk", "Break line"], ["cloud", "Rev cloud"], ["slope", "Slope"], ["wl", "Water level"], ["image", "Image"], ["inset", "Detail window"], ["window", "New viewport"]]
   };
   var HINTS = {
@@ -124,7 +125,11 @@
   }
 
   /* ---------- State ---------- */
-  var mode = S.mode === "struct" ? "struct" : "free";
+  /* One set of tools: the beam and frame kit is a group in All tools rather than a separate mode. Anyone who
+     was in the old beam and frame mode gets the kit on their toolbar. */
+  var KIT = TOOLS.kit.map(function (t) { return t[0]; });
+  if (S.mode === "struct") { S.pins = S.pins || {}; var pf0 = (S.pins.free || ["select", "xform", "pen", "line", "rect", "text", "dim", "leader", "hatch", "eraser"]).slice(); KIT.forEach(function (k) { if (pf0.indexOf(k) < 0) pf0.push(k); }); S.pins.free = pf0; S.mode = "free"; }
+  var mode = "free";
   var tool = { free: "pen", struct: "member" };
   var style = { c: COLORS[0][0], w: 2, ls: "solid", pat: "diag", fs: 14, veg: "tree", op: 1 };
   var sel = null; /* {k:"item"|"img", id} */
@@ -463,7 +468,8 @@
   function toM(u, N0) { var N = N0 || doc().dscale; return N ? u / 4 * N / 1000 : u / GRID * (doc().scale || 0.2); }
   function fromM(m) { var N = doc().dscale; return N ? m * 1000 / N * 4 : m / (doc().scale || 0.2) * GRID; }
   function fmtM(m) { var a = Math.abs(m); if (a >= 10000) return (Math.round(m / 10) / 100) + " km"; return a >= 1 || !doc().dscale ? (Math.round(m * 100) / 100) + " m" : Math.round(m * 1000) + " mm"; }
-  function measured() { return !!doc().dscale || mode === "struct"; }
+  function kitOn() { return doc().items.some(function (it) { return /^(member|support|pload|udl|moment)$/.test(it.type); }) || KIT.some(function (k) { return pinsFor("free").indexOf(k) > -1; }); }
+  function measured() { return !!doc().dscale || kitOn(); } /* beam and frame diagrams read lengths from the grid square */
   function loopsOf(it) { if (it.type === "circle") return null; if (it.type === "rect" || it.type === "cloud") { var o = outlineOf({ type: "rect", x1: it.x1, y1: it.y1, x2: it.x2, y2: it.y2 }); return [o.slice(0, 4)]; } return [it.pts].concat(it.holes || []); }
   function shoelace(L) { var a = 0; for (var i = 0; i < L.length; i++) { var p = L[i], q = L[(i + 1) % L.length]; a += p[0] * q[1] - q[0] * p[1]; } return Math.abs(a / 2); }
   function areaOf(it) { if (it.type === "circle") { var R = Math.hypot(it.x2 - it.x1, it.y2 - it.y1); return Math.PI * R * R; } var ls = loopsOf(it); return Math.max(0, shoelace(ls[0]) - ls.slice(1).reduce(function (s2, L) { return s2 + shoelace(L); }, 0)); }
@@ -1259,9 +1265,11 @@
   function togglePin(id) { var p = pinsFor(mode), i = p.indexOf(id); if (i > -1) { if (p.length > 1) p.splice(i, 1); } else p.push(id); S.pins[mode] = p; persist(); renderTools(); }
   function renderTools() {
     var tb = function (t, pinUI) { var pinned = pinUI && pinsFor(mode).indexOf(t[0]) > -1; return '<button type="button" class="sk-tool' + (toolLock === t[0] ? " sk-locked" : "") + '" data-tool="' + t[0] + '" aria-pressed="' + (tool[mode] === t[0]) + '" title="' + esc(HINTS[t[0]] + (pinUI ? "" : " Right-click for its colour, width, line type, text size and transparency.")) + '">' + iconSvg(t[0]) + "<span>" + t[1] + "</span>" + (pinUI ? '<span class="sk-pin' + (pinned ? " on" : "") + '" data-pin="' + t[0] + '" role="button" tabindex="0" title="' + (pinned ? "Unpin from" : "Pin to") + ' the tools at the top" aria-label="' + (pinned ? "Unpin " : "Pin ") + t[1] + '">' + (pinned ? "★" : "☆") + "</span>" : "") + "</button>"; };
-    var all = TOOLS[mode].concat(TOOLS.shapes), byT = {}; all.forEach(function (t) { byT[t[0]] = t; });
+    var all = TOOLS.free.concat(TOOLS.shapes, TOOLS.kit), byT = {}; all.forEach(function (t) { byT[t[0]] = t; });
     $("sk-tools").innerHTML = pinsFor(mode).filter(function (id) { return byT[id]; }).map(function (id) { return tb(byT[id]); }).join("");
-    $("sk-tools2").innerHTML = all.map(function (t) { return tb(t, true); }).join("");
+    var kitAll = KIT.every(function (k) { return pinsFor(mode).indexOf(k) > -1; });
+    $("sk-tools2").innerHTML = TOOLS.free.concat(TOOLS.shapes).map(function (t) { return tb(t, true); }).join("") +
+      '<div class="sk-kit"><label class="sk-check sk-kith" title="Star the whole beam and frame kit onto the toolbar, or take it all off"><input type="checkbox" id="sk-kit"' + (kitAll ? " checked" : "") + '> Beam and frame kit</label><div class="sk-kitt">' + TOOLS.kit.map(function (t) { return tb(t, true); }).join("") + "</div></div>";
     $("sk-ermode").hidden = tool[mode] !== "eraser";
     Array.prototype.forEach.call(app.querySelectorAll("[data-mode]"), function (b) { b.setAttribute("aria-pressed", b.dataset.mode === mode); });
     Array.prototype.forEach.call(app.querySelectorAll("[data-only]"), function (el) { el.hidden = el.dataset.only !== mode; });
@@ -1278,7 +1286,7 @@
     Array.prototype.forEach.call(app.querySelectorAll("[data-orient]"), function (b) { b.setAttribute("aria-pressed", b.dataset.orient === d.orient); });
     $("sk-color").value = style.c; $("sk-ls").value = style.ls; $("sk-op").value = String(style.op || 1); $("sk-pat").value = style.pat;
     $("sk-grid").checked = d.grid; $("sk-chkw").checked = S.chkw !== false; $("sk-spell").checked = S.spell !== false; $("sk-snap").checked = d.snap; $("sk-scale").value = d.scale; $("sk-dscale").value = d.dscale || 0; $("sk-sbar-l").hidden = !d.dscale; $("sk-sbar").checked = d.sbar !== false;
-    $("sk-gsq").hidden = !!d.dscale || mode !== "struct"; $("sk-mapshow-l").hidden = !d.map; if (d.map) { $("sk-mapshow").checked = d.map.show !== false; $("sk-mapleg").checked = !!d.map.leg; $("sk-mapbase").value = d.map.base || "osm"; $("sk-mapflow").checked = !!d.map.fl && d.map.flow !== false; $("sk-mapflow").disabled = !d.map.fl; $("sk-maplegpos").value = d.map.legpos || "br"; $("sk-maposm").checked = d.map.osm !== false; $("sk-mapcont").checked = d.map.cont !== false; $("sk-mapgrey").checked = d.map.grey !== false; if (document.activeElement !== $("sk-maprot")) $("sk-maprot").value = d.map.rot || 0; $("sk-maprot-r").value = d.map.rot || 0; $("sk-mapop").value = d.map.op || 0.55; $("sk-mapcop").value = d.map.cop || 1; }
+    $("sk-gsq").hidden = !!d.dscale || !kitOn(); $("sk-mapshow-l").hidden = !d.map; if (d.map) { $("sk-mapshow").checked = d.map.show !== false; $("sk-mapleg").checked = !!d.map.leg; $("sk-mapbase").value = d.map.base || "osm"; $("sk-mapflow").checked = !!d.map.fl && d.map.flow !== false; $("sk-mapflow").disabled = !d.map.fl; $("sk-maplegpos").value = d.map.legpos || "br"; $("sk-maposm").checked = d.map.osm !== false; $("sk-mapcont").checked = d.map.cont !== false; $("sk-mapgrey").checked = d.map.grey !== false; if (document.activeElement !== $("sk-maprot")) $("sk-maprot").value = d.map.rot || 0; $("sk-maprot-r").value = d.map.rot || 0; $("sk-mapop").value = d.map.op || 0.55; $("sk-mapcop").value = d.map.cop || 1; }
     renderMapExtra();
     Array.prototype.forEach.call(app.querySelectorAll("[data-ml]"), function (c) { c.checked = !!(d.map && d.map.on && d.map.on[c.dataset.ml]); });
     var nOn = MAPL.filter(function (L) { return d.map && d.map.on && d.map.on[L.id]; }).length; $("sk-mlcount").textContent = nOn ? "(" + nOn + " on)" : "(" + MAPL.length + " available)"; $("sk-gridinfo").textContent = d.dscale ? "grid " + fmtM(toM(GRID)) : "";
@@ -1330,6 +1338,7 @@
   $("sk-wmtext").addEventListener("input", function () { doc().wm = this.value; persist(); renderAll(); });
   $("sk-color").addEventListener("input", function () { style.c = this.value; syncControls(); });
   $("sk-color").addEventListener("change", function () { style.c = this.value; restyle(function (it) { it.c = style.c; }); });
+  app.addEventListener("change", function (e) { if (e.target.id !== "sk-kit") return; var p = pinsFor(mode).slice(), on = e.target.checked; KIT.forEach(function (k) { var i = p.indexOf(k); if (on && i < 0) p.push(k); if (!on && i > -1) p.splice(i, 1); }); S.pins[mode] = p; persist(); renderTools(); syncControls(); status(on ? "Beam and frame kit added to the toolbar: members, supports and loads. Lengths read from the grid square until you set a drawing scale." : "Beam and frame kit taken off the toolbar."); });
   $("sk-op").addEventListener("change", function () { style.op = +this.value; restyle(function (it) { if (style.op < 1) it.op = style.op; else delete it.op; }); });
   $("sk-ls").addEventListener("change", function () { style.ls = this.value; restyle(function (it) { if (/^(stroke|line|member|hatch|arrow|rect|circle|poly)$/.test(it.type)) it.ls = style.ls; }); });
   $("sk-veg").addEventListener("change", function () { style.veg = this.value; if (tool[mode] === "veg") return; /* while placing, it just sets the next stamp */ if (!(sel && byId(sel.id) && byId(sel.id).type === "veg")) { setTool("veg"); return; } restyle(function (it) { if (it.type === "veg") it.kind = style.veg; }); renderProps(); });
@@ -1861,7 +1870,7 @@
     if (mod && e.key.toLowerCase() === "d") { var dl = selList(); if (dl.length) { e.preventDefault(); syncLeaders(); paste(clone(dl), GRID); } return; }
     if (sel && sel.k !== "img" && /^Arrow/.test(e.key)) { /* nudge the selection */
       var nl = selList(); if (!nl.length || nl.some(locked)) return; e.preventDefault();
-      var st = (e.shiftKey ? 5 : 1) * (mode === "struct" && doc().snap ? GRID : 4), ddx = e.key === "ArrowLeft" ? -st : e.key === "ArrowRight" ? st : 0, ddy = e.key === "ArrowUp" ? -st : e.key === "ArrowDown" ? st : 0;
+      var st = (e.shiftKey ? 5 : 1) * (kitOn() && doc().snap ? GRID : 4), ddx = e.key === "ArrowLeft" ? -st : e.key === "ArrowRight" ? st : 0, ddy = e.key === "ArrowUp" ? -st : e.key === "ArrowDown" ? st : 0;
       begin(); nl.forEach(function (o) { replaceItem(shifted(o, ddx, ddy)); }); commit(); return;
     }
     if ((e.key === "Delete" || e.key === "Backspace") && sel) {
