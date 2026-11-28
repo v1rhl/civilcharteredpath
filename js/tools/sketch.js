@@ -2431,7 +2431,7 @@
     if (d.map.cont !== false) { if (d.map.csrc !== "file") fetchContours(); } refreshLayers();
   }
   function fetchContours(cb) {
-    var d = doc(), m = d.map, F = mapFrame(); if (!m || !d.dscale) return;
+    var d = doc(), m = d.map, F = mapFrame(); if (!m) return; if (!d.dscale) { mapStatus("Set a drawing scale in Sheet first (it's on NTS): contours need the map at a scale."); return; }
     var CM = mapClipM(), Wm = CM.x1 - CM.x0, Hm = CM.y1 - CM.y0, mcx = (CM.x0 + CM.x1) / 2, mcy = (CM.y0 + CM.y1) / 2;
     if (Math.max(Wm, Hm) > 6000) { mapStatus("The sheet covers more than 6 km at this scale, too much LiDAR to fetch. Pick a larger scale (smaller number) for contours."); return; }
     var cell = Math.max(1, Math.ceil(Math.max(Wm, Hm) / 300)), x0 = Math.floor(mcx - Wm / 2 - cell), y0 = Math.floor(mcy - Hm / 2 - cell), nx = Math.ceil((Wm + 2 * cell) / cell), ny = Math.ceil((Hm + 2 * cell) / cell);
