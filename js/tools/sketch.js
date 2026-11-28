@@ -75,7 +75,7 @@
     circle: "Press on the centre and drag out to the radius.",
     poly: "Click each corner, then click the first point again (or press Enter, or double-click) to close the shape.",
     section: "Drag along the line of the cut. Arrows show the viewing direction; Flip side turns them round and you can set the letter.",
-    north: "Click to place a north arrow. Rotate it and set its size below.",
+    north: "Click to place a north arrow. Drag its round handle to turn it to any angle, or type the angle below.",
     brk: "Drag where the break line should run; the zigzag goes in the middle.",
     cloud: "Drag a box round the change to draw a revision cloud.",
     slope: "Drag along the top of the slope. The ticks point down the slope; Flip side if they're the wrong way.",
@@ -777,6 +777,7 @@
           if (SEG[it.type]) { o += hnd("p1", it.x1, it.y1) + hnd("p2", it.x2, it.y2); if (it.type === "dim") { var n = norm(it), off = it.o == null ? 30 : it.o; o += hnd("off", (it.x1 + it.x2) / 2 + n.nx * off, (it.y1 + it.y2) / 2 + n.ny * off, "sq"); } }
           if ((it.type === "hatch" && !it.seed) || it.type === "poly") it.pts.forEach(function (q, i) { o += hnd("v" + i, q[0], q[1]); });
           if (it.type === "leader") { var A = anchorOf(it); o += hnd("anc", A.x, A.y); }
+          if (it.type === "north") { var nr = (it.rot || 0) * Math.PI / 180, nL = 58 * (it.s || 1), hx = it.x + Math.sin(nr) * nL, hy = it.y - Math.cos(nr) * nL; o += '<line x1="' + it.x + '" y1="' + it.y + '" x2="' + r1(hx) + '" y2="' + r1(hy) + '" class="sk-sel" stroke-width="1"/>' + hnd("nrot", hx, hy); }
           if (it.type === "image" || it.type === "inset") o += hnd("isz", it.x + it.w, it.y + it.h, "sq");
           if (it.type === "inset") o += '<line x1="' + r1(it.x + it.w / 2) + '" y1="' + r1(it.y + it.h / 2) + '" x2="' + it.sx + '" y2="' + it.sy + '" class="sk-sel" stroke-width="1"/>' + hnd("isrc", it.sx, it.sy);
         }
@@ -965,7 +966,8 @@
     if (it.type === "section" || it.type === "slope") h += '<button type="button" class="sk-btn" data-act="flip">Flip side</button>';
     if (it.type === "leader" || it.type === "arrow") h += '<label class="sk-check">Arrowhead <select id="skp-ah">' + (it.type === "leader" ? [[0, "None"], [-1, "Dot"], [7, "Small"], [11, "Medium"], [16, "Large"]] : [[8, "Small"], [11, "Medium"], [16, "Large"], [22, "Extra large"]]).map(function (x) { var cur = it.ah == null ? (it.type === "leader" ? 11 : 11) : it.ah; return '<option value="' + x[0] + '"' + (cur === x[0] ? " selected" : "") + ">" + x[1] + "</option>"; }).join("") + "</select></label>";
     if (it.type === "pload" || it.type === "udl" || it.type === "moment" || it.type === "dim") h += '<input type="text" id="skp-label" spellcheck="true" lang="en-GB" value="' + esc(it.label || "") + '" placeholder="' + (it.type === "dim" ? esc(dimAuto(it)) : "Value") + '" aria-label="Label" style="width:9em">';
-    if (ROT_TYPES[it.type]) h += '<button type="button" class="sk-btn" data-act="rot">Rotate</button>';
+    if (it.type === "north") h += '<label class="sk-check">Angle <input type="number" id="skp-nrot" min="0" max="359" step="1" style="width:4.5em" value="' + (it.rot || 0) + '">°</label>';
+    if (ROT_TYPES[it.type]) h += '<button type="button" class="sk-btn" data-act="rot">Rotate' + (it.type === "north" ? " 45°" : "") + "</button>";
     if (it.type === "udl" || it.type === "dim") h += '<button type="button" class="sk-btn" data-act="flip">Flip side</button>';
     if (it.type === "moment") h += '<button type="button" class="sk-btn" data-act="dir">Reverse</button>';
     if (it.type === "hatch") h += '<select id="skp-pat" aria-label="Hatch pattern">' + PATS.map(function (x) { return '<option value="' + x[0] + '"' + (it.pat === x[0] ? " selected" : "") + ">" + x[1] + "</option>"; }).join("") + '</select><label class="sk-check"><input type="checkbox" id="skp-outline"' + (it.outline ? " checked" : "") + "> Outline</label>" +
@@ -1015,6 +1017,7 @@
     liveEdit("skp-mask", function (it, el) { it.mask = el.checked; });
     liveEdit("skp-unit", function (it, el) { it.unit = el.value || undefined; });
     liveEdit("skp-border", function (it, el) { it.border = el.checked; });
+    liveEdit("skp-nrot", function (it, el) { var v = parseFloat(el.value); if (isFinite(v)) it.rot = ((Math.round(v) % 360) + 360) % 360; });
     liveEdit("skp-rfill", function (it, el) { it.fill = el.checked; });
     liveEdit("skp-ilabel", function (it, el) { it.label = el.value; });
     liveEdit("skp-ik", function (it, el) { it.k = +el.value; });
@@ -1271,6 +1274,7 @@
         else if (hh === "off") { var nn = norm(it); it.o = r1((p.x - it.x1) * nn.nx + (p.y - it.y1) * nn.ny); }
         else if (hh === "anc") { var tg = itemAt(e, it.id); it.att = makeAttach(tg, p); var ap = tg ? p : snapPt(p); it.ax = r1(ap.x); it.ay = r1(ap.y); if (!tg) it.att = null; }
         else if (hh === "isz" && it.type === "inset") { it.w = r1(Math.max(40, p.x - it.x)); it.h = r1(Math.max(40, p.y - it.y)); }
+        else if (hh === "nrot") { var na = Math.atan2(p.x - it.x, -(p.y - it.y)) * 180 / Math.PI, nst = e.shiftKey ? 15 : 1; it.rot = ((Math.round(na / nst) * nst) % 360 + 360) % 360; status("North arrow at " + it.rot + "°" + (e.shiftKey ? "" : ". Hold Shift to step by 15°.")); }
         else if (hh === "isrc") { it.sx = r1(p.x); it.sy = r1(p.y); }
         else if (hh === "isz") { var ar0 = drag.orig.h / drag.orig.w, nw = Math.max(10, p.x - it.x); it.w = r1(nw); it.h = r1(e.shiftKey ? Math.max(10, p.y - it.y) : nw * ar0); }
         else if (hh[0] === "v") { var qv = snapPt(p); it.pts[+hh.slice(1)] = [qv.x, qv.y]; }
