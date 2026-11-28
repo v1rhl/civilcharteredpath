@@ -1564,6 +1564,10 @@ html:not(.sk-mob) .sk-tabs { margin-bottom: -5px; gap: 2px; }
 html:not(.sk-mob) .sk-tab button { padding: 2px 8px !important; font-size: 11px !important; line-height: 1.4; }
 html:not(.sk-mob) .sk-tab .sk-tabx { padding: 2px 6px 2px 0 !important; font-size: 12px !important; }
 html:not(.sk-mob) .sk-tabs .sk-tabadd { padding: 2px 8px !important; font-size: 11px !important; min-height: 0; }
+/* a window opened from a toolbar button is joined to it: the button takes the window's colour and the seam between them disappears */
+html:not(.sk-mob) .sk-sec.sk-attached > summary { position: relative; z-index: 2147483000; background: var(--paper) !important; color: var(--accent) !important; border: 1px solid var(--line); border-right: 0; border-radius: 6px 0 0 6px !important; box-shadow: -2px 2px 8px rgba(0,0,0,.08); }
+html:not(.sk-mob) .sk-sec.sk-attached > summary::after { content: ""; position: absolute; top: 0; bottom: 0; right: -3px; width: 4px; background: var(--paper); }
+html:not(.sk-mob) .sk-sec.sk-attached > .sk-sec-body { border-top-left-radius: 0 !important; }
 /* icon buttons in the map panel */
 .sk-app .sk-btn.sk-ibtn, html:not(.sk-mob) .sk-app :is(.sk-sec-in, .sk-dlg, .sk-toolpop, .sk-props) .sk-btn.sk-ibtn { width: 32px !important; max-width: 32px !important; height: 28px; min-height: 28px; padding: 0 !important; display: inline-flex; align-items: center; justify-content: center; flex: 0 0 auto; }
 .sk-app .sk-btn.sk-icbtn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
@@ -3151,9 +3155,9 @@ html:not(.sk-mob) .sk-tabs .sk-tabadd { padding: 2px 8px !important; font-size: 
 <script src="js/news-feed.js?v=20261122b"></script>
 <script src="js/news-archive.js?v=20261122b"></script>
 <script src="js/pages.js?v=20261122b"></script>
-<script src="js/tools/sketch-templates.js?v=20261129s"></script>
-<script src="js/tools/sketch.js?v=20261129s"></script>
-<script src="js/tools/drawing-check.js?v=20261129s"></script>
+<script src="js/tools/sketch-templates.js?v=20261129t"></script>
+<script src="js/tools/sketch.js?v=20261129t"></script>
+<script src="js/tools/drawing-check.js?v=20261129t"></script>
 <script src="js/tools/hydraulics.js?v=20261127a"></script>
 <script src="js/tools/pipeflow.js?v=20261127a"></script>
 <script src="js/tools/catchment.js?v=20261127a"></script>
@@ -3165,7 +3169,7 @@ html:not(.sk-mob) .sk-tabs .sk-tabadd { padding: 2px 8px !important; font-size: 
 <script src="js/tools/culvert.js?v=20261127a"></script>
 <script src="js/tools/site-diary.js?v=20261127a"></script>
 <script src="js/learn.js?v=20261127m"></script>
-<script src="js/site.js?v=20261129s"></script>
+<script src="js/site.js?v=20261129t"></script>
 <script src="js/art.js?v=20261127m"></script>
 </body>
 </html>

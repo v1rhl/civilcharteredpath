@@ -1167,7 +1167,7 @@
   function winSave(dd, patch) { var w = winState(dd.dataset.sec); for (var k in patch) w[k] = patch[k]; try { localStorage.setItem("cp-sketch-win2-" + dd.dataset.sec, JSON.stringify(w)); } catch (e) {} }
   /* the map panel's collapsible groups; open or shut is remembered */
   function mgO(key, title, dflt, extra) { var st = null; try { st = localStorage.getItem("cp-sketch-mg-" + key); } catch (e) {} var on = st == null ? dflt : st === "1"; return '<details class="sk-mgrp" data-mg="' + key + '"' + (on ? " open" : "") + '><summary>' + title + (extra ? " " + extra : "") + '</summary><div class="sk-mgrp-in">'; }
-  function unfly(d) { var b = d.querySelector(".sk-sec-body"), n = d.querySelector(".sk-sec-in"); d.classList.remove("sk-fly"); if (b) b.removeAttribute("style"); if (n) n.removeAttribute("style"); }
+  function unfly(d) { var b = d.querySelector(".sk-sec-body"), n = d.querySelector(".sk-sec-in"); d.classList.remove("sk-fly", "sk-attached"); if (b) b.removeAttribute("style"); if (n) n.removeAttribute("style"); }
   function openWin(dd) {
     Array.prototype.forEach.call(document.querySelectorAll(".sk-side > details.sk-sec[open]"), function (o) { if (o !== dd && !winState(o.dataset.sec).pin) closeWin(o); });
     dd.classList.add("sk-fly"); dd.open = true; placeWin(dd); /* laid out before the browser paints, so it never shows dropping down first */
@@ -1177,6 +1177,8 @@
     var b = dd.querySelector(".sk-sec-body"), n = dd.querySelector(".sk-sec-in"), h = dd.querySelector(".sk-win-h"), side = $("sk-side"), w = winState(dd.dataset.sec);
     var pin = h.querySelector('[data-win="pin"]'); pin.setAttribute("aria-pressed", !!w.pin);
     var r = side.getBoundingClientRect(), VW = window.innerWidth, VH = window.innerHeight, x = w.x, y = w.y, left = dd.dataset.sec !== "style";
+    var sm = dd.querySelector(":scope > summary"), sr = sm && sm.offsetParent ? sm.getBoundingClientRect() : null, att = w.x == null && !!sr && sr.width > 0 && !isMob(); /* opens joined to the button that opened it */
+    if (att) y = sr.top;
     if (y == null) { var tb = $("sk-tbar"), tr = tb && !tb.hidden && !/sk-tbar-(float|left|bottom)/.test(tb.className) ? tb.getBoundingClientRect() : null; var tlb = tb && !tb.hidden && tb.classList.contains("sk-tbar-left") ? tb.getBoundingClientRect() : null; y = tr ? tr.bottom + 8 : tlb ? Math.max(tlb.top, 8) : Math.max($("sk-stage").getBoundingClientRect().top, 8); } /* first time: under the toolbar */
     y = Math.max(8, Math.min(y, VH - 160));
     b.style.zIndex = ++winZ; b._placing = true;
@@ -1192,7 +1194,10 @@
     }
     var bw = b.offsetWidth, bh = b.offsetHeight;
     if (x == null) { var tbl = $("sk-tbar"), tl = tbl && !tbl.hidden && tbl.classList.contains("sk-tbar-left") ? tbl.getBoundingClientRect() : null; x = left ? (tl ? tl.left : r.right + 8) : VW - bw - 16; } /* left-hand windows open over the toolbar column, leaving the drawing clear */ /* Style opens at the right; the others at the left, beside the side bar */
+    if (att) x = sr.right - 1;
     x = Math.max(8, Math.min(x, VW - bw - 8)); y = Math.max(8, Math.min(y, VH - bh - 8));
+    if (att && (x !== sr.right - 1 || y > sr.top || y + bh < sr.bottom)) att = false; /* no room beside the button: float as before */
+    dd.classList.toggle("sk-attached", att);
     b.style.left = x + "px"; b.style.top = y + "px";
     b._size = [b.offsetWidth, b.offsetHeight]; setTimeout(function () { b._placing = false; }, 0);
   }
@@ -1209,8 +1214,8 @@
     head.addEventListener("pointerdown", function (e) {
       if (e.button !== 0 || e.target.closest("[data-win]") || !dd.classList.contains("sk-fly")) return; e.preventDefault();
       var r = body.getBoundingClientRect(), ox = e.clientX - r.left, oy = e.clientY - r.top; head.setPointerCapture(e.pointerId); head.classList.add("sk-drag");
-      var mv = function (ev) { var x = Math.max(4, Math.min(window.innerWidth - r.width - 4, ev.clientX - ox)), y = Math.max(4, Math.min(window.innerHeight - r.height - 4, ev.clientY - oy)); body.style.left = x + "px"; body.style.top = y + "px"; };
-      var up = function () { head.removeEventListener("pointermove", mv); head.removeEventListener("pointerup", up); head.removeEventListener("pointercancel", up); head.classList.remove("sk-drag"); winSave(dd, { x: parseFloat(body.style.left), y: parseFloat(body.style.top) }); };
+      var mv = function (ev) { var x = Math.max(4, Math.min(window.innerWidth - r.width - 4, ev.clientX - ox)), y = Math.max(4, Math.min(window.innerHeight - r.height - 4, ev.clientY - oy)); body.style.left = x + "px"; body.style.top = y + "px"; if (Math.abs(x - r.left) + Math.abs(y - r.top) > 3) { moved = true; dd.classList.remove("sk-attached"); } };
+      var moved = false, up = function () { head.removeEventListener("pointermove", mv); head.removeEventListener("pointerup", up); head.removeEventListener("pointercancel", up); head.classList.remove("sk-drag"); if (moved) winSave(dd, { x: parseFloat(body.style.left), y: parseFloat(body.style.top) }); };
       head.addEventListener("pointermove", mv); head.addEventListener("pointerup", up); head.addEventListener("pointercancel", up);
     });
   }
