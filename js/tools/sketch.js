@@ -332,7 +332,7 @@
     var t = toM(L).toFixed(2) + " m", w0 = tw(t, 10) + 8;
     return '<g transform="rotate(' + r1(ang) + " " + r1(q[0]) + " " + r1(q[1]) + ')"><rect x="' + r1(q[0] - w0 / 2) + '" y="' + r1(q[1] - 16) + '" width="' + r1(w0) + '" height="13" fill="#fff"/>' + txt(q[0], q[1] - 6, t, c, 10, "middle") + "</g>";
   }
-  /* Angle dimension: pts are the vertex and a point on each arm; the arc spans the smaller angle between them */
+  /* Angle dimension: pts are the vertex and a point on each arm (drawn as: end of first line, corner, end of second line); the arc spans the smaller angle between them */
   function adimStr(it, c) {
     var v = it.pts[0], a = it.pts[1], b = it.pts[2], ta = Math.atan2(a[1] - v[1], a[0] - v[0]), tb = Math.atan2(b[1] - v[1], b[0] - v[0]), d = tb - ta;
     while (d > Math.PI) d -= 2 * Math.PI; while (d <= -Math.PI) d += 2 * Math.PI;
@@ -1110,7 +1110,7 @@
       if (e.target.closest('[data-tp="x"]')) return close();
       var lm = e.target.closest("[data-lm]"), dm = e.target.closest("[data-dm]");
       if (lm) { style.lmode = lm.dataset.lm; pop.querySelectorAll("[data-lm]").forEach(function (b) { b.setAttribute("aria-pressed", b === lm); }); status(style.lmode === "poly" ? "Polyline: click each point, then press Enter or double-click to finish." : HINTS.line); }
-      if (dm) { style.dmode = dm.dataset.dm; pop.querySelectorAll("[data-dm]").forEach(function (b) { b.setAttribute("aria-pressed", b === dm); }); status(style.dmode === "ang" ? "Angle: click the corner, then a point on each of the two lines." : HINTS.dim); }
+      if (dm) { style.dmode = dm.dataset.dm; pop.querySelectorAll("[data-dm]").forEach(function (b) { b.setAttribute("aria-pressed", b === dm); }); status(style.dmode === "ang" ? "Angle: click the end of the first line, then the corner, then the end of the second line." : HINTS.dim); }
     });
     pop.addEventListener("change", function (e) { if (e.target.matches("[data-ml]")) style.ml = e.target.checked; });
     document.addEventListener("pointerdown", function (e) { if (!pop.hidden && !pop.contains(e.target) && !(at && at.contains(e.target))) close(); }, true);
@@ -1394,7 +1394,8 @@
     var o = "";
     if (pend && pend.pts.length) {
       var pts = pend.pts.concat(pend.cur ? [[pend.cur.x, pend.cur.y]] : []);
-      o += '<path d="' + (pend.curve ? cmr(pts, false) : "M" + pts.map(function (p) { return p[0] + " " + p[1]; }).join("L")) + '" fill="' + (pend.curve ? "none" : style.c) + '" fill-opacity="0.08" stroke="' + style.c + '" stroke-width="' + r1(1.5 * Math.max(k, 1)) + '" stroke-dasharray="6 4"/>';
+      o += '<path d="' + (pend.curve ? cmr(pts, false) : "M" + pts.map(function (p) { return p[0] + " " + p[1]; }).join("L")) + '" fill="' + (pend.curve || pend.adim ? "none" : style.c) + '" fill-opacity="0.08" stroke="' + style.c + '" stroke-width="' + r1(1.5 * Math.max(k, 1)) + '" stroke-dasharray="6 4"/>';
+      if (pend.adim && pts.length === 3) o += '<g opacity="0.7">' + adimStr({ pts: [pts[1], pts[0], pts[2]], w: 1.2 }, style.c) + "</g>"; /* live angle while placing the third point */
       o += hnd("first", pend.pts[0][0], pend.pts[0][1]);
     }
     if (drag && drag.temp) o += draw(drag.temp);
@@ -1855,10 +1856,10 @@
       }
       drag = { type: "hatch0", start: sp, raw: { x: p.x, y: p.y } }; return;
     }
-    if (t === "dim" && style.dmode === "ang") { /* three clicks: the corner, then a point on each arm */
+    if (t === "dim" && style.dmode === "ang") { /* three clicks: end of the first line, the corner, end of the second line */
       var pq = snapPt(p);
-      if (pend && pend.adim) { pend.pts.push([pq.x, pq.y]); if (pend.pts.length === 3) { var ap = pend.pts; pend = null; renderLive(); selectAfterCreate(addItem(base("adim", { pts: ap, w: Math.min(style.w, 1.5) }))); return; } status("Now click a point on the second line."); renderLive(); return; }
-      pend = { pts: [[pq.x, pq.y]], cur: pq, adim: true }; status("Angle: now click a point on the first line."); renderLive(); return;
+      if (pend && pend.adim) { pend.pts.push([pq.x, pq.y]); if (pend.pts.length === 3) { var ap = pend.pts; pend = null; renderLive(); selectAfterCreate(addItem(base("adim", { pts: [ap[1], ap[0], ap[2]], w: Math.min(style.w, 1.5) }))); return; } status(pend.pts.length === 2 ? "Now click the end of the second line." : ""); renderLive(); return; }
+      pend = { pts: [[pq.x, pq.y]], cur: pq, adim: true }; status("Angle: now click the corner, where the two lines meet."); renderLive(); return;
     }
     if (t === "poly" || t === "curve" || (t === "line" && style.lmode === "poly")) {
       var pp = snapPt(p);
