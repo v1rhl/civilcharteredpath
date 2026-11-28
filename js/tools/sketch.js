@@ -313,22 +313,32 @@
   }
 
   /* Where a leader's arrow points: follows the thing it's attached to. */
-  function anchorOf(it) {
-    var a = it.att, t = a && byId(a.id);
+  function anchorOf(it) { return attPt(it.att, it.ax, it.ay); }
+  function attPt(a, fx, fy) {
+    var t = a && byId(a.id);
     if (t) {
-      if (SEG[t.type]) return { x: t.x1 + (t.x2 - t.x1) * a.t, y: t.y1 + (t.y2 - t.y1) * a.t };
+      if (SEG[t.type]) { if (a.s == null) return { x: t.x1 + (t.x2 - t.x1) * a.t, y: t.y1 + (t.y2 - t.y1) * a.t }; var nq = norm(t); return { x: t.x1 + (nq.dx * a.t + nq.nx * a.s) * nq.L, y: t.y1 + (nq.dy * a.t + nq.ny * a.s) * nq.L }; }
       if (PTS[t.type] && t.pts.length) return { x: t.pts[0][0] + a.dx, y: t.pts[0][1] + a.dy };
       if ("x" in t) return { x: t.x + a.dx, y: t.y + a.dy };
     }
-    return { x: it.ax, y: it.ay };
+    return { x: fx, y: fy };
   }
-  function makeAttach(t, p) {
+  function makeAttach(t, p, exact) {
     if (!t || t.type === "leader") return null;
+    if (exact && SEG[t.type]) { var nE = norm(t); if (nE.L > 0) return { id: t.id, t: ((p.x - t.x1) * nE.dx + (p.y - t.y1) * nE.dy) / nE.L, s: ((p.x - t.x1) * nE.nx + (p.y - t.y1) * nE.ny) / nE.L }; } /* keeps the exact point, moving and scaling with the item */
     if (SEG[t.type]) { var n = norm(t), tt = ((p.x - t.x1) * n.dx + (p.y - t.y1) * n.dy) / n.L; return { id: t.id, t: Math.max(0, Math.min(1, tt)) }; }
     if (PTS[t.type]) return { id: t.id, dx: p.x - t.pts[0][0], dy: p.y - t.pts[0][1] };
     return { id: t.id, dx: p.x - t.x, dy: p.y - t.y };
   }
-  function syncLeaders() { doc().items.forEach(function (it) { if (it.type === "leader") { var a = anchorOf(it); it.ax = r1(a.x); it.ay = r1(a.y); if (it.att && !byId(it.att.id)) it.att = null; } }); }
+  function syncLeaders() { doc().items.forEach(function (it) {
+    if (it.type === "leader") { var a = anchorOf(it); it.ax = r1(a.x); it.ay = r1(a.y); if (it.att && !byId(it.att.id)) it.att = null; }
+    if (it.type === "arrow") ["1", "2"].forEach(function (k) { var at = it["a" + k]; if (!at) return; if (!byId(at.id)) { it["a" + k] = null; return; } var q = attPt(at, it["x" + k], it["y" + k]); it["x" + k] = r1(q.x); it["y" + k] = r1(q.y); }); /* anchored arrow ends follow their feature */
+  }); }
+  /* The item drawn at a sheet point (not the one given), for anchoring an arrow end to it. */
+  function itemAtPt(p, skip) {
+    var m = svg.getScreenCTM(); if (!m) return null;
+    return itemAt({ clientX: m.a * p.x + m.c * p.y + m.e, clientY: m.b * p.x + m.d * p.y + m.f }, skip);
+  }
   function leaderBox(it) {
     var lines = String(it.text || "").split("\n"), sz = it.fs || 14, w = 0;
     lines.forEach(function (l) { w = Math.max(w, tw(l, sz)); });
@@ -636,6 +646,7 @@
       var n = shifted(o, off, off); n.id = map[o.id]; n.lock = false;
       if (n.g) n.g = gmap[n.g];
       if (n.type === "leader" && n.att) { if (map[n.att.id]) n.att.id = map[n.att.id]; else { n.att = null; n.ax = o.ax + off; n.ay = o.ay + off; } }
+      if (n.type === "arrow") ["a1", "a2"].forEach(function (k) { if (n[k]) { if (map[n[k].id]) n[k].id = map[n[k].id]; else n[k] = null; } });
       doc().items.push(n); out.push(n);
     });
     commit(); setTool("select"); setSel(out);
@@ -654,6 +665,7 @@
   }
   function iconSvg(name) { return '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="stroke:currentColor">' + IC[name] + "</svg>"; }
   var LTI = { /* layer toggle icons */
+    mag: '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3v8a6 6 0 0 0 12 0V3"/><path d="M6 7h4M14 7h4"/></svg>',
     eye: '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-6.5 10-6.5S22 12 22 12s-3.5 6.5-10 6.5S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>',
     lock: '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>',
     img: '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="M21 17l-5-5-9 8"/></svg>'
@@ -696,7 +708,7 @@
       '<label class="sk-check" title="Flags words in your text, labels and title block that aren\'t in the British English dictionary. The dictionary is part of this site, so nothing is sent anywhere."><input type="checkbox" id="sk-spell"> Check spelling</label>' +
       '<label class="sk-check">Scale <select id="sk-dscale"><option value="0">Not to scale</option>' + SCALES.map(function (n) { return '<option value="' + n + '">' + nS(n) + "</option>"; }).join("") + '</select></label><span class="small" id="sk-gridinfo"></span><label class="sk-check" id="sk-sbar-l"><input type="checkbox" id="sk-sbar"> Scale bar</label>' +
       '<label class="sk-check" id="sk-gsq">Grid square = <input type="number" id="sk-scale" min="0.01" step="0.05" style="width:5.5em"> m</label>' +
-      '<span class="sk-snapwrap"><label class="sk-check"><input type="checkbox" id="sk-snap"> Snap</label><details class="sk-snapmenu"><summary>Snaps</summary><div>' +
+      '<span class="sk-snapwrap" id="sk-snapwrap"><label class="sk-check sk-ltog" title="Snap to the grid and to points on the drawing"><input type="checkbox" id="sk-snap">' + LTI.mag + '<span>Snap</span></label><details class="sk-snapmenu"><summary title="Choose what to snap to">Snaps ▾</summary><div>' +
         SNAPS.map(function (x) { return '<label class="sk-check"><input type="checkbox" data-snap="' + x[0] + '"> ' + x[1] + "</label>"; }).join("") + '<p class="small">Hold Alt to draw without snapping.</p></div></details></span>' +
       '<span class="sk-layers"><span class="sk-lab">Layers</span>' +
         '<span class="sk-laytogs" id="sk-laytogs">' +
@@ -755,9 +767,14 @@
     side.appendChild(modes); side.appendChild(toolrow);
     var all = toolrow.querySelector("#sk-tools2"), tpl = toolrow.querySelector("#sk-tpl"), allSec = sec("alltools", "All tools", false, [mk("p", "small sk-alltip", "Click ☆ on a tool to star it onto the toolbar."), all]); allSec.classList.add("sk-alltools"); side.appendChild(allSec); side.appendChild(tpl);
     side.appendChild(sec("style", "Style", true, [styleEl]));
-    side.appendChild(sec("sheet", "Sheet", false, [sheet]));
-    side.appendChild(sec("layers", "Layers and map", false, [layers, mp]));
-    var more = mk("button", "sk-btn sk-more", "More"); more.type = "button"; more.id = "sk-more"; more.setAttribute("aria-expanded", "false"); more.title = "All tools, style, sheet and layers"; toolrow.appendChild(more); /* phones: opens the side bar as a drawer */
+    side.appendChild(sec("layers", "Layers and map", false, [layers, mp])); /* takes the layer toggles out of the sheet options first */
+    /* Page settings (paper, orientation, frame, title block, revisions, legend) and View settings (watermark,
+       grid, checks, scale, snaps): everything from the watermark on goes in View. */
+    var viewEl = mk("div", "sk-style sk-sheetopts sk-viewopts"), kids = Array.prototype.slice.call(sheet.children), wm0 = kids.indexOf($("sk-wm").closest("label"));
+    kids.slice(wm0).forEach(function (c) { viewEl.appendChild(c); });
+    side.insertBefore(sec("view", "View settings", false, [viewEl]), side.querySelector('[data-sec="layers"]'));
+    side.insertBefore(sec("sheet", "Page settings", false, [sheet]), side.querySelector('[data-sec="layers"]'));
+    var more = mk("button", "sk-btn sk-more", "More"); more.type = "button"; more.id = "sk-more"; more.setAttribute("aria-expanded", "false"); more.title = "All tools, style, view, page and layers"; toolrow.appendChild(more); /* phones: opens the side bar as a drawer */
     var main = mk("div", "sk-main"); main.id = "sk-main";
     top.insertAdjacentHTML("beforeend", '<button type="button" class="sk-btn" id="sk-fit" title="See the whole sheet (0)" hidden>Fit sheet</button><button type="button" class="sk-btn" id="sk-full" title="Full screen (F)" aria-pressed="false">Full screen</button>');
     top.querySelector(".sk-actions").appendChild($("sk-fit")); top.querySelector(".sk-actions").appendChild($("sk-full"));
@@ -880,6 +897,8 @@
     if (act && side && r1w) { if (isMob()) { if (act.parentNode !== r1w) r1w.appendChild(act); act.classList.remove("sk-sideacts"); } else { if (act.parentNode !== side) side.appendChild(act); act.classList.add("sk-sideacts"); } }
     var lt = $("sk-laytogs"), ls = app.querySelector(".sk-layers"), tl = $("sk-tblay");
     if (lt && ls && tl) { if (isMob()) { if (lt.parentNode !== ls) ls.insertBefore(lt, ls.children[1] || null); } else if (lt.parentNode !== tl) tl.appendChild(lt); } /* drawing and underlay show / lock: toolbar icons on wide screens */
+    var sw = $("sk-snapwrap"), gsq = $("sk-gsq"); /* snapping sits with them */
+    if (sw && tl && gsq) { if (isMob()) { if (sw.previousElementSibling !== gsq) gsq.parentNode.insertBefore(sw, gsq.nextSibling); } else if (sw.parentNode !== tl) tl.appendChild(sw); }
     var lay = app.querySelector(".sk-layout"), main = $("sk-main");
     if (isMob()) { if (t.parentNode !== row) row.insertBefore(t, row.firstChild); bar.hidden = true; if (lay) lay.classList.remove("sk-tl"); if (bar.parentNode !== main) main.insertBefore(bar, $("sk-stage")); return; }
     if (t.parentNode !== slot) slot.appendChild(t);
@@ -944,7 +963,7 @@
     var b = dd.querySelector(".sk-sec-body"), n = dd.querySelector(".sk-sec-in"), h = dd.querySelector(".sk-win-h"), side = $("sk-side"), w = winState(dd.dataset.sec);
     var pin = h.querySelector('[data-win="pin"]'); pin.setAttribute("aria-pressed", !!w.pin);
     var r = side.getBoundingClientRect(), VW = window.innerWidth, VH = window.innerHeight, x = w.x, y = w.y, left = dd.dataset.sec !== "style";
-    if (y == null) { var tb = $("sk-tbar"), tr = tb && !tb.hidden && !/sk-tbar-(float|left|bottom)/.test(tb.className) ? tb.getBoundingClientRect() : null; y = tr ? tr.bottom + 8 : Math.max($("sk-stage").getBoundingClientRect().top, 8); } /* first time: under the toolbar */
+    if (y == null) { var tb = $("sk-tbar"), tr = tb && !tb.hidden && !/sk-tbar-(float|left|bottom)/.test(tb.className) ? tb.getBoundingClientRect() : null; var tlb = tb && !tb.hidden && tb.classList.contains("sk-tbar-left") ? tb.getBoundingClientRect() : null; y = tr ? tr.bottom + 8 : tlb ? Math.max(tlb.top, 8) : Math.max($("sk-stage").getBoundingClientRect().top, 8); } /* first time: under the toolbar */
     y = Math.max(8, Math.min(y, VH - 160));
     b.style.zIndex = ++winZ; b._placing = true;
     var hh0 = h.offsetHeight || 34;
@@ -958,7 +977,7 @@
       n.style.height = Math.min(H, Math.max(60, my - n0.top + 16)) + "px"; b.style.width = cw + "px";
     }
     var bw = b.offsetWidth, bh = b.offsetHeight;
-    if (x == null) { var tbl = $("sk-tbar"); x = left ? (tbl && tbl.classList.contains("sk-tbar-left") ? tbl.getBoundingClientRect().right : r.right) + 8 : VW - bw - 16; } /* Style opens at the right; the others at the left, beside the side bar */
+    if (x == null) { var tbl = $("sk-tbar"), tl = tbl && !tbl.hidden && tbl.classList.contains("sk-tbar-left") ? tbl.getBoundingClientRect() : null; x = left ? (tl ? tl.left : r.right + 8) : VW - bw - 16; } /* left-hand windows open over the toolbar column, leaving the drawing clear */ /* Style opens at the right; the others at the left, beside the side bar */
     x = Math.max(8, Math.min(x, VW - bw - 8)); y = Math.max(8, Math.min(y, VH - bh - 8));
     b.style.left = x + "px"; b.style.top = y + "px";
     b._size = [b.offsetWidth, b.offsetHeight]; setTimeout(function () { b._placing = false; }, 0);
@@ -1070,7 +1089,7 @@
   /* Spelling: British English, using the SCOWL en_GB Hunspell dictionary with Typo.js (js/vendor/spell).
      Both load from this site the first time they're needed; no text leaves the browser. */
   var SPELL = { st: 0, t: null, ok: {} };
-  var SP_OK = ("kn knm kpa mpa udl udls aod osgb bng lidar dtm dsm geotextile geogrid geocomposite benching precast insitu cl il fl gl ffl sfl tbc tba nts rev dia suds hdpe upvc pvc mdpe rc rcc gga dpc dpm csa dwg dxf pdf png svg jpeg sssi rofrs ea bgs os osm cbr spt cpt ssl mh ic ch chainage kerb kerbs kerbing gully gullies soakaway soakaways culvert culverts headwall headwalls attenuation outfall outfalls invert inverts formwork rebar blinding sulfate sulphate thk approx typ nom ctrs crs exg exist reinf conc bldg ugl rwp svp fw sw ic/mh").split(" ");
+  var SP_OK = ("kn knm kpa mpa udl udls aod osgb bng lidar dtm dsm geotextile geogrid geocomposite benching precast insitu cl il fl gl ffl sfl tbc tba nts rev dia suds hdpe upvc pvc mdpe rc rcc gga dpc dpm csa dwg dxf pdf png svg jpeg sssi rofrs ea bgs os osm cbr spt cpt ssl mh ic ch chainage kerb kerbs kerbing gully gullies soakaway soakaways culvert culverts headwall headwalls attenuation outfall outfalls invert inverts formwork rebar blinding sulfate sulphate thk approx typ nom ctrs crs exg exist reinf conc bldg ugl rwp svp fw sw ic/mh freeboard bankfull bankside thalweg riprap gabion gabions swale swales culverted culverting desilt desilting desludging penstock penstocks hydrobrake floodwall floodwalls headloss soffit soffits geocell geocells geomembrane geomembranes geogrids geotextiles geocomposites catchpit catchpits downpipe downpipes hardstanding kerbline kerblines rodding bioretention raingarden raingardens greywater hydrograph hydrographs qbar feh refh spr bfihost urbext saar ogee wingwall wingwalls cill cills underdrain underdrains backfill backfilled backfilling subbase subgrade estuarine overtopping overtopped sheetpile sheetpiles sheetpiling dewatering wellpoint wellpoints flapvalve trashscreen trashscreens trashrack trashracks hydrostatic drawdown rewetting flowmeter piezometer piezometers aod maod").split(" ");
   function spellMine() { try { return JSON.parse(localStorage.getItem("cp-sketch-dict")) || []; } catch (e) { return []; } }
   function spellLoad() {
     if (SPELL.st) return; SPELL.st = 1; var base = "js/vendor/spell/";
@@ -1373,6 +1392,7 @@
     if (it.type === "slope" || it.type === "north" || it.type === "wl") h += '<label class="sk-check">Size <select id="skp-s">' + [0.5, 0.75, 1, 1.5, 2, 3].map(function (v) { return '<option value="' + v + '"' + ((it.s || 1) === v ? " selected" : "") + ">×" + v + "</option>"; }).join("") + "</select></label>";
     if (it.type === "section" || it.type === "slope") h += '<button type="button" class="sk-btn" data-act="flip">Flip side</button>';
     if (it.type === "leader" || it.type === "arrow") h += '<label class="sk-check">Arrowhead <select id="skp-ah">' + (it.type === "leader" ? [[0, "None"], [-1, "Dot"], [7, "Small"], [11, "Medium"], [16, "Large"]] : [[8, "Small"], [11, "Medium"], [16, "Large"], [22, "Extra large"]]).map(function (x) { var cur = it.ah == null ? (it.type === "leader" ? 11 : 11) : it.ah; return '<option value="' + x[0] + '"' + (cur === x[0] ? " selected" : "") + ">" + x[1] + "</option>"; }).join("") + "</select></label>";
+    if (it.type === "arrow") h += '<label class="sk-check" title="Lock the tail end onto the feature it sits on, so it follows when that moves"><input type="checkbox" id="skp-a1"' + (it.a1 ? " checked" : "") + '> Anchor tail</label><label class="sk-check" title="Lock the arrowhead end onto the feature it points at, so it follows when that moves"><input type="checkbox" id="skp-a2"' + (it.a2 ? " checked" : "") + "> Anchor head</label>";
     if (it.type === "pload" || it.type === "udl" || it.type === "moment" || it.type === "dim") h += '<input type="text" id="skp-label" spellcheck="true" lang="en-GB" value="' + esc(it.label || "") + '" placeholder="' + (it.type === "dim" ? esc(dimAuto(it)) : "Value") + '" aria-label="Label" style="width:9em">';
     if (it.type === "north") h += '<label class="sk-check">Angle <input type="number" id="skp-nrot" min="0" max="360" step="any" style="width:4.5em" value="' + (it.rot || 0) + '">°</label>' + (doc().map ? '<label class="sk-check" title="Turn with the map when it is rotated"><input type="checkbox" id="skp-nfol"' + (it.rotSet ? "" : " checked") + "> Follow the map</label>" : "");
     if (ROT_TYPES[it.type]) h += '<button type="button" class="sk-btn" data-act="rot">Rotate' + (it.type === "north" ? " 45°" : "") + "</button>";
@@ -1447,6 +1467,12 @@
     liveEdit("skp-rh", function (it, el) { var v = parseFloat(el.value); if (!(v > 0)) return; it.y2 = r1(it.y1 + (it.y2 >= it.y1 ? 1 : -1) * fromM(v)); });
     liveEdit("skp-rad", function (it, el) { var v = parseFloat(el.value); if (!(v > 0)) return; var n = norm(it), L = fromM(v); it.x2 = r1(it.x1 + n.dx * L); it.y2 = r1(it.y1 + n.dy * L); });
     liveEdit("skp-ah", function (it, el) { it.ah = +el.value; });
+    ["1", "2"].forEach(function (k) { var cb = $("skp-a" + k); if (!cb) return; cb.addEventListener("change", function () {
+      var it = sel && byId(sel.id); if (!it) return; var end = k === "1" ? "tail" : "head", pt = { x: it["x" + k], y: it["y" + k] };
+      if (cb.checked) { var tg = itemAtPt(pt, it.id), at = makeAttach(tg, pt, true); if (!at) { cb.checked = false; status("There's nothing under the arrow's " + end + " to anchor to. Drag that end onto a line, shape or symbol first."); return; } begin(); it["a" + k] = at; commit(); status("Arrow " + end + " anchored: it follows that feature when you move it."); }
+      else { begin(); it["a" + k] = null; commit(); status("Arrow " + end + " no longer anchored."); }
+    }); });
+
     liveEdit("skp-hsc", function (it, el) { it.ps = +el.value; });
     liveEdit("skp-hbg", function (it, el) { if (el.value) { it.bg = el.value; if (it.bo == null) it.bo = 1; } else { delete it.bg; delete it.bo; } });
     liveEdit("skp-hbo", function (it, el) { it.bo = +el.value; if (!it.bg) it.bg = it.c || "#15233a"; });
@@ -1709,6 +1735,7 @@
         var n = shifted(drag.orig, snapDelta(p.x - drag.start.x), snapDelta(p.y - drag.start.y)); replaceItem(n); renderContent(); return;
       case "h":
         it = clone(drag.orig); var hh = drag.h;
+        if ((hh === "p1" || hh === "p2") && it.type === "arrow" && it["a" + hh[1]]) { var tga = itemAt(e, it.id); it["a" + hh[1]] = tga ? makeAttach(tga, p, true) : null; } /* an anchored end re-anchors where you drop it, or lets go off any feature */
         if (hh === "p1" || hh === "p2") { var q = snapPt(p, { skip: it.id }); var other = hh === "p1" ? { x: it.x2, y: it.y2 } : { x: it.x1, y: it.y1 }; if (e.shiftKey) q = constrain(other, q); it[hh === "p1" ? "x1" : "x2"] = q.x; it[hh === "p1" ? "y1" : "y2"] = q.y; }
         else if (hh === "off") { var nn = norm(it); it.o = r1((p.x - it.x1) * nn.nx + (p.y - it.y1) * nn.ny); }
         else if (hh === "anc") { var tg = itemAt(e, it.id); it.att = makeAttach(tg, p); var ap = tg ? p : snapPt(p); it.ax = r1(ap.x); it.ay = r1(ap.y); if (!tg) it.att = null; }
@@ -2431,7 +2458,7 @@
     if (d.map.cont !== false) { if (d.map.csrc !== "file") fetchContours(); } refreshLayers();
   }
   function fetchContours(cb) {
-    var d = doc(), m = d.map, F = mapFrame(); if (!m || !d.dscale) return;
+    var d = doc(), m = d.map, F = mapFrame(); if (!m) return; if (!d.dscale) { mapStatus("Set a drawing scale in Sheet first (it's on NTS): contours need the map at a scale."); return; }
     var CM = mapClipM(), Wm = CM.x1 - CM.x0, Hm = CM.y1 - CM.y0, mcx = (CM.x0 + CM.x1) / 2, mcy = (CM.y0 + CM.y1) / 2;
     if (Math.max(Wm, Hm) > 6000) { mapStatus("The sheet covers more than 6 km at this scale, too much LiDAR to fetch. Pick a larger scale (smaller number) for contours."); return; }
     var cell = Math.max(1, Math.ceil(Math.max(Wm, Hm) / 300)), x0 = Math.floor(mcx - Wm / 2 - cell), y0 = Math.floor(mcy - Hm / 2 - cell), nx = Math.ceil((Wm + 2 * cell) / cell), ny = Math.ceil((Hm + 2 * cell) / cell);
@@ -3149,6 +3176,7 @@
   svg.addEventListener("auxclick", function (e) { if (e.button === 1) e.preventDefault(); });
   svg.addEventListener("dblclick", function (e) { if (e.button === 1) fitView(); });
   document.addEventListener("keyup", function (e) { if (e.key === " " && spaceDown) { spaceDown = false; stage.classList.remove("sk-panning"); } });
+  window.addEventListener("blur", function () { if (spaceDown) { spaceDown = false; stage.classList.remove("sk-panning"); } }); /* space let go in another window: don't leave the grab hand stuck on */
   $("sk-fit").addEventListener("click", fitView);
   document.addEventListener("fullscreenchange", afterFull);
   function toTop() { var top = document.querySelector(".topbar"), th = top ? top.offsetHeight : 0; window.scrollTo(0, Math.max(0, app.getBoundingClientRect().top + window.scrollY - th - 8)); }
