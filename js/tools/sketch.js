@@ -8,7 +8,9 @@
   var NS = "http://www.w3.org/2000/svg", GRID = 20, FONT = "Arial, Helvetica, sans-serif", KEY = "cp-sketch";
   /* A4 at 4 units per mm, so a grid square of 20 units is 5 mm on the printed sheet. */
   /* Paper at 4 units per mm, landscape [width, height]; portrait swaps them. */
-  var PAPER = { A4: [1188, 840], A3: [1680, 1188] }, PT = { A4: [841.89, 595.28], A3: [1190.55, 841.89] };
+  /* ISO A sizes, landscape. Sheet units are 0.25 mm on paper; PT is the PDF page size in points. */
+  var PAPER = { A4: [1188, 840], A3: [1680, 1188], A2: [2376, 1680], A1: [3364, 2376], A0: [4756, 3364] }, PT = {};
+  Object.keys(PAPER).forEach(function (k) { PT[k] = [PAPER[k][0] / 4 * 72 / 25.4, PAPER[k][1] / 4 * 72 / 25.4]; });
   var TBS = { small: 0.75, medium: 0.9, large: 1.1 };
   var NOTE_SC = "Indicative only. Check all dimensions on site. Not for construction.";
   var NOTE = "NOT TO SCALE. This sketch is indicative only and must not be used for construction.";
@@ -682,7 +684,7 @@
       '<p class="small" id="sk-ctxhint" hidden>Pick a drawing tool or select something to see its line, text and hatch options.</p>' +
     "</div>" +
     '<div class="sk-style sk-sheetopts">' +
-      '<div class="sk-seg sk-seg-sm" role="group" aria-label="Paper size"><button type="button" data-paper="A4">A4</button><button type="button" data-paper="A3">A3</button></div>' +
+      '<div class="sk-seg sk-seg-sm" role="group" aria-label="Paper size"><button type="button" data-paper="A4">A4</button><button type="button" data-paper="A3">A3</button><button type="button" data-paper="A2">A2</button><button type="button" data-paper="A1">A1</button><button type="button" data-paper="A0">A0</button></div>' +
       '<div class="sk-seg sk-seg-sm" role="group" aria-label="Orientation"><button type="button" data-orient="land">Landscape</button><button type="button" data-orient="port">Portrait</button></div>' +
       '<label class="sk-check"><input type="checkbox" id="sk-showframe"> Frame</label>' +
       '<label class="sk-check">Title block <select id="sk-tbs"><option value="small">Small</option><option value="medium">Medium</option><option value="large">Large</option><option value="off">Off</option></select></label>' +
@@ -1996,6 +1998,7 @@
     if (F.rot) o += '<g transform="rotate(' + r1(F.rot) + " " + r1(F.cx) + " " + r1(F.cy) + ')">';
     if (m.osm !== false) {
       var ll = RO().bngToWgs(m.e, m.n), z = Math.round(Math.log2(156543.034 * Math.cos(ll.lat * Math.PI / 180) / (F.mu * 1.2))); z = Math.max(8, Math.min(19, z));
+      for (var zTry = 0; zTry < 4; zTry++) { /* big sheets (A1, A0): step down a zoom level rather than ask for hundreds of tiles */
       var p1 = RO().bngToWgs(m.e + 200, m.n), p2 = RO().bngToWgs(m.e, m.n + 200), m0 = merc(ll.lat, ll.lon, z), m1 = merc(p1.lat, p1.lon, z), m2 = merc(p2.lat, p2.lon, z);
       var a1 = [m1[0] - m0[0], m1[1] - m0[1]], a2 = [m2[0] - m0[0], m2[1] - m0[1]], det = a1[0] * a2[1] - a2[0] * a1[1], s2 = 200 / F.mu;
       /* world = A · mercator + t, with A taking a1 to (s2, 0) and a2 to (0, -s2) */
@@ -2007,6 +2010,7 @@
       /* tile positions go in relative to a local origin: browsers lose precision on huge coordinates */
       var Ox = Math.floor(m0[0]), Oy = Math.floor(m0[1]), ltx = tx + A[0][0] * Ox + A[0][1] * Oy, lty = ty + A[1][0] * Ox + A[1][1] * Oy;
       var t0x = Math.floor(X0 / 256), t1x = Math.floor(X1 / 256), t0y = Math.floor(Y0 / 256), t1y = Math.floor(Y1 / 256);
+      if ((t1x - t0x + 1) * (t1y - t0y + 1) <= 120 || z <= 8) break; z--; }
       if ((t1x - t0x + 1) * (t1y - t0y + 1) <= 120) {
         o += '<filter id="sk-mapfx' + (forExport ? "x" : "") + '"><feColorMatrix type="saturate" values="0"/></filter><g opacity="' + (m.op || 0.55) + '"' + (m.grey !== false ? ' filter="url(#sk-mapfx' + (forExport ? "x" : "") + ')"' : "") + ' transform="matrix(' + [A[0][0], A[1][0], A[0][1], A[1][1], ltx, lty].map(function (v) { return +v.toFixed(6); }).join(" ") + ')">';
         for (var X = t0x; X <= t1x; X++) for (var Y = t0y; Y <= t1y; Y++) {
