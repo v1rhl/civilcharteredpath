@@ -129,7 +129,7 @@
   function snap() { var d = doc(); return JSON.stringify({ items: d.items, under: d.under, tb: d.tb, orient: d.orient }); }
   function begin() { if (before === null) before = snap(); }
   function commit() {
-    syncLeaders(); reHatch();
+    syncLeaders(); reHatch(); try { syncSections(); } catch (er) {}
     var now = snap(), h = H();
     if (before !== null && now !== before) { h.u.push(before); if (h.u.length > 60) h.u.shift(); h.r = []; }
     before = null; persist(); renderAll();
@@ -440,13 +440,13 @@
   function hit(it) {
     var w = Math.max(16 * k, 10), T = 'stroke="transparent" fill="none" pointer-events="stroke" stroke-linecap="round" stroke-width="';
     switch (it.type) {
-      case "stroke": return '<path d="' + smooth(it.pts) + '" ' + T + Math.max(w, it.w + 8) + '"/>';
+      case "stroke": return '<path d="' + smooth(it.pts) + '" ' + T + Math.max(w, (it.w || 2) + 8) + '"/>';
       case "rect": case "cloud": var rx1 = Math.min(it.x1, it.x2), ry1 = Math.min(it.y1, it.y2); return '<rect x="' + rx1 + '" y="' + ry1 + '" width="' + r1(Math.abs(it.x2 - it.x1)) + '" height="' + r1(Math.abs(it.y2 - it.y1)) + '" ' + T + Math.max(w, (it.w || 2) + 8) + '"/>';
-      case "circle": return '<circle cx="' + it.x1 + '" cy="' + it.y1 + '" r="' + r1(Math.hypot(it.x2 - it.x1, it.y2 - it.y1)) + '" ' + T + Math.max(w, it.w + 8) + '"/>';
-      case "poly": return '<path d="' + (it.open ? opath(it.pts) : poly(it.pts)) + '" ' + T + Math.max(w, it.w + 8) + '"/>';
+      case "circle": return '<circle cx="' + it.x1 + '" cy="' + it.y1 + '" r="' + r1(Math.hypot(it.x2 - it.x1, it.y2 - it.y1)) + '" ' + T + Math.max(w, (it.w || 2) + 8) + '"/>';
+      case "poly": return '<path d="' + (it.open ? opath(it.pts) : poly(it.pts)) + '" ' + T + Math.max(w, (it.w || 2) + 8) + '"/>';
       case "slope": var sn = norm(it), sd = it.side === -1 ? -1 : 1, hl = 36 * (it.s || 1); return '<path d="M' + it.x1 + " " + it.y1 + "L" + it.x2 + " " + it.y2 + "L" + r1(it.x2 + sn.nx * sd * hl) + " " + r1(it.y2 + sn.ny * sd * hl) + "L" + r1(it.x1 + sn.nx * sd * hl) + " " + r1(it.y1 + sn.ny * sd * hl) + 'Z" fill="transparent" pointer-events="all"/>';
       case "arrow": case "section": case "brk":
-      case "line": case "member": return '<line x1="' + it.x1 + '" y1="' + it.y1 + '" x2="' + it.x2 + '" y2="' + it.y2 + '" ' + T + Math.max(w, it.w + 8) + '"/>';
+      case "line": case "member": return '<line x1="' + it.x1 + '" y1="' + it.y1 + '" x2="' + it.x2 + '" y2="' + it.y2 + '" ' + T + Math.max(w, (it.w || 2) + 8) + '"/>';
       case "udl": var n = norm(it), sd = it.side === -1 ? -1 : 1; return '<path d="M' + r1(it.x1 + n.nx * sd * 8) + " " + r1(it.y1 + n.ny * sd * 8) + "L" + r1(it.x2 + n.nx * sd * 8) + " " + r1(it.y2 + n.ny * sd * 8) + "L" + r1(it.x2 + n.nx * sd * 42) + " " + r1(it.y2 + n.ny * sd * 42) + "L" + r1(it.x1 + n.nx * sd * 42) + " " + r1(it.y1 + n.ny * sd * 42) + 'Z" fill="transparent" pointer-events="all"/>';
       case "dim": var dn = norm(it), off = it.o == null ? 30 : it.o; return '<line x1="' + r1(it.x1 + dn.nx * off) + '" y1="' + r1(it.y1 + dn.ny * off) + '" x2="' + r1(it.x2 + dn.nx * off) + '" y2="' + r1(it.y2 + dn.ny * off) + '" ' + T + w + '"/>';
       case "hatch": return '<path d="' + hpath(it) + '" fill-rule="evenodd" fill="transparent" pointer-events="all"/>';
@@ -634,7 +634,7 @@
      properties above it, so the drawing sits at the top of the screen without scrolling. */
   (function () {
     function mk(tag, cls, html) { var e = document.createElement(tag); if (cls) e.className = cls; if (html) e.innerHTML = html; return e; }
-    function sec(name, title, open, nodes) { var dd = mk("details", "sk-sec"); dd.dataset.sec = name; var st = null; try { st = localStorage.getItem("cp-sketch-sec-" + name); } catch (e) {} dd.open = st == null ? open : st === "1"; dd.appendChild(mk("summary", "", title)); nodes.forEach(function (n) { if (n) dd.appendChild(n); }); dd.addEventListener("toggle", function () { if (dd.open && window.innerWidth > 1000) Array.prototype.forEach.call(document.querySelectorAll(".sk-side > details.sk-sec"), function (o) { if (o !== dd && o.open) o.open = false; }); /* one section open at a time, so the side bar fits without scrolling */ try { localStorage.setItem("cp-sketch-sec-" + name, dd.open ? "1" : "0"); } catch (e) {} if (window.innerWidth > 1000) fitSheet(); }); return dd; }
+    function sec(name, title, open, nodes) { var dd = mk("details", "sk-sec"); dd.dataset.sec = name; var st = null; try { st = localStorage.getItem("cp-sketch-sec-" + name); } catch (e) {} dd.open = st == null ? open : st === "1"; dd.appendChild(mk("summary", "", title)); var body = mk("div", "sk-sec-body"); dd.appendChild(body); nodes.forEach(function (n) { if (n) body.appendChild(n); }); dd.addEventListener("toggle", function () { if (dd.open && window.innerWidth > 1000) Array.prototype.forEach.call(document.querySelectorAll(".sk-side > details.sk-sec"), function (o) { if (o !== dd && o.open) o.open = false; }); /* one section open at a time, so the side bar fits without scrolling */ try { localStorage.setItem("cp-sketch-sec-" + name, dd.open ? "1" : "0"); } catch (e) {} if (window.innerWidth > 1000) fitSheet(); }); return dd; }
     var head = $("sk-head"), top = head.querySelector(".sk-top"), modes = top.querySelector(".sk-seg"), toolrow = head.querySelector(".sk-toolrow"), styleEl = head.querySelector(".sk-style:not(.sk-sheetopts)"), sheet = head.querySelector(".sk-sheetopts"), layers = sheet.querySelector(".sk-layers"), mp = $("sk-mappanel");
     var side = mk("aside", "sk-side"); side.id = "sk-side"; side.setAttribute("aria-label", "Tools and options");
     side.appendChild(modes); side.appendChild(toolrow);
@@ -752,19 +752,46 @@
     var avail = window.innerHeight - th - hh - $("sk-tabs").offsetHeight - (full ? 24 : 36);
     svg.style.maxWidth = Math.max(320, avail * G.W / G.H) + "px";
     var mn = $("sk-main"); if ((document.documentElement.classList.contains("sk-lock") || full) && mn) { var over = mn.scrollHeight - mn.clientHeight; if (over > 0) svg.style.maxWidth = Math.max(320, (avail - over - 2) * G.W / G.H) + "px"; }
+    flyCheck();
   }
-  function measureK() { var w = svg.getBoundingClientRect().width; k = w ? (zv ? zv.w : geo().W) / w : 1; }
-  /* Zoom: the wheel (or a trackpad pinch) zooms about the pointer; drag with the middle button, or hold
-     Space and drag, to pan; double-click the middle button, press 0, or use Fit to see the whole sheet. */
+  /* A side section too long for the side bar opens as a panel beside it, its options flowed into columns,
+     so nothing needs scrolling. Closing the section (click its heading again) puts it back. */
+  function unfly(d) { var b = d.querySelector(".sk-sec-body"); d.classList.remove("sk-fly"); if (b) b.removeAttribute("style"); }
+  function flyCheck() {
+    var side = $("sk-side"); if (!side) return;
+    var secs = side.querySelectorAll(".sk-side > details.sk-sec"), wide = window.innerWidth > 1000, d = null;
+    Array.prototype.forEach.call(secs, function (o) { if (o.open && wide && !d) d = o; else if (o.classList.contains("sk-fly")) unfly(o); });
+    if (!d) return;
+    if (!d.classList.contains("sk-fly")) { if (side.scrollHeight <= side.clientHeight + 1) return; d.classList.add("sk-fly"); }
+    var b = d.querySelector(".sk-sec-body"), r = side.getBoundingClientRect(), left = r.right + 8, top = Math.max(r.top, 4), H = Math.max(240, Math.min(r.bottom, window.innerHeight - 8) - top), avail = Math.max(300, window.innerWidth - left - 16);
+    b.style.left = left + "px"; b.style.top = top + "px"; b.style.height = H + "px"; b.style.width = avail + "px";
+    var mx = left; Array.prototype.forEach.call(b.querySelectorAll("*"), function (c) { var q = c.getBoundingClientRect(); if (q.width && q.right > mx) mx = q.right; });
+    b.style.width = Math.min(avail, mx - left + 16) + "px";
+  }
+  function measureK() { var w = svg.getBoundingClientRect().width; k = w ? geo().W / w : 1; }
+  /* Zoom and pan move the sheet itself about the grey desk, like sliding a sheet of paper: the wheel (or a
+     trackpad pinch) zooms about the pointer; drag with the middle button, or hold Space and drag, to slide it;
+     press 0 or use Fit sheet to put it back. zv is {s, tx, ty}: a scale and a shift in screen pixels. */
   var zv = null, zvSheet = null, spaceDown = false;
-  function vbStr() { var G = geo(); if (zv && (zvSheet !== doc() || zv.w >= G.W - 0.5)) zv = null; return zv ? [zv.x, zv.y, zv.w, zv.h].map(r1).join(" ") : "0 0 " + G.W + " " + G.H; }
-  function clampView(v) { var G = geo(); v.x = Math.min(Math.max(v.x, -v.w * 0.25), G.W - v.w * 0.75); v.y = Math.min(Math.max(v.y, -v.h * 0.25), G.H - v.h * 0.75); return v; }
-  function applyView() { svg.setAttribute("viewBox", vbStr()); measureK(); renderUI(); var fb = $("sk-fit"); if (fb) fb.hidden = !zv; }
-  function zoomAt(p, f) {
-    var G = geo(), v = zv || { x: 0, y: 0, w: G.W, h: G.H }, nw = Math.min(G.W, Math.max(G.W / 50, v.w * f)), s2 = nw / v.w;
-    if (nw >= G.W - 0.5) { zv = null; } else { zv = clampView({ x: p.x - (p.x - v.x) * s2, y: p.y - (p.y - v.y) * s2, w: nw, h: v.h * s2 }); zvSheet = doc(); }
-    applyView(); status(zv ? "Zoom " + Math.round(G.W / zv.w * 100) + "%. Drag with the middle button or hold Space to pan; press 0 to fit the sheet." : "");
+  function vbStr() { var G = geo(); if (zv && zvSheet !== doc()) { zv = null; svg.style.transform = ""; } return "0 0 " + G.W + " " + G.H; }
+  function svgHome() { var r = svg.getBoundingClientRect(), v = zv || { s: 1, tx: 0, ty: 0 }; return { x: r.left - v.tx, y: r.top - v.ty, w: r.width / v.s, h: r.height / v.s }; }
+  function clampView(v) {
+    var o = svgHome(), sr = stage.getBoundingClientRect(), m = 60;
+    v.tx = Math.min(Math.max(v.tx, sr.left + m - o.x - o.w * v.s), sr.right - m - o.x);
+    v.ty = Math.min(Math.max(v.ty, sr.top + m - o.y - o.h * v.s), sr.bottom - m - o.y);
+    return v;
   }
+  function applyView() {
+    if (zv && Math.abs(zv.s - 1) < 0.01 && Math.abs(zv.tx) < 1 && Math.abs(zv.ty) < 1) zv = null;
+    svg.style.transformOrigin = "0 0"; svg.style.transform = zv ? "translate(" + r1(zv.tx) + "px," + r1(zv.ty) + "px) scale(" + zv.s + ")" : "";
+    measureK(); renderUI(); var fb = $("sk-fit"); if (fb) fb.hidden = !zv;
+  }
+  function zoomAt(c, f) {
+    var v = zv || { s: 1, tx: 0, ty: 0 }, o = svgHome(), ns = Math.min(40, Math.max(0.3, v.s / f)), q = ns / v.s;
+    zv = clampView({ s: ns, tx: c.x - o.x - (c.x - o.x - v.tx) * q, ty: c.y - o.y - (c.y - o.y - v.ty) * q }); zvSheet = doc();
+    applyView(); status(zv ? "Zoom " + Math.round(zv.s * 100) + "%. Drag with the middle button, or hold Space and drag, to slide the sheet; press 0 to fit it." : "");
+  }
+  function panBy(dx, dy, v0) { v0 = v0 || zv || { s: 1, tx: 0, ty: 0 }; zv = clampView({ s: v0.s, tx: v0.tx + dx, ty: v0.ty + dy }); zvSheet = doc(); applyView(); }
   function fitView() { zv = null; applyView(); status(""); }
   var underKey = "";
   function renderAll() {
@@ -978,7 +1005,7 @@
 
   /* ---------- Properties bar ---------- */
   var ROT_TYPES = { support: 90, pload: 45, north: 45 };
-  function renderProps() { updateCtx(); renderProps0(); var pe = $("sk-props"); pe.hidden = !pe.innerHTML; var hn = $("sk-hint"); if (hn) hn.textContent = HINTS[tool[mode]] || ""; if (window.innerWidth > 1000) fitSheet(); }
+  function renderProps() { updateCtx(); renderProps0(); var pe = $("sk-props"); if (!pe.innerHTML) pe.innerHTML = '<span class="sk-props-none">Nothing selected. Click an item to change it, or drag a box round several.</span>'; pe.hidden = false; var hn = $("sk-hint"); if (hn) hn.textContent = HINTS[tool[mode]] || ""; if (window.innerWidth > 1000) fitSheet(); }
   function renderProps0() {
     var p = $("sk-props"), it = sel && sel.k === "item" ? byId(sel.id) : null, im = sel && sel.k === "img" ? imgById(sel.id) : null;
     if (im) {
@@ -1175,8 +1202,8 @@
   }
   function selectAfterCreate(it) { sel = { k: "item", id: it.id }; renderContent(); renderProps(); }
 
-  svg.addEventListener("pointerdown", function (e) {
-    if (e.button === 1 || (e.button === 0 && spaceDown)) { e.preventDefault(); if (!zv) return; try { svg.setPointerCapture(e.pointerId); } catch (er) {} drag = { type: "zpan", cx: e.clientX, cy: e.clientY, v: { x: zv.x, y: zv.y, w: zv.w, h: zv.h } }; return; }
+  svg.addEventListener("pointerdown", function (e) { closeFly();
+    if (e.button === 1 || (e.button === 0 && spaceDown)) { e.preventDefault(); try { svg.setPointerCapture(e.pointerId); } catch (er) {} drag = { type: "zpan", cx: e.clientX, cy: e.clientY, v: zv ? { s: zv.s, tx: zv.tx, ty: zv.ty } : null }; stage.classList.add("sk-panning"); return; }
     if (e.button !== 0) return;
     measureK();
     var p = world(e), d = doc(), t = tool[mode];
@@ -1341,7 +1368,7 @@
         if (!e.shiftKey) { var uf = Math.max(0.05, (fx + fy) / 2); fx = fy = uf; } else { fx = Math.max(0.05, fx); fy = Math.max(0.05, fy); }
         drag.orig.forEach(function (o) { replaceItem(scaleItem(o, drag.ax, drag.ay, fx, fy)); }); renderContent(); status("Scale ×" + (+fx.toFixed(2)) + (fx !== fy ? " by ×" + (+fy.toFixed(2)) : "")); return;
       case "mappan": mapPanning = true; var mf = mapFrame(), mpm = doc().map; mpm.e = Math.round(drag.e0 - (p.x - drag.start.x) * mf.mu); mpm.n = Math.round(drag.n0 + (p.y - drag.start.y) * mf.mu); renderAll(); return;
-      case "zpan": var rw = svg.getBoundingClientRect().width || 1, sc2 = drag.v.w / rw; zv = clampView({ x: drag.v.x - (e.clientX - drag.cx) * sc2, y: drag.v.y - (e.clientY - drag.cy) * sc2, w: drag.v.w, h: drag.v.h }); applyView(); return;
+      case "zpan": panBy(e.clientX - drag.cx, e.clientY - drag.cy, drag.v); return;
       case "inset0": case "mapsect":
         drag.cur = p; gLive.innerHTML = drag.type === "inset0" ? '<rect x="' + r1(Math.min(p.x, drag.start.x)) + '" y="' + r1(Math.min(p.y, drag.start.y)) + '" width="' + r1(Math.abs(p.x - drag.start.x)) + '" height="' + r1(Math.abs(p.y - drag.start.y)) + '" fill="rgba(11,79,108,0.06)" stroke="#0b4f6c" stroke-dasharray="6 4" vector-effect="non-scaling-stroke"/>' : ln(drag.start.x, drag.start.y, p.x, p.y, "#b84a32", 2, "dashed");
         if (drag.type === "mapsect") status("Section " + fmtM(toM(dist(drag.start, p))) + " long. Let go to draw it.");
@@ -1394,7 +1421,7 @@
     if (mod && e.key.toLowerCase() === "y") { e.preventDefault(); redo(); return; }
     if (e.key === " " && !mod) { if (!spaceDown) { spaceDown = true; stage.classList.add("sk-panning"); } e.preventDefault(); return; }
     if (!mod && (e.key === "0" || e.key === "Home")) { e.preventDefault(); fitView(); return; }
-    if (!mod && (e.key === "+" || e.key === "=" || e.key === "-")) { var G0 = geo(), v0 = zv || { x: 0, y: 0, w: G0.W, h: G0.H }; e.preventDefault(); zoomAt({ x: v0.x + v0.w / 2, y: v0.y + v0.h / 2 }, e.key === "-" ? 1.25 : 0.8); return; }
+    if (!mod && (e.key === "+" || e.key === "=" || e.key === "-")) { var sr0 = stage.getBoundingClientRect(); e.preventDefault(); zoomAt({ x: sr0.left + sr0.width / 2, y: sr0.top + sr0.height / 2 }, e.key === "-" ? 1.25 : 0.8); return; }
     if (e.key === "Enter" && pend) { e.preventDefault(); if (pend.poly) finishPoly(); else finishHatch(); return; }
     if ((e.key === "f" || e.key === "F") && !mod && !e.altKey) { e.preventDefault(); setFull(!isFull()); return; }
     if (e.key === "Escape" && app.classList.contains("sk-full") && !pend && !sel) { setFull(false); return; }
@@ -1653,6 +1680,10 @@
     var lh = 15, W = Math.min(I.w - 20, w + 20), H = 26 + rows.length * lh, pos = m.legpos || "br";
     var x = pos[1] === "l" ? I.x + 10 : I.x + I.w - W - 10, y = pos[0] === "t" ? I.y + 10 : I.y + I.h - H - 22;
     var TB = geo().tb; if (pos === "br" && doc().frame !== false && !TB.off && x + W > TB.x && y + H > TB.y) y = Math.max(I.y + 10, TB.y - H - 10); /* keep clear of the title block */
+    var D0 = doc(), G0 = geo(); if (D0.dscale && D0.sbar !== false && pos[0] === "b") { /* and stack above the sheet scale bar, never on it */
+      var sbY = G0.inner.y + G0.inner.h - (D0.map ? 34 : 22) - 16, sbX1 = G0.inner.x + 16 + 500;
+      if (x < sbX1 && y + H > sbY) y = Math.max(I.y + 10, sbY - H - 8);
+    }
     var o = '<g><rect x="' + r1(x) + '" y="' + r1(y) + '" width="' + r1(W) + '" height="' + r1(H) + '" fill="#fff" fill-opacity="0.94" stroke="#15233a" stroke-width="1"/>' + txt(x + 10, y + 16, "LEGEND", "#15233a", fs + 1, "start", ' font-weight="bold"');
     rows.forEach(function (r, i) {
       var yy = y + 24 + i * lh, tx = x + 10;
@@ -1845,7 +1876,8 @@
   }
   /* moving the map and limiting it to an area are done by dragging on the sheet */
   var mapMode = null, mapPanning = false;
-  function setMapMode(mm) { mapMode = mapMode === mm ? null : mm; $("sk-mappan").setAttribute("aria-pressed", mapMode === "pan"); $("sk-mapbox").setAttribute("aria-pressed", mapMode === "box"); $("sk-mapsect").setAttribute("aria-pressed", mapMode === "sect"); $("sk-mapcatch").setAttribute("aria-pressed", mapMode === "catch"); $("sk-mapfall").setAttribute("aria-pressed", mapMode === "fall"); stage.dataset.map = mapMode || ""; if (mapMode === "sect" || mapMode === "catch" || mapMode === "fall") mapStatus(mapMode === "sect" ? "Drag a line across the map where you want the ground section." : mapMode === "fall" ? "Click on the map to add a fall arrow there." : "Finding the flow lines. Then click on one where you want the outlet."); else if (mapMode) mapStatus(mapMode === "pan" ? "Drag on the sheet to move the map. Your drawing stays where it is. Click Move map again to finish." : "Drag a box on the sheet for the map area."); }
+  function closeFly() { Array.prototype.forEach.call(document.querySelectorAll(".sk-sec.sk-fly[open]"), function (d) { d.open = false; }); }
+  function setMapMode(mm) { mapMode = mapMode === mm ? null : mm; if (mapMode) closeFly(); $("sk-mappan").setAttribute("aria-pressed", mapMode === "pan"); $("sk-mapbox").setAttribute("aria-pressed", mapMode === "box"); $("sk-mapsect").setAttribute("aria-pressed", mapMode === "sect"); $("sk-mapcatch").setAttribute("aria-pressed", mapMode === "catch"); $("sk-mapfall").setAttribute("aria-pressed", mapMode === "fall"); stage.dataset.map = mapMode || ""; if (mapMode === "sect" || mapMode === "catch" || mapMode === "fall") mapStatus(mapMode === "sect" ? "Drag a line across the map where you want the ground section." : mapMode === "fall" ? "Click on the map to add a fall arrow there." : "Finding the flow lines. Then click on one where you want the outlet."); else if (mapMode) mapStatus(mapMode === "pan" ? "Drag on the sheet to move the map. Your drawing stays where it is. Click Move map again to finish." : "Drag a box on the sheet for the map area."); }
   $("sk-mappan").addEventListener("click", function () { if (!doc().map) { mapStatus("Place the map first."); return; } setMapMode("pan"); });
   $("sk-mapbox").addEventListener("click", function () { if (!doc().map) { mapStatus("Place the map first."); return; } setMapMode("box"); });
   $("sk-mapall").addEventListener("click", function () { var m = doc().map; if (!m) return; delete m.box; persist(); renderAll(); afterMapMove(); });
@@ -1930,20 +1962,58 @@
 
   /* A ground section along a line drawn on the map: horizontal at the drawing scale (or smaller, to fit),
      vertical exaggerated so the relief reads, with chainage and level rows. */
+  function secKey(m) { return [m.x1, m.y1, m.x2, m.y2, m.label].join(","); }
   function makeSection(A, B, g) {
     var d = doc(); if (!d.map || !g) return;
+    var lab = nextSectionLetter(), gid = "sec" + Date.now().toString(36), r = buildSection(A, B, g, lab, gid);
+    if (!r) { mapStatus("There's no terrain along that line. Fetch EA LiDAR or load a LiDAR file that covers it."); return; }
+    var mk = base("section", { x1: r1(A.x), y1: r1(A.y), x2: r1(B.x), y2: r1(B.y), label: lab, sg: gid });
+    mk.sk = secKey(mk);
+    begin(); d.items.push(mk); r.out.forEach(function (x) { d.items.push(x); }); commit(); persist();
+    setSel(r.out);
+    mapStatus("Section " + lab + "–" + lab + " drawn: " + r.msg + ". It's selected, so drag it where you want it. Move or flip the section marker and the view redraws to match.");
+  }
+  /* Keep each section view tied to its marker: when the marker's line or letter changes, redraw the
+     profile in place (top-left of the old view kept). Runs inside commit, so it's one undo step. */
+  var secWait = false;
+  function syncSections() {
+    var d = doc(); if (!d.map) return;
+    var stale = d.items.filter(function (m) { return m.type === "section" && m.sg && m.sk !== secKey(m); });
+    if (!stale.length) return;
+    if (!(terrain && terrain.sheet === d && terrain.fine)) {
+      if (secWait || d.map.csrc === "file") { if (d.map.csrc === "file") mapStatus("Load your LiDAR file again to update the section view."); return; }
+      secWait = true; getFine(function () { secWait = false; begin(); commit(); }); return;
+    }
+    stale.forEach(function (m) { resection(d, m, terrain.fine); });
+  }
+  function resection(d, m, g) {
+    var old = d.items.filter(function (x) { return x.g === m.sg; });
+    if (!old.length) { delete m.sg; delete m.sk; return; }
+    var r = buildSection({ x: m.x1, y: m.y1 }, { x: m.x2, y: m.y2 }, g, m.label || "A", m.sg);
+    m.sk = secKey(m);
+    if (!r) { mapStatus("There's no terrain along the moved section line, so section " + (m.label || "") + " wasn't redrawn."); return; }
+    var f0 = old.filter(function (x) { return x.type === "rect"; })[0], f1 = r.out[0], dx = f0 ? Math.min(f0.x1, f0.x2) - Math.min(f1.x1, f1.x2) : 0, dy = f0 ? Math.min(f0.y1, f0.y2) - Math.min(f1.y1, f1.y2) : 0;
+    var at = d.items.indexOf(old[0]);
+    d.items = d.items.filter(function (x) { return x.g !== m.sg; });
+    var neu = r.out.map(function (x) { var n = shifted(x, dx, dy); n.id = x.id; return n; });
+    Array.prototype.splice.apply(d.items, [Math.min(at, d.items.length), 0].concat(neu));
+    if (sel && ((sel.k === "item" && !byId(sel.id)) || (sel.k === "multi" && sel.ids.some(function (id) { return !byId(id); })))) sel = null;
+    mapStatus("Section " + m.label + "–" + m.label + " redrawn: " + r.msg + ".");
+  }
+  function buildSection(A, B, g, lab, gid) {
+    var d = doc();
     var a = w2bng(A), b = w2bng(B), Lm = Math.hypot(b.e - a.e, b.n - a.n), nS = Math.max(20, Math.min(400, Math.round(Lm / (g.cell / 2)))), pr = [], i;
     var zf = function (ch) { var t = ch / Lm; return zAt(g, a.e + (b.e - a.e) * t, a.n + (b.n - a.n) * t); };
     for (i = 0; i <= nS; i++) pr.push([Lm * i / nS, zf(Lm * i / nS)]);
     var zs = pr.map(function (q) { return q[1]; }).filter(function (z) { return z === z; });
-    if (zs.length < 2) { mapStatus("There's no terrain along that line. Fetch EA LiDAR or load a LiDAR file that covers it."); return; }
+    if (zs.length < 2) return null;
     var zmn = Math.min.apply(null, zs), zmx = Math.max.apply(null, zs), I = geo().inner, N = d.dscale || 500;
     var Hs = N; if (Lm * 4000 / Hs > I.w * 0.75) Hs = SCALES.filter(function (n) { return Lm * 4000 / n <= I.w * 0.75; })[0] || 10000;
     var R = Math.max(zmx - zmn, 0.5), Vs = SCALES.filter(function (n) { return R * 4000 / n <= 160; })[0] || Hs; if (Vs > Hs) Vs = Hs;
     var hu = 4000 / Hs, vu = 4000 / Vs, ls = niceStep(R, Math.max(2, Math.floor(R * vu / 24))), datum = Math.floor((zmn - ls * 0.5) / ls) * ls, ztop = Math.ceil((zmx + ls * 0.2) / ls) * ls;
     var W = Lm * hu, Hh = (ztop - datum) * vu, x0 = I.x + (I.w - W) / 2 + 50, yb = r1((A.y + B.y) / 2 < I.y + I.h / 2 ? I.y + I.h - 130 : I.y + 50 + Hh); /* on the other half of the sheet from the line */
     var X = function (ch) { return r1(x0 + ch * hu); }, Y = function (z) { return r1(yb - (z - datum) * vu); };
-    var gid = "sec" + Date.now().toString(36), C = "#15233a", G2 = "#8a94a6", out = [], lab = nextSectionLetter();
+    var C = "#15233a", G2 = "#8a94a6", out = [];
     var add = function (type, ex) { ex.g = gid; if (!ex.c) ex.c = C; out.push(base(type, ex)); };
     var addT = function (x, y, t, sz, ex) { ex = ex || {}; ex.x = r1(x); ex.y = r1(y); ex.text = t; ex.size = sz; add("text", ex); };
     add("rect", { x1: r1(X(0) - 150), y1: r1(Y(ztop) - 24), x2: r1(X(Lm) + 24), y2: r1(yb + 90), w: 1, ls: "solid", c: "#c9d1dc", fill: true });
@@ -1963,10 +2033,7 @@
     var ve = Hs / Vs;
     addT(X(0), yb + 50, "SECTION " + lab + "–" + lab, 16, { bold: true });
     addT(X(0), yb + 72, "Ground from " + terrainSrc() + ". Horizontal 1:" + Hs + ", vertical 1:" + Vs + (ve > 1 ? " (×" + (Math.round(ve * 10) / 10) + ")" : "") + ". Datum " + datum.toFixed(2) + " m AOD. Indicative only.", 10);
-    var mk = base("section", { x1: r1(A.x), y1: r1(A.y), x2: r1(B.x), y2: r1(B.y), label: lab });
-    begin(); d.items.push(mk); out.forEach(function (x) { d.items.push(x); }); commit(); persist();
-    setSel(out);
-    mapStatus("Section " + lab + "–" + lab + " drawn: " + Math.round(Lm) + " m long, ground from " + zmn.toFixed(2) + " to " + zmx.toFixed(2) + " m AOD" + (zs.length < pr.length ? ", with gaps where there's no LiDAR" : "") + ". It's selected, so drag it where you want it.");
+    return { out: out, msg: Math.round(Lm) + " m long, ground from " + zmn.toFixed(2) + " to " + zmx.toFixed(2) + " m AOD" + (zs.length < pr.length ? ", with gaps where there's no LiDAR" : "") };
   }
 
   function clipRect(P, x0, y0, x1, y1) { /* Sutherland–Hodgman against an axis-aligned box */
@@ -2420,9 +2487,9 @@
   function afterFull() { var f = isFull(); $("sk-full").setAttribute("aria-pressed", f); $("sk-full").textContent = f ? "Exit full screen" : "Full screen"; app.style.setProperty("--sk-top", f ? "0px" : ((document.querySelector(".topbar") || {}).offsetHeight || 0) + "px"); setTimeout(function () { renderAll(); measureK(); renderUI(); }, 60); }
   $("sk-full").addEventListener("click", function () { setFull(!isFull()); });
   svg.addEventListener("wheel", function (e) {
-    if (e.shiftKey && !e.ctrlKey && zv) { e.preventDefault(); var rw = svg.getBoundingClientRect().width || 1; zv = clampView({ x: zv.x + (e.deltaY || e.deltaX) * zv.w / rw, y: zv.y, w: zv.w, h: zv.h }); applyView(); return; } /* Shift+wheel pans sideways */
+    if (e.shiftKey && !e.ctrlKey) { e.preventDefault(); panBy(-(e.deltaY || e.deltaX), 0); return; } /* Shift+wheel pans sideways */
     e.preventDefault();
-    var dy = e.deltaMode === 1 ? e.deltaY * 16 : e.deltaY; zoomAt(world(e), Math.exp(Math.max(-1, Math.min(1, dy * (e.ctrlKey ? 0.01 : 0.0015)))));
+    var dy = e.deltaMode === 1 ? e.deltaY * 16 : e.deltaY; zoomAt({ x: e.clientX, y: e.clientY }, Math.exp(Math.max(-1, Math.min(1, dy * (e.ctrlKey ? 0.01 : 0.0015)))));
   }, { passive: false });
   svg.addEventListener("auxclick", function (e) { if (e.button === 1) e.preventDefault(); });
   svg.addEventListener("dblclick", function (e) { if (e.button === 1) fitView(); });

@@ -921,6 +921,14 @@ html.sk-lock #view-sketch .view-head { gap: 0; }
 .sk-stage.sk-panning #sk-svg, .sk-stage.sk-panning #sk-svg * { cursor: grab !important; }
 .sk-hint { margin: 2px 0 0; color: var(--muted, #5a6677); min-height: 1.2em; }
 .sk-main > .sk-props[hidden] { display: none; }
+.sk-stage { overflow: hidden; }
+.sk-sec.sk-fly > .sk-sec-body { position: fixed; z-index: 30; display: flex; flex-direction: column; flex-wrap: wrap; align-content: flex-start; gap: 8px 18px; padding: 10px 14px; overflow: auto; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: 0 6px 24px rgba(0,0,0,.18); scrollbar-width: thin; }
+.sk-sec.sk-fly > .sk-sec-body > *, .sk-sec.sk-fly .sk-layers > *, .sk-sec.sk-fly #sk-mappanel > * { width: 290px; max-width: 290px; flex: 0 0 auto; }
+.sk-sec.sk-fly .sk-layers, .sk-sec.sk-fly #sk-mappanel:not([hidden]), .sk-sec.sk-fly .sk-sheetopts { display: contents; }
+.sk-sec.sk-fly .sk-sheetopts > * { width: 290px; max-width: 290px; flex: 0 0 auto; }
+.sk-sec.sk-fly > summary { color: var(--accent, #0b4f6c); }
+.sk-props-none { color: var(--muted, #6b7685); font-size: 0.85rem; }
+.sk-app:fullscreen .sk-main > .sk-top, .sk-app:fullscreen .sk-main > .sk-props, .sk-app.sk-full .sk-main > .sk-top, .sk-app.sk-full .sk-main > .sk-props { position: static; }
 html.sk-lock .sk-main { height: 100%; overflow-y: auto; scrollbar-width: thin; }
 html.sk-lock .sk-main > .sk-top, html.sk-lock .sk-main > .sk-props { top: 0; }
 .sk-pin { position: absolute; top: 1px; right: 2px; font-size: 0.7rem; line-height: 1; color: var(--muted, #8a94a6); padding: 1px; border-radius: 3px; }
@@ -2794,8 +2802,8 @@ footer .wrap { font-family: var(--font-body); }
 <script src="js/news-feed.js?v=20261122b"></script>
 <script src="js/news-archive.js?v=20261122b"></script>
 <script src="js/pages.js?v=20261122b"></script>
-<script src="js/tools/sketch-templates.js?v=20261128p"></script>
-<script src="js/tools/sketch.js?v=20261128p"></script>
+<script src="js/tools/sketch-templates.js?v=20261128r"></script>
+<script src="js/tools/sketch.js?v=20261128r"></script>
 <script src="js/tools/hydraulics.js?v=20261127a"></script>
 <script src="js/tools/pipeflow.js?v=20261127a"></script>
 <script src="js/tools/drawing-check.js?v=20261127a"></script>
