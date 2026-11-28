@@ -961,6 +961,13 @@ html.sk-lock .sk-layout, .sk-app:fullscreen .sk-layout, .sk-app.sk-full .sk-layo
 .sk-mlmsg-none { color: #6d5600; background: #fff8e1; border-color: #ffe082; }
 .sk-mlmsg-err { color: #8c1d18; background: #fdecea; border-color: #f5b5ae; }
 .sk-mlmsg-err::before { content: "✗ "; font-weight: 700; }
+/* the item options bar sits under the sheet, compact */
+.sk-main > .sk-props { position: static; min-height: 0; padding: 3px 8px; gap: 4px 10px; font-size: 0.8rem; }
+.sk-main > .sk-props .sk-btn, .sk-main > .sk-props select, .sk-main > .sk-props input[type="text"] { padding: 3px 7px; font-size: 0.78rem; }
+.sk-main > .sk-props .sk-props-none { font-size: 0.76rem; }
+.sk-main > .sk-hint, .sk-main > .sk-status { font-size: 0.74rem; margin: 0; min-height: 1em; }
+#sk-svg .sk-warn { cursor: help !important; }
+#sk-svg .sk-warn * { cursor: help !important; }
 .sk-win-h { display: none; }
 .sk-sec.sk-fly > .sk-sec-body { position: fixed; z-index: 40; display: flex; flex-direction: column; padding: 0; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: 0 6px 24px rgba(0,0,0,.18); max-height: calc(100vh - 16px); }
 .sk-sec.sk-fly .sk-win-h { display: flex; align-items: center; gap: 4px; padding: 4px 6px 4px 12px; border-bottom: 1px solid var(--line); cursor: move; user-select: none; touch-action: none; background: var(--paper); border-radius: var(--radius) var(--radius) 0 0; }
@@ -1142,6 +1149,7 @@ html.sk-lock .sk-main > .sk-top, html.sk-lock .sk-main > .sk-props { top: 0; }
 #view-drawing-check .dc-field input { font: 400 0.95rem var(--font-body); padding: 7px 9px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--paper); color: var(--ink); min-width: 0; }
 #view-drawing-check .dc-groups { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 440px), 1fr)); gap: 14px; align-items: start; }
 #view-drawing-check .dc-group h3 { margin: 0; display: flex; gap: 8px; align-items: baseline; font-size: 1.02rem; }
+#view-drawing-check .dc-ref { display: inline-block; min-width: 2.4em; font: 600 0.72rem var(--font-mono); color: #b35c00; }
 #view-drawing-check .dc-n { font: 600 0.78rem var(--font-mono); color: var(--accent-2); }
 #view-drawing-check .dc-c { margin-left: auto; color: var(--muted); }
 #view-drawing-check .dc-complete { border-color: var(--accent); }
@@ -2368,7 +2376,7 @@ footer .wrap { font-family: var(--font-body); }
 <!-- TOOL: DRAWING CHECKLIST (js/tools/drawing-check.js) -->
 <section class="view wrap" id="view-drawing-check" data-view="drawing-check" hidden>
   <div class="view-head">
-    <span class="eyebrow"><a href="#tools">Tools</a> / Drawing checklist</span>
+    <span class="eyebrow"><a href="#resources">Guidance</a> / Drawing checklist</span>
     <h2>Drawing checklist</h2>
     <p class="lede">Run this over a drawing before it goes out for review or issue: once yourself, then again by the checker. Tick each check, or mark it N/A if it doesn't apply.</p>
     <p class="small">Written from general drawing-office practice for UK civils and drainage work. It is not taken from, and doesn't claim to meet, any published drawing standard. Checks tagged <span class="dc-office">office std</span> vary between organisations, so follow your employer's standard and the project's information requirements. Your ticks are saved in this browser only.</p>
@@ -2910,9 +2918,9 @@ footer .wrap { font-family: var(--font-body); }
 <script src="js/news-feed.js?v=20261122b"></script>
 <script src="js/news-archive.js?v=20261122b"></script>
 <script src="js/pages.js?v=20261122b"></script>
-<script src="js/tools/sketch-templates.js?v=20261128y"></script>
-<script src="js/tools/sketch.js?v=20261128y"></script>
-<script src="js/tools/drawing-check.js?v=20261128y"></script>
+<script src="js/tools/sketch-templates.js?v=20261128z"></script>
+<script src="js/tools/sketch.js?v=20261128z"></script>
+<script src="js/tools/drawing-check.js?v=20261128z"></script>
 <script src="js/tools/hydraulics.js?v=20261127a"></script>
 <script src="js/tools/pipeflow.js?v=20261127a"></script>
 <script src="js/tools/catchment.js?v=20261127a"></script>
@@ -2924,7 +2932,7 @@ footer .wrap { font-family: var(--font-body); }
 <script src="js/tools/culvert.js?v=20261127a"></script>
 <script src="js/tools/site-diary.js?v=20261127a"></script>
 <script src="js/learn.js?v=20261127m"></script>
-<script src="js/site.js?v=20261127m"></script>
+<script src="js/site.js?v=20261128z"></script>
 <script src="js/art.js?v=20261127m"></script>
 </body>
 </html>
