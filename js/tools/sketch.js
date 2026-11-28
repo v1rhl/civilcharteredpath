@@ -934,7 +934,8 @@
     tbar.innerHTML = '<button type="button" class="sk-tbar-grip" id="sk-tbgrip" title="Drag to move the toolbar anywhere" aria-label="Move toolbar"><svg viewBox="0 0 8 16" width="8" height="16" aria-hidden="true"><g fill="currentColor"><circle cx="2" cy="3" r="1.2"/><circle cx="6" cy="3" r="1.2"/><circle cx="2" cy="8" r="1.2"/><circle cx="6" cy="8" r="1.2"/><circle cx="2" cy="13" r="1.2"/><circle cx="6" cy="13" r="1.2"/></g></svg></button><div class="sk-tbar-slot" id="sk-tbslot"></div>' +
       '<div class="sk-tbar-lay" id="sk-tblay"></div><div class="sk-tbar-end"><button type="button" class="sk-btn sk-tbar-all" id="sk-tball" title="All tools: star the ones you want on this toolbar">All tools</button><span class="sk-tbdocks"><button type="button" class="sk-win-b" id="sk-tbvert" aria-pressed="false" title="Stand the toolbar up as a column" aria-label="Vertical toolbar" hidden>⇅</button><button type="button" class="sk-win-b" data-dock="left" title="Dock the toolbar at the left of the drawing" aria-label="Dock toolbar at the left">⇤</button><button type="button" class="sk-win-b" data-dock="top" title="Dock the toolbar along the top of the drawing" aria-label="Dock toolbar at the top">⤒</button><button type="button" class="sk-win-b" data-dock="bottom" title="Dock the toolbar along the bottom of the drawing" aria-label="Dock toolbar at the bottom">⤓</button></span></div>';
     var vbar = mk("div", "sk-vbar"); vbar.id = "sk-vbar"; vbar.setAttribute("role", "group"); vbar.setAttribute("aria-label", "View settings");
-    [row1, tbar, $("sk-stage"), $("sk-props"), hint, $("sk-status"), vbar].forEach(function (n) { main.appendChild(n); }); /* the item options and messages sit under the sheet, kept small */
+    var bar2 = mk("div", "sk-bar2"), msgs = mk("div", "sk-msgs"); msgs.appendChild($("sk-status")); msgs.appendChild(hint); bar2.appendChild($("sk-props")); bar2.appendChild(msgs); /* one slim line: the item's options (when something is selected) and the messages */
+    [row1, tbar, $("sk-stage"), bar2, vbar].forEach(function (n) { main.appendChild(n); }); /* the item options and messages sit under the sheet, kept small */
     var lay = mk("div", "sk-layout"); lay.appendChild(side); lay.appendChild(main);
     head.remove(); app.innerHTML = ""; app.appendChild(lay);
     top.id = "sk-head"; /* the bar above the sheet: kept in view on wide screens */
@@ -1617,7 +1618,7 @@
 
   /* ---------- Properties bar ---------- */
   var ROT_TYPES = { support: 90, pload: 45, north: 45 };
-  function renderProps() { updateCtx(); renderProps0(); var pe = $("sk-props"); if (!pe.innerHTML) pe.innerHTML = '<span class="sk-props-none">Nothing selected. Click an item to change it, or drag a box round several.</span>'; pe.hidden = false; var hn = $("sk-hint"); if (hn) hn.textContent = HINTS[tool[mode]] || ""; if (window.innerWidth > 1000) fitSheet(); }
+  function renderProps() { updateCtx(); renderProps0(); var pe = $("sk-props"); if (!pe.innerHTML) pe.innerHTML = '<span class="sk-props-none">Nothing selected. Click an item to change it, or drag a box round several.</span>'; pe.hidden = false; var hn = $("sk-hint"); if (hn) { hn.textContent = HINTS[tool[mode]] || ""; hn.title = hn.textContent; } if (window.innerWidth > 1000) fitSheet(); }
   function renderProps0() {
     var p = $("sk-props"), it = sel && sel.k === "item" ? byId(sel.id) : null, im = sel && sel.k === "img" ? imgById(sel.id) : null;
     if (im) {
