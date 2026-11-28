@@ -768,7 +768,7 @@
     head.remove(); app.innerHTML = ""; app.appendChild(lay);
     top.id = "sk-head"; /* the bar above the sheet: kept in view on wide screens */
   })();
-  function status(msg) { $("sk-status").textContent = msg || ""; }
+  function status(msg) { var el = $("sk-status"); el.textContent = msg || ""; el.title = msg || ""; }
 
   /* ---------- Rendering ---------- */
   function contentStr(forExport) {
