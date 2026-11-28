@@ -869,10 +869,10 @@ nav a[aria-current="page"][aria-expanded="true"] { color: var(--accent-ink); bac
 .sk-order { display: inline-flex; gap: 2px; }
 .sk-order .sk-btn { padding: 6px 8px; }
 .sk-tab { display: inline-flex; align-items: center; border: 1px solid var(--line); border-bottom-color: transparent; border-radius: var(--radius) var(--radius) 0 0; background: var(--paper); }
-.sk-tab.on { background: #e9edec; border-color: var(--line); border-bottom-color: #e9edec; }
+.sk-tab.on { background: var(--sk-desk, #e9edec); color: var(--ink); border-color: var(--line); border-bottom-color: var(--sk-desk, #e9edec); }
 .sk-tab button { font: 600 0.82rem var(--font-body); border: 0; background: transparent; color: var(--ink); padding: 6px 10px; cursor: pointer; display: inline-flex; gap: 6px; align-items: baseline; }
 .sk-tab small { font-weight: 400; color: var(--muted); }
-.sk-tab.on [role="tab"] { color: #15233a; } .sk-tab.on small { color: #5a6677; }
+.sk-tab.on [role="tab"] { color: var(--sk-tabink, #15233a); } .sk-tab.on small { color: var(--sk-tabsub, #5a6677); }
 .sk-tab .sk-tabx { padding: 4px 8px 4px 0; color: var(--muted); font-size: 1rem; line-height: 1; }
 .sk-tabadd { font: 600 0.82rem var(--font-body); border: 1px dashed var(--line); background: transparent; color: var(--accent); padding: 5px 10px; border-radius: var(--radius) var(--radius) 0 0; cursor: pointer; }
 @media (max-width: 760px) { .sk-head { position: static; } }
@@ -1217,7 +1217,10 @@ html:not(.sk-mob) .sk-side > details.sk-sec[data-sec="style"] { display: none; }
 .sk-check { display: inline-flex; gap: 5px; align-items: center; font-size: 0.88rem; }
 .sk-check input[type="number"] { padding: 4px 6px; }
 .sk-layers { padding-left: 10px; border-left: 1px solid var(--line); }
-.sk-stage { position: relative; background: #e9edec; border: 1px solid var(--line); border-radius: var(--radius); padding: 10px; }
+.sk-stage { position: relative; background: var(--sk-desk, #e9edec); border: 1px solid var(--line); border-radius: var(--radius); padding: 10px; }
+/* dark mode: a dark desk round the sheet, so only the paper is white */
+:root[data-theme="dark"] .sk-app { --sk-desk: #0b1a24; --sk-tabink: var(--ink); --sk-tabsub: var(--muted); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .sk-app { --sk-desk: #0b1a24; --sk-tabink: var(--ink); --sk-tabsub: var(--muted); } }
 #sk-svg { display: block; width: 100%; margin: 0 auto; height: auto; background: #fff; box-shadow: 0 1px 4px rgba(0,0,0,.18); touch-action: none; user-select: none; -webkit-user-select: none; }
 /* cursors: Select shows a pointer over things it can pick; drawing tools show a crosshair everywhere on
    the sheet (even over existing items) with their own icon beside it; the pen shows a pen, the eraser an eraser */
@@ -3030,9 +3033,9 @@ footer .wrap { font-family: var(--font-body); }
 <script src="js/news-feed.js?v=20261122b"></script>
 <script src="js/news-archive.js?v=20261122b"></script>
 <script src="js/pages.js?v=20261122b"></script>
-<script src="js/tools/sketch-templates.js?v=20261129f"></script>
-<script src="js/tools/sketch.js?v=20261129f"></script>
-<script src="js/tools/drawing-check.js?v=20261129f"></script>
+<script src="js/tools/sketch-templates.js?v=20261129g"></script>
+<script src="js/tools/sketch.js?v=20261129g"></script>
+<script src="js/tools/drawing-check.js?v=20261129g"></script>
 <script src="js/tools/hydraulics.js?v=20261127a"></script>
 <script src="js/tools/pipeflow.js?v=20261127a"></script>
 <script src="js/tools/catchment.js?v=20261127a"></script>
@@ -3044,7 +3047,7 @@ footer .wrap { font-family: var(--font-body); }
 <script src="js/tools/culvert.js?v=20261127a"></script>
 <script src="js/tools/site-diary.js?v=20261127a"></script>
 <script src="js/learn.js?v=20261127m"></script>
-<script src="js/site.js?v=20261129f"></script>
+<script src="js/site.js?v=20261129g"></script>
 <script src="js/art.js?v=20261127m"></script>
 </body>
 </html>
