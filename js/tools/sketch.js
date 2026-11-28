@@ -60,13 +60,13 @@
     wl: '<path d="M7 5h10l-5 7z"/><path d="M5 15h14M8 18h8M10.5 21h3"/>'
   };
   var TOOLS = {
-    free: [["select", "Select"], ["xform", "Move/resize"], ["pen", "Pen"], ["eraser", "Eraser"], ["hatch", "Hatch"], ["text", "Text"], ["leader", "Leader"], ["dim", "Dimension"]],
-    struct: [["select", "Select"], ["xform", "Move/resize"], ["member", "Member"], ["pin", "Pin"], ["roller", "Roller"], ["fixed", "Fixed"], ["pload", "Point load"], ["udl", "UDL"], ["moment", "Moment"], ["dim", "Dimension"], ["hatch", "Hatch"], ["text", "Text"], ["leader", "Leader"], ["eraser", "Eraser"]],
+    free: [["select", "Select"], ["pen", "Pen"], ["eraser", "Eraser"], ["hatch", "Hatch"], ["text", "Text"], ["leader", "Leader"], ["dim", "Dimension"]],
+    struct: [["select", "Select"], ["member", "Member"], ["pin", "Pin"], ["roller", "Roller"], ["fixed", "Fixed"], ["pload", "Point load"], ["udl", "UDL"], ["moment", "Moment"], ["dim", "Dimension"], ["hatch", "Hatch"], ["text", "Text"], ["leader", "Leader"], ["eraser", "Eraser"]],
     kit: [["member", "Member"], ["pin", "Pin"], ["roller", "Roller"], ["fixed", "Fixed"], ["pload", "Point load"], ["udl", "UDL"], ["moment", "Moment"]], /* beam and frame diagram kit, a group in All tools */
     shapes: [["line", "Line"], ["arrow", "Arrow"], ["rect", "Rectangle"], ["circle", "Circle"], ["poly", "Polygon"], ["section", "Section"], ["north", "North"], ["veg", "Vegetation"], ["brk", "Break line"], ["cloud", "Rev cloud"], ["slope", "Slope"], ["wl", "Water level"], ["image", "Image"], ["inset", "Detail window"], ["window", "New viewport"]]
   };
   var HINTS = {
-    select: "Click to select, drag a box to select several, Shift or Ctrl click to add or remove. Drag to move, Delete removes, Ctrl+C / Ctrl+V copy and paste, Ctrl+D duplicates, Ctrl+A selects all, Esc clears.",
+    select: "Click to select, drag a box to select several, Shift or Ctrl click to add or remove. Drag to move, drag a corner square to resize, drag the round grip above to rotate (Shift for 15° steps). Delete removes, Ctrl+C / Ctrl+V copy and paste, Ctrl+D duplicates, Ctrl+A selects all, Esc clears.",
     pen: "Draw freehand. Ctrl+Z undoes the last stroke.",
     line: "Drag to draw a straight line. Hold Shift to keep it horizontal, vertical or at 45°.",
     eraser: "Drag over anything to rub it out. Locked items are left alone.",
@@ -128,7 +128,8 @@
   /* One set of tools: the beam and frame kit is a group in All tools rather than a separate mode. Anyone who
      was in the old beam and frame mode gets the kit on their toolbar. */
   var KIT = TOOLS.kit.map(function (t) { return t[0]; });
-  if (S.mode === "struct") { S.pins = S.pins || {}; var pf0 = (S.pins.free || ["select", "xform", "pen", "line", "rect", "text", "dim", "leader", "hatch", "eraser"]).slice(); KIT.forEach(function (k) { if (pf0.indexOf(k) < 0) pf0.push(k); }); S.pins.free = pf0; S.mode = "free"; }
+  if (S.pins) Object.keys(S.pins).forEach(function (k0) { if (Array.isArray(S.pins[k0])) S.pins[k0] = S.pins[k0].filter(function (t0) { return t0 !== "xform"; }); }); /* Move/resize is part of Select now */
+  if (S.mode === "struct") { S.pins = S.pins || {}; var pf0 = (S.pins.free || ["select", "pen", "line", "rect", "text", "dim", "leader", "hatch", "eraser"]).slice(); KIT.forEach(function (k) { if (pf0.indexOf(k) < 0) pf0.push(k); }); S.pins.free = pf0; S.mode = "free"; }
   var mode = "free";
   var tool = { free: "pen", struct: "member" };
   var style = { c: COLORS[0][0], w: 2, ls: "solid", pat: "diag", fs: 14, veg: "tree", op: 1 };
@@ -602,7 +603,7 @@
     else if ("x" in n) { n.x += dx; n.y += dy; }
     return n;
   }
-  /* Scale an item about a point. Text, symbols and arrowheads grow with the geometric mean of the factors. */
+  /* Scale an item about a point. Symbols and arrowheads grow with the geometric mean of the factors; text sizes stay as set. */
   function scaleItem(o, ax, ay, fx, fy) {
     var n = clone(o), m = Math.sqrt(fx * fy), P = function (q) { return [r1(ax + (q[0] - ax) * fx), r1(ay + (q[1] - ay) * fy)]; };
     if (n.pts) n.pts = n.pts.map(P); if (n.holes) n.holes = n.holes.map(function (h) { return h.map(P); });
@@ -611,12 +612,31 @@
     if (n.type === "leader") { var bb = P([n.bx, n.by]); n.bx = bb[0]; n.by = bb[1]; if (!n.att) { var aa = P([n.ax, n.ay]); n.ax = aa[0]; n.ay = aa[1]; } }
     else if ("x" in n) { var xy = P([n.x, n.y]); n.x = xy[0]; n.y = xy[1]; }
     if (n.type === "image" || n.type === "inset") { n.w = r1(n.w * fx); n.h = r1(n.h * fy); }
-    if (n.type === "text") n.size = Math.max(4, r1((n.size || 18) * m));
-    if (n.fs) n.fs = Math.max(4, r1(n.fs * m));
+    /* text keeps its size: set it in the item's options, not by stretching */
     if (n.type === "veg") n.r = r1((n.r || 40) * m);
     else if (n.s != null || /^(north|wl|slope)$/.test(n.type)) n.s = r1((n.s || 1) * m * 100) / 100;
     if (n.type === "dim" && n.o != null) n.o = r1(n.o * m);
     return n;
+  }
+  /* Rotate an item about a point by deg (clockwise on the sheet). Lines and outlines turn their points; rectangles,
+     clouds, text and symbols keep their shape and carry an angle (xr) that's drawn as a turn about their centre. */
+  function rotateItem(o, cx, cy, deg) {
+    var n = clone(o), a = deg * Math.PI / 180, ca = Math.cos(a), sa = Math.sin(a), R = function (x, y) { var dx = x - cx, dy = y - cy; return [r1(cx + dx * ca - dy * sa), r1(cy + dx * sa + dy * ca)]; }, P = function (q) { return R(q[0], q[1]); };
+    var addR = function () { n.xr = Math.round((((n.xr || 0) + deg) % 360 + 360) % 360 * 10) / 10; if (!n.xr) delete n.xr; };
+    if (n.pts) n.pts = n.pts.map(P); if (n.holes) n.holes = n.holes.map(function (h) { return h.map(P); });
+    if (n.seed) { var sd = R(n.seed.x, n.seed.y); n.seed = { x: sd[0], y: sd[1] }; }
+    if ("x1" in n) {
+      if (n.type === "rect" || n.type === "cloud") { var mx = (n.x1 + n.x2) / 2, my = (n.y1 + n.y2) / 2, m2 = R(mx, my), ddx = m2[0] - mx, ddy = m2[1] - my; n.x1 = r1(n.x1 + ddx); n.x2 = r1(n.x2 + ddx); n.y1 = r1(n.y1 + ddy); n.y2 = r1(n.y2 + ddy); addR(); }
+      else { var a1 = R(n.x1, n.y1), b1 = R(n.x2, n.y2); n.x1 = a1[0]; n.y1 = a1[1]; n.x2 = b1[0]; n.y2 = b1[1]; }
+    }
+    if (n.type === "leader") { var bb = R(n.bx, n.by); n.bx = bb[0]; n.by = bb[1]; if (!n.att) { var aa = R(n.ax, n.ay); n.ax = aa[0]; n.ay = aa[1]; } }
+    else if ("x" in n && !("x1" in n) && n.type !== "inset") { var xy = R(n.x, n.y); n.x = xy[0]; n.y = xy[1]; if (n.type === "image") n.rot = ((n.rot || 0) + deg) % 360; else addR(); }
+    return n;
+  }
+  function rotT(it) {
+    if (!it.xr) return "";
+    var cx = "x1" in it ? (it.x1 + it.x2) / 2 : it.x, cy = "x1" in it ? (it.y1 + it.y2) / 2 : it.y;
+    return ' transform="rotate(' + it.xr + " " + r1(cx) + " " + r1(cy) + ')"';
   }
   function replaceItem(n) { var a = doc().items; for (var i = 0; i < a.length; i++) if (a[i].id === n.id) { a[i] = n; return; } }
   function removeItem(id) { syncLeaders(); doc().items = doc().items.filter(function (it) { return it.id !== id; }); }
@@ -785,7 +805,7 @@
     side.insertBefore(sec("sheet", "Page settings", false, [sheet]), side.querySelector('[data-sec="layers"]'));
     var more = mk("button", "sk-btn sk-more", "More"); more.type = "button"; more.id = "sk-more"; more.setAttribute("aria-expanded", "false"); more.title = "All tools, style, view, page and layers"; toolrow.appendChild(more); /* phones: opens the side bar as a drawer */
     var main = mk("div", "sk-main"); main.id = "sk-main";
-    top.insertAdjacentHTML("beforeend", '<button type="button" class="sk-btn" id="sk-fit" title="See the whole sheet (0)" hidden>Fit sheet</button><button type="button" class="sk-btn" id="sk-full" title="Full screen (F)" aria-pressed="false">Full screen</button>');
+    top.insertAdjacentHTML("beforeend", '<button type="button" class="sk-btn" id="sk-fit" title="See the whole sheet (0)" disabled>Fit sheet</button><button type="button" class="sk-btn" id="sk-full" title="Full screen (F)" aria-pressed="false">Full screen</button>');
     top.querySelector(".sk-actions").appendChild($("sk-fit")); top.querySelector(".sk-actions").appendChild($("sk-full"));
     var hint = mk("p", "small sk-hint"); hint.id = "sk-hint";
     var row1 = mk("div", "sk-row1"); row1.appendChild($("sk-tabs")); row1.appendChild(top); /* sheet tabs and the undo/export bar share one row */
@@ -806,7 +826,8 @@
       if (it.type === "hatch") pats[patId(it.pat, it.c, it.ps, it.ha)] = patDef(it.pat, it.c, it.ps, it.ha);
       if (it.type === "inset") s += forExport ? insetBody(it) : '<g pointer-events="none">' + insetBody(it) + "</g>";
       var opA = it.op != null && it.op < 1 ? ' opacity="' + it.op + '"' : "";
-      s += forExport ? (opA ? "<g" + opA + ">" + draw(it) + "</g>" : draw(it)) : '<g data-id="' + it.id + '"' + (isOn(it) ? ' class="sk-on"' : "") + '><g class="v"' + opA + ">" + draw(it) + "</g>" + (locked(it) ? "" : hit(it)) + "</g>";
+      var rt = rotT(it), dr = rt ? "<g" + rt + ">" + draw(it) + "</g>" : draw(it), ht = locked(it) ? "" : rt ? "<g" + rt + ">" + hit(it) + "</g>" : hit(it);
+      s += forExport ? (opA ? "<g" + opA + ">" + dr + "</g>" : dr) : '<g data-id="' + it.id + '"' + (isOn(it) ? ' class="sk-on"' : "") + '><g class="v"' + opA + ">" + dr + "</g>" + ht + "</g>";
     });
     return { s: s, defs: Object.keys(pats).map(function (p) { return pats[p]; }).join("") };
   }
@@ -1071,7 +1092,7 @@
   function applyView() {
     if (zv && Math.abs(zv.s - 1) < 0.01 && Math.abs(zv.tx) < 1 && Math.abs(zv.ty) < 1) zv = null;
     svg.style.transformOrigin = "0 0"; svg.style.transform = zv ? "translate(" + r1(zv.tx) + "px," + r1(zv.ty) + "px) scale(" + zv.s + ")" : "";
-    measureK(); renderUI(); var fb = $("sk-fit"); if (fb) fb.hidden = !zv;
+    measureK(); renderUI(); var fb = $("sk-fit"); if (fb) fb.disabled = !zv; /* always shown, so the bar doesn't jump about while zooming */
   }
   function zoomAt(c, f) {
     var v = zv || { s: 1, tx: 0, ty: 0 }, o = svgHome(), ns = Math.min(40, Math.max(0.3, v.s / f)), q = ns / v.s;
@@ -1083,7 +1104,7 @@
   var underKey = "";
   function renderAll() {
     var d = doc(), G = geo();
-    svg.setAttribute("viewBox", vbStr()); fitSheet(); var fb0 = $("sk-fit"); if (fb0) fb0.hidden = !zv;
+    svg.setAttribute("viewBox", vbStr()); fitSheet(); var fb0 = $("sk-fit"); if (fb0) fb0.disabled = !zv;
     stage.classList.toggle("port", d.orient === "port");
     $("sk-bg").setAttribute("width", G.W); $("sk-bg").setAttribute("height", G.H);
     measureK();
@@ -1225,13 +1246,16 @@
       }
     }
     xbox = null;
-    if (sel && sel.k !== "img" && (tool[mode] === "xform" || (tool[mode] === "select" && isSet()))) { /* a detail, group or several items: move and resize grips straight away */
-      var xl = selList(); if (xl.length && !xl.some(locked)) {
+    if (sel && sel.k !== "img" && (tool[mode] === "select" || tool[mode] === "xform")) { /* Select moves, resizes and rotates: a box with corner grips and a rotate grip */
+      var xl = selList(), one = !isSet() && xl.length === 1 ? xl[0] : null, boxGrips = !one || /^(stroke|hatch|poly|cloud)$/.test(one.type);
+      if (xl.length && !xl.some(locked) && !(one && one.type === "inset")) {
         var xb = null; xl.forEach(function (gi) { var e3 = gContent.querySelector('[data-id="' + gi.id + '"] .v'); if (!e3) return; try { var b3 = e3.getBBox(); if (!xb) xb = { x1: b3.x, y1: b3.y, x2: b3.x + b3.width, y2: b3.y + b3.height }; else { xb.x1 = Math.min(xb.x1, b3.x); xb.y1 = Math.min(xb.y1, b3.y); xb.x2 = Math.max(xb.x2, b3.x + b3.width); xb.y2 = Math.max(xb.y2, b3.y + b3.height); } } catch (er) {} });
         if (xb && xb.x2 - xb.x1 + xb.y2 - xb.y1 > 2) {
-          xbox = xb; o = o.replace(/<(circle|rect) data-h="(?!xs)[^"]*"[^>]*\/>/g, "");
-          o += '<rect x="' + r1(xb.x1) + '" y="' + r1(xb.y1) + '" width="' + r1(xb.x2 - xb.x1) + '" height="' + r1(xb.y2 - xb.y1) + '" class="sk-sel" stroke-width="1.5"/>';
-          [[xb.x1, xb.y1], [xb.x2, xb.y1], [xb.x2, xb.y2], [xb.x1, xb.y2]].forEach(function (q, i) { o += hnd("xs" + i, q[0], q[1], "sq"); });
+          if (one && one.xr) boxGrips = true; xbox = xb; if (!one || one.xr) o = o.replace(/<(circle|rect) data-h="(?!xs)[^"]*"[^>]*\/>/g, "");
+          if (boxGrips) { o += '<rect x="' + r1(xb.x1) + '" y="' + r1(xb.y1) + '" width="' + r1(xb.x2 - xb.x1) + '" height="' + r1(xb.y2 - xb.y1) + '" class="sk-sel" stroke-width="1.5"/>';
+            [[xb.x1, xb.y1], [xb.x2, xb.y1], [xb.x2, xb.y2], [xb.x1, xb.y2]].forEach(function (q, i) { o += hnd("xs" + i, q[0], q[1], "sq"); }); }
+          var rgx = (xb.x1 + xb.x2) / 2, rgy = xb.y1 - 30 * Math.max(k, 1);
+          o += '<line x1="' + r1(rgx) + '" y1="' + r1(xb.y1) + '" x2="' + r1(rgx) + '" y2="' + r1(rgy) + '" class="sk-sel" stroke-width="1"/>' + hnd("xrot", rgx, rgy);
         }
       }
     }
@@ -1262,7 +1286,7 @@
   }
   /* Pinned tools sit at the top of the side bar; every tool is under "All tools", where the pin on each
      one adds it to or removes it from the pinned set. The set is remembered per mode. */
-  var PIN_DEF = { free: ["select", "xform", "pen", "line", "rect", "text", "dim", "leader", "hatch", "eraser"], struct: ["select", "xform", "member", "pin", "roller", "pload", "udl", "dim", "text", "eraser"] };
+  var PIN_DEF = { free: ["select", "pen", "line", "rect", "text", "dim", "leader", "hatch", "eraser"], struct: ["select", "member", "pin", "roller", "pload", "udl", "dim", "text", "eraser"] };
   function pinsFor(md) { S.pins = S.pins || {}; return S.pins[md] || PIN_DEF[md].slice(); }
   function togglePin(id) { var p = pinsFor(mode), i = p.indexOf(id); if (i > -1) { if (p.length > 1) p.splice(i, 1); } else p.push(id); S.pins[mode] = p; persist(); renderTools(); }
   function renderTools() {
@@ -1643,6 +1667,7 @@
     e.preventDefault();
     var h = e.target.closest("[data-h]");
     if (h && /^xs\d$/.test(h.dataset.h) && sel && xbox) { begin(); var ci = +h.dataset.h[2], cx0 = ci === 0 || ci === 3 ? xbox.x2 : xbox.x1, cy0 = ci < 2 ? xbox.y2 : xbox.y1; drag = { type: "xs", orig: clone(selList()), ax: cx0, ay: cy0, cx: ci === 0 || ci === 3 ? xbox.x1 : xbox.x2, cy: ci < 2 ? xbox.y1 : xbox.y2 }; return; }
+    if (h && h.dataset.h === "xrot" && sel && xbox) { begin(); var rcx = (xbox.x1 + xbox.x2) / 2, rcy = (xbox.y1 + xbox.y2) / 2; drag = { type: "xrot", orig: clone(selList()), cx: rcx, cy: rcy, a0: Math.atan2(p.y - rcy, p.x - rcx) }; return; }
     if (h && h.dataset.h === "gmv" && isSet()) { var gml = selList(); if (!gml.some(locked)) { begin(); drag = { type: "gmove", orig: clone(gml), start: p }; } return; }
     if (h && h.dataset.h !== "first" && sel) {
       begin();
@@ -1797,6 +1822,9 @@
         else if (hh === "isz") { var ar0 = drag.orig.h / drag.orig.w, nw = Math.max(10, p.x - it.x); it.w = r1(nw); it.h = r1(e.shiftKey ? Math.max(10, p.y - it.y) : nw * ar0); }
         else if (hh[0] === "v") { var qv = snapPt(p); it.pts[+hh.slice(1)] = [qv.x, qv.y]; }
         replaceItem(it); renderContent(); return;
+      case "xrot":
+        var da = (Math.atan2(p.y - drag.cy, p.x - drag.cx) - drag.a0) * 180 / Math.PI, st = e.shiftKey ? 15 : 1; da = Math.round(da / st) * st;
+        drag.orig.forEach(function (o) { replaceItem(rotateItem(o, drag.cx, drag.cy, da)); }); syncLeaders(); renderContent(); status("Rotated " + ((da % 360 + 540) % 360 - 180) + "°" + (e.shiftKey ? "" : ". Hold Shift for 15° steps.")); return;
       case "xs":
         var fx = (p.x - drag.ax) / ((drag.cx - drag.ax) || 1), fy = (p.y - drag.ay) / ((drag.cy - drag.ay) || 1);
         if (!e.shiftKey) { var uf = Math.max(0.05, (fx + fy) / 2); fx = fy = uf; } else { fx = Math.max(0.05, fx); fy = Math.max(0.05, fy); }
@@ -3156,6 +3184,9 @@
   var ctxEl = null;
   function closeCtx() { if (ctxEl) { ctxEl.remove(); ctxEl = null; } }
   function ctxMenu(e) {
+    if (tool[mode] !== "select" && e.type === "contextmenu" && !mapMode) { /* right-click with a drawing tool: finish what's in hand and go back to Select */
+      e.preventDefault(); closeCtx(); if (drag && drag.type !== "xs") drag = null; toolLock = null; setTool("select"); status("Back to Select."); return;
+    }
     var g = e.target.closest && e.target.closest("[data-id]"), it = g && svg.contains(g) ? byId(g.dataset.id) : null;
     if (it && selList().indexOf(it) < 0) setSel([it]);
     var l = selList(); if (!l.length) { closeCtx(); return; }
