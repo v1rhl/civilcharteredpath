@@ -386,7 +386,7 @@
         return (it.mask !== false ? '<rect x="' + r1(it.x - 4) + '" y="' + r1(it.y - 2) + '" width="' + r1(mw + 8) + '" height="' + r1(ls.length * sz * 1.25 + 4) + '" fill="#fff"/>' : "") + '<text font-family="' + FONT + '" font-size="' + sz + '" fill="' + c + '"' + (it.bold ? ' font-weight="bold"' : "") + ">" + ls.map(function (l, j) { return '<tspan x="' + it.x + '" y="' + r1(it.y + sz * 0.85 + j * sz * 1.25) + '">' + (esc(l) || " ") + "</tspan>"; }).join("") + "</text>";
       case "arrow": return arrow(it.x1, it.y1, it.x2, it.y2, c, it.w, it.ah || Math.max(11, it.w * 4)).replace("<line ", "<line" + dash(it.ls, it.w) + " ");
       case "rect": return '<rect x="' + Math.min(it.x1, it.x2) + '" y="' + Math.min(it.y1, it.y2) + '" width="' + r1(Math.abs(it.x2 - it.x1)) + '" height="' + r1(Math.abs(it.y2 - it.y1)) + '" fill="' + (it.fill ? "#fff" : "none") + '" stroke="' + c + '" stroke-width="' + it.w + '" stroke-linejoin="round"' + dash(it.ls, it.w) + "/>";
-      case "circle": return '<circle cx="' + it.x1 + '" cy="' + it.y1 + '" r="' + r1(Math.hypot(it.x2 - it.x1, it.y2 - it.y1)) + '" fill="none" stroke="' + c + '" stroke-width="' + it.w + '"' + dash(it.ls, it.w) + "/>";
+      case "circle": return '<circle cx="' + it.x1 + '" cy="' + it.y1 + '" r="' + r1(Math.hypot(it.x2 - it.x1, it.y2 - it.y1)) + '" fill="' + (it.fill || "none") + '" stroke="' + c + '" stroke-width="' + it.w + '"' + dash(it.ls, it.w) + "/>";
       case "poly": return '<path d="' + (it.open ? opath(it.pts) : poly(it.pts)) + '" fill="none" stroke="' + c + '" stroke-width="' + it.w + '" stroke-linejoin="round"' + dash(it.ls, it.w) + "/>";
       case "cloud": return '<path d="' + cloudPath(it) + '" fill="none" stroke="' + c + '" stroke-width="' + (it.w || 2) + '" stroke-linejoin="round"/>';
       case "brk":
@@ -2439,7 +2439,7 @@
     var iv = +$("sk-mapiv").value, sheet = d, key = m.e + "," + m.n;
     mapStatus("Fetching LiDAR terrain from the Environment Agency (" + nx + " × " + ny + " cells at " + cell + " m)…");
     fetch(url).then(function (r) { if (!r.ok) throw new Error("the EA service answered " + r.status); return r.text(); }).then(function (t) {
-      var g = R.parseWcsText(t), c = traceContours(g, iv, m.e, m.n);
+      var g = R.parseWcsText(t); if (noTerrain(g)) { mapStatus(NO_LIDAR); return; } var c = traceContours(g, iv, m.e, m.n);
       if (!sheet.map || sheet.map.e + "," + sheet.map.n !== key) return;
       terrain = { sheet: sheet, fine: g, wide: terrain && terrain.sheet === sheet && !terrain.file ? terrain.wide : null };
       if (cb) cb(g);
@@ -2477,8 +2477,16 @@
     var R = RO(), url = R.EA_WCS + "?service=WCS&version=2.0.1&request=GetCoverage&coverageId=" + R.EA_COVERAGE + "&subset=E(" + x0 + "," + (x0 + n * cell) + ")&subset=N(" + y0 + "," + (y0 + n * cell) + ")&scaleSize=i(" + n + "),j(" + n + ")&format=text%2Fplain";
     mapStatus("Fetching " + (n * cell / 1000).toFixed(1) + " km of LiDAR round that point from the Environment Agency (" + cell + " m cells)…");
     fetch(url).then(function (r) { if (!r.ok) throw new Error("the EA service answered " + r.status); return r.text(); }).then(function (t) {
-      var g = R.parseWcsText(t); terrain = { sheet: d, fine: terrain && terrain.sheet === d ? terrain.fine : null, wide: g }; cb(g);
+      var g = R.parseWcsText(t); if (noTerrain(g)) { mapStatus(NO_LIDAR); return; } terrain = { sheet: d, fine: terrain && terrain.sheet === d ? terrain.fine : null, wide: g }; cb(g);
     }).catch(function (er) { mapStatus("Couldn't fetch LiDAR: " + er.message + ". The EA's LiDAR covers England only."); });
+  }
+  /* Outside England the EA service still answers, but with zeros or blanks: a flat sheet of water that would
+     send flow lines everywhere. Treat that as no terrain. */
+  var NO_LIDAR = "The Environment Agency has no LiDAR there: it covers England only. For Wales or Scotland, download a DTM (for example Natural Resources Wales LiDAR from DataMapWales, or the Scottish remote sensing portal) as an .asc file and use Load LiDAR file.";
+  function noTerrain(g) {
+    var n = 0, lo = Infinity, hi = -Infinity, step = Math.max(1, Math.floor(g.z.length / 20000));
+    for (var q = 0; q < g.z.length; q += step) { var v = g.z[q]; if (v === v && v !== 0) { n++; if (v < lo) lo = v; if (v > hi) hi = v; } }
+    return n < 0.2 * g.z.length / step || hi - lo < 0.05;
   }
   function terrainSrc() { var m = doc().map; return m && m.csrc === "file" && m.c && m.c.src ? m.c.src : "EA LiDAR DTM © Environment Agency (OGL)"; }
 
@@ -2634,11 +2642,11 @@
         if (!loops.length) { mapStatus("That catchment lies outside the map area."); return; }
         loops.sort(function (a2, b2) { return shoelace(b2) - shoelace(a2); });
         var gid = "cat" + Date.now().toString(36), B = "#0d6b78", RED = "#d6452f", out = [], cw = function (k2) { var w = bng2w(cE(k2), cN(k2)); return [r1(w.x), r1(w.y)]; };
-        out.push(base("hatch", { pts: loops[0], holes: loops.slice(1), pat: "diag", ps: 2, outline: true, w: 2, ls: "dashed", c: B, g: gid }));
+        out.push(base("hatch", { pts: loops[0], holes: loops.slice(1), pat: "none", bg: B, bo: 0.3, outline: true, w: 2, ls: "solid", c: B, g: gid })); /* shaded like the Catchment runoff tool */
         var fp = dpS(cat.path.map(cw).filter(inI), Math.max(1, g.cell / mapFrame().mu * 0.6));
         if (fp.length > 1) out.push(base("poly", { pts: fp, open: true, w: 3, ls: "solid", c: RED, g: gid }));
         var ow = cw(outlet), rO = 9;
-        out.push(base("circle", { x1: ow[0], y1: ow[1], x2: r1(ow[0] + rO), y2: ow[1], w: 3, ls: "solid", c: "#15233a", g: gid }));
+        out.push(base("circle", { x1: ow[0], y1: ow[1], x2: r1(ow[0] + rO), y2: ow[1], w: 2.5, ls: "solid", c: "#15233a", fill: "#f2b705", g: gid }));
         out.push(base("text", { x: r1(ow[0] + 13), y: r1(ow[1] - 8), text: "Outlet " + cat.zOut.toFixed(2) + " m AOD", size: 11, bold: true, mask: true, c: "#15233a", g: gid }));
         var A = cat.area, s1085 = isFinite(cat.slope1085) && cat.slope1085 > 0 ? cat.slope1085 : cat.slope, at = (A / 10000).toFixed(A >= 1e5 ? 1 : 2) + " ha";
         var tl = ["Catchment " + at + " (" + cat.cells.toLocaleString("en-GB") + " cells)", "Longest flow path " + Math.round(cat.L) + " m, " + cat.zTop.toFixed(1) + " to " + cat.zOut.toFixed(1) + " m AOD", "Slope along path " + (s1085 * 100).toFixed(2) + " % (10–85%)", "Outlet E " + Math.round(cE(outlet)) + ", N " + Math.round(cN(outlet))];
@@ -2646,7 +2654,7 @@
         var twm = 0; tl.forEach(function (t) { twm = Math.max(twm, tw(t, 12)); });
         out.push(base("text", { x: r1(cx - twm / 2), y: r1(cy - 30), text: tl.join("\n"), size: 12, mask: true, c: "#15233a", g: gid }));
         begin(); out.forEach(function (x) { d.items.push(x); }); commit(); persist(); setSel(out);
-        mapStatus("Catchment of " + at + " from " + g.cell + " m LiDAR cells: outline dashed, longest flow path in red, outlet circled. " + (cat.touchesEdge ? "It still runs off the edge of the terrain, so the real catchment is bigger" + (terrain.file ? ": load a larger LiDAR file." : ".") + " " : "") + "Indicative only: drains, culverts and buildings aren't in the terrain model, so check it on site.");
+        mapStatus("Catchment of " + at + " from " + g.cell + " m LiDAR cells: catchment shaded, longest flow path in red, outlet in yellow. " + (cat.touchesEdge ? "It still runs off the edge of the terrain, so the real catchment is bigger" + (terrain.file ? ": load a larger LiDAR file." : ".") + " " : "") + "Indicative only: drains, culverts and buildings aren't in the terrain model, so check it on site.");
     };
     getWide(c, run);
   }
