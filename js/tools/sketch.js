@@ -816,11 +816,11 @@
   function tbGet(key) { var d = doc(), m = /^r\.(\d+)\.(\w+)$/.exec(key); if (m) return ((d.revs || [])[+m[1]] || {})[m[2]] || ""; if (key === "note") return d.tb.note == null ? (d.dscale ? NOTE_SC : NOTE) : d.tb.note; if (key === "scale") return d.tb.scale == null ? (d.dscale ? nS(d.dscale) + " at " + (d.paper || "A4") : "NTS") : d.tb.scale; return d.tb[key] || ""; }
   function tbSet(key, v) { var d = doc(), m = /^r\.(\d+)\.(\w+)$/.exec(key); if (m) { d.revs = d.revs || []; while (d.revs.length <= +m[1]) d.revs.push({ rev: "", date: "", desc: "", by: "" }); d.revs[+m[1]][m[2]] = v; } else d.tb[key] = v; }
   /* Scale bar: a round length of about 60 to 100 mm on paper, in alternate black and white blocks. */
-  function scaleBar(G, d) { return sbarAt(G.inner.x + 16, G.inner.y + G.inner.h - (d.map ? 34 : 22), d.dscale, 320, " at " + (d.paper || "A4")); }
+  function scaleBar(G, d) { return sbarAt(G.inner.x + 16, G.inner.y + G.inner.h - (d.map ? 34 : 22), d.dscale, 320, " at " + (d.paper || "A4"), true); } /* always on a white box, so it reads over a map */
   function sbarAt(x0, y0, N, maxW, extra, mask) {
     var mPerU = N / 4000, target = maxW * mPerU, p10 = Math.pow(10, Math.floor(Math.log10(target))), L = [1, 2, 5, 10].map(function (x) { return x * p10; }).filter(function (x) { return x <= target * 1.25; }).pop() || p10;
     var n = /^[15]/.test(String(L / p10)) ? 5 : 4, seg = L / n / mPerU, c = "#15233a", o = '<g class="sk-sbar">';
-    if (mask) o += '<rect x="' + r1(x0 - 10) + '" y="' + r1(y0 - 17) + '" width="' + r1(n * seg + 24 + tw(nS(N) + (extra || ""), 8.5)) + '" height="29" fill="#fff" fill-opacity="0.92" stroke="' + c + '" stroke-width="0.6"/>';
+    if (mask) o += '<rect x="' + r1(x0 - 10) + '" y="' + r1(y0 - 17) + '" width="' + r1(n * seg + 24 + tw(nS(N) + (extra || ""), 8.5)) + '" height="29" fill="#fff" stroke="' + c + '" stroke-width="0.6"/>';
     for (var i = 0; i < n; i++) o += '<rect x="' + r1(x0 + i * seg) + '" y="' + y0 + '" width="' + r1(seg) + '" height="6" fill="' + (i % 2 ? "#fff" : c) + '" stroke="' + c + '" stroke-width="0.8"/>';
     var lab = function (v) { return v >= 1000 ? v / 1000 + " km" : v >= 1 ? +v.toFixed(2) + " m" : Math.round(v * 1000) + " mm"; };
     o += txt(x0, y0 - 4, "0", c, 9, "middle") + txt(x0 + n * seg / 2, y0 - 4, lab(L / 2), c, 9, "middle") + txt(x0 + n * seg, y0 - 4, lab(L), c, 9, "middle") + txt(x0 + n * seg + 10, y0 + 6, nS(N) + (extra || ""), "#5a6677", 8.5, "start");
