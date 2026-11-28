@@ -518,16 +518,12 @@
   function insetScale(it) { var N = insetN(it); return N ? "1:" + N : "×" + (it.k || 2); }
   function insetFrame(it) {
     var c = it.c || "#15233a";
-    if (it.blank) { /* a viewport: title top left and scale bar bottom left, inside the box on a white mask */
-      var tt = String(it.label || "Viewport").toUpperCase() + "  (" + insetScale(it) + ")", tsz = 13, twd = Math.min(it.w - 12, tw(tt, tsz, true) + 14);
-      return '<rect x="' + it.x + '" y="' + it.y + '" width="' + it.w + '" height="' + it.h + '" fill="none" stroke="' + c + '" stroke-width="2"/>' +
-        '<rect x="' + r1(it.x + 4) + '" y="' + r1(it.y + 4) + '" width="' + r1(twd) + '" height="22" fill="#fff" fill-opacity="0.92" stroke="' + c + '" stroke-width="0.6"/>' +
-        txt(it.x + 11, it.y + 20, tt, c, tsz, "start", ' font-weight="bold"') +
-        (it.sbar !== false && it.N ? sbarAt(it.x + 14, it.y + it.h - 14, it.N, Math.min(220, (it.w - 120) * 0.7), "", true) : "");
-    }
+    /* viewports and details: title top left and scale bar bottom left, inside the box on a white mask */
+    var tt = (it.blank ? String(it.label || "Viewport").toUpperCase() : "DETAIL " + (it.label || "1")) + "  (" + insetScale(it) + ")", tsz = 13, twd = Math.min(it.w - 12, tw(tt, tsz, true) + 14);
     return '<rect x="' + it.x + '" y="' + it.y + '" width="' + it.w + '" height="' + it.h + '" fill="none" stroke="' + c + '" stroke-width="2"/>' +
-      txt(it.x, it.y + it.h + 20, (it.blank ? String(it.label || "Window").toUpperCase() : "DETAIL " + (it.label || "1")) + "  (" + insetScale(it) + ")", c, 14, "start", ' font-weight="bold"') +
-      (it.sbar !== false && insetN(it) ? sbarAt(it.x + 4, it.y + it.h + 44, insetN(it), Math.min(260, it.w * 0.7)) : "");
+      '<rect x="' + r1(it.x + 4) + '" y="' + r1(it.y + 4) + '" width="' + r1(twd) + '" height="22" fill="#fff" fill-opacity="0.92" stroke="' + c + '" stroke-width="0.6"/>' +
+      txt(it.x + 11, it.y + 20, tt, c, tsz, "start", ' font-weight="bold"') +
+      (it.sbar !== false && insetN(it) ? sbarAt(it.x + 14, it.y + it.h - 14, insetN(it), Math.max(40, Math.min(220, (it.w - 120) * 0.7)), "", true) : "");
   }
   function insetBody(it) {
     if (it.blank) return '<rect x="' + it.x + '" y="' + it.y + '" width="' + it.w + '" height="' + it.h + '" fill="#fff"/>';
