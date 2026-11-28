@@ -1909,6 +1909,10 @@
   var SNAP_TOOLS = { curve: 1, line: 1, arrow: 1, rect: 1, circle: 1, poly: 1, member: 1, dim: 1, udl: 1, section: 1, brk: 1, slope: 1, cloud: 1, pin: 1, roller: 1, fixed: 1, pload: 1, moment: 1, wl: 1, hatch: 1, leader: 1 };
   /* while drawing to scale, the status line reads out the true length */
   function lenStatus(a, b, type) {
+    if (pend && pend.adim && pend.pts.length) { /* angle dimension: report the angle between the two lines at the corner, not the bearing of the leg */
+      var P = pend.pts; if (P.length === 1) { status("First line: click the corner where it meets the second line."); return; }
+      var v0 = P[1], t1 = Math.atan2(P[0][1] - v0[1], P[0][0] - v0[0]), t2 = Math.atan2(b.y - v0[1], b.x - v0[0]), dd = Math.abs(t2 - t1); if (dd > Math.PI) dd = 2 * Math.PI - dd;
+      status("Angle between the two lines at the corner: " + Math.round(dd * 1800 / Math.PI) / 10 + "°. Click the end of the second line."); return; }
     if (!measured() || !a) return; var A = a.x != null ? a : { x: a[0], y: a[1] }, dx = b.x - A.x, dy = b.y - A.y;
     if (type === "rect" || type === "cloud") status("Width " + fmtM(toM(Math.abs(dx))) + " × height " + fmtM(toM(Math.abs(dy))));
     else if (type === "circle") status("Radius " + fmtM(toM(Math.hypot(dx, dy))));
