@@ -53,7 +53,7 @@
   var TOOLS = {
     free: [["select", "Select"], ["xform", "Move/resize"], ["pen", "Pen"], ["eraser", "Eraser"], ["hatch", "Hatch"], ["text", "Text"], ["leader", "Leader"], ["dim", "Dimension"]],
     struct: [["select", "Select"], ["xform", "Move/resize"], ["member", "Member"], ["pin", "Pin"], ["roller", "Roller"], ["fixed", "Fixed"], ["pload", "Point load"], ["udl", "UDL"], ["moment", "Moment"], ["dim", "Dimension"], ["hatch", "Hatch"], ["text", "Text"], ["leader", "Leader"], ["eraser", "Eraser"]],
-    shapes: [["line", "Line"], ["arrow", "Arrow"], ["rect", "Rectangle"], ["circle", "Circle"], ["poly", "Polygon"], ["section", "Section"], ["north", "North"], ["brk", "Break line"], ["cloud", "Rev cloud"], ["slope", "Slope"], ["wl", "Water level"], ["image", "Image"], ["inset", "Detail window"], ["window", "Window"]]
+    shapes: [["line", "Line"], ["arrow", "Arrow"], ["rect", "Rectangle"], ["circle", "Circle"], ["poly", "Polygon"], ["section", "Section"], ["north", "North"], ["brk", "Break line"], ["cloud", "Rev cloud"], ["slope", "Slope"], ["wl", "Water level"], ["image", "Image"], ["inset", "Detail window"], ["window", "New viewport"]]
   };
   var HINTS = {
     select: "Click to select, drag a box to select several, Shift or Ctrl click to add or remove. Drag to move, Delete removes, Ctrl+C / Ctrl+V copy and paste, Ctrl+D duplicates, Ctrl+A selects all, Esc clears.",
@@ -81,7 +81,7 @@
     cloud: "Drag a box round the change to draw a revision cloud.",
     slope: "Drag along the top of the slope. The ticks point down the slope; Flip side if they're the wrong way.",
     xform: "Click or box-select items, then drag them to move, or drag a corner handle to resize them all together (Shift to stretch). Works on typical details and groups too.",
-    window: "Drag a box for a separate window on the sheet, such as a cross-section or detail, at its own scale with its own scale bar. Dimensions and areas inside it are measured at that scale.",
+    window: "Drag a box for a new viewport on the sheet, such as a cross-section or detail, at its own scale with its own scale bar. Dimensions and areas inside it are measured at that scale.",
     inset: "Drag a box round the part of the drawing or map to enlarge. A detail window at a larger scale is added: move it with Select, resize it from its square handle, and drag its round handle to change what it shows.",
     image: "Add a picture or screenshot to the drawing. You can also paste a screenshot straight in with Ctrl+V.",
     wl: "Click on the water line to place a water level marker, then type the level below."
@@ -126,7 +126,7 @@
   function newId(p) { var d = doc(); return (p || "i") + (d.seq++); }
 
   /* ---------- Undo ---------- */
-  function snap() { var d = doc(); return JSON.stringify({ items: d.items, under: d.under, tb: d.tb, orient: d.orient }); }
+  function snap() { var d = doc(); return JSON.stringify({ items: d.items, under: d.under, tb: d.tb, orient: d.orient, legItems: d.legItems || [], legpos: d.legpos }); }
   function begin() { if (before === null) before = snap(); }
   function commit() {
     syncLeaders(); reHatch(); try { syncSections(); } catch (er) {}
@@ -134,7 +134,7 @@
     if (before !== null && now !== before) { h.u.push(before); if (h.u.length > 60) h.u.shift(); h.r = []; }
     before = null; persist(); renderAll();
   }
-  function restore(str) { var o = JSON.parse(str), d = doc(); d.items = o.items; d.under = o.under; d.tb = o.tb; d.orient = o.orient; }
+  function restore(str) { var o = JSON.parse(str), d = doc(); d.items = o.items; d.under = o.under; d.tb = o.tb; d.orient = o.orient; d.legItems = o.legItems || []; if (o.legpos) d.legpos = o.legpos; }
   function undo() { var h = H(); if (!h.u.length) return; h.r.push(snap()); restore(h.u.pop()); sel = null; pend = null; persist(); renderAll(); renderProps(); }
   function redo() { var h = H(); if (!h.r.length) return; h.u.push(snap()); restore(h.r.pop()); sel = null; persist(); renderAll(); renderProps(); }
 
@@ -463,6 +463,13 @@
   function insetScale(it) { var N = insetN(it); return N ? "1:" + N : "×" + (it.k || 2); }
   function insetFrame(it) {
     var c = it.c || "#15233a";
+    if (it.blank) { /* a viewport: title top left and scale bar bottom left, inside the box on a white mask */
+      var tt = String(it.label || "Viewport").toUpperCase() + "  (" + insetScale(it) + ")", tsz = 13, twd = Math.min(it.w - 12, tw(tt, tsz, true) + 14);
+      return '<rect x="' + it.x + '" y="' + it.y + '" width="' + it.w + '" height="' + it.h + '" fill="none" stroke="' + c + '" stroke-width="2"/>' +
+        '<rect x="' + r1(it.x + 4) + '" y="' + r1(it.y + 4) + '" width="' + r1(twd) + '" height="22" fill="#fff" fill-opacity="0.92" stroke="' + c + '" stroke-width="0.6"/>' +
+        txt(it.x + 11, it.y + 20, tt, c, tsz, "start", ' font-weight="bold"') +
+        (it.sbar !== false && it.N ? sbarAt(it.x + 14, it.y + it.h - 14, it.N, Math.min(220, (it.w - 120) * 0.7), "", true) : "");
+    }
     return '<rect x="' + it.x + '" y="' + it.y + '" width="' + it.w + '" height="' + it.h + '" fill="none" stroke="' + c + '" stroke-width="2"/>' +
       txt(it.x, it.y + it.h + 20, (it.blank ? String(it.label || "Window").toUpperCase() : "DETAIL " + (it.label || "1")) + "  (" + insetScale(it) + ")", c, 14, "start", ' font-weight="bold"') +
       (it.sbar !== false && insetN(it) ? sbarAt(it.x + 4, it.y + it.h + 44, insetN(it), Math.min(260, it.w * 0.7)) : "");
@@ -492,9 +499,9 @@
     var d = doc(), x = Math.min(a.x, b.x), y = Math.min(a.y, b.y), w = Math.abs(b.x - a.x), h = Math.abs(b.y - a.y);
     if (w < 40 || h < 40) { status("Drag a box for the window."); return; }
     var N = d.dscale ? SCALES.filter(function (n) { return n <= d.dscale / 2; }).pop() || d.dscale : 20, n = d.items.filter(function (q) { return q.type === "inset" && q.blank; }).length + 1;
-    var it = addItem(base("inset", { blank: true, x: r1(x), y: r1(y), w: r1(w), h: r1(h), N: N, label: "Window " + n, c: "#15233a" }));
+    var it = addItem(base("inset", { blank: true, x: r1(x), y: r1(y), w: r1(w), h: r1(h), N: N, label: "Viewport " + n, c: "#15233a" }));
     selectAfterCreate(it);
-    status("Window added at 1:" + N + ". Draw in it: dimensions and areas inside it are measured at its own scale. Change the scale or title above.");
+    status("Viewport added at 1:" + N + ". Draw in it: dimensions and areas inside it are measured at its own scale. Change the scale or title above.");
   }
   function shifted(o, dx, dy) {
     var n = clone(o);
@@ -591,6 +598,7 @@
       '<label class="sk-check"><input type="checkbox" id="sk-showframe"> Frame</label>' +
       '<label class="sk-check">Title block <select id="sk-tbs"><option value="small">Small</option><option value="medium">Medium</option><option value="large">Large</option><option value="off">Off</option></select></label>' +
       '<label class="sk-check"><input type="checkbox" id="sk-rev"> Revisions</label><button type="button" class="sk-btn" id="sk-addrev">Add revision</button><button type="button" class="sk-btn" id="sk-delrev" title="Remove the last revision row">Remove last</button>' +
+      '<button type="button" class="sk-btn" id="sk-legedit" title="Build a legend from the line types and hatches on the drawing">Legend editor</button>' +
       '<label class="sk-check">Watermark <select id="sk-wm"><option value="">None</option><option>DRAFT</option><option>NOT FOR CONSTRUCTION</option><option>PRELIMINARY</option><option>FOR INFORMATION</option><option value="*">Your own text…</option></select></label><input type="text" id="sk-wmtext" placeholder="Watermark text" hidden style="width:12em">' +
       '<label class="sk-check"><input type="checkbox" id="sk-grid"> Grid</label>' +
       '<label class="sk-check">Scale <select id="sk-dscale"><option value="0">Not to scale</option>' + SCALES.map(function (n) { return '<option value="' + n + '">1:' + n + "</option>"; }).join("") + '</select></label><span class="small" id="sk-gridinfo"></span><label class="sk-check" id="sk-sbar-l"><input type="checkbox" id="sk-sbar"> Scale bar</label>' +
@@ -673,9 +681,10 @@
   function tbSet(key, v) { var d = doc(), m = /^r\.(\d+)\.(\w+)$/.exec(key); if (m) { d.revs = d.revs || []; while (d.revs.length <= +m[1]) d.revs.push({ rev: "", date: "", desc: "", by: "" }); d.revs[+m[1]][m[2]] = v; } else d.tb[key] = v; }
   /* Scale bar: a round length of about 60 to 100 mm on paper, in alternate black and white blocks. */
   function scaleBar(G, d) { return sbarAt(G.inner.x + 16, G.inner.y + G.inner.h - (d.map ? 34 : 22), d.dscale, 320, " at " + (d.paper || "A4")); }
-  function sbarAt(x0, y0, N, maxW, extra) {
+  function sbarAt(x0, y0, N, maxW, extra, mask) {
     var mPerU = N / 4000, target = maxW * mPerU, p10 = Math.pow(10, Math.floor(Math.log10(target))), L = [1, 2, 5, 10].map(function (x) { return x * p10; }).filter(function (x) { return x <= target * 1.25; }).pop() || p10;
     var n = /^[15]/.test(String(L / p10)) ? 5 : 4, seg = L / n / mPerU, c = "#15233a", o = '<g class="sk-sbar">';
+    if (mask) o += '<rect x="' + r1(x0 - 10) + '" y="' + r1(y0 - 17) + '" width="' + r1(n * seg + 24 + tw("1:" + N + (extra || ""), 8.5)) + '" height="29" fill="#fff" fill-opacity="0.92" stroke="' + c + '" stroke-width="0.6"/>';
     for (var i = 0; i < n; i++) o += '<rect x="' + r1(x0 + i * seg) + '" y="' + y0 + '" width="' + r1(seg) + '" height="6" fill="' + (i % 2 ? "#fff" : c) + '" stroke="' + c + '" stroke-width="0.8"/>';
     var lab = function (v) { return v >= 1000 ? v / 1000 + " km" : v >= 1 ? +v.toFixed(2) + " m" : Math.round(v * 1000) + " mm"; };
     o += txt(x0, y0 - 4, "0", c, 9, "middle") + txt(x0 + n * seg / 2, y0 - 4, lab(L / 2), c, 9, "middle") + txt(x0 + n * seg, y0 - 4, lab(L), c, 9, "middle") + txt(x0 + n * seg + 10, y0 + 6, "1:" + N + (extra || ""), "#5a6677", 8.5, "start");
@@ -688,6 +697,7 @@
       o += '<g class="sk-wm" opacity="0.13" pointer-events="none" transform="rotate(' + r1(wang) + " " + r1(wcx) + " " + r1(wcy) + ')">' + txt(wcx, wcy + wsz * 0.35, d.wm, "#7a1f1f", r1(wsz), "middle", ' font-weight="bold" letter-spacing="2"') + "</g>";
     }
     if (d.dscale && d.sbar !== false) o += scaleBar(G, d);
+    if (!mapLegOn() && d.legItems && d.legItems.length) o += legendStr(null, G.inner, forExport);
     if (d.frame !== false) o += '<rect x="' + G.inner.x + '" y="' + G.inner.y + '" width="' + G.inner.w + '" height="' + G.inner.h + '" fill="none" stroke="' + c + '" stroke-width="2"/>';
     if (G.tb.off) return o;
     var K = G.k, t = G.tbBlock, rh = G.rh, lw = Math.max(1, 1.6 * K);
@@ -751,7 +761,7 @@
     app.style.setProperty("--sk-top", th + "px");
     var avail = window.innerHeight - th - hh - $("sk-tabs").offsetHeight - (full ? 24 : 36);
     svg.style.maxWidth = Math.max(320, avail * G.W / G.H) + "px";
-    var mn = $("sk-main"); if ((document.documentElement.classList.contains("sk-lock") || full) && mn) { var over = mn.scrollHeight - mn.clientHeight; if (over > 0) svg.style.maxWidth = Math.max(320, (avail - over - 2) * G.W / G.H) + "px"; }
+    if (document.documentElement.classList.contains("sk-lock") || full) { var sh = stage.clientHeight - 22; if (sh > 120) svg.style.maxWidth = Math.max(320, sh * G.W / G.H) + "px"; } /* the stage fills what's left of the column */
     flyCheck();
   }
   /* A side section too long for the side bar opens as a panel beside it, its options flowed into columns,
@@ -1025,7 +1035,7 @@
     }
     if (!it) { p.innerHTML = ""; return; }
     updateCtx();
-    var NAMES = { inset: "Detail or window", image: "Image", arrow: "Arrow", rect: "Rectangle", circle: "Circle", poly: "Polygon", cloud: "Revision cloud", brk: "Break line", slope: "Slope marker", section: "Section marker", north: "North arrow", wl: "Water level", stroke: "Pen stroke", line: "Line", member: "Member", support: "Support", pload: "Point load", udl: "Distributed load", moment: "Moment", dim: "Dimension", text: "Text", leader: "Leader note", hatch: "Hatched area" };
+    var NAMES = { inset: "Detail or viewport", image: "Image", arrow: "Arrow", rect: "Rectangle", circle: "Circle", poly: "Polygon", cloud: "Revision cloud", brk: "Break line", slope: "Slope marker", section: "Section marker", north: "North arrow", wl: "Water level", stroke: "Pen stroke", line: "Line", member: "Member", support: "Support", pload: "Point load", udl: "Distributed load", moment: "Moment", dim: "Dimension", text: "Text", leader: "Leader note", hatch: "Hatched area" };
     var h = '<span class="sk-lab">' + NAMES[it.type] + "</span>";
     if (locked(it)) {
       h += '<span class="small">' + (doc().lockDraw ? "The drawing is locked. Untick \"Lock drawing\" to change it." : "Locked in place.") + "</span>";
@@ -1202,7 +1212,7 @@
   }
   function selectAfterCreate(it) { sel = { k: "item", id: it.id }; renderContent(); renderProps(); }
 
-  svg.addEventListener("pointerdown", function (e) { closeFly();
+  svg.addEventListener("pointerdown", function (e) { closeFly(); closeCtx(); if (e.button === 2) return;
     if (e.button === 1 || (e.button === 0 && spaceDown)) { e.preventDefault(); try { svg.setPointerCapture(e.pointerId); } catch (er) {} drag = { type: "zpan", cx: e.clientX, cy: e.clientY, v: zv ? { s: zv.s, tx: zv.tx, ty: zv.ty } : null }; stage.classList.add("sk-panning"); return; }
     if (e.button !== 0) return;
     measureK();
@@ -1557,7 +1567,7 @@
   var mapKeyV = "", tileCache = {}, tilePending = {};
   function RO() { return window.Runoff; }
   function mapFrame() { var d = doc(), G = geo(), mu = (d.dscale || 0) / 4000; return { cx: G.inner.x + G.inner.w / 2, cy: G.inner.y + G.inner.h / 2, mu: mu, inner: G.inner }; }
-  function mapKey() { var d = doc(), m = d.map; return m ? [m.e, m.n, d.dscale, d.paper, d.orient, d.tbs, m.show, m.osm, m.base, m.cont, m.op, m.cop, m.grey, m.box, m.c ? m.c.lines.length + ":" + m.c.iv + ":" + m.c.oe : "", JSON.stringify(m.on || {}), Object.keys(m.L || {}).map(function (k2) { return k2 + (m.L[k2].f || []).length; }).join(), m.leg, m.legpos, legVer, m.flow, m.fl ? m.fl.lines.length + ":" + m.fl.oe + ":" + m.fl.on : ""].join("|") : ""; }
+  function mapKey() { var d = doc(), m = d.map; return m ? [m.e, m.n, d.dscale, d.paper, d.orient, d.tbs, m.show, m.osm, m.base, m.cont, m.op, m.cop, m.grey, m.box, m.c ? m.c.lines.length + ":" + m.c.iv + ":" + m.c.oe : "", JSON.stringify(m.on || {}), Object.keys(m.L || {}).map(function (k2) { return k2 + (m.L[k2].f || []).length; }).join(), m.leg, m.legpos, legVer, JSON.stringify(d.legItems || []), m.flow, m.fl ? m.fl.lines.length + ":" + m.fl.oe + ":" + m.fl.on : ""].join("|") : ""; }
   /* contours and vector layers are stored in metres from their own origin, so the map can move under them */
   function cOff(m, c) { return [(c.oe == null ? m.e : c.oe) - m.e, (c.on == null ? m.n : c.on) - m.n]; }
   function mapLayers() { return MAPL.concat(doc().map && doc().map.extra || []); }
@@ -1656,8 +1666,14 @@
      geology the units actually showing are found by matching the colours in the fetched map image to
      the BGS service's own renderer (its published key), and listed by their BGS LEX-RCS codes. */
   var bgsRend = {}, bgsUnits = {}, legVer = 0;
+  function mapLegOn() { var d = doc(), m = d.map; return !!(m && m.show !== false && d.dscale && m.leg && RO()); }
+  function legSwatch(L, x, y, sw, lh) { /* a legend entry's sample, drawn with the item renderer so it matches the drawing */
+    if (L.kind === "hatch") return '<defs>' + patDef(L.pat, L.c, L.ps) + '</defs>' + draw({ type: "hatch", pts: [[x, y + 2], [x + sw, y + 2], [x + sw, y + lh - 3], [x, y + lh - 3]], pat: L.pat, c: L.c, ps: L.ps, outline: true, w: 1, ls: "solid" });
+    return draw({ type: "line", x1: r1(x), y1: r1(y + lh / 2), x2: r1(x + sw), y2: r1(y + lh / 2), c: L.c, w: Math.min(L.w || 2, 8), ls: L.ls || "solid" });
+  }
   function legendStr(m, I, forExport) {
     var rows = [], fs = 10, sw = 22;
+    if (!m) m = { legpos: doc().legpos };
     if (m.cont !== false && m.c && m.c.lines.length) rows.push({ kind: "line", c: "#8a5a2b", w: 1.3, t: "Contour, every " + m.c.iv + " m (m AOD)" });
     if (m.flow !== false && m.fl && m.fl.lines.length) rows.push({ kind: "line", c: "#2f7fd6", w: 1.6, t: "Flow line from LiDAR (drains over " + (m.fl.thr >= 10000 ? (m.fl.thr / 10000).toFixed(1) + " ha" : m.fl.thr + " m²") + ")" });
     mapLayers().forEach(function (L) {
@@ -1675,7 +1691,9 @@
       }
       rows.push(L.line ? { kind: "line", c: L.stroke || "#3f6fd1", w: 1.6, t: L.name } : { kind: "fill", c: L.fill || "#3f6fd1", fo: L.fo || 0.12, st: L.stroke, dash: L.dash, t: L.name });
     });
+    (doc().legItems || []).forEach(function (L) { rows.push({ kind: "item", L: L, t: L.t || "" }); });
     if (!rows.length) return "";
+    if (rows.some(function (r) { return r.kind === "item" && r.L.kind === "hatch"; })) sw = 30;
     var w = 0; rows.forEach(function (r) { w = Math.max(w, tw(r.t, r.kind === "head" ? fs + 0.5 : r.kind === "note" ? fs - 1.5 : fs, r.kind === "head") + (r.kind === "head" || r.kind === "note" ? 0 : sw + 8)); });
     var lh = 15, W = Math.min(I.w - 20, w + 20), H = 26 + rows.length * lh, pos = m.legpos || "br";
     var x = pos[1] === "l" ? I.x + 10 : I.x + I.w - W - 10, y = pos[0] === "t" ? I.y + 10 : I.y + I.h - H - 22;
@@ -1689,7 +1707,8 @@
       var yy = y + 24 + i * lh, tx = x + 10;
       if (r.kind === "line") o += '<line x1="' + r1(tx) + '" y1="' + r1(yy + lh / 2) + '" x2="' + r1(tx + sw) + '" y2="' + r1(yy + lh / 2) + '" stroke="' + r.c + '" stroke-width="' + r.w + '"/>';
       if (r.kind === "fill") o += '<rect x="' + r1(tx) + '" y="' + r1(yy + 2) + '" width="' + sw + '" height="' + (lh - 5) + '" fill="' + r.c + '" fill-opacity="' + r.fo + '" stroke="' + (r.st || r.c) + '" stroke-width="' + (r.st ? 1.1 : 0.4) + '"' + (r.dash ? ' stroke-dasharray="' + r.dash + '"' : "") + "/>";
-      if (r.kind === "line" || r.kind === "fill") tx += sw + 8;
+      if (r.kind === "item") o += legSwatch(r.L, tx, yy, sw, lh);
+      if (r.kind === "line" || r.kind === "fill" || r.kind === "item") tx += sw + 8;
       o += txt(tx, yy + lh / 2 + 3.5, r.t, r.kind === "note" ? "#5a6677" : "#15233a", r.kind === "head" ? fs + 0.5 : r.kind === "note" ? fs - 1.5 : fs, "start", r.kind === "head" ? ' font-weight="bold"' : r.kind === "note" ? ' font-style="italic"' : "");
     });
     return o + "</g>";
@@ -2475,6 +2494,100 @@
   }
 
   /* For tests and the example sheet */
+  /* Right-click menu: formatting and actions for whatever is under the pointer (or the selection). The
+     controls drive the same side-bar style controls and properties-bar buttons, so they behave alike. */
+  var ctxEl = null;
+  function closeCtx() { if (ctxEl) { ctxEl.remove(); ctxEl = null; } }
+  function ctxMenu(e) {
+    var g = e.target.closest && e.target.closest("[data-id]"), it = g && svg.contains(g) ? byId(g.dataset.id) : null;
+    if (it && selList().indexOf(it) < 0) setSel([it]);
+    var l = selList(); if (!l.length) { closeCtx(); return; }
+    e.preventDefault(); closeCtx(); renderProps();
+    var has = function (re) { return l.some(function (x) { return re.test(x.type); }); };
+    var o = '<div class="sk-ctx-h">' + esc(l.length === 1 ? (NAMES_ALL[l[0].type] || l[0].type) : l.length + " items") + "</div>";
+    o += '<div class="sk-ctx-row"><span>Colour</span>' + COLORS.map(function (c) { return '<button type="button" class="sk-sw" data-cc="' + c[0] + '" style="background:' + c[0] + '" title="' + c[1] + '" aria-label="' + c[1] + '"></button>'; }).join("") + '<input type="color" data-cin value="' + (l[0].c || style.c) + '" aria-label="Any colour"></div>';
+    if (l.some(function (x) { return "w" in x; })) o += '<div class="sk-ctx-row"><span>Weight</span>' + WIDTHS.map(function (w) { return '<button type="button" class="sk-chip' + (l[0].w === w[0] ? " on" : "") + '" data-cw="' + w[0] + '" title="' + w[1] + '" aria-label="' + w[1] + '"><i style="height:' + Math.min(w[0], 10) + 'px"></i></button>'; }).join("") + "</div>";
+    if (has(/^(stroke|line|member|hatch|arrow|rect|circle|poly)$/)) o += '<div class="sk-ctx-row"><span>Line</span><select data-cs="sk-ls">' + LINES.map(function (x) { return '<option value="' + x[0] + '"' + ((l[0].ls || "solid") === x[0] ? " selected" : "") + ">" + x[1] + "</option>"; }).join("") + "</select></div>";
+    if (l.some(function (x) { return x.type === "text" || x.type === "leader" || x.type === "dim" || x.label != null; })) o += '<div class="sk-ctx-row"><span>Text size</span><select data-cs="sk-fs">' + [8, 10, 12, 14, 16, 18, 24, 32].map(function (v) { var cur = l[0].size || l[0].fs || style.fs; return '<option value="' + v + '"' + (cur === v ? " selected" : "") + ">" + v + "</option>"; }).join("") + "</select></div>";
+    if (has(/^hatch$/)) { var h0 = l.filter(function (x) { return x.type === "hatch"; })[0]; o += '<div class="sk-ctx-row"><span>Hatch</span><select data-cs="sk-pat">' + PATS.map(function (x) { return '<option value="' + x[0] + '"' + (h0.pat === x[0] ? " selected" : "") + ">" + x[1] + "</option>"; }).join("") + '</select><select data-cs="sk-hsc" aria-label="Hatch scale">' + [0.1, 0.25, 0.5, 0.75, 1, 1.5, 2, 3, 4].map(function (v) { return '<option value="' + v + '"' + ((h0.ps || 1) === v ? " selected" : "") + ">×" + v + "</option>"; }).join("") + "</select></div>"; }
+    var acts = Array.prototype.map.call(propsEl.querySelectorAll("button[data-act]"), function (b) { return '<button type="button" class="sk-ctx-act' + (b.dataset.act === "del" || b.dataset.act === "gdel" ? " del" : "") + '" data-ca="' + esc(b.dataset.act) + '">' + esc(b.textContent) + "</button>"; });
+    if (acts.length) o += '<div class="sk-ctx-acts">' + acts.join("") + "</div>";
+    ctxEl = document.createElement("div"); ctxEl.className = "sk-ctx"; ctxEl.setAttribute("role", "menu"); ctxEl.innerHTML = o; app.appendChild(ctxEl);
+    var r = ctxEl.getBoundingClientRect(), x = Math.min(e.clientX, window.innerWidth - r.width - 8), y = Math.min(e.clientY, window.innerHeight - r.height - 8);
+    ctxEl.style.left = Math.max(4, x) + "px"; ctxEl.style.top = Math.max(4, y) + "px";
+    ctxEl.addEventListener("click", function (ev) {
+      var b = ev.target.closest("button"); if (!b) return;
+      if (b.dataset.cc) { var sw = $("sk-swatches").querySelector('[data-color="' + b.dataset.cc + '"]'); if (sw) sw.click(); }
+      else if (b.dataset.cw) { var wb = $("sk-widths").querySelector('[data-w="' + b.dataset.cw + '"]'); if (wb) wb.click(); ctxEl.querySelectorAll("[data-cw]").forEach(function (q) { q.classList.toggle("on", q === b); }); return; }
+      else if (b.dataset.ca) { var pb = propsEl.querySelector('button[data-act="' + b.dataset.ca + '"]'); closeCtx(); if (pb) pb.click(); return; }
+    });
+    ctxEl.addEventListener("change", function (ev) {
+      var t = ev.target;
+      if (t.dataset.cs) { var c = $(t.dataset.cs); c.value = t.value; c.dispatchEvent(new Event("change")); }
+      else if (t.hasAttribute("data-cin")) { var ci = $("sk-color"); ci.value = t.value; ci.dispatchEvent(new Event("change")); }
+    });
+  }
+  /* Legend editor: the line types and hatches used on the drawing, to add to the legend with your own words. */
+  function legKey(L) { return L.kind === "hatch" ? ["h", L.pat, L.c, L.ps || 1].join("|") : ["l", L.c, L.w, L.ls || "solid"].join("|"); }
+  function legFound() {
+    var f = {}, out = [];
+    doc().items.forEach(function (it) {
+      var L = it.type === "hatch" ? { kind: "hatch", pat: it.pat, c: it.c, ps: it.ps || 1 } : /^(line|member|stroke|poly|rect|circle|arrow|cloud|brk)$/.test(it.type) ? { kind: "line", c: it.c, w: it.w || 2, ls: it.ls || "solid" } : null;
+      if (!L) return; var k2 = legKey(L);
+      if (!f[k2]) { f[k2] = { L: L, n: 0, types: {} }; out.push(f[k2]); }
+      f[k2].n++; f[k2].types[NAMES_ALL[it.type] || it.type] = 1;
+    });
+    return out;
+  }
+  function legDefault(L) {
+    var cn = (COLORS.filter(function (c) { return c[0] === L.c; })[0] || [0, ""])[1];
+    if (L.kind === "hatch") return (PATS.filter(function (p) { return p[0] === L.pat; })[0] || [0, "Hatch"])[1];
+    var ln = (LINES.filter(function (x) { return x[0] === L.ls; })[0] || [0, "Solid"])[1], wn = (WIDTHS.filter(function (x) { return x[0] === L.w; })[0] || [0, ""])[1];
+    return ((wn ? wn + " " : "") + (ln === "Solid" ? "" : ln.toLowerCase() + " ") + (cn ? cn.toLowerCase() + " " : "") + "line").replace(/^./, function (c) { return c.toUpperCase(); });
+  }
+  function legSvg(L) { return '<svg width="46" height="18" viewBox="-2 -1 34 16" aria-hidden="true">' + legSwatch(L, 0, 0, 30, 15) + "</svg>"; }
+  var legDlg = null;
+  function closeLeg() { if (legDlg) { legDlg.remove(); legDlg = null; } }
+  function openLeg() {
+    closeCtx(); closeFly(); if (!legDlg) { legDlg = document.createElement("div"); legDlg.className = "sk-dlg"; legDlg.setAttribute("role", "dialog"); legDlg.setAttribute("aria-label", "Legend editor"); app.appendChild(legDlg); wireLeg(); }
+    var d = doc(), items = d.legItems || [], have = {}; items.forEach(function (L) { have[legKey(L)] = 1; });
+    var found = legFound(), pos = mapLegOn() ? d.map.legpos || "br" : d.legpos || "br";
+    var o = '<div class="sk-dlg-h"><b>Legend editor</b><button type="button" class="sk-btn" data-lg="close" aria-label="Close">Close</button></div>';
+    o += '<p class="small">Pick line types and hatches from the drawing, then type what each one means.' + (mapLegOn() ? " They're added under the map layers in the map legend." : "") + "</p>";
+    o += '<h4>On the drawing</h4>' + (found.length ? '<div class="sk-lg-list">' + found.map(function (F, i) {
+      var k2 = legKey(F.L); return '<div class="sk-lg-row">' + legSvg(F.L) + '<span class="sk-lg-t">' + esc(Object.keys(F.types).join(", ")) + ' <i>×' + F.n + '</i></span>' + (have[k2] ? '<span class="small">In legend</span>' : '<input type="text" data-lgnew="' + i + '" value="' + esc(legDefault(F.L)) + '" aria-label="Legend label"><button type="button" class="sk-btn" data-lg="add" data-i="' + i + '">Add</button>') + "</div>";
+    }).join("") + "</div>" : '<p class="small">Nothing yet: draw some lines or hatches first.</p>');
+    o += '<h4>In the legend</h4>' + (items.length ? '<div class="sk-lg-list">' + items.map(function (L, i) {
+      return '<div class="sk-lg-row">' + legSvg(L) + '<input type="text" data-lgt="' + i + '" value="' + esc(L.t || "") + '" aria-label="Legend label"><button type="button" class="sk-btn" data-lg="up" data-i="' + i + '"' + (i ? "" : " disabled") + ' aria-label="Move up">↑</button><button type="button" class="sk-btn" data-lg="down" data-i="' + i + '"' + (i < items.length - 1 ? "" : " disabled") + ' aria-label="Move down">↓</button><button type="button" class="sk-btn" data-lg="del" data-i="' + i + '" aria-label="Remove">✕</button></div>';
+    }).join("") + "</div>" : '<p class="small">Empty. Add entries from the list above.</p>');
+    o += '<div class="sk-lg-foot"><label class="sk-check">Position <select data-lgpos><option value="br">bottom right</option><option value="bl">bottom left</option><option value="tr">top right</option><option value="tl">top left</option></select></label>' + (items.length ? '<button type="button" class="sk-btn" data-lg="clear">Remove all</button>' : "") + "</div>";
+    legDlg.innerHTML = o; legDlg.querySelector("[data-lgpos]").value = pos; legDlg._found = found;
+  }
+  function wireLeg() {
+    legDlg.addEventListener("click", function (e) {
+      var b = e.target.closest("[data-lg]"); if (!b) return; var a = b.dataset.lg, i = +b.dataset.i, d = doc();
+      if (a === "close") { closeLeg(); return; }
+      begin(); d.legItems = (d.legItems || []).slice();
+      if (a === "add") { var F = legDlg._found[i], inp = legDlg.querySelector('[data-lgnew="' + i + '"]'), L = clone(F.L); L.t = inp ? inp.value : legDefault(F.L); d.legItems.push(L); }
+      else if (a === "del") d.legItems.splice(i, 1);
+      else if (a === "up" && i > 0) d.legItems.splice(i - 1, 0, d.legItems.splice(i, 1)[0]);
+      else if (a === "down") d.legItems.splice(i + 1, 0, d.legItems.splice(i, 1)[0]);
+      else if (a === "clear") d.legItems = [];
+      commit(); openLeg();
+    });
+    legDlg.addEventListener("change", function (e) {
+      var t = e.target, d = doc();
+      if (t.dataset.lgt != null) { begin(); d.legItems[+t.dataset.lgt].t = t.value; commit(); }
+      else if (t.hasAttribute("data-lgpos")) { begin(); d.legpos = t.value; if (d.map) d.map.legpos = t.value; commit(); syncControls(); }
+    });
+  }
+  $("sk-legedit").addEventListener("click", openLeg);
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape" && legDlg) closeLeg(); });
+  var NAMES_ALL = { line: "Line", member: "Member", stroke: "Pen stroke", text: "Text", dim: "Dimension", leader: "Leader", hatch: "Hatch", udl: "UDL", pload: "Point load", moment: "Moment", support: "Support", inset: "Detail or viewport", image: "Image", arrow: "Arrow", rect: "Rectangle", circle: "Circle", poly: "Polygon", cloud: "Revision cloud", brk: "Break line", slope: "Slope marker", section: "Section marker", north: "North arrow", wl: "Water level" };
+  svg.addEventListener("contextmenu", ctxMenu);
+  document.addEventListener("pointerdown", function (e) { if (ctxEl && !ctxEl.contains(e.target)) closeCtx(); }, true);
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape" && ctxEl) closeCtx(); }, true);
+  window.addEventListener("wheel", function (e) { if (ctxEl && !ctxEl.contains(e.target)) closeCtx(); }, { passive: true });
   window.CPSketch = { importDetail: importDetail, exportSvg: exportSvg, exportDxf: exportDxf, toPng: toPng, exportPdf: exportPdf, insertTemplate: insertTemplate, state: function () { return S; }, setMode: setMode, setTool: setTool, render: function () { underKey = ""; renderAll(); renderProps(); } };
 
   window.addEventListener("resize", function () { if (!view.hidden) { renderAll(); if (tbKey) closeTB(true); } });
