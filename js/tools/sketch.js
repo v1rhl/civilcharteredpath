@@ -1471,6 +1471,7 @@
       "sk-clear": S('<path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/>'),
       "sk-fit": S('<path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5"/><rect x="8" y="8" width="8" height="8" rx="1"/>'),
       "sk-full": S('<path d="M3 8V3h5M16 3h5v5M21 16v5h-5M8 21H3v-5"/>'),
+      "sk-fullx": S('<path d="M8 3v5H3M16 3v5h5M21 16h-5v5M3 16h5v5"/>'),
       "sk-tball": S('<rect x="4" y="4" width="6" height="6" rx="1"/><rect x="14" y="4" width="6" height="6" rx="1"/><rect x="4" y="14" width="6" height="6" rx="1"/><path d="M17 14v6M14 17h6"/>'),
       snaps: S('<path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/>') }; })();
   function iconBar() {
@@ -3599,7 +3600,7 @@
     if (on) { if (app.requestFullscreen) app.requestFullscreen().catch(function () { app.classList.add("sk-full"); afterFull(); }); else { app.classList.add("sk-full"); afterFull(); } }
     else { if (document.fullscreenElement) document.exitFullscreen(); app.classList.remove("sk-full"); afterFull(); }
   }
-  function afterFull() { var f = isFull(); $("sk-full").setAttribute("aria-pressed", f); $("sk-full").textContent = f ? "Exit full screen" : "Full screen"; app.style.setProperty("--sk-top", f ? "0px" : ((document.querySelector(".topbar") || {}).offsetHeight || 0) + "px"); setTimeout(function () { renderAll(); measureK(); renderUI(); }, 60); }
+  function afterFull() { var f = isFull(); $("sk-full").setAttribute("aria-pressed", f); var fb = $("sk-full"), fl = f ? "Exit full screen" : "Full screen", fsp = fb.querySelector(".sk-tlab"); if (fsp) { fsp.textContent = fl; var fsv = fb.querySelector("svg"); if (fsv && TBI) fsv.outerHTML = TBI[f ? "sk-fullx" : "sk-full"]; } else fb.textContent = fl; fb.setAttribute("data-tip", fl); fb.setAttribute("aria-label", fl); app.style.setProperty("--sk-top", f ? "0px" : ((document.querySelector(".topbar") || {}).offsetHeight || 0) + "px"); setTimeout(function () { renderAll(); measureK(); renderUI(); }, 60); }
   $("sk-full").addEventListener("click", function () { setFull(!isFull()); });
   svg.addEventListener("wheel", function (e) {
     if (e.shiftKey && !e.ctrlKey) { e.preventDefault(); panBy(-(e.deltaY || e.deltaX), 0); return; } /* Shift+wheel pans sideways */
