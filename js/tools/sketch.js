@@ -902,13 +902,15 @@
     var sw = $("sk-snapwrap"), gsq = $("sk-gsq"); /* snapping sits with them */
     if (sw && tl && gsq) { if (isMob()) { if (sw.previousElementSibling !== gsq) gsq.parentNode.insertBefore(sw, gsq.nextSibling); } else if (sw.parentNode !== tl) tl.appendChild(sw); }
     var lay = app.querySelector(".sk-layout"), main = $("sk-main");
-    if (isMob()) { if (t.parentNode !== row) row.insertBefore(t, row.firstChild); bar.hidden = true; if (lay) lay.classList.remove("sk-tl"); if (bar.parentNode !== main) main.insertBefore(bar, $("sk-stage")); return; }
+    if (isMob()) { if (t.parentNode !== row) row.insertBefore(t, row.firstChild); bar.hidden = true; if (lay) { lay.classList.remove("sk-tl"); lay.classList.remove("sk-tl2"); var sd = $("sk-side"); if (sd && sd.parentNode !== lay) lay.insertBefore(sd, lay.firstChild); } if (bar.parentNode !== main) main.insertBefore(bar, $("sk-stage")); return; }
     if (t.parentNode !== slot) slot.appendChild(t);
     bar.hidden = false; var w = tbState(), fl = !!w.float, dk = fl ? "" : w.dock;
     if (dk === "left") { if (bar.parentNode !== lay) lay.insertBefore(bar, main); }
     else if (dk === "bottom") { if (bar.parentNode !== main || bar.previousElementSibling !== $("sk-stage")) main.insertBefore(bar, $("sk-stage").nextSibling); }
     else if (dk === "top" && (bar.parentNode !== main || bar.nextElementSibling !== $("sk-stage"))) main.insertBefore(bar, $("sk-stage")); /* floating: left where it is, so a drag in progress keeps hold of it */
     lay.classList.toggle("sk-tl", dk === "left");
+    var sideEl = $("sk-side"); /* docked at the left, the side panel folds into the toolbar column, between the tools and the locks */
+    if (sideEl) { if (dk === "left") { if (sideEl.parentNode !== bar) bar.insertBefore(sideEl, $("sk-tblay")); } else if (sideEl.parentNode !== lay) lay.insertBefore(sideEl, lay.firstChild); bar.classList.toggle("sk-tbar-side", dk === "left"); lay.classList.toggle("sk-tl2", dk === "left"); }
     bar.classList.toggle("sk-tbar-float", fl); bar.classList.toggle("sk-tbar-vert", fl && !!w.vert); bar.classList.toggle("sk-tbar-left", dk === "left"); bar.classList.toggle("sk-tbar-bottom", dk === "bottom");
     $("sk-tbvert").hidden = !fl; $("sk-tbvert").setAttribute("aria-pressed", !!w.vert);
     Array.prototype.forEach.call(bar.querySelectorAll("[data-dock]"), function (b) { b.setAttribute("aria-pressed", b.dataset.dock === dk); });
@@ -957,6 +959,18 @@
     document.addEventListener("pointerdown", function (e) { if (!pop.hidden && !pop.contains(e.target) && !(at && at.contains(e.target))) close(); }, true);
     document.addEventListener("keydown", function (e) { if (e.key === "Escape") close(); });
     window.addEventListener("resize", close);
+  })();
+  /* The Snaps list in the toolbar opens as a fixed pop-out, so the toolbar's own scrolling can't clip it. */
+  (function () {
+    var sm = app.querySelector(".sk-snapmenu"); if (!sm) return;
+    sm.addEventListener("toggle", function () {
+      var dv = sm.querySelector(":scope > div"); if (!dv) return;
+      if (!sm.open || !sm.closest("#sk-tbar")) { dv.style.position = dv.style.left = dv.style.top = dv.style.right = dv.style.bottom = ""; return; }
+      var r = sm.querySelector("summary").getBoundingClientRect(), bar = $("sk-tbar"), VW = window.innerWidth, VH = window.innerHeight;
+      dv.style.position = "fixed"; dv.style.right = "auto"; dv.style.bottom = "auto"; var w = dv.offsetWidth || 220, h = dv.offsetHeight || 320, x, y;
+      if (bar.classList.contains("sk-tbar-left")) { x = bar.getBoundingClientRect().right + 6; y = r.bottom - h; } else if (bar.classList.contains("sk-tbar-bottom")) { x = r.right - w; y = r.top - h - 4; } else { x = r.right - w; y = r.bottom + 4; }
+      dv.style.left = Math.max(8, Math.min(x, VW - w - 8)) + "px"; dv.style.top = Math.max(8, Math.min(y, VH - h - 8)) + "px";
+    });
   })();
   /* the site bar and tool links stay at the top; only the sketch pad's own panels scroll */
   window.addEventListener("scroll", function () { var hc = document.documentElement.classList; if ((hc.contains("sk-lock") || hc.contains("sk-mob")) && window.scrollY) window.scrollTo(0, 0); });

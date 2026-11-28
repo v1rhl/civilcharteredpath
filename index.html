@@ -1159,6 +1159,20 @@ html.sk-lock .sk-main > .sk-top, html.sk-lock .sk-main > .sk-props { top: 0; }
 .sk-snapmenu summary::-webkit-details-marker { display: none; }
 .sk-snapmenu[open] > div { position: absolute; z-index: 20; top: calc(100% + 4px); left: 0; display: grid; gap: 6px; min-width: 210px; padding: 10px 12px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: 0 6px 20px rgba(0,0,0,.12); }
 .sk-snapmenu p { margin: 4px 0 0; }
+/* side panel folded into the left toolbar column: compact */
+.sk-layout.sk-tl2, html.sk-lock .sk-layout.sk-tl2, .sk-app:fullscreen .sk-layout.sk-tl2, .sk-app.sk-full .sk-layout.sk-tl2 { grid-template-columns: auto minmax(0, 1fr); }
+.sk-tbar-side > .sk-side { position: static; max-height: none; height: auto !important; min-height: 0 !important; overflow: visible; flex: 0 0 auto; width: 100px; padding: 4px 0 0; margin: 0; gap: 3px; border: 0; border-top: 1px solid var(--tool-line); background: none; box-shadow: none; font-size: 0.62rem; }
+.sk-tbar-side > .sk-side .sk-seg { display: grid; grid-template-columns: 1fr; width: 100%; border-radius: 6px; }
+.sk-tbar-side > .sk-side .sk-seg button { padding: 2px 4px; font-size: 0.6rem; line-height: 1.2; border-radius: 4px; }
+.sk-tbar-side > .sk-side > details.sk-sec { padding: 2px 5px; border-radius: 4px; }
+.sk-tbar-side > .sk-side > details.sk-sec > summary { font-size: 0.56rem; letter-spacing: 0.03em; padding: 1px 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sk-tbar-side > .sk-side select.sk-tpl, .sk-tbar-side > .sk-side .sk-tpl { font-size: 0.6rem; padding: 2px 3px; width: 100%; min-height: 0; }
+.sk-tbar-side > .sk-side .sk-sideacts .sk-actions { gap: 2px; }
+.sk-tbar-side > .sk-side .sk-sideacts .sk-actions > * { padding: 2px 3px !important; font-size: 0.6rem; min-height: 0; }
+.sk-tbar-side > .sk-side .sk-toolrow { gap: 3px; }
+.sk-tbar-left.sk-tbar-side { overflow-y: auto; overflow-x: hidden; scrollbar-width: thin; }
+.sk-tbar-left.sk-tbar-side .sk-tbar-slot { flex: 0 0 auto; overflow: visible; }
+.sk-tbar-side > .sk-side .sk-sideacts .sk-actions #sk-clear, .sk-tbar-side > .sk-side .sk-sideacts .sk-actions #sk-full, .sk-tbar-side > .sk-side .sk-sideacts .sk-actions #sk-fit { grid-column: 1 / -1; }
 html:not(.sk-mob) .sk-side > details.sk-sec[data-sec="style"] { display: none; } /* wide screens: right-click a tool instead */
 .sk-toolpop { position: fixed; z-index: 60; max-width: min(560px, calc(100vw - 16px)); background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: 0 6px 24px rgba(0,0,0,.18); padding: 0 0 6px; font-size: 0.8rem; }
 .sk-toolpop[hidden] { display: none; }
@@ -3004,9 +3018,9 @@ footer .wrap { font-family: var(--font-body); }
 <script src="js/news-feed.js?v=20261122b"></script>
 <script src="js/news-archive.js?v=20261122b"></script>
 <script src="js/pages.js?v=20261122b"></script>
-<script src="js/tools/sketch-templates.js?v=20261128zv"></script>
-<script src="js/tools/sketch.js?v=20261128zv"></script>
-<script src="js/tools/drawing-check.js?v=20261128zv"></script>
+<script src="js/tools/sketch-templates.js?v=20261128zy"></script>
+<script src="js/tools/sketch.js?v=20261128zy"></script>
+<script src="js/tools/drawing-check.js?v=20261128zy"></script>
 <script src="js/tools/hydraulics.js?v=20261127a"></script>
 <script src="js/tools/pipeflow.js?v=20261127a"></script>
 <script src="js/tools/catchment.js?v=20261127a"></script>
@@ -3018,7 +3032,7 @@ footer .wrap { font-family: var(--font-body); }
 <script src="js/tools/culvert.js?v=20261127a"></script>
 <script src="js/tools/site-diary.js?v=20261127a"></script>
 <script src="js/learn.js?v=20261127m"></script>
-<script src="js/site.js?v=20261128zv"></script>
+<script src="js/site.js?v=20261128zy"></script>
 <script src="js/art.js?v=20261127m"></script>
 </body>
 </html>
