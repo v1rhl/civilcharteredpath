@@ -690,7 +690,7 @@
       '<button type="button" class="sk-btn" id="sk-legedit" title="Build a legend from the line types and hatches on the drawing">Legend editor</button>' +
       '<label class="sk-check">Watermark <select id="sk-wm"><option value="">None</option><option>DRAFT</option><option>NOT FOR CONSTRUCTION</option><option>PRELIMINARY</option><option>FOR INFORMATION</option><option value="*">Your own text…</option></select></label><input type="text" id="sk-wmtext" placeholder="Watermark text" hidden style="width:12em">' +
       '<label class="sk-check"><input type="checkbox" id="sk-grid"> Grid</label>' +
-      '<label class="sk-check" title="Orange numbered markers for drawing checklist items the sheet seems to miss. Never exported."><input type="checkbox" id="sk-chkw"> Checklist warnings</label>' +
+      '<label class="sk-check" title="A small bar at the right of the sheet listing drawing checklist items the sheet seems to miss, numbered like the checklist. Point at one to see where. Never exported."><input type="checkbox" id="sk-chkw"> Checklist warnings</label>' +
       '<label class="sk-check">Scale <select id="sk-dscale"><option value="0">Not to scale</option>' + SCALES.map(function (n) { return '<option value="' + n + '">' + nS(n) + "</option>"; }).join("") + '</select></label><span class="small" id="sk-gridinfo"></span><label class="sk-check" id="sk-sbar-l"><input type="checkbox" id="sk-sbar"> Scale bar</label>' +
       '<label class="sk-check" id="sk-gsq">Grid square = <input type="number" id="sk-scale" min="0.01" step="0.05" style="width:5.5em"> m</label>' +
       '<span class="sk-snapwrap"><label class="sk-check"><input type="checkbox" id="sk-snap"> Snap</label><details class="sk-snapmenu"><summary>Snaps</summary><div>' +
@@ -725,6 +725,7 @@
       '<svg id="sk-svg" xmlns="' + NS + '" role="img" aria-label="Sketch sheet"><defs id="sk-defs"></defs><rect id="sk-bg" fill="#fff"/><g id="sk-mapg" pointer-events="none"></g><g id="sk-under"></g><g id="sk-gridg"></g><g id="sk-content"></g><g id="sk-frame"></g><g id="sk-warng"></g><g id="sk-live"></g><g id="sk-ui"></g><g id="sk-snapg" pointer-events="none"></g></svg>' +
       '<input type="text" id="sk-tb-edit" class="sk-tb-edit" spellcheck="true" lang="en-GB" hidden aria-label="Title block field">' +
       '<div class="sk-drop" id="sk-drop" hidden>Drop the image to trace over it</div>' +
+      '<aside class="sk-warnbar" id="sk-warnbar" aria-label="Drawing checklist warnings" hidden></aside>' +
     "</div>" +
     '<div class="sk-props" id="sk-props" aria-live="polite"></div>' +
     '<p class="small sk-status" id="sk-status" role="status"></p>';
@@ -1013,7 +1014,7 @@
     gGrid.innerHTML = d.grid ? gridStr() : "";
     renderContent();
     gFrame.innerHTML = frameStr(false);
-    $("sk-warng").innerHTML = warnStr();
+    renderWarn();
     syncControls();
   }
   function renderContent() {
@@ -1050,12 +1051,27 @@
     d.items.forEach(function (it) { var tx = it.type === "text" || it.type === "leader" ? it.text || "" : ""; if (/\b(TBC|TBA|XX+|check)\b|\?\?/i.test(tx)) { var bx = it.type === "leader" ? it.x : it.x; at("an10", (bx || 0) - 14, (it.y || 0) - 14, "Draft text left in: \"" + tx.slice(0, 40) + "\"."); } });
     return out;
   }
+  /* The warnings sit in a narrow bar down the right of the sheet area. Hovering or clicking a row
+     shows its marker on the sheet, so the drawing itself stays clear. */
+  var warnCur = [], warnShow = null;
+  function warnTxt(w) { return window.CPDrawCheck.ref(w.id) + " " + window.CPDrawCheck.text(w.id) + ". " + w.why; }
   function warnStr() {
-    if (S.chkw === false || !window.CPDrawCheck) return "";
-    return warnList().map(function (w) {
-      var rf = window.CPDrawCheck.ref(w.id), tt = rf + " " + window.CPDrawCheck.text(w.id) + ". " + w.why, wd = 10 + rf.length * 6.4;
-      return '<g class="sk-warn" data-warn="' + esc(tt) + '" transform="translate(' + r1(w.x) + " " + r1(w.y) + ')"><title>' + esc(tt) + '</title><rect x="' + r1(-wd / 2) + '" y="-9" width="' + r1(wd) + '" height="18" rx="9" fill="#f08a00" stroke="#fff" stroke-width="1.5"/>' + txt(0, 4, rf, "#fff", 10.5, "middle", ' font-weight="bold"') + "</g>";
-    }).join("");
+    if (warnShow == null || !warnCur[warnShow]) return "";
+    var w = warnCur[warnShow], rf = window.CPDrawCheck.ref(w.id), wd = 10 + rf.length * 6.4, tt = warnTxt(w);
+    return '<g class="sk-warn" data-warn="' + esc(tt) + '" transform="translate(' + r1(w.x) + " " + r1(w.y) + ')"><title>' + esc(tt) + '</title><circle r="16" fill="none" stroke="#f08a00" stroke-width="2" opacity=".6"/><rect x="' + r1(-wd / 2) + '" y="-9" width="' + r1(wd) + '" height="18" rx="9" fill="#f08a00" stroke="#fff" stroke-width="1.5"/>' + txt(0, 4, rf, "#fff", 10.5, "middle", ' font-weight="bold"') + "</g>";
+  }
+  function renderWarn() {
+    var bar = $("sk-warnbar"), on = S.chkw !== false && !!window.CPDrawCheck;
+    warnCur = on ? warnList() : [];
+    if (warnShow != null && !warnCur[warnShow]) warnShow = null;
+    $("sk-warng").innerHTML = warnStr();
+    bar.hidden = !warnCur.length;
+    if (!warnCur.length) { bar.innerHTML = ""; bar._key = ""; return; }
+    var key = JSON.stringify(warnCur.map(function (w) { return w.id + w.why; })) + !!S.chkwc;
+    if (bar._key === key) return; bar._key = key;
+    bar.classList.toggle("sk-warnbar-min", !!S.chkwc);
+    bar.innerHTML = '<button type="button" class="sk-warnbar-h" id="sk-warnmin" aria-expanded="' + !S.chkwc + '" title="' + (S.chkwc ? "Show the checklist warnings" : "Fold the checklist warnings away") + '"><span class="sk-warnpill">' + warnCur.length + "</span>" + (S.chkwc ? "" : "<span>Checklist</span><span aria-hidden=\"true\">›</span>") + "</button>" +
+      (S.chkwc ? "" : '<ol class="sk-warnlist">' + warnCur.map(function (w, i) { return '<li><button type="button" data-wi="' + i + '" title="' + esc(warnTxt(w)) + '"><span class="sk-warnpill">' + esc(window.CPDrawCheck.ref(w.id)) + "</span><span>" + esc(w.why) + "</span></button></li>"; }).join("") + "</ol>");
   }
   function renderUI() {
     var o = "", sw = 1.5; /* screen px: these outlines use non-scaling strokes */
@@ -1221,6 +1237,16 @@
   });
   $("sk-sbar").addEventListener("change", function () { begin(); doc().sbar = this.checked; commit(); });
   $("sk-chkw").addEventListener("change", function () { S.chkw = this.checked; persist(); renderAll(); });
+  (function () {
+    var bar = $("sk-warnbar"), show = function (i) { if (warnShow === i) return; warnShow = i; $("sk-warng").innerHTML = warnStr(); };
+    bar.addEventListener("click", function (e) {
+      if (e.target.closest("#sk-warnmin")) { S.chkwc = !S.chkwc; persist(); renderWarn(); return; }
+      var b = e.target.closest("[data-wi]"); if (!b) return; var i = +b.dataset.wi; show(i); status("Drawing checklist " + warnTxt(warnCur[i]) + " See Guidance › Drawing checklist.");
+    });
+    bar.addEventListener("pointerover", function (e) { var b = e.target.closest("[data-wi]"); if (b) show(+b.dataset.wi); });
+    bar.addEventListener("pointerleave", function () { show(null); });
+    bar.addEventListener("focusin", function (e) { var b = e.target.closest("[data-wi]"); if (b) show(+b.dataset.wi); });
+  })();
   $("sk-warng").addEventListener("click", function (e) { var g = e.target.closest("[data-warn]"); if (g) status("Drawing checklist " + g.dataset.warn + " See Guidance › Drawing checklist."); });
   opt("sk-grid", "grid"); opt("sk-snap", "snap", syncControls); opt("sk-scale", "scale");
   $("sk-dscale").addEventListener("change", function () { begin(); var d = doc(); d.dscale = +this.value || 0; commit(); syncControls(); renderProps(); status(d.dscale ? "Drawing at 1:" + d.dscale + " on " + (d.paper || "A4") + ". One grid square is " + fmtM(toM(GRID)) + ". Dimensions and lengths now read true." : "Not to scale."); });
