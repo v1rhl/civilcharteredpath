@@ -415,8 +415,8 @@
      hosted by the Catchment Based Approach (CaBA), and you can load your own GeoJSON instead. */
   var NE = "https://services.arcgis.com/JJzESW51TqeY9uat/ArcGIS/rest/services/";
   var MAPL = [
-    { id: "bgsb", name: "BGS bedrock", kind: "wms", url: "https://map.bgs.ac.uk/arcgis/services/BGS_Detailed_Geology/MapServer/WMSServer", layer: "BGS.50k.Bedrock", src: "BGS Geology 50k WMS", attr: "Geology: contains British Geological Survey materials © UKRI" },
-    { id: "bgss", name: "BGS superficial", kind: "wms", url: "https://map.bgs.ac.uk/arcgis/services/BGS_Detailed_Geology/MapServer/WMSServer", layer: "BGS.50k.Superficial.deposits", src: "BGS Geology 50k WMS", attr: "Geology: contains British Geological Survey materials © UKRI" },
+    { id: "bgsb", name: "BGS bedrock", kind: "wms", url: "https://map.bgs.ac.uk/arcgis/services/BGS_Detailed_Geology/MapServer/WMSServer", layer: "BGS.50k.Bedrock", rest: "https://map.bgs.ac.uk/arcgis/rest/services/BGS_Detailed_Geology/MapServer/4", src: "BGS Geology 50k WMS", attr: "Geology: contains British Geological Survey materials © UKRI" },
+    { id: "bgss", name: "BGS superficial", kind: "wms", url: "https://map.bgs.ac.uk/arcgis/services/BGS_Detailed_Geology/MapServer/WMSServer", layer: "BGS.50k.Superficial.deposits", rest: "https://map.bgs.ac.uk/arcgis/rest/services/BGS_Detailed_Geology/MapServer/3", src: "BGS Geology 50k WMS", attr: "Geology: contains British Geological Survey materials © UKRI" },
     { id: "sssi", name: "SSSI", kind: "fs", url: NE + "SSSI_England/FeatureServer/0", src: "Natural England, Sites of Special Scientific Interest", stroke: "#b84a32", fill: "#b84a32", fo: 0.12, dash: "6 3", attr: "Contains Natural England data © Natural England" },
     { id: "awi", name: "Ancient woodland", kind: "fs", url: NE + "Ancient_Woodland_England/FeatureServer/0", src: "Natural England, Ancient Woodland Inventory", stroke: "#2e7d32", fill: "#2e7d32", fo: 0.15, attr: "Contains Natural England data © Natural England" },
     { id: "phi", name: "Priority habitats", kind: "fs", url: NE + "Priority_Habitats_Inventory_England/FeatureServer/0", src: "Natural England, Priority Habitats Inventory", stroke: "#7a9a2b", fill: "#9bbf3b", fo: 0.12, attr: "Contains Natural England data © Natural England" },
@@ -601,6 +601,7 @@
       '<div class="sk-maprow sk-maplayers"><span class="sk-lab">Layers</span>' + MAPL.map(function (L) { return '<label class="sk-check" title="' + esc(L.src) + '"><input type="checkbox" data-ml="' + L.id + '"> ' + L.name + "</label>"; }).join("") +
         '<label class="sk-check sk-wide">ArcGIS layer URL <input type="url" id="sk-mlurl" placeholder="https://…/FeatureServer/0"></label><button type="button" class="sk-btn" id="sk-mladd">Add layer</button><button type="button" class="sk-btn" id="sk-mlgj-b">Load GeoJSON</button><input type="file" id="sk-mlgj" accept=".geojson,.json" hidden></div>' +
       '<div id="sk-mlextra" class="sk-maprow"></div>' +
+      '<div class="sk-maprow"><label class="sk-check"><input type="checkbox" id="sk-mapleg"> Legend for the layers</label><label class="sk-check">at <select id="sk-maplegpos"><option value="br">bottom right</option><option value="bl">bottom left</option><option value="tr">top right</option><option value="tl">top left</option></select></label></div>' +
       '<p class="small">Grid north up, centred on the drawing frame (or the map area you draw) at the drawing scale. Map tiles come from OpenStreetMap, terrain from the Environment Agency, postcodes from postcodes.io, geology from BGS and designations from Natural England, so the location is sent to them. <strong>EA LiDAR covers England only.</strong> Files you load stay in this browser. Contours, designations and geology are indicative: check them against the source before relying on them. © OpenStreetMap contributors (ODbL). LiDAR © Environment Agency, OGL. Contains Natural England data © Natural England, OGL. Contains British Geological Survey materials © UKRI, OGL. Contains OS data © Crown copyright and database right, OGL.</p>' +
     "</div>" +
     "</div>" +
@@ -716,11 +717,25 @@
     }).join("");
   }
   /* Keep the whole sheet in view under the sticky toolbars on a desktop screen. */
+  /* keep the sketch pad fixed in the window on wide screens while it is the page on show */
+  function lockPage() {
+    var on = !view.hidden && window.innerWidth > 1000 && !isFull(), h = document.documentElement, was = h.classList.contains("sk-lock");
+    if (on !== was) h.classList.toggle("sk-lock", on);
+    if (on) pinTop();
+  }
+  function pinTop() { /* the sketch pad's top sits just under the site bar */
+    var tb = document.querySelector(".topbar"), th = tb ? tb.offsetHeight : 0, y = Math.max(0, Math.round(app.getBoundingClientRect().top + window.scrollY - th - 8));
+    if (Math.abs(window.scrollY - y) > 1) window.scrollTo(0, y);
+  }
+  window.addEventListener("scroll", function () { if (document.documentElement.classList.contains("sk-lock")) pinTop(); });
+  new MutationObserver(function () { lockPage(); if (!view.hidden) setTimeout(fitSheet, 0); }).observe(view, { attributes: true, attributeFilter: ["hidden"] });
   function fitSheet() {
+    lockPage();
     var G = geo(), full = isFull(), top = full ? null : document.querySelector(".topbar"), th = top ? top.offsetHeight : 0, wide = window.innerWidth > 1000, hh = wide ? $("sk-head").offsetHeight + $("sk-props").offsetHeight + 16 : window.innerWidth > 760 ? $("sk-head").offsetHeight : 0;
     app.style.setProperty("--sk-top", th + "px");
     var avail = window.innerHeight - th - hh - $("sk-tabs").offsetHeight - (full ? 24 : 36);
     svg.style.maxWidth = Math.max(320, avail * G.W / G.H) + "px";
+    var mn = $("sk-main"); if (document.documentElement.classList.contains("sk-lock") && mn) { var over = mn.scrollHeight - mn.clientHeight; if (over > 0) svg.style.maxWidth = Math.max(320, (avail - over - 2) * G.W / G.H) + "px"; }
   }
   function measureK() { var w = svg.getBoundingClientRect().width; k = w ? geo().W / w : 1; }
   var underKey = "";
@@ -733,7 +748,7 @@
     var uk = d.under.map(function (im) { return im.id + im.src.length; }).join() + d.showUnder;
     if (uk !== underKey) { gUnder.innerHTML = d.showUnder ? underStr() : ""; underKey = uk; } else d.under.forEach(updImg);
     gUnder.style.pointerEvents = d.lockUnder ? "none" : "";
-    var mk = mapKey(); if (mk !== mapKeyV) { $("sk-mapg").innerHTML = mapStr(false); mapKeyV = mk; }
+    var mk = mapKey(); if (mk !== mapKeyV) { $("sk-mapg").innerHTML = mapStr(false); mapKeyV = mk; if (d.map && d.map.leg && !mapPanning) updateBgsLegend(); }
     gGrid.innerHTML = d.grid ? gridStr() : "";
     renderContent();
     gFrame.innerHTML = frameStr(false);
@@ -838,7 +853,7 @@
     Array.prototype.forEach.call(app.querySelectorAll("[data-orient]"), function (b) { b.setAttribute("aria-pressed", b.dataset.orient === d.orient); });
     $("sk-color").value = style.c; $("sk-ls").value = style.ls; $("sk-pat").value = style.pat;
     $("sk-grid").checked = d.grid; $("sk-snap").checked = d.snap; $("sk-scale").value = d.scale; $("sk-dscale").value = d.dscale || 0; $("sk-sbar-l").hidden = !d.dscale; $("sk-sbar").checked = d.sbar !== false;
-    $("sk-gsq").hidden = !!d.dscale || mode !== "struct"; $("sk-mapshow-l").hidden = !d.map; if (d.map) { $("sk-mapshow").checked = d.map.show !== false; $("sk-maposm").checked = d.map.osm !== false; $("sk-mapcont").checked = d.map.cont !== false; $("sk-mapgrey").checked = d.map.grey !== false; $("sk-mapop").value = d.map.op || 0.55; $("sk-mapcop").value = d.map.cop || 1; }
+    $("sk-gsq").hidden = !!d.dscale || mode !== "struct"; $("sk-mapshow-l").hidden = !d.map; if (d.map) { $("sk-mapshow").checked = d.map.show !== false; $("sk-mapleg").checked = !!d.map.leg; $("sk-maplegpos").value = d.map.legpos || "br"; $("sk-maposm").checked = d.map.osm !== false; $("sk-mapcont").checked = d.map.cont !== false; $("sk-mapgrey").checked = d.map.grey !== false; $("sk-mapop").value = d.map.op || 0.55; $("sk-mapcop").value = d.map.cop || 1; }
     renderMapExtra();
     Array.prototype.forEach.call(app.querySelectorAll("[data-ml]"), function (c) { c.checked = !!(d.map && d.map.on && d.map.on[c.dataset.ml]); }); $("sk-gridinfo").textContent = d.dscale ? "grid " + fmtM(toM(GRID)) : "";
     Array.prototype.forEach.call(app.querySelectorAll("[data-snap]"), function (c) { c.checked = !!S.snaps[c.dataset.snap]; c.disabled = !d.snap; });
@@ -1468,7 +1483,7 @@
   var mapKeyV = "", tileCache = {}, tilePending = {};
   function RO() { return window.Runoff; }
   function mapFrame() { var d = doc(), G = geo(), mu = (d.dscale || 0) / 4000; return { cx: G.inner.x + G.inner.w / 2, cy: G.inner.y + G.inner.h / 2, mu: mu, inner: G.inner }; }
-  function mapKey() { var d = doc(), m = d.map; return m ? [m.e, m.n, d.dscale, d.paper, d.orient, d.tbs, m.show, m.osm, m.cont, m.op, m.cop, m.grey, m.box, m.c ? m.c.lines.length + ":" + m.c.iv + ":" + m.c.oe : "", JSON.stringify(m.on || {}), Object.keys(m.L || {}).map(function (k2) { return k2 + (m.L[k2].f || []).length; }).join()].join("|") : ""; }
+  function mapKey() { var d = doc(), m = d.map; return m ? [m.e, m.n, d.dscale, d.paper, d.orient, d.tbs, m.show, m.osm, m.cont, m.op, m.cop, m.grey, m.box, m.c ? m.c.lines.length + ":" + m.c.iv + ":" + m.c.oe : "", JSON.stringify(m.on || {}), Object.keys(m.L || {}).map(function (k2) { return k2 + (m.L[k2].f || []).length; }).join(), m.leg, m.legpos, legVer].join("|") : ""; }
   /* contours and vector layers are stored in metres from their own origin, so the map can move under them */
   function cOff(m, c) { return [(c.oe == null ? m.e : c.oe) - m.e, (c.on == null ? m.n : c.on) - m.n]; }
   function mapLayers() { return MAPL.concat(doc().map && doc().map.extra || []); }
@@ -1484,8 +1499,7 @@
       if (L.kind === "wms") {
         if (mapPanning) return; /* fetched again when the drag ends */
         /* BGS draws the 1:50k geology only at 1:25,000 or smaller, so ask for no more than about 6 m per pixel */
-        var C = mapClipM(), px = Math.max(2, Math.min(2048, Math.round((C.x1 - C.x0) / 6))), py = Math.max(2, Math.round(px * I.h / I.w));
-        var url = L.url + "?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=" + encodeURIComponent(L.layer) + "&STYLES=&CRS=EPSG:27700&BBOX=" + [C.x0, C.y0, C.x1, C.y1].map(function (v) { return Math.round(v); }).join(",") + "&WIDTH=" + px + "&HEIGHT=" + py + "&FORMAT=image/png&TRANSPARENT=TRUE";
+        var url = wmsUrl(L);
         var src = tileCache[url] || (forExport ? "" : url); if (!forExport) cacheTile(url); if (!src) { mapMissing++; return; }
         o += '<image href="' + esc(src) + '" x="' + r1(I.x) + '" y="' + r1(I.y) + '" width="' + r1(I.w) + '" height="' + r1(I.h) + '" preserveAspectRatio="none" opacity="' + (m.lop || 0.6) + '"/>';
         return;
@@ -1558,8 +1572,78 @@
     }
     var attr = [m.osm !== false ? "Map © OpenStreetMap contributors" : "", m.cont !== false && m.c ? "Contours " + m.c.iv + " m from " + (m.c.src || "EA LiDAR DTM © Environment Agency (OGL)") + ", indicative" : ""].concat(layerAttr(m)).filter(Boolean).join(" · ");
     if (m.box) o += '<rect x="' + r1(I.x) + '" y="' + r1(I.y) + '" width="' + r1(I.w) + '" height="' + r1(I.h) + '" fill="none" stroke="#15233a" stroke-width="1.2"/>';
+    if (m.leg) o += legendStr(m, I, forExport);
     if (attr) o += txt(I.x + 6, I.y + I.h - 6, attr, "#5a6677", 8, "start", ' stroke="#fff" stroke-width="3" paint-order="stroke"');
     return o + "</g>";
+  }
+  /* ---------- Map legend ----------
+     One entry per layer that is switched on. Vector layers use the colours they're drawn in. For BGS
+     geology the units actually showing are found by matching the colours in the fetched map image to
+     the BGS service's own renderer (its published key), and listed by their BGS LEX-RCS codes. */
+  var bgsRend = {}, bgsUnits = {}, legVer = 0;
+  function legendStr(m, I, forExport) {
+    var rows = [], fs = 10, sw = 22;
+    if (m.cont !== false && m.c && m.c.lines.length) rows.push({ kind: "line", c: "#8a5a2b", w: 1.3, t: "Contour, every " + m.c.iv + " m (m AOD)" });
+    mapLayers().forEach(function (L) {
+      if (!m.on || !m.on[L.id]) return;
+      if (L.kind === "wms") {
+        var u = bgsUnits[L.id];
+        var nm = L.name.replace(/^BGS /, ""); rows.push({ kind: "head", t: nm.charAt(0).toUpperCase() + nm.slice(1) + " geology (BGS 1:50,000)" });
+        if (u && u.key === mapClipKey(L)) {
+          if (!u.list.length) rows.push({ kind: "note", t: "No mapped units in this area" + (doc().dscale < 25000 ? " (BGS shows it only at 1:25,000 or smaller)" : "") });
+          u.list.slice(0, 14).forEach(function (q) { rows.push({ kind: "fill", c: q.c, fo: m.lop || 0.6, t: q.labels.slice(0, 3).join(", ") + (q.labels.length > 3 ? " …" : "") }); });
+          if (u.list.length > 14) rows.push({ kind: "note", t: "+ " + (u.list.length - 14) + " more units" });
+          if (u.list.length) rows.push({ kind: "note", t: "Codes are BGS LEX-RCS: look them up in the BGS Lexicon" });
+        } else rows.push({ kind: "note", t: u && u.err ? "Key unavailable: " + u.err : "Reading the BGS key…" });
+        return;
+      }
+      rows.push(L.line ? { kind: "line", c: L.stroke || "#3f6fd1", w: 1.6, t: L.name } : { kind: "fill", c: L.fill || "#3f6fd1", fo: L.fo || 0.12, st: L.stroke, dash: L.dash, t: L.name });
+    });
+    if (!rows.length) return "";
+    var w = 0; rows.forEach(function (r) { w = Math.max(w, tw(r.t, r.kind === "head" ? fs + 0.5 : r.kind === "note" ? fs - 1.5 : fs, r.kind === "head") + (r.kind === "head" || r.kind === "note" ? 0 : sw + 8)); });
+    var lh = 15, W = Math.min(I.w - 20, w + 20), H = 26 + rows.length * lh, pos = m.legpos || "br";
+    var x = pos[1] === "l" ? I.x + 10 : I.x + I.w - W - 10, y = pos[0] === "t" ? I.y + 10 : I.y + I.h - H - 22;
+    var TB = geo().tb; if (pos === "br" && doc().frame !== false && !TB.off && x + W > TB.x && y + H > TB.y) y = Math.max(I.y + 10, TB.y - H - 10); /* keep clear of the title block */
+    var o = '<g><rect x="' + r1(x) + '" y="' + r1(y) + '" width="' + r1(W) + '" height="' + r1(H) + '" fill="#fff" fill-opacity="0.94" stroke="#15233a" stroke-width="1"/>' + txt(x + 10, y + 16, "LEGEND", "#15233a", fs + 1, "start", ' font-weight="bold"');
+    rows.forEach(function (r, i) {
+      var yy = y + 24 + i * lh, tx = x + 10;
+      if (r.kind === "line") o += '<line x1="' + r1(tx) + '" y1="' + r1(yy + lh / 2) + '" x2="' + r1(tx + sw) + '" y2="' + r1(yy + lh / 2) + '" stroke="' + r.c + '" stroke-width="' + r.w + '"/>';
+      if (r.kind === "fill") o += '<rect x="' + r1(tx) + '" y="' + r1(yy + 2) + '" width="' + sw + '" height="' + (lh - 5) + '" fill="' + r.c + '" fill-opacity="' + r.fo + '" stroke="' + (r.st || r.c) + '" stroke-width="' + (r.st ? 1.1 : 0.4) + '"' + (r.dash ? ' stroke-dasharray="' + r.dash + '"' : "") + "/>";
+      if (r.kind === "line" || r.kind === "fill") tx += sw + 8;
+      o += txt(tx, yy + lh / 2 + 3.5, r.t, r.kind === "note" ? "#5a6677" : "#15233a", r.kind === "head" ? fs + 0.5 : r.kind === "note" ? fs - 1.5 : fs, "start", r.kind === "head" ? ' font-weight="bold"' : r.kind === "note" ? ' font-style="italic"' : "");
+    });
+    return o + "</g>";
+  }
+  function wmsUrl(L) { var C = mapClipM(), I = C.I, px = Math.max(2, Math.min(2048, Math.round((C.x1 - C.x0) / 6))), py = Math.max(2, Math.round(px * I.h / I.w)); return L.url + "?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=" + encodeURIComponent(L.layer) + "&STYLES=&CRS=EPSG:27700&BBOX=" + [C.x0, C.y0, C.x1, C.y1].map(function (v) { return Math.round(v); }).join(",") + "&WIDTH=" + px + "&HEIGHT=" + py + "&FORMAT=image/png&TRANSPARENT=TRUE"; }
+  function mapClipKey(L) { return wmsUrl(L); }
+  /* Find which BGS units are on the map: colours in the WMS image matched to the service renderer. */
+  function updateBgsLegend() {
+    var m = doc().map; if (!m || !m.leg || !m.on) return;
+    mapLayers().forEach(function (L) {
+      if (L.kind !== "wms" || !m.on[L.id] || !L.rest) return;
+      var key = mapClipKey(L), u = bgsUnits[L.id]; if (u && (u.key === key || u.busy === key)) return;
+      bgsUnits[L.id] = { busy: key };
+      var fail = function (er) { bgsUnits[L.id] = { key: "", err: er }; legVer++; mapKeyV = ""; renderAll(); };
+      var rend = bgsRend[L.id] ? Promise.resolve(bgsRend[L.id]) : fetch(L.rest + "?f=json").then(function (r) { if (!r.ok) throw new Error("BGS answered " + r.status); return r.json(); }).then(function (j) {
+        var infos = (j.drawingInfo && j.drawingInfo.renderer && j.drawingInfo.renderer.uniqueValueInfos) || []; if (!infos.length) throw new Error("no key in the BGS service");
+        return (bgsRend[L.id] = infos.map(function (v) { var c = v.symbol && v.symbol.color || [0, 0, 0, 0]; return { label: v.label || String(v.value), rgb: [c[0], c[1], c[2]] }; }));
+      });
+      var img = new Promise(function (res, rej) {
+        var tries = 0, wait = function () { if (tileCache[key]) return res(tileCache[key]); if (++tries > 60) return rej(new Error("the geology map didn't load")); cacheTile(key); setTimeout(wait, 500); }; wait();
+      }).then(function (src) { return new Promise(function (res, rej) { var im = new Image(); im.onload = function () { res(im); }; im.onerror = function () { rej(new Error("couldn't read the geology map")); }; im.src = src; }); });
+      Promise.all([rend, img]).then(function (r) {
+        var R = r[0], im = r[1], cv = document.createElement("canvas"); cv.width = im.naturalWidth; cv.height = im.naturalHeight;
+        var cx = cv.getContext("2d"); cx.drawImage(im, 0, 0); var px = cx.getImageData(0, 0, cv.width, cv.height).data, cnt = {}, tot = 0;
+        for (var i = 0; i < px.length; i += 4) { if (px[i + 3] < 250) continue; tot++; var k = (px[i] << 16) | (px[i + 1] << 8) | px[i + 2]; cnt[k] = (cnt[k] || 0) + 1; }
+        var list = [];
+        Object.keys(cnt).sort(function (a, b) { return cnt[b] - cnt[a]; }).forEach(function (k) {
+          if (cnt[k] < Math.max(12, tot * 0.002)) return; var rr = (k >> 16) & 255, gg = (k >> 8) & 255, bb = k & 255, labs = [];
+          R.forEach(function (q) { if (Math.abs(q.rgb[0] - rr) + Math.abs(q.rgb[1] - gg) + Math.abs(q.rgb[2] - bb) <= 6 && labs.indexOf(q.label) < 0) labs.push(q.label); });
+          if (labs.length) list.push({ c: "rgb(" + rr + "," + gg + "," + bb + ")", labels: labs, n: cnt[k] });
+        });
+        if (mapClipKey(L) !== key) return; bgsUnits[L.id] = { key: key, list: list }; legVer++; mapKeyV = ""; renderAll();
+      }).catch(function (er) { fail(er.message || "couldn't read the BGS key"); });
+    });
   }
   /* marching squares over the terrain grid, joined into polylines and simplified */
   function traceContours(g, iv, e0, n0) {
@@ -1621,6 +1705,8 @@
   });
   function mapSet(fn) { var m = doc().map; if (!m) return; fn(m); persist(); renderAll(); }
   $("sk-maposm").addEventListener("change", function () { var v = this.checked; mapSet(function (m) { m.osm = v; }); });
+  $("sk-mapleg").addEventListener("change", function () { var v = this.checked; mapSet(function (m) { m.leg = v; }); });
+  $("sk-maplegpos").addEventListener("change", function () { var v = this.value; mapSet(function (m) { m.legpos = v; }); });
   $("sk-mapgrey").addEventListener("change", function () { var v = this.checked; mapSet(function (m) { m.grey = v; }); });
   $("sk-mapop").addEventListener("input", function () { var v = +this.value; mapSet(function (m) { m.op = v; }); });
   $("sk-mapcont").addEventListener("change", function () { var v = this.checked; mapSet(function (m) { m.cont = v; }); if (v && doc().map && !doc().map.c) fetchContours(); });

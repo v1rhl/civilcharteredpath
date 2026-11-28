@@ -875,12 +875,12 @@ nav a[aria-current="page"][aria-expanded="true"] { color: var(--accent-ink); bac
 @media (max-width: 760px) { .sk-head { position: static; } }
 /* side bar layout */
 #view-sketch.wrap { max-width: 1600px; }
-.sk-layout { display: grid; grid-template-columns: 272px minmax(0, 1fr); gap: 14px; align-items: start; }
+.sk-layout { display: grid; grid-template-columns: 340px minmax(0, 1fr); gap: 14px; align-items: start; }
 .sk-side { position: sticky; top: calc(var(--sk-top, 56px) + 8px); max-height: calc(100vh - var(--sk-top, 56px) - 16px); overflow-y: auto; display: flex; flex-direction: column; gap: 10px; padding: 2px 6px 10px 2px; scrollbar-width: thin; }
 .sk-side .sk-seg { align-self: flex-start; }
 .sk-side .sk-seg button { padding: 5px 10px; font-size: 0.8rem; }
 .sk-side .sk-toolrow { display: flex; flex-direction: column; gap: 8px; }
-.sk-side .sk-tools { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 2px; grid-auto-rows: min-content; align-content: start; height: auto; }
+.sk-side .sk-tools { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 2px; grid-auto-rows: min-content; align-content: start; height: auto; }
 .sk-side .sk-tool { min-width: 0; padding: 5px 2px; font-size: 0.66rem; line-height: 1.15; text-align: center; }
 .sk-side .sk-tools2 .sk-tool { min-width: 0; }
 .sk-side .sk-style { flex-direction: column; align-items: flex-start; gap: 10px; padding-top: 6px; }
@@ -894,6 +894,13 @@ nav a[aria-current="page"][aria-expanded="true"] { color: var(--accent-ink); bac
 .sk-main { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
 .sk-main > .sk-top { position: sticky; top: var(--sk-top, 56px); z-index: 4; background: var(--paper); padding: 6px 0; }
 .sk-main > .sk-props { position: sticky; top: calc(var(--sk-top, 56px) + 48px); z-index: 3; }
+/* wide screens: the sketch pad fills the window under the site bar and the page itself doesn't scroll;
+   the side bar and the area round the sheet scroll on their own if they need to */
+html.sk-lock, html.sk-lock body { overflow: hidden; }
+html.sk-lock .sk-layout { height: calc(100vh - var(--sk-top, 56px) - 20px); }
+html.sk-lock .sk-side { max-height: 100%; }
+html.sk-lock .sk-main { height: 100%; overflow-y: auto; scrollbar-width: thin; }
+html.sk-lock .sk-main > .sk-top, html.sk-lock .sk-main > .sk-props { top: 0; }
 .sk-app:fullscreen, .sk-app.sk-full { background: var(--paper); padding: 10px 14px; overflow: auto; }
 .sk-app.sk-full { position: fixed; inset: 0; z-index: 1000; }
 .sk-app:fullscreen .sk-side, .sk-app.sk-full .sk-side { top: 8px; max-height: calc(100vh - 20px); }
@@ -2760,8 +2767,8 @@ footer .wrap { font-family: var(--font-body); }
 <script src="js/news-feed.js?v=20261122b"></script>
 <script src="js/news-archive.js?v=20261122b"></script>
 <script src="js/pages.js?v=20261122b"></script>
-<script src="js/tools/sketch-templates.js?v=20261128f"></script>
-<script src="js/tools/sketch.js?v=20261128f"></script>
+<script src="js/tools/sketch-templates.js?v=20261128g"></script>
+<script src="js/tools/sketch.js?v=20261128g"></script>
 <script src="js/tools/hydraulics.js?v=20261127a"></script>
 <script src="js/tools/pipeflow.js?v=20261127a"></script>
 <script src="js/tools/drawing-check.js?v=20261127a"></script>
