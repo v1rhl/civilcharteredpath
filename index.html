@@ -1159,6 +1159,13 @@ html.sk-lock .sk-main > .sk-top, html.sk-lock .sk-main > .sk-props { top: 0; }
 .sk-snapmenu summary::-webkit-details-marker { display: none; }
 .sk-snapmenu[open] > div { position: absolute; z-index: 20; top: calc(100% + 4px); left: 0; display: grid; gap: 6px; min-width: 210px; padding: 10px 12px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: 0 6px 20px rgba(0,0,0,.12); }
 .sk-snapmenu p { margin: 4px 0 0; }
+.sk-sheetopts .sk-snapwrap svg { display: none; }
+.sk-tbar .sk-snapwrap { gap: 2px; }
+.sk-tbar .sk-snapmenu summary { font-size: 0.6rem; padding: 2px 5px; }
+.sk-tbar .sk-snapmenu[open] > div { top: calc(100% + 4px); left: auto; right: 0; font-size: 0.8rem; z-index: 50; }
+.sk-tbar-bottom .sk-snapmenu[open] > div { top: auto; bottom: calc(100% + 4px); }
+.sk-tbar-left .sk-snapwrap { grid-column: 1 / -1; justify-content: center; }
+.sk-tbar-left .sk-snapmenu[open] > div { top: auto; bottom: 0; right: auto; left: calc(100% + 8px); }
 .sk-toolrow { align-items: stretch; }
 .sk-tool { display: inline-flex; flex-direction: column; align-items: center; gap: 2px; min-width: 62px; font: 600 0.72rem var(--font-body); border: 1px solid transparent; background: transparent; color: var(--ink); padding: 5px 6px; border-radius: calc(var(--radius) - 2px); cursor: pointer; }
 .sk-tool svg { width: 22px; height: 22px; }
@@ -2990,9 +2997,9 @@ footer .wrap { font-family: var(--font-body); }
 <script src="js/news-feed.js?v=20261122b"></script>
 <script src="js/news-archive.js?v=20261122b"></script>
 <script src="js/pages.js?v=20261122b"></script>
-<script src="js/tools/sketch-templates.js?v=20261128zs"></script>
-<script src="js/tools/sketch.js?v=20261128zs"></script>
-<script src="js/tools/drawing-check.js?v=20261128zs"></script>
+<script src="js/tools/sketch-templates.js?v=20261128zt"></script>
+<script src="js/tools/sketch.js?v=20261128zt"></script>
+<script src="js/tools/drawing-check.js?v=20261128zt"></script>
 <script src="js/tools/hydraulics.js?v=20261127a"></script>
 <script src="js/tools/pipeflow.js?v=20261127a"></script>
 <script src="js/tools/catchment.js?v=20261127a"></script>
@@ -3004,7 +3011,7 @@ footer .wrap { font-family: var(--font-body); }
 <script src="js/tools/culvert.js?v=20261127a"></script>
 <script src="js/tools/site-diary.js?v=20261127a"></script>
 <script src="js/learn.js?v=20261127m"></script>
-<script src="js/site.js?v=20261128zs"></script>
+<script src="js/site.js?v=20261128zt"></script>
 <script src="js/art.js?v=20261127m"></script>
 </body>
 </html>

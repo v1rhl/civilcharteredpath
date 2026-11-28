@@ -665,6 +665,7 @@
   }
   function iconSvg(name) { return '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="stroke:currentColor">' + IC[name] + "</svg>"; }
   var LTI = { /* layer toggle icons */
+    mag: '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3v8a6 6 0 0 0 12 0V3"/><path d="M6 7h4M14 7h4"/></svg>',
     eye: '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-6.5 10-6.5S22 12 22 12s-3.5 6.5-10 6.5S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>',
     lock: '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>',
     img: '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="M21 17l-5-5-9 8"/></svg>'
@@ -707,7 +708,7 @@
       '<label class="sk-check" title="Flags words in your text, labels and title block that aren\'t in the British English dictionary. The dictionary is part of this site, so nothing is sent anywhere."><input type="checkbox" id="sk-spell"> Check spelling</label>' +
       '<label class="sk-check">Scale <select id="sk-dscale"><option value="0">Not to scale</option>' + SCALES.map(function (n) { return '<option value="' + n + '">' + nS(n) + "</option>"; }).join("") + '</select></label><span class="small" id="sk-gridinfo"></span><label class="sk-check" id="sk-sbar-l"><input type="checkbox" id="sk-sbar"> Scale bar</label>' +
       '<label class="sk-check" id="sk-gsq">Grid square = <input type="number" id="sk-scale" min="0.01" step="0.05" style="width:5.5em"> m</label>' +
-      '<span class="sk-snapwrap"><label class="sk-check"><input type="checkbox" id="sk-snap"> Snap</label><details class="sk-snapmenu"><summary>Snaps</summary><div>' +
+      '<span class="sk-snapwrap" id="sk-snapwrap"><label class="sk-check sk-ltog" title="Snap to the grid and to points on the drawing"><input type="checkbox" id="sk-snap">' + LTI.mag + '<span>Snap</span></label><details class="sk-snapmenu"><summary title="Choose what to snap to">Snaps ▾</summary><div>' +
         SNAPS.map(function (x) { return '<label class="sk-check"><input type="checkbox" data-snap="' + x[0] + '"> ' + x[1] + "</label>"; }).join("") + '<p class="small">Hold Alt to draw without snapping.</p></div></details></span>' +
       '<span class="sk-layers"><span class="sk-lab">Layers</span>' +
         '<span class="sk-laytogs" id="sk-laytogs">' +
@@ -896,6 +897,8 @@
     if (act && side && r1w) { if (isMob()) { if (act.parentNode !== r1w) r1w.appendChild(act); act.classList.remove("sk-sideacts"); } else { if (act.parentNode !== side) side.appendChild(act); act.classList.add("sk-sideacts"); } }
     var lt = $("sk-laytogs"), ls = app.querySelector(".sk-layers"), tl = $("sk-tblay");
     if (lt && ls && tl) { if (isMob()) { if (lt.parentNode !== ls) ls.insertBefore(lt, ls.children[1] || null); } else if (lt.parentNode !== tl) tl.appendChild(lt); } /* drawing and underlay show / lock: toolbar icons on wide screens */
+    var sw = $("sk-snapwrap"), gsq = $("sk-gsq"); /* snapping sits with them */
+    if (sw && tl && gsq) { if (isMob()) { if (sw.previousElementSibling !== gsq) gsq.parentNode.insertBefore(sw, gsq.nextSibling); } else if (sw.parentNode !== tl) tl.appendChild(sw); }
     var lay = app.querySelector(".sk-layout"), main = $("sk-main");
     if (isMob()) { if (t.parentNode !== row) row.insertBefore(t, row.firstChild); bar.hidden = true; if (lay) lay.classList.remove("sk-tl"); if (bar.parentNode !== main) main.insertBefore(bar, $("sk-stage")); return; }
     if (t.parentNode !== slot) slot.appendChild(t);
