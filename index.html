@@ -859,6 +859,12 @@ nav a[aria-current="page"][aria-expanded="true"] { color: var(--accent-ink); bac
 .sk-app { display: flex; flex-direction: column; gap: 10px; }
 .sk-head { display: flex; flex-direction: column; gap: 8px; position: sticky; top: var(--sk-top, 56px); z-index: 4; background: var(--paper); padding: 8px 0; margin-top: -8px; border-bottom: 1px solid var(--line); }
 .sk-tabs { display: flex; flex-wrap: wrap; gap: 4px; align-items: flex-end; margin-bottom: -11px; position: relative; z-index: 1; padding-left: 8px; }
+.sk-tab.dropl { box-shadow: inset 3px 0 0 var(--accent); }
+.sk-tab.dropr { box-shadow: inset -3px 0 0 var(--accent); }
+.sk-tab.dragging { opacity: 0.5; }
+.sk-tab[draggable="true"] { cursor: grab; }
+.sk-order { display: inline-flex; gap: 2px; }
+.sk-order .sk-btn { padding: 6px 8px; }
 .sk-tab { display: inline-flex; align-items: center; border: 1px solid var(--line); border-bottom-color: transparent; border-radius: var(--radius) var(--radius) 0 0; background: var(--paper); }
 .sk-tab.on { background: #e9edec; border-color: var(--line); border-bottom-color: #e9edec; }
 .sk-tab button { font: 600 0.82rem var(--font-body); border: 0; background: transparent; color: var(--ink); padding: 6px 10px; cursor: pointer; display: inline-flex; gap: 6px; align-items: baseline; }
@@ -867,6 +873,40 @@ nav a[aria-current="page"][aria-expanded="true"] { color: var(--accent-ink); bac
 .sk-tab .sk-tabx { padding: 4px 8px 4px 0; color: var(--muted); font-size: 1rem; line-height: 1; }
 .sk-tabadd { font: 600 0.82rem var(--font-body); border: 1px dashed var(--line); background: transparent; color: var(--accent); padding: 5px 10px; border-radius: var(--radius) var(--radius) 0 0; cursor: pointer; }
 @media (max-width: 760px) { .sk-head { position: static; } }
+/* side bar layout */
+#view-sketch.wrap { max-width: 1600px; }
+.sk-layout { display: grid; grid-template-columns: 272px minmax(0, 1fr); gap: 14px; align-items: start; }
+.sk-side { position: sticky; top: calc(var(--sk-top, 56px) + 8px); max-height: calc(100vh - var(--sk-top, 56px) - 16px); overflow-y: auto; display: flex; flex-direction: column; gap: 10px; padding: 2px 6px 10px 2px; scrollbar-width: thin; }
+.sk-side .sk-seg { align-self: flex-start; }
+.sk-side .sk-seg button { padding: 5px 10px; font-size: 0.8rem; }
+.sk-side .sk-toolrow { display: flex; flex-direction: column; gap: 8px; }
+.sk-side .sk-tools { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 2px; grid-auto-rows: min-content; align-content: start; height: auto; }
+.sk-side .sk-tool { min-width: 0; padding: 5px 2px; font-size: 0.66rem; line-height: 1.15; text-align: center; }
+.sk-side .sk-tools2 .sk-tool { min-width: 0; }
+.sk-side .sk-style { flex-direction: column; align-items: flex-start; gap: 10px; padding-top: 6px; }
+.sk-side .sk-group { width: 100%; }
+.sk-side .sk-layers { padding-left: 0; border-left: 0; flex-direction: column; align-items: flex-start; }
+.sk-side .sk-mappanel { margin-top: 6px; }
+.sk-side .sk-mappanel input[type="text"] { width: 100% !important; }
+.sk-side .sk-tpl { width: 100%; }
+.sk-sec { border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); padding: 6px 10px; }
+.sk-sec > summary { cursor: pointer; font: 600 0.8rem var(--font-mono); letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); padding: 2px 0; }
+.sk-main { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.sk-main > .sk-top { position: sticky; top: var(--sk-top, 56px); z-index: 4; background: var(--paper); padding: 6px 0; }
+.sk-main > .sk-props { position: sticky; top: calc(var(--sk-top, 56px) + 48px); z-index: 3; }
+.sk-app:fullscreen, .sk-app.sk-full { background: var(--paper); padding: 10px 14px; overflow: auto; }
+.sk-app.sk-full { position: fixed; inset: 0; z-index: 1000; }
+.sk-app:fullscreen .sk-side, .sk-app.sk-full .sk-side { top: 8px; max-height: calc(100vh - 20px); }
+.sk-stage[data-tool="xform"] #sk-svg [data-id] { cursor: move; }
+@media (max-width: 1000px) {
+  .sk-layout { grid-template-columns: 1fr; }
+  .sk-side { position: static; max-height: none; overflow: visible; }
+  .sk-side .sk-tools { display: flex; flex-wrap: wrap; }
+  .sk-side .sk-tool { min-width: 60px; flex: none; }
+  .sk-side .sk-toolrow > * { flex: none; }
+  .sk-side .sk-style { flex-direction: row; flex-wrap: wrap; }
+  .sk-main > .sk-top, .sk-main > .sk-props { position: static; }
+}
 .sk-top, .sk-style, .sk-toolrow, .sk-props { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; }
 .sk-top { justify-content: space-between; }
 .sk-sheets, .sk-actions, .sk-group, .sk-layers { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
@@ -882,6 +922,13 @@ nav a[aria-current="page"][aria-expanded="true"] { color: var(--accent-ink); bac
 .sk-tools { display: flex; flex-wrap: wrap; gap: 4px; background: var(--tool-bg); border: 1px solid var(--tool-line); border-radius: var(--radius); padding: 4px; }
 .sk-tools2 .sk-tool { min-width: 54px; }
 .sk-mappanel { border: 1px solid var(--tool-line); background: var(--tool-bg); border-radius: var(--radius); padding: 8px 10px; margin-top: 8px; }
+.sk-wide { flex: 1 1 100%; }
+.sk-wide input { flex: 1; min-width: 0; padding: 5px 8px; }
+.sk-mappanel .sk-maprow + .sk-maprow { margin-top: 6px; }
+.sk-maplayers { border-top: 1px solid var(--line); padding-top: 6px; }
+.sk-stage[data-map="pan"] #sk-svg, .sk-stage[data-map="pan"] #sk-svg * { cursor: move !important; }
+.sk-stage[data-map="box"] #sk-svg, .sk-stage[data-map="box"] #sk-svg * { cursor: crosshair !important; }
+.sk-stage[data-map="sect"] #sk-svg, .sk-stage[data-map="sect"] #sk-svg *, .sk-stage[data-map="catch"] #sk-svg, .sk-stage[data-map="catch"] #sk-svg * { cursor: crosshair !important; }
 .sk-maprow { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; }
 .sk-mappanel p { margin: 6px 0 0; }
 .sk-snapwrap { display: inline-flex; align-items: center; gap: 6px; position: relative; }
@@ -2713,8 +2760,8 @@ footer .wrap { font-family: var(--font-body); }
 <script src="js/news-feed.js?v=20261122b"></script>
 <script src="js/news-archive.js?v=20261122b"></script>
 <script src="js/pages.js?v=20261122b"></script>
-<script src="js/tools/sketch-templates.js?v=20261127h"></script>
-<script src="js/tools/sketch.js?v=20261127h"></script>
+<script src="js/tools/sketch-templates.js?v=20261128e"></script>
+<script src="js/tools/sketch.js?v=20261128e"></script>
 <script src="js/tools/hydraulics.js?v=20261127a"></script>
 <script src="js/tools/pipeflow.js?v=20261127a"></script>
 <script src="js/tools/drawing-check.js?v=20261127a"></script>
