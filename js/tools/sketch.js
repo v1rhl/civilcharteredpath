@@ -1170,17 +1170,18 @@
   function winSave(dd, patch) { var w = winState(dd.dataset.sec); for (var k in patch) w[k] = patch[k]; try { localStorage.setItem("cp-sketch-win2-" + dd.dataset.sec, JSON.stringify(w)); } catch (e) {} }
   /* the map panel's collapsible groups; open or shut is remembered */
   function mgO(key, title, dflt, extra) { var st = null; try { st = localStorage.getItem("cp-sketch-mg-" + key); } catch (e) {} var on = st == null ? dflt : st === "1"; return '<details class="sk-mgrp" data-mg="' + key + '"' + (on ? " open" : "") + '><summary>' + title + (extra ? " " + extra : "") + '</summary><div class="sk-mgrp-in">'; }
-  function unfly(d) { var b = d.querySelector(".sk-sec-body"), n = d.querySelector(".sk-sec-in"); d.classList.remove("sk-fly", "sk-attached"); if (b) b.removeAttribute("style"); if (n) n.removeAttribute("style"); }
+  function unfly(d) { var b = d.querySelector(".sk-sec-body"), n = d.querySelector(".sk-sec-in"); d.classList.remove("sk-fly", "sk-attached"); if (b) { b.removeAttribute("style"); b._moved = null; } if (n) n.removeAttribute("style"); }
   function openWin(dd) {
     Array.prototype.forEach.call(document.querySelectorAll(".sk-side > details.sk-sec[open]"), function (o) { if (o !== dd && !winState(o.dataset.sec).pin) closeWin(o); });
     dd.classList.add("sk-fly"); dd.open = true; placeWin(dd); /* laid out before the browser paints, so it never shows dropping down first */
   }
-  function closeWin(dd) { dd.open = false; unfly(dd); }
+  function closeWin(dd) { dd.open = false; unfly(dd); dd.querySelector(".sk-sec-body")._moved = null; }
   function placeWin(dd) {
     var b = dd.querySelector(".sk-sec-body"), n = dd.querySelector(".sk-sec-in"), h = dd.querySelector(".sk-win-h"), side = $("sk-side"), w = winState(dd.dataset.sec);
     var pin = h.querySelector('[data-win="pin"]'); pin.setAttribute("aria-pressed", !!w.pin);
     var r = side.getBoundingClientRect(), VW = window.innerWidth, VH = window.innerHeight, x = w.x, y = w.y, left = dd.dataset.sec !== "style";
-    var sm = dd.querySelector(":scope > summary"), sr = sm && sm.offsetParent ? sm.getBoundingClientRect() : null, att = w.x == null && !!sr && sr.width > 0 && !isMob(); /* opens joined to the button that opened it */
+    var sm = dd.querySelector(":scope > summary"), sr = sm && sm.offsetParent ? sm.getBoundingClientRect() : null, hasBtn = !!sr && sr.width > 0 && !isMob(), att = hasBtn && !b._moved; /* opens joined to the button that opened it, in every dock and in full screen */
+    if (hasBtn) { x = b._moved ? b._moved[0] : null; y = b._moved ? b._moved[1] : null; } /* a window dragged off its button stays put until it is closed, then opens on its button again */
     if (att) y = sr.top;
     if (y == null) { var tb = $("sk-tbar"), tr = tb && !tb.hidden && !/sk-tbar-(float|left|bottom)/.test(tb.className) ? tb.getBoundingClientRect() : null; var tlb = tb && !tb.hidden && tb.classList.contains("sk-tbar-left") ? tb.getBoundingClientRect() : null; y = tr ? tr.bottom + 8 : tlb ? Math.max(tlb.top, 8) : Math.max($("sk-stage").getBoundingClientRect().top, 8); } /* first time: under the toolbar */
     y = Math.max(8, Math.min(y, VH - 160));
@@ -1218,7 +1219,7 @@
       if (e.button !== 0 || e.target.closest("[data-win]") || !dd.classList.contains("sk-fly")) return; e.preventDefault();
       var r = body.getBoundingClientRect(), ox = e.clientX - r.left, oy = e.clientY - r.top; head.setPointerCapture(e.pointerId); head.classList.add("sk-drag");
       var mv = function (ev) { var x = Math.max(4, Math.min(window.innerWidth - r.width - 4, ev.clientX - ox)), y = Math.max(4, Math.min(window.innerHeight - r.height - 4, ev.clientY - oy)); body.style.left = x + "px"; body.style.top = y + "px"; if (Math.abs(x - r.left) + Math.abs(y - r.top) > 3) { moved = true; dd.classList.remove("sk-attached"); } };
-      var moved = false, up = function () { head.removeEventListener("pointermove", mv); head.removeEventListener("pointerup", up); head.removeEventListener("pointercancel", up); head.classList.remove("sk-drag"); if (moved) winSave(dd, { x: parseFloat(body.style.left), y: parseFloat(body.style.top) }); };
+      var moved = false, up = function () { head.removeEventListener("pointermove", mv); head.removeEventListener("pointerup", up); head.removeEventListener("pointercancel", up); head.classList.remove("sk-drag"); if (moved) { var sm = dd.querySelector(":scope > summary"); if (sm && sm.offsetParent && !isMob()) body._moved = [parseFloat(body.style.left), parseFloat(body.style.top)]; else winSave(dd, { x: parseFloat(body.style.left), y: parseFloat(body.style.top) }); } };
       head.addEventListener("pointermove", mv); head.addEventListener("pointerup", up); head.addEventListener("pointercancel", up);
     });
   }
@@ -3636,7 +3637,7 @@
     if (on) { if (app.requestFullscreen) app.requestFullscreen().catch(function () { app.classList.add("sk-full"); afterFull(); }); else { app.classList.add("sk-full"); afterFull(); } }
     else { if (document.fullscreenElement) document.exitFullscreen(); app.classList.remove("sk-full"); afterFull(); }
   }
-  function afterFull() { var f = isFull(); $("sk-full").setAttribute("aria-pressed", f); var fb = $("sk-full"), fl = f ? "Exit full screen" : "Full screen", fsp = fb.querySelector(".sk-tlab"); if (fsp) { fsp.textContent = fl; var fsv = fb.querySelector("svg"); if (fsv && TBI) fsv.outerHTML = TBI[f ? "sk-fullx" : "sk-full"]; } else fb.textContent = fl; fb.setAttribute("data-tip", fl); fb.setAttribute("aria-label", fl); app.style.setProperty("--sk-top", f ? "0px" : ((document.querySelector(".topbar") || {}).offsetHeight || 0) + "px"); setTimeout(function () { renderAll(); measureK(); renderUI(); }, 60); }
+  function afterFull() { var f = isFull(); $("sk-full").setAttribute("aria-pressed", f); var fb = $("sk-full"), fl = f ? "Exit full screen" : "Full screen", fsp = fb.querySelector(".sk-tlab"); if (fsp) { fsp.textContent = f ? "Exit full" : fl; var fsv = fb.querySelector("svg"); if (fsv && TBI) fsv.outerHTML = TBI[f ? "sk-fullx" : "sk-full"]; } else fb.textContent = fl; fb.setAttribute("data-tip", fl); fb.setAttribute("aria-label", fl); app.style.setProperty("--sk-top", f ? "0px" : ((document.querySelector(".topbar") || {}).offsetHeight || 0) + "px"); setTimeout(function () { renderAll(); measureK(); renderUI(); }, 60); }
   $("sk-full").addEventListener("click", function () { setFull(!isFull()); });
   svg.addEventListener("wheel", function (e) {
     if (e.shiftKey && !e.ctrlKey) { e.preventDefault(); panBy(-(e.deltaY || e.deltaX), 0); return; } /* Shift+wheel pans sideways */
