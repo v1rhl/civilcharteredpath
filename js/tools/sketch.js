@@ -651,6 +651,11 @@
     return (curCache[t] = 'url("data:image/svg+xml,' + encodeURIComponent(sv).replace(/'/g, "%27") + '") 8 8, crosshair');
   }
   function iconSvg(name) { return '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="stroke:currentColor">' + IC[name] + "</svg>"; }
+  var LTI = { /* layer toggle icons */
+    eye: '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-6.5 10-6.5S22 12 22 12s-3.5 6.5-10 6.5S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>',
+    lock: '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>',
+    img: '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="M21 17l-5-5-9 8"/></svg>'
+  };
   var app = $("sk-app");
   app.innerHTML =
     '<div class="sk-head" id="sk-head"><div class="sk-top">' +
@@ -691,8 +696,9 @@
       '<span class="sk-snapwrap"><label class="sk-check"><input type="checkbox" id="sk-snap"> Snap</label><details class="sk-snapmenu"><summary>Snaps</summary><div>' +
         SNAPS.map(function (x) { return '<label class="sk-check"><input type="checkbox" data-snap="' + x[0] + '"> ' + x[1] + "</label>"; }).join("") + '<p class="small">Hold Alt to draw without snapping.</p></div></details></span>' +
       '<span class="sk-layers"><span class="sk-lab">Layers</span>' +
-        '<label class="sk-check"><input type="checkbox" id="sk-show-draw"> Drawing</label><label class="sk-check"><input type="checkbox" id="sk-lock-draw"> Lock drawing</label>' +
-        '<label class="sk-check"><input type="checkbox" id="sk-show-under"> Underlay</label><label class="sk-check"><input type="checkbox" id="sk-lock-under"> Lock underlay</label>' +
+        '<span class="sk-laytogs" id="sk-laytogs">' +
+        '<label class="sk-check sk-ltog" title="Show the drawing"><input type="checkbox" id="sk-show-draw">' + LTI.eye + '<span>Drawing</span></label><label class="sk-check sk-ltog" title="Lock the drawing so nothing on it can be picked or moved"><input type="checkbox" id="sk-lock-draw">' + LTI.lock + '<span>Lock drawing</span></label>' +
+        '<label class="sk-check sk-ltog" title="Show the traced image (underlay)"><input type="checkbox" id="sk-show-under">' + LTI.img + '<span>Underlay</span></label><label class="sk-check sk-ltog" title="Lock the underlay image"><input type="checkbox" id="sk-lock-under">' + LTI.lock + '<span>Lock underlay</span></label></span>' +
         '<button type="button" class="sk-btn" id="sk-img-btn">Add image to trace</button><input type="file" id="sk-img" accept="image/*" hidden><input type="file" id="sk-img2" accept="image/*" hidden>' +
         '<label class="sk-check" id="sk-mapshow-l" hidden><input type="checkbox" id="sk-mapshow"> Map</label><button type="button" class="sk-btn" id="sk-map-btn" aria-expanded="false">Map and contours</button></span>' +
     "</div>" +
@@ -707,7 +713,7 @@
         '<button type="button" class="sk-btn" id="sk-mapea" title="Fetch the EA 1 m LiDAR DTM for the map area (England only)">EA LiDAR</button><button type="button" class="sk-btn" id="sk-mapfile-b" title="Load a terrain grid you have downloaded, e.g. from the EA survey portal">Load LiDAR file</button><input type="file" id="sk-mapfile" accept=".asc,.txt,.tif,.tiff" hidden></div>' +
       '<div class="sk-maprow"><span class="sk-lab">From the terrain</span><button type="button" class="sk-btn" id="sk-mapsect" aria-pressed="false" title="Drag a line on the map to draw a ground section from the LiDAR">Draw section</button><button type="button" class="sk-btn" id="sk-mapcatch" aria-pressed="false" title="Click a ditch, stream or low point to outline the land that drains to it">Find catchment</button><button type="button" class="sk-btn" id="sk-mapfall" aria-pressed="false" title="Click on the map to add an arrow showing which way the ground falls there, with its gradient">Fall arrow</button><label class="sk-check"><input type="checkbox" id="sk-mapflow"> Flow lines</label></div>' +
       '<p class="small">Find catchment works like the Catchment runoff tool: it shows the flow lines, then outlines the land draining to the point you click, with the longest flow path and outlet. It uses EA LiDAR, or your file if you loaded one with Load LiDAR file.</p>' +
-      '<div class="sk-maprow sk-maplayers"><span class="sk-lab">Layers</span>' + MAPL.map(function (L) { return (L.grp ? '<span class="sk-lab sk-mlgrp">' + L.grp + "</span>" : "") + '<label class="sk-check" title="' + esc(L.src) + '"><input type="checkbox" data-ml="' + L.id + '"> ' + L.name + ' <span data-mls="' + L.id + '"></span></label>'; }).join("") +
+      '<div class="sk-maprow sk-maplayers"><details class="sk-mldd" id="sk-mldd"><summary>Map layers <span class="small" id="sk-mlcount"></span></summary><div class="sk-mldd-in">' + MAPL.map(function (L) { return (L.grp ? '<span class="sk-lab sk-mlgrp">' + L.grp + "</span>" : "") + '<label class="sk-check" title="' + esc(L.src) + '"><input type="checkbox" data-ml="' + L.id + '"> ' + L.name + ' <span data-mls="' + L.id + '"></span></label>'; }).join("") + "</div></details>" +
         '<label class="sk-check sk-wide">ArcGIS layer URL <input type="url" id="sk-mlurl" placeholder="FeatureServer/0 or Hub dataset link"></label><button type="button" class="sk-btn" id="sk-mladd">Add layer</button><button type="button" class="sk-btn" id="sk-mlgj-b">Load GeoJSON</button><input type="file" id="sk-mlgj" accept=".geojson,.json" hidden></div>' +
       '<p id="sk-mlmsg" class="sk-mlmsg" role="status" hidden></p><div id="sk-mlextra" class="sk-maprow"></div>' +
       '<div class="sk-maprow"><label class="sk-check"><input type="checkbox" id="sk-mapleg"> Legend for the layers</label><label class="sk-check">at <select id="sk-maplegpos"><option value="br">bottom right</option><option value="bl">bottom left</option><option value="tr">top right</option><option value="tl">top left</option></select></label></div>' +
@@ -755,7 +761,7 @@
     var row1 = mk("div", "sk-row1"); row1.appendChild($("sk-tabs")); row1.appendChild(top); /* sheet tabs and the undo/export bar share one row */
     var tbar = mk("div", "sk-tbar"); tbar.id = "sk-tbar"; tbar.setAttribute("role", "group"); tbar.setAttribute("aria-label", "Starred tools");
     tbar.innerHTML = '<button type="button" class="sk-tbar-grip" id="sk-tbgrip" title="Drag to move the toolbar anywhere" aria-label="Move toolbar"><svg viewBox="0 0 8 16" width="8" height="16" aria-hidden="true"><g fill="currentColor"><circle cx="2" cy="3" r="1.2"/><circle cx="6" cy="3" r="1.2"/><circle cx="2" cy="8" r="1.2"/><circle cx="6" cy="8" r="1.2"/><circle cx="2" cy="13" r="1.2"/><circle cx="6" cy="13" r="1.2"/></g></svg></button><div class="sk-tbar-slot" id="sk-tbslot"></div>' +
-      '<div class="sk-tbar-end"><button type="button" class="sk-btn sk-tbar-all" id="sk-tball" title="All tools: star the ones you want on this toolbar">All tools</button><button type="button" class="sk-win-b" id="sk-tbvert" aria-pressed="false" title="Stand the toolbar up as a column" aria-label="Vertical toolbar" hidden>⇅</button><button type="button" class="sk-win-b" id="sk-tbdock" title="Put the toolbar back along the top" aria-label="Dock toolbar at the top" hidden>⤒</button></div>';
+      '<div class="sk-tbar-lay" id="sk-tblay"></div><div class="sk-tbar-end"><button type="button" class="sk-btn sk-tbar-all" id="sk-tball" title="All tools: star the ones you want on this toolbar">All tools</button><button type="button" class="sk-win-b" id="sk-tbvert" aria-pressed="false" title="Stand the toolbar up as a column" aria-label="Vertical toolbar" hidden>⇅</button><button type="button" class="sk-win-b" id="sk-tbdock" title="Put the toolbar back along the top" aria-label="Dock toolbar at the top" hidden>⤒</button></div>';
     [row1, tbar, $("sk-stage"), $("sk-props"), hint, $("sk-status")].forEach(function (n) { main.appendChild(n); }); /* the item options and messages sit under the sheet, kept small */
     var lay = mk("div", "sk-layout"); lay.appendChild(side); lay.appendChild(main);
     head.remove(); app.innerHTML = ""; app.appendChild(lay);
@@ -866,6 +872,8 @@
     var row = app.querySelector(".sk-toolrow");
     var act = $("sk-head"), side = $("sk-side"), r1w = app.querySelector(".sk-row1"); /* undo, redo, clear, export and full screen: under Layers and map on wide screens */
     if (act && side && r1w) { if (isMob()) { if (act.parentNode !== r1w) r1w.appendChild(act); act.classList.remove("sk-sideacts"); } else { if (act.parentNode !== side) side.appendChild(act); act.classList.add("sk-sideacts"); } }
+    var lt = $("sk-laytogs"), ls = app.querySelector(".sk-layers"), tl = $("sk-tblay");
+    if (lt && ls && tl) { if (isMob()) { if (lt.parentNode !== ls) ls.insertBefore(lt, ls.children[1] || null); } else if (lt.parentNode !== tl) tl.appendChild(lt); } /* drawing and underlay show / lock: toolbar icons on wide screens */
     if (isMob()) { if (t.parentNode !== row) row.insertBefore(t, row.firstChild); bar.hidden = true; return; }
     if (t.parentNode !== slot) slot.appendChild(t);
     bar.hidden = false; var w = tbState(), fl = !!w.float;
@@ -909,8 +917,8 @@
      when you click on the sheet or open another section); × closes it. Position and pin are remembered. */
   var winZ = 40;
   /* Style starts pinned open; the rest start closed */
-  function winState(name) { var w = null; try { w = JSON.parse(localStorage.getItem("cp-sketch-win-" + name)); } catch (e) {} w = w || {}; if (w.pin == null) w.pin = name === "style"; return w; }
-  function winSave(dd, patch) { var w = winState(dd.dataset.sec); for (var k in patch) w[k] = patch[k]; try { localStorage.setItem("cp-sketch-win-" + dd.dataset.sec, JSON.stringify(w)); } catch (e) {} }
+  function winState(name) { var w = null; try { w = JSON.parse(localStorage.getItem("cp-sketch-win2-" + name)); } catch (e) {} w = w || {}; if (w.pin == null) w.pin = name === "style"; return w; }
+  function winSave(dd, patch) { var w = winState(dd.dataset.sec); for (var k in patch) w[k] = patch[k]; try { localStorage.setItem("cp-sketch-win2-" + dd.dataset.sec, JSON.stringify(w)); } catch (e) {} }
   function unfly(d) { var b = d.querySelector(".sk-sec-body"), n = d.querySelector(".sk-sec-in"); d.classList.remove("sk-fly"); if (b) b.removeAttribute("style"); if (n) n.removeAttribute("style"); }
   function openWin(dd) {
     Array.prototype.forEach.call(document.querySelectorAll(".sk-side > details.sk-sec[open]"), function (o) { if (o !== dd && !winState(o.dataset.sec).pin) closeWin(o); });
@@ -920,21 +928,33 @@
   function placeWin(dd) {
     var b = dd.querySelector(".sk-sec-body"), n = dd.querySelector(".sk-sec-in"), h = dd.querySelector(".sk-win-h"), side = $("sk-side"), w = winState(dd.dataset.sec);
     var pin = h.querySelector('[data-win="pin"]'); pin.setAttribute("aria-pressed", !!w.pin);
-    var r = side.getBoundingClientRect(), VW = window.innerWidth, VH = window.innerHeight, x = w.x, y = w.y;
-    if (y == null) { var tb = $("sk-tbar"), tr = tb && !tb.hidden && !tb.classList.contains("sk-tbar-float") ? tb.getBoundingClientRect() : null; y = tr ? tr.bottom + 8 : Math.max(r.top, 8); } /* first time: under the toolbar, at the right */
+    var r = side.getBoundingClientRect(), VW = window.innerWidth, VH = window.innerHeight, x = w.x, y = w.y, left = dd.dataset.sec !== "style";
+    if (y == null) { var tb = $("sk-tbar"), tr = tb && !tb.hidden && !tb.classList.contains("sk-tbar-float") ? tb.getBoundingClientRect() : null; y = tr ? tr.bottom + 8 : Math.max(r.top, 8); } /* first time: under the toolbar */
     y = Math.max(8, Math.min(y, VH - 160));
-    b.style.zIndex = ++winZ;
-    b.style.left = "0px"; b.style.top = "0px"; b.style.width = Math.max(320, VW - 16) + "px";
-    var hh = h.offsetHeight, H = Math.max(140, VH - y - 8 - hh - 2); n.style.height = H + "px"; /* fits below where it opens, flowing into more columns if it must, so it never covers the toolbar */
-    var mx = 0, my = 0, n0 = n.getBoundingClientRect(); Array.prototype.forEach.call(n.querySelectorAll("*"), function (c) { var q = c.getBoundingClientRect(); if (q.width) { if (q.right > mx) mx = q.right; if (q.bottom > my) my = q.bottom; } });
-    var cw = Math.min(VW - 16, Math.max(300, mx - n0.left + 30)); n.style.height = Math.min(H, Math.max(60, my - n0.top + 16)) + "px"; /* + the bottom padding (border-box) */ b.style.width = cw + "px";
+    b.style.zIndex = ++winZ; b._placing = true;
+    var hh0 = h.offsetHeight || 34;
+    if (w.w && w.h) { /* a size she chose by dragging the corner */
+      var W0 = Math.min(w.w, VW - 16), H0 = Math.min(w.h, VH - 16); b.style.width = W0 + "px"; b.style.height = H0 + "px"; n.style.height = Math.max(60, H0 - hh0 - 2) + "px";
+    } else {
+      b.style.height = ""; b.style.left = "0px"; b.style.top = "0px"; b.style.width = Math.max(320, VW - 16) + "px";
+      var hh = h.offsetHeight, H = Math.max(140, VH - y - 8 - hh - 2); n.style.height = H + "px"; /* fits below where it opens, flowing into more columns if it must */
+      var mx = 0, my = 0, n0 = n.getBoundingClientRect(); Array.prototype.forEach.call(n.querySelectorAll("*"), function (c) { var q = c.getBoundingClientRect(); if (q.width) { if (q.right > mx) mx = q.right; if (q.bottom > my) my = q.bottom; } });
+      var cw = Math.min(VW - 16, 560, Math.max(300, mx - n0.left + 30)); /* no wider than two columns to start with: drag the corner for more */
+      n.style.height = Math.min(H, Math.max(60, my - n0.top + 16)) + "px"; b.style.width = cw + "px";
+    }
     var bw = b.offsetWidth, bh = b.offsetHeight;
-    if (x == null) x = VW - bw - 16;
+    if (x == null) x = left ? r.right + 8 : VW - bw - 16; /* Style opens at the right; the others at the left, beside the side bar */
     x = Math.max(8, Math.min(x, VW - bw - 8)); y = Math.max(8, Math.min(y, VH - bh - 8));
     b.style.left = x + "px"; b.style.top = y + "px";
+    b._size = [b.offsetWidth, b.offsetHeight]; setTimeout(function () { b._placing = false; }, 0);
   }
   function wireWin(dd, head) {
     var body = head.parentNode;
+    if (window.ResizeObserver) new ResizeObserver(function () { /* remember a size dragged by hand */
+      if (body._placing || !dd.classList.contains("sk-fly") || !body._size) return;
+      var W = body.offsetWidth, H = body.offsetHeight; if (Math.abs(W - body._size[0]) < 3 && Math.abs(H - body._size[1]) < 3) return;
+      body._size = [W, H]; var n = body.querySelector(".sk-sec-in"); n.style.height = Math.max(60, H - head.offsetHeight - 2) + "px"; winSave(dd, { w: W, h: H });
+    }).observe(body);
     body.addEventListener("pointerdown", function () { if (dd.classList.contains("sk-fly")) body.style.zIndex = ++winZ; });
     head.addEventListener("click", function (e) { var b = e.target.closest("[data-win]"); if (!b) return;
       if (b.dataset.win === "x") closeWin(dd); else { var on = !winState(dd.dataset.sec).pin; winSave(dd, { pin: on }); b.setAttribute("aria-pressed", on); } });
@@ -1137,7 +1157,8 @@
     $("sk-grid").checked = d.grid; $("sk-chkw").checked = S.chkw !== false; $("sk-snap").checked = d.snap; $("sk-scale").value = d.scale; $("sk-dscale").value = d.dscale || 0; $("sk-sbar-l").hidden = !d.dscale; $("sk-sbar").checked = d.sbar !== false;
     $("sk-gsq").hidden = !!d.dscale || mode !== "struct"; $("sk-mapshow-l").hidden = !d.map; if (d.map) { $("sk-mapshow").checked = d.map.show !== false; $("sk-mapleg").checked = !!d.map.leg; $("sk-mapbase").value = d.map.base || "osm"; $("sk-mapflow").checked = !!d.map.fl && d.map.flow !== false; $("sk-mapflow").disabled = !d.map.fl; $("sk-maplegpos").value = d.map.legpos || "br"; $("sk-maposm").checked = d.map.osm !== false; $("sk-mapcont").checked = d.map.cont !== false; $("sk-mapgrey").checked = d.map.grey !== false; if (document.activeElement !== $("sk-maprot")) $("sk-maprot").value = d.map.rot || 0; $("sk-maprot-r").value = d.map.rot || 0; $("sk-mapop").value = d.map.op || 0.55; $("sk-mapcop").value = d.map.cop || 1; }
     renderMapExtra();
-    Array.prototype.forEach.call(app.querySelectorAll("[data-ml]"), function (c) { c.checked = !!(d.map && d.map.on && d.map.on[c.dataset.ml]); }); $("sk-gridinfo").textContent = d.dscale ? "grid " + fmtM(toM(GRID)) : "";
+    Array.prototype.forEach.call(app.querySelectorAll("[data-ml]"), function (c) { c.checked = !!(d.map && d.map.on && d.map.on[c.dataset.ml]); });
+    var nOn = MAPL.filter(function (L) { return d.map && d.map.on && d.map.on[L.id]; }).length; $("sk-mlcount").textContent = nOn ? "(" + nOn + " on)" : "(" + MAPL.length + " available)"; $("sk-gridinfo").textContent = d.dscale ? "grid " + fmtM(toM(GRID)) : "";
     Array.prototype.forEach.call(app.querySelectorAll("[data-snap]"), function (c) { c.checked = !!S.snaps[c.dataset.snap]; c.disabled = !d.snap; });
     $("sk-show-draw").checked = d.showDraw; $("sk-lock-draw").checked = d.lockDraw; $("sk-show-under").checked = d.showUnder; $("sk-lock-under").checked = d.lockUnder;
     Array.prototype.forEach.call(app.querySelectorAll("[data-paper]"), function (b) { b.setAttribute("aria-pressed", b.dataset.paper === (d.paper || "A4")); });
@@ -1497,7 +1518,7 @@
       if (u && d.showUnder && !d.lockUnder) { sel = { k: "img", id: u.dataset.uid }; renderUI(); renderProps(); begin(); drag = { type: "imove", orig: clone(imgById(u.dataset.uid)), start: p }; return; }
       selectItem(null); return;
     }
-    if (!d.showDraw) { status("The drawing layer is hidden. Tick \"Drawing\" under Layers to draw."); return; }
+    if (!d.showDraw) { status("The drawing layer is hidden. Turn on Drawing (the eye in the toolbar) to draw."); return; }
     status("");
     if (t === "pen") { drag = { type: "pen", item: base("stroke", { pts: [[r1(p.x), r1(p.y)]], w: style.w, ls: style.ls }) }; drag.el = document.createElementNS(NS, "g"); gLive.appendChild(drag.el); drag.el.innerHTML = draw(drag.item); return; }
     if (t === "eraser") { begin(); drag = { type: "erase" }; eraseAt(e); return; }
@@ -2245,6 +2266,7 @@
     mapStatus(feats.length + " features loaded" + (ll ? " (converted from lat/long)" : " (read as British National Grid)") + ". Add an attribution in a note if the data needs one.");
   }
   function renderMapExtra() { var m = doc().map, ex = m && m.extra || []; $("sk-mlextra").innerHTML = ex.map(function (L) { return '<label class="sk-check" title="' + esc(L.src) + '"><input type="checkbox" data-ml="' + L.id + '"' + (m.on && m.on[L.id] ? " checked" : "") + "> " + esc(L.name) + ' <span data-mls="' + L.id + '"></span></label><button type="button" class="sk-btn danger" data-mlx="' + L.id + '" aria-label="Remove layer">×</button>'; }).join(""); badges(); }
+  $("sk-mldd").addEventListener("toggle", function () { var w = app.querySelector('details.sk-sec[data-sec="layers"]'); if (w && w.classList.contains("sk-fly")) { var z = w.querySelector(".sk-sec-body").style.zIndex; placeWin(w); w.querySelector(".sk-sec-body").style.zIndex = z; } });
   $("sk-mlextra").addEventListener("click", function (e) { var b = e.target.closest("[data-mlx]"); if (!b) return; var m = doc().map, id = b.dataset.mlx; m.extra = m.extra.filter(function (x) { return x.id !== id; }); if (m.L) delete m.L[id]; if (m.on) delete m.on[id]; persist(); renderMapExtra(); renderAll(); });
   /* contours from a terrain file: ESRI ASCII grid, or GeoTIFF read with geotiff.js (loaded on first use) */
   function loadTerrainFile(f) {

@@ -985,6 +985,22 @@ html.sk-lock .sk-layout, .sk-app:fullscreen .sk-layout, .sk-app.sk-full .sk-layo
 .sk-sideacts .sk-actions select { grid-column: 1 / -1; }
 .sk-sideacts .sk-actions #sk-export { grid-column: 1 / -1; }
 .sk-sideacts .sk-actions .sr-only { display: none; }
+/* windows can be resized from the corner */
+.sk-sec.sk-fly > .sk-sec-body { resize: both; overflow: hidden; min-width: 240px; min-height: 120px; }
+.sk-sec.sk-fly .sk-sec-in { flex: 1 1 auto; min-height: 0; }
+/* map layers list folds away */
+.sk-mldd { flex: 1 1 100%; }
+.sk-mldd > summary { cursor: pointer; font-weight: 600; padding: 2px 0; }
+.sk-mldd-in { display: flex; flex-direction: column; align-items: flex-start; gap: 3px; padding: 4px 0 2px 8px; }
+/* drawing / underlay show and lock: icon toggles in the toolbar */
+.sk-tbar-lay { display: flex; align-items: center; gap: 2px; flex: 0 0 auto; border-left: 1px solid var(--tool-line); padding-left: 6px; }
+.sk-laytogs { display: inline-flex; flex-wrap: wrap; gap: 2px; }
+.sk-tbar .sk-ltog { position: relative; display: inline-flex; flex-direction: column; align-items: center; gap: 1px; min-width: 44px; padding: 2px 3px; font-size: 0.56rem; line-height: 1.05; border-radius: calc(var(--radius) - 2px); cursor: pointer; color: var(--muted); border: 1px solid transparent; }
+.sk-tbar .sk-ltog input { position: absolute; opacity: 0; width: 1px; height: 1px; pointer-events: none; }
+.sk-tbar .sk-ltog:has(input:checked) { color: var(--ink); background: var(--surface); border-color: var(--tool-line); }
+.sk-tbar .sk-ltog:has(input:focus-visible) { outline: 2px solid var(--accent); }
+.sk-ltog svg { display: none; }
+.sk-tbar .sk-ltog svg { display: block; }
 .sk-win-h { display: none; }
 .sk-sec.sk-fly > .sk-sec-body { position: fixed; z-index: 40; display: flex; flex-direction: column; padding: 0; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: 0 6px 24px rgba(0,0,0,.18); max-height: calc(100vh - 16px); }
 .sk-sec.sk-fly .sk-win-h { display: flex; align-items: center; gap: 4px; padding: 4px 6px 4px 12px; border-bottom: 1px solid var(--line); cursor: move; user-select: none; touch-action: none; background: var(--paper); border-radius: var(--radius) var(--radius) 0 0; }
@@ -2935,9 +2951,9 @@ footer .wrap { font-family: var(--font-body); }
 <script src="js/news-feed.js?v=20261122b"></script>
 <script src="js/news-archive.js?v=20261122b"></script>
 <script src="js/pages.js?v=20261122b"></script>
-<script src="js/tools/sketch-templates.js?v=20261128zd"></script>
-<script src="js/tools/sketch.js?v=20261128zd"></script>
-<script src="js/tools/drawing-check.js?v=20261128zd"></script>
+<script src="js/tools/sketch-templates.js?v=20261128ze"></script>
+<script src="js/tools/sketch.js?v=20261128ze"></script>
+<script src="js/tools/drawing-check.js?v=20261128ze"></script>
 <script src="js/tools/hydraulics.js?v=20261127a"></script>
 <script src="js/tools/pipeflow.js?v=20261127a"></script>
 <script src="js/tools/catchment.js?v=20261127a"></script>
@@ -2949,7 +2965,7 @@ footer .wrap { font-family: var(--font-body); }
 <script src="js/tools/culvert.js?v=20261127a"></script>
 <script src="js/tools/site-diary.js?v=20261127a"></script>
 <script src="js/learn.js?v=20261127m"></script>
-<script src="js/site.js?v=20261128zd"></script>
+<script src="js/site.js?v=20261128ze"></script>
 <script src="js/art.js?v=20261127m"></script>
 </body>
 </html>
