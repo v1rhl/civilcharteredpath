@@ -949,7 +949,7 @@ html.sk-lock .sk-main > *:not(.sk-stage), .sk-app:fullscreen .sk-main > *:not(.s
 .sk-layout.sk-tl { grid-template-columns: 340px auto minmax(0, 1fr); }
 html.sk-lock .sk-layout.sk-tl, .sk-app:fullscreen .sk-layout.sk-tl, .sk-app.sk-full .sk-layout.sk-tl { grid-template-columns: 210px auto minmax(0, 1fr); }
 .sk-tbar-left { flex-direction: column; align-items: stretch; align-self: stretch; min-height: 0; max-height: 100%; padding: 4px 3px; gap: 4px; }
-html:not(.sk-lock) .sk-tbar-left { position: sticky; top: var(--sk-top, 56px); max-height: calc(100vh - var(--sk-top, 56px) - 16px); align-self: start; }
+html:not(.sk-lock) .sk-tbar-left { position: sticky; top: var(--sk-top, 56px); max-height: calc(100vh - var(--sk-top, 56px) - 16px); align-self: start; z-index: 30; } /* above the sheet, so windows opened from it are never under the stage or the tabs */
 .sk-tbar-left .sk-tbar-grip { padding: 3px 0; }
 .sk-tbar-left .sk-tbar-grip svg { transform: rotate(90deg); }
 .sk-tbar-left .sk-tbar-slot { flex: 1 1 auto; min-height: 0; overflow-y: auto; scrollbar-width: thin; }
