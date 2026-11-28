@@ -913,6 +913,12 @@ html.sk-lock .sk-side .sk-style { gap: 6px; }
 .sk-row1 > .sk-top { padding: 0 0 6px !important; position: static !important; }
 .sk-row1 > .sk-top .sk-btn, .sk-row1 > .sk-top select, .sk-row1 > .sk-top .btn { padding-block: 5px; }
 html.sk-lock #view-sketch .view-head { gap: 0; }
+/* full screen: nothing scrolls except the side bar's own panel; the wheel zooms the sheet */
+.sk-app:fullscreen, .sk-app.sk-full { overflow: hidden !important; }
+.sk-app:fullscreen .sk-layout, .sk-app.sk-full .sk-layout { height: calc(100vh - 20px); }
+.sk-app:fullscreen .sk-side, .sk-app.sk-full .sk-side { position: static; height: 100%; max-height: 100%; }
+.sk-app:fullscreen .sk-main, .sk-app.sk-full .sk-main { height: 100%; overflow: hidden; }
+.sk-stage.sk-panning #sk-svg, .sk-stage.sk-panning #sk-svg * { cursor: grab !important; }
 .sk-hint { margin: 2px 0 0; color: var(--muted, #5a6677); min-height: 1.2em; }
 .sk-main > .sk-props[hidden] { display: none; }
 html.sk-lock .sk-main { height: 100%; overflow-y: auto; scrollbar-width: thin; }
@@ -2788,8 +2794,8 @@ footer .wrap { font-family: var(--font-body); }
 <script src="js/news-feed.js?v=20261122b"></script>
 <script src="js/news-archive.js?v=20261122b"></script>
 <script src="js/pages.js?v=20261122b"></script>
-<script src="js/tools/sketch-templates.js?v=20261128o"></script>
-<script src="js/tools/sketch.js?v=20261128o"></script>
+<script src="js/tools/sketch-templates.js?v=20261128p"></script>
+<script src="js/tools/sketch.js?v=20261128p"></script>
 <script src="js/tools/hydraulics.js?v=20261127a"></script>
 <script src="js/tools/pipeflow.js?v=20261127a"></script>
 <script src="js/tools/drawing-check.js?v=20261127a"></script>
