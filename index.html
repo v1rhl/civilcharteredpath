@@ -1511,6 +1511,33 @@ html:not(.sk-mob) .sk-app .sk-tbar-all, html:not(.sk-mob) .sk-app .sk-snapmenu >
 html:not(.sk-mob) .sk-app .sk-tabs button { font-size: var(--sk-t) !important; }
 #sk-export { display: flex !important; align-items: center; justify-content: center; }
 #sk-export svg { display: block; flex: 0 0 auto; }
+/* ---- Toolbar: icons only on desktop; names pop up on hover ---- */
+.sk-tip { position: fixed; z-index: 1000; background: #15233a; color: #fff; font: 600 11px/1.3 var(--font-body); padding: 4px 8px; border-radius: 4px; pointer-events: none; white-space: nowrap; box-shadow: 0 2px 8px rgba(0,0,0,.25); }
+.sk-tip[hidden] { display: none; }
+.sk-btn:has(> svg + .sk-tlab) { display: inline-flex; align-items: center; justify-content: center; gap: 5px; }
+.sk-side > details.sk-sec > summary > svg, .sk-snapmenu > summary > svg { vertical-align: -3px; margin: 0 6px 0 2px; }
+.sk-sideacts .sk-actions > .sk-btn:has(> svg) { display: inline-flex; align-items: center; justify-content: center; gap: 5px; }
+html:not(.sk-mob) #sk-tbar .sk-tool:not(.sk-sec-body .sk-tool) > span:not(.sk-pin), html:not(.sk-mob) #sk-tbar .sk-ltog > span, html:not(.sk-mob) #sk-tbar .sk-tlab { display: none !important; }
+html:not(.sk-mob) #sk-tbar .sk-tool:not(.sk-sec-body .sk-tool), html:not(.sk-mob) #sk-tbar .sk-ltog { width: 34px; height: 32px; min-width: 0 !important; padding: 0 !important; display: inline-flex; align-items: center; justify-content: center; }
+html:not(.sk-mob) #sk-tbar .sk-tool:not(.sk-sec-body .sk-tool) svg, html:not(.sk-mob) #sk-tbar .sk-ltog svg { width: 18px; height: 18px; }
+html:not(.sk-mob) #sk-tbar.sk-tbar-left .sk-tools, html:not(.sk-mob) #sk-tbar.sk-tbar-left .sk-tbar-lay { grid-template-columns: repeat(2, 34px); justify-content: center; }
+html:not(.sk-mob) #sk-tbar.sk-tbar-side > .sk-side { width: 72px; display: grid; grid-template-columns: repeat(2, 34px); gap: 2px; justify-content: center; align-content: start; }
+html:not(.sk-mob) #sk-tbar.sk-tbar-side > .sk-side > :not(details.sk-sec) { grid-column: 1 / -1; }
+html:not(.sk-mob) #sk-tbar.sk-tbar-side > .sk-side > details.sk-sec { padding: 0; }
+html:not(.sk-mob) #sk-tbar.sk-tbar-side > .sk-side > .sk-toolrow { grid-column: auto; display: flex; justify-content: center; }
+html:not(.sk-mob) #sk-tbar.sk-tbar-side #sk-tball { display: none; }
+html:not(.sk-mob) #sk-tbar > .sk-side > details.sk-sec > summary, html:not(.sk-mob) #sk-tbar .sk-snapmenu > summary { list-style: none; display: flex; align-items: center; justify-content: center; width: 34px; height: 30px; padding: 0 !important; border-radius: 4px; cursor: pointer; }
+html:not(.sk-mob) #sk-tbar > .sk-side > details.sk-sec > summary::-webkit-details-marker, html:not(.sk-mob) #sk-tbar .sk-snapmenu > summary::-webkit-details-marker { display: none; }
+html:not(.sk-mob) #sk-tbar > .sk-side > details.sk-sec > summary:hover, html:not(.sk-mob) #sk-tbar .sk-snapmenu > summary:hover { background: var(--line); }
+html:not(.sk-mob) #sk-tbar > .sk-side > details.sk-sec[open] > summary { color: var(--accent); }
+html:not(.sk-mob) #sk-tbar .sk-sideacts .sk-actions { grid-template-columns: repeat(2, 34px) !important; justify-content: center; }
+html:not(.sk-mob) #sk-tbar .sk-sideacts .sk-actions > * { grid-column: auto !important; width: 34px; height: 30px; min-height: 0; padding: 0 !important; display: inline-flex; align-items: center; justify-content: center; }
+html:not(.sk-mob) #sk-tbar .sk-sideacts .sk-actions svg { width: 16px; height: 16px; }
+html:not(.sk-mob) #sk-tbar .sk-tbar-all { width: 34px; height: 30px; padding: 0 !important; display: inline-flex; align-items: center; justify-content: center; align-self: center; }
+html:not(.sk-mob) #sk-tbar .sk-snapwrap { display: flex; justify-content: center; gap: 2px; }
+html:not(.sk-mob) #sk-tbar select.sk-tpl { width: 34px !important; height: 30px; padding: 0 !important; color: transparent; appearance: none; -webkit-appearance: none; background: var(--surface) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2315233a' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='4' y='4' width='16' height='16' rx='2'/%3E%3Cpath d='M4 10h16M10 10v10'/%3E%3C/svg%3E") center / 18px no-repeat; border: 1px solid var(--tool-line); border-radius: 4px; cursor: pointer; justify-self: center; }
+html:not(.sk-mob) #sk-tbar select.sk-tpl option { color: var(--ink); }
+html[data-theme="dark"]:not(.sk-mob) #sk-tbar select.sk-tpl { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23dbe7f0' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='4' y='4' width='16' height='16' rx='2'/%3E%3Cpath d='M4 10h16M10 10v10'/%3E%3C/svg%3E"); }
 /* icon buttons in the map panel */
 .sk-app .sk-btn.sk-ibtn, html:not(.sk-mob) .sk-app :is(.sk-sec-in, .sk-dlg, .sk-toolpop, .sk-props) .sk-btn.sk-ibtn { width: 32px !important; max-width: 32px !important; height: 28px; min-height: 28px; padding: 0 !important; display: inline-flex; align-items: center; justify-content: center; flex: 0 0 auto; }
 .sk-app .sk-btn.sk-icbtn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
@@ -3098,9 +3125,9 @@ html:not(.sk-mob) .sk-app .sk-tabs button { font-size: var(--sk-t) !important; }
 <script src="js/news-feed.js?v=20261122b"></script>
 <script src="js/news-archive.js?v=20261122b"></script>
 <script src="js/pages.js?v=20261122b"></script>
-<script src="js/tools/sketch-templates.js?v=20261129n"></script>
-<script src="js/tools/sketch.js?v=20261129n"></script>
-<script src="js/tools/drawing-check.js?v=20261129n"></script>
+<script src="js/tools/sketch-templates.js?v=20261129p"></script>
+<script src="js/tools/sketch.js?v=20261129p"></script>
+<script src="js/tools/drawing-check.js?v=20261129p"></script>
 <script src="js/tools/hydraulics.js?v=20261127a"></script>
 <script src="js/tools/pipeflow.js?v=20261127a"></script>
 <script src="js/tools/catchment.js?v=20261127a"></script>
@@ -3112,7 +3139,7 @@ html:not(.sk-mob) .sk-app .sk-tabs button { font-size: var(--sk-t) !important; }
 <script src="js/tools/culvert.js?v=20261127a"></script>
 <script src="js/tools/site-diary.js?v=20261127a"></script>
 <script src="js/learn.js?v=20261127m"></script>
-<script src="js/site.js?v=20261129n"></script>
+<script src="js/site.js?v=20261129p"></script>
 <script src="js/art.js?v=20261127m"></script>
 </body>
 </html>
