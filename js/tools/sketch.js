@@ -62,6 +62,7 @@
   var TOOLS = {
     free: [["select", "Select"], ["xform", "Move/resize"], ["pen", "Pen"], ["eraser", "Eraser"], ["hatch", "Hatch"], ["text", "Text"], ["leader", "Leader"], ["dim", "Dimension"]],
     struct: [["select", "Select"], ["xform", "Move/resize"], ["member", "Member"], ["pin", "Pin"], ["roller", "Roller"], ["fixed", "Fixed"], ["pload", "Point load"], ["udl", "UDL"], ["moment", "Moment"], ["dim", "Dimension"], ["hatch", "Hatch"], ["text", "Text"], ["leader", "Leader"], ["eraser", "Eraser"]],
+    kit: [["member", "Member"], ["pin", "Pin"], ["roller", "Roller"], ["fixed", "Fixed"], ["pload", "Point load"], ["udl", "UDL"], ["moment", "Moment"]], /* beam and frame diagram kit, a group in All tools */
     shapes: [["line", "Line"], ["arrow", "Arrow"], ["rect", "Rectangle"], ["circle", "Circle"], ["poly", "Polygon"], ["section", "Section"], ["north", "North"], ["veg", "Vegetation"], ["brk", "Break line"], ["cloud", "Rev cloud"], ["slope", "Slope"], ["wl", "Water level"], ["image", "Image"], ["inset", "Detail window"], ["window", "New viewport"]]
   };
   var HINTS = {
@@ -124,9 +125,13 @@
   }
 
   /* ---------- State ---------- */
-  var mode = S.mode === "struct" ? "struct" : "free";
+  /* One set of tools: the beam and frame kit is a group in All tools rather than a separate mode. Anyone who
+     was in the old beam and frame mode gets the kit on their toolbar. */
+  var KIT = TOOLS.kit.map(function (t) { return t[0]; });
+  if (S.mode === "struct") { S.pins = S.pins || {}; var pf0 = (S.pins.free || ["select", "xform", "pen", "line", "rect", "text", "dim", "leader", "hatch", "eraser"]).slice(); KIT.forEach(function (k) { if (pf0.indexOf(k) < 0) pf0.push(k); }); S.pins.free = pf0; S.mode = "free"; }
+  var mode = "free";
   var tool = { free: "pen", struct: "member" };
-  var style = { c: COLORS[0][0], w: 2, ls: "solid", pat: "diag", fs: 14, veg: "tree" };
+  var style = { c: COLORS[0][0], w: 2, ls: "solid", pat: "diag", fs: 14, veg: "tree", op: 1 };
   var sel = null; /* {k:"item"|"img", id} */
   var drag = null, pend = null, before = null, k = 1;
   var hist = {}; function H() { var id = S.cur; return hist[id] || (hist[id] = { u: [], r: [] }); }
@@ -463,7 +468,8 @@
   function toM(u, N0) { var N = N0 || doc().dscale; return N ? u / 4 * N / 1000 : u / GRID * (doc().scale || 0.2); }
   function fromM(m) { var N = doc().dscale; return N ? m * 1000 / N * 4 : m / (doc().scale || 0.2) * GRID; }
   function fmtM(m) { var a = Math.abs(m); if (a >= 10000) return (Math.round(m / 10) / 100) + " km"; return a >= 1 || !doc().dscale ? (Math.round(m * 100) / 100) + " m" : Math.round(m * 1000) + " mm"; }
-  function measured() { return !!doc().dscale || mode === "struct"; }
+  function kitOn() { return doc().items.some(function (it) { return /^(member|support|pload|udl|moment)$/.test(it.type); }) || KIT.some(function (k) { return pinsFor("free").indexOf(k) > -1; }); }
+  function measured() { return !!doc().dscale || kitOn(); } /* beam and frame diagrams read lengths from the grid square */
   function loopsOf(it) { if (it.type === "circle") return null; if (it.type === "rect" || it.type === "cloud") { var o = outlineOf({ type: "rect", x1: it.x1, y1: it.y1, x2: it.x2, y2: it.y2 }); return [o.slice(0, 4)]; } return [it.pts].concat(it.holes || []); }
   function shoelace(L) { var a = 0; for (var i = 0; i < L.length; i++) { var p = L[i], q = L[(i + 1) % L.length]; a += p[0] * q[1] - q[0] * p[1]; } return Math.abs(a / 2); }
   function areaOf(it) { if (it.type === "circle") { var R = Math.hypot(it.x2 - it.x1, it.y2 - it.y1); return Math.PI * R * R; } var ls = loopsOf(it); return Math.max(0, shoelace(ls[0]) - ls.slice(1).reduce(function (s2, L) { return s2 + shoelace(L); }, 0)); }
@@ -684,6 +690,7 @@
       '<label class="sr-only" for="sk-tpl">Insert a typical detail</label><select id="sk-tpl" class="sk-tpl"></select></div>' +
     '<div class="sk-style">' +
       '<div class="sk-group"><span class="sk-lab">Colour</span><div class="sk-swatches" id="sk-swatches"></div><label class="sk-pick" title="Pick any colour"><span class="sr-only">Custom colour</span><input type="color" id="sk-color"></label></div>' +
+      '<div class="sk-group"><label class="sk-lab" for="sk-op">Transparency</label><select id="sk-op"><option value="1">None</option><option value="0.75">25%</option><option value="0.5">50%</option><option value="0.25">75%</option></select></div>' +
       '<div class="sk-group" data-ctx="line"><span class="sk-lab">Weight</span><div class="sk-chips" id="sk-widths"></div></div>' +
       '<div class="sk-group" data-ctx="line"><label class="sk-lab" for="sk-ls">Line</label><select id="sk-ls">' + LINES.map(function (l) { return '<option value="' + l[0] + '">' + l[1] + "</option>"; }).join("") + "</select></div>" +
       '<div class="sk-group" data-ctx="text"><label class="sk-lab" for="sk-fs">Text</label><select id="sk-fs">' + [8, 10, 12, 14, 16, 18, 24, 32].map(function (v) { return '<option value="' + v + '">' + v + "</option>"; }).join("") + "</select></div>" +
@@ -796,7 +803,8 @@
     d.items.forEach(function (it) {
       if (it.type === "hatch") pats[patId(it.pat, it.c, it.ps, it.ha)] = patDef(it.pat, it.c, it.ps, it.ha);
       if (it.type === "inset") s += forExport ? insetBody(it) : '<g pointer-events="none">' + insetBody(it) + "</g>";
-      s += forExport ? draw(it) : '<g data-id="' + it.id + '"' + (isOn(it) ? ' class="sk-on"' : "") + '><g class="v">' + draw(it) + "</g>" + (locked(it) ? "" : hit(it)) + "</g>";
+      var opA = it.op != null && it.op < 1 ? ' opacity="' + it.op + '"' : "";
+      s += forExport ? (opA ? "<g" + opA + ">" + draw(it) + "</g>" : draw(it)) : '<g data-id="' + it.id + '"' + (isOn(it) ? ' class="sk-on"' : "") + '><g class="v"' + opA + ">" + draw(it) + "</g>" + (locked(it) ? "" : hit(it)) + "</g>";
     });
     return { s: s, defs: Object.keys(pats).map(function (p) { return pats[p]; }).join("") };
   }
@@ -808,11 +816,11 @@
   function tbGet(key) { var d = doc(), m = /^r\.(\d+)\.(\w+)$/.exec(key); if (m) return ((d.revs || [])[+m[1]] || {})[m[2]] || ""; if (key === "note") return d.tb.note == null ? (d.dscale ? NOTE_SC : NOTE) : d.tb.note; if (key === "scale") return d.tb.scale == null ? (d.dscale ? nS(d.dscale) + " at " + (d.paper || "A4") : "NTS") : d.tb.scale; return d.tb[key] || ""; }
   function tbSet(key, v) { var d = doc(), m = /^r\.(\d+)\.(\w+)$/.exec(key); if (m) { d.revs = d.revs || []; while (d.revs.length <= +m[1]) d.revs.push({ rev: "", date: "", desc: "", by: "" }); d.revs[+m[1]][m[2]] = v; } else d.tb[key] = v; }
   /* Scale bar: a round length of about 60 to 100 mm on paper, in alternate black and white blocks. */
-  function scaleBar(G, d) { return sbarAt(G.inner.x + 16, G.inner.y + G.inner.h - (d.map ? 34 : 22), d.dscale, 320, " at " + (d.paper || "A4")); }
+  function scaleBar(G, d) { return sbarAt(G.inner.x + 16, G.inner.y + G.inner.h - (d.map ? 34 : 22), d.dscale, 320, " at " + (d.paper || "A4"), true); } /* always on a white box, so it reads over a map */
   function sbarAt(x0, y0, N, maxW, extra, mask) {
     var mPerU = N / 4000, target = maxW * mPerU, p10 = Math.pow(10, Math.floor(Math.log10(target))), L = [1, 2, 5, 10].map(function (x) { return x * p10; }).filter(function (x) { return x <= target * 1.25; }).pop() || p10;
     var n = /^[15]/.test(String(L / p10)) ? 5 : 4, seg = L / n / mPerU, c = "#15233a", o = '<g class="sk-sbar">';
-    if (mask) o += '<rect x="' + r1(x0 - 10) + '" y="' + r1(y0 - 17) + '" width="' + r1(n * seg + 24 + tw(nS(N) + (extra || ""), 8.5)) + '" height="29" fill="#fff" fill-opacity="0.92" stroke="' + c + '" stroke-width="0.6"/>';
+    if (mask) o += '<rect x="' + r1(x0 - 10) + '" y="' + r1(y0 - 17) + '" width="' + r1(n * seg + 24 + tw(nS(N) + (extra || ""), 8.5)) + '" height="29" fill="#fff" stroke="' + c + '" stroke-width="0.6"/>';
     for (var i = 0; i < n; i++) o += '<rect x="' + r1(x0 + i * seg) + '" y="' + y0 + '" width="' + r1(seg) + '" height="6" fill="' + (i % 2 ? "#fff" : c) + '" stroke="' + c + '" stroke-width="0.8"/>';
     var lab = function (v) { return v >= 1000 ? v / 1000 + " km" : v >= 1 ? +v.toFixed(2) + " m" : Math.round(v * 1000) + " mm"; };
     o += txt(x0, y0 - 4, "0", c, 9, "middle") + txt(x0 + n * seg / 2, y0 - 4, lab(L / 2), c, 9, "middle") + txt(x0 + n * seg, y0 - 4, lab(L), c, 9, "middle") + txt(x0 + n * seg + 10, y0 + 6, nS(N) + (extra || ""), "#5a6677", 8.5, "start");
@@ -900,13 +908,15 @@
     var sw = $("sk-snapwrap"), gsq = $("sk-gsq"); /* snapping sits with them */
     if (sw && tl && gsq) { if (isMob()) { if (sw.previousElementSibling !== gsq) gsq.parentNode.insertBefore(sw, gsq.nextSibling); } else if (sw.parentNode !== tl) tl.appendChild(sw); }
     var lay = app.querySelector(".sk-layout"), main = $("sk-main");
-    if (isMob()) { if (t.parentNode !== row) row.insertBefore(t, row.firstChild); bar.hidden = true; if (lay) lay.classList.remove("sk-tl"); if (bar.parentNode !== main) main.insertBefore(bar, $("sk-stage")); return; }
+    if (isMob()) { if (t.parentNode !== row) row.insertBefore(t, row.firstChild); bar.hidden = true; if (lay) { lay.classList.remove("sk-tl"); lay.classList.remove("sk-tl2"); var sd = $("sk-side"); if (sd && sd.parentNode !== lay) lay.insertBefore(sd, lay.firstChild); } if (bar.parentNode !== main) main.insertBefore(bar, $("sk-stage")); return; }
     if (t.parentNode !== slot) slot.appendChild(t);
     bar.hidden = false; var w = tbState(), fl = !!w.float, dk = fl ? "" : w.dock;
     if (dk === "left") { if (bar.parentNode !== lay) lay.insertBefore(bar, main); }
     else if (dk === "bottom") { if (bar.parentNode !== main || bar.previousElementSibling !== $("sk-stage")) main.insertBefore(bar, $("sk-stage").nextSibling); }
     else if (dk === "top" && (bar.parentNode !== main || bar.nextElementSibling !== $("sk-stage"))) main.insertBefore(bar, $("sk-stage")); /* floating: left where it is, so a drag in progress keeps hold of it */
     lay.classList.toggle("sk-tl", dk === "left");
+    var sideEl = $("sk-side"); /* docked at the left, the side panel folds into the toolbar column, between the tools and the locks */
+    if (sideEl) { if (dk === "left") { if (sideEl.parentNode !== bar) bar.insertBefore(sideEl, $("sk-tblay")); } else if (sideEl.parentNode !== lay) lay.insertBefore(sideEl, lay.firstChild); bar.classList.toggle("sk-tbar-side", dk === "left"); lay.classList.toggle("sk-tl2", dk === "left"); }
     bar.classList.toggle("sk-tbar-float", fl); bar.classList.toggle("sk-tbar-vert", fl && !!w.vert); bar.classList.toggle("sk-tbar-left", dk === "left"); bar.classList.toggle("sk-tbar-bottom", dk === "bottom");
     $("sk-tbvert").hidden = !fl; $("sk-tbvert").setAttribute("aria-pressed", !!w.vert);
     Array.prototype.forEach.call(bar.querySelectorAll("[data-dock]"), function (b) { b.setAttribute("aria-pressed", b.dataset.dock === dk); });
@@ -932,6 +942,41 @@
     Array.prototype.forEach.call(bar.querySelectorAll("[data-dock]"), function (b) { b.addEventListener("click", function () { var w = tbState(); w.float = false; w.dock = b.dataset.dock; tbSave(w); placeTools(); fitSheet(); }); });
     $("sk-tbvert").addEventListener("click", function () { var w = tbState(); w.vert = !w.vert; tbSave(w); placeTools(); });
     $("sk-tball").addEventListener("click", function () { var d = app.querySelector('details.sk-sec[data-sec="alltools"]'); if (!d) return; if (isMob()) { d.open = true; setDrawer(true); return; } if (d.open) closeWin(d); else openWin(d); });
+  })();
+  /* Right-click a tool on the toolbar: its style options (colour, weight, line type, text size,
+     transparency) open in a small pop-out beside it. On wide screens this replaces the Style window. */
+  (function () {
+    var pop = document.createElement("div"); pop.className = "sk-toolpop"; pop.id = "sk-toolpop"; pop.hidden = true; pop.setAttribute("role", "dialog"); pop.setAttribute("aria-label", "Tool options");
+    pop.innerHTML = '<div class="sk-toolpop-h"><span id="sk-toolpop-t"></span><button type="button" class="sk-win-b" data-tp="x" aria-label="Close">×</button></div>';
+    app.appendChild(pop); var stEl = app.querySelector(".sk-style:not(.sk-sheetopts)"), home = null, at = null;
+    var close = function () { if (pop.hidden) return; pop.hidden = true; if (home && stEl.parentNode === pop) home.appendChild(stEl); at = null; };
+    var open = function (btn) {
+      var t = btn.dataset.tool; if (t !== tool[mode]) { setTool(t); btn = $("sk-tbar").querySelector('.sk-tool[data-tool="' + t + '"]') || btn; } updateCtx(); /* the toolbar redraws when the tool changes */
+      if (stEl.parentNode !== pop) { home = stEl.parentNode; pop.appendChild(stEl); }
+      $("sk-toolpop-t").textContent = (btn.textContent || "").trim() + (t === "select" || t === "xform" ? ": selected items" : ""); pop.hidden = false; at = btn;
+      var r = btn.getBoundingClientRect(), bar = $("sk-tbar"), pw = pop.offsetWidth, ph = pop.offsetHeight, VW = window.innerWidth, VH = window.innerHeight, x, y;
+      if (bar.classList.contains("sk-tbar-left") || bar.classList.contains("sk-tbar-vert")) { x = r.right + 6; y = r.top; }
+      else if (bar.classList.contains("sk-tbar-bottom")) { x = r.left; y = r.top - ph - 6; }
+      else { x = r.left; y = r.bottom + 6; }
+      pop.style.left = Math.max(8, Math.min(x, VW - pw - 8)) + "px"; pop.style.top = Math.max(8, Math.min(y, VH - ph - 8)) + "px";
+    };
+    $("sk-tbar").addEventListener("contextmenu", function (e) { var b = e.target.closest(".sk-tool[data-tool]"); if (!b || isMob()) return; e.preventDefault(); open(b); });
+    pop.addEventListener("click", function (e) { if (e.target.closest('[data-tp="x"]')) close(); });
+    document.addEventListener("pointerdown", function (e) { if (!pop.hidden && !pop.contains(e.target) && !(at && at.contains(e.target))) close(); }, true);
+    document.addEventListener("keydown", function (e) { if (e.key === "Escape") close(); });
+    window.addEventListener("resize", close);
+  })();
+  /* The Snaps list in the toolbar opens as a fixed pop-out, so the toolbar's own scrolling can't clip it. */
+  (function () {
+    var sm = app.querySelector(".sk-snapmenu"); if (!sm) return;
+    sm.addEventListener("toggle", function () {
+      var dv = sm.querySelector(":scope > div"); if (!dv) return;
+      if (!sm.open || !sm.closest("#sk-tbar")) { dv.style.position = dv.style.left = dv.style.top = dv.style.right = dv.style.bottom = ""; return; }
+      var r = sm.querySelector("summary").getBoundingClientRect(), bar = $("sk-tbar"), VW = window.innerWidth, VH = window.innerHeight;
+      dv.style.position = "fixed"; dv.style.right = "auto"; dv.style.bottom = "auto"; var w = dv.offsetWidth || 220, h = dv.offsetHeight || 320, x, y;
+      if (bar.classList.contains("sk-tbar-left")) { x = bar.getBoundingClientRect().right + 6; y = r.bottom - h; } else if (bar.classList.contains("sk-tbar-bottom")) { x = r.right - w; y = r.top - h - 4; } else { x = r.right - w; y = r.bottom + 4; }
+      dv.style.left = Math.max(8, Math.min(x, VW - w - 8)) + "px"; dv.style.top = Math.max(8, Math.min(y, VH - h - 8)) + "px";
+    });
   })();
   /* the site bar and tool links stay at the top; only the sketch pad's own panels scroll */
   window.addEventListener("scroll", function () { var hc = document.documentElement.classList; if ((hc.contains("sk-lock") || hc.contains("sk-mob")) && window.scrollY) window.scrollTo(0, 0); });
@@ -1219,10 +1264,12 @@
   function pinsFor(md) { S.pins = S.pins || {}; return S.pins[md] || PIN_DEF[md].slice(); }
   function togglePin(id) { var p = pinsFor(mode), i = p.indexOf(id); if (i > -1) { if (p.length > 1) p.splice(i, 1); } else p.push(id); S.pins[mode] = p; persist(); renderTools(); }
   function renderTools() {
-    var tb = function (t, pinUI) { var pinned = pinUI && pinsFor(mode).indexOf(t[0]) > -1; return '<button type="button" class="sk-tool' + (toolLock === t[0] ? " sk-locked" : "") + '" data-tool="' + t[0] + '" aria-pressed="' + (tool[mode] === t[0]) + '" title="' + esc(HINTS[t[0]]) + '">' + iconSvg(t[0]) + "<span>" + t[1] + "</span>" + (pinUI ? '<span class="sk-pin' + (pinned ? " on" : "") + '" data-pin="' + t[0] + '" role="button" tabindex="0" title="' + (pinned ? "Unpin from" : "Pin to") + ' the tools at the top" aria-label="' + (pinned ? "Unpin " : "Pin ") + t[1] + '">' + (pinned ? "★" : "☆") + "</span>" : "") + "</button>"; };
-    var all = TOOLS[mode].concat(TOOLS.shapes), byT = {}; all.forEach(function (t) { byT[t[0]] = t; });
+    var tb = function (t, pinUI) { var pinned = pinUI && pinsFor(mode).indexOf(t[0]) > -1; return '<button type="button" class="sk-tool' + (toolLock === t[0] ? " sk-locked" : "") + '" data-tool="' + t[0] + '" aria-pressed="' + (tool[mode] === t[0]) + '" title="' + esc(HINTS[t[0]] + (pinUI ? "" : " Right-click for its colour, width, line type, text size and transparency.")) + '">' + iconSvg(t[0]) + "<span>" + t[1] + "</span>" + (pinUI ? '<span class="sk-pin' + (pinned ? " on" : "") + '" data-pin="' + t[0] + '" role="button" tabindex="0" title="' + (pinned ? "Unpin from" : "Pin to") + ' the tools at the top" aria-label="' + (pinned ? "Unpin " : "Pin ") + t[1] + '">' + (pinned ? "★" : "☆") + "</span>" : "") + "</button>"; };
+    var all = TOOLS.free.concat(TOOLS.shapes, TOOLS.kit), byT = {}; all.forEach(function (t) { byT[t[0]] = t; });
     $("sk-tools").innerHTML = pinsFor(mode).filter(function (id) { return byT[id]; }).map(function (id) { return tb(byT[id]); }).join("");
-    $("sk-tools2").innerHTML = all.map(function (t) { return tb(t, true); }).join("");
+    var kitAll = KIT.every(function (k) { return pinsFor(mode).indexOf(k) > -1; });
+    $("sk-tools2").innerHTML = TOOLS.free.concat(TOOLS.shapes).map(function (t) { return tb(t, true); }).join("") +
+      '<div class="sk-kit"><label class="sk-check sk-kith" title="Star the whole beam and frame kit onto the toolbar, or take it all off"><input type="checkbox" id="sk-kit"' + (kitAll ? " checked" : "") + '> Beam and frame kit</label><div class="sk-kitt">' + TOOLS.kit.map(function (t) { return tb(t, true); }).join("") + "</div></div>";
     $("sk-ermode").hidden = tool[mode] !== "eraser";
     Array.prototype.forEach.call(app.querySelectorAll("[data-mode]"), function (b) { b.setAttribute("aria-pressed", b.dataset.mode === mode); });
     Array.prototype.forEach.call(app.querySelectorAll("[data-only]"), function (el) { el.hidden = el.dataset.only !== mode; });
@@ -1237,9 +1284,9 @@
     Array.prototype.forEach.call(app.querySelectorAll("[data-color]"), function (b) { b.setAttribute("aria-pressed", b.dataset.color === style.c); });
     Array.prototype.forEach.call(app.querySelectorAll("[data-w]"), function (b) { b.setAttribute("aria-pressed", +b.dataset.w === style.w); });
     Array.prototype.forEach.call(app.querySelectorAll("[data-orient]"), function (b) { b.setAttribute("aria-pressed", b.dataset.orient === d.orient); });
-    $("sk-color").value = style.c; $("sk-ls").value = style.ls; $("sk-pat").value = style.pat;
+    $("sk-color").value = style.c; $("sk-ls").value = style.ls; $("sk-op").value = String(style.op || 1); $("sk-pat").value = style.pat;
     $("sk-grid").checked = d.grid; $("sk-chkw").checked = S.chkw !== false; $("sk-spell").checked = S.spell !== false; $("sk-snap").checked = d.snap; $("sk-scale").value = d.scale; $("sk-dscale").value = d.dscale || 0; $("sk-sbar-l").hidden = !d.dscale; $("sk-sbar").checked = d.sbar !== false;
-    $("sk-gsq").hidden = !!d.dscale || mode !== "struct"; $("sk-mapshow-l").hidden = !d.map; if (d.map) { $("sk-mapshow").checked = d.map.show !== false; $("sk-mapleg").checked = !!d.map.leg; $("sk-mapbase").value = d.map.base || "osm"; $("sk-mapflow").checked = !!d.map.fl && d.map.flow !== false; $("sk-mapflow").disabled = !d.map.fl; $("sk-maplegpos").value = d.map.legpos || "br"; $("sk-maposm").checked = d.map.osm !== false; $("sk-mapcont").checked = d.map.cont !== false; $("sk-mapgrey").checked = d.map.grey !== false; if (document.activeElement !== $("sk-maprot")) $("sk-maprot").value = d.map.rot || 0; $("sk-maprot-r").value = d.map.rot || 0; $("sk-mapop").value = d.map.op || 0.55; $("sk-mapcop").value = d.map.cop || 1; }
+    $("sk-gsq").hidden = !!d.dscale || !kitOn(); $("sk-mapshow-l").hidden = !d.map; if (d.map) { $("sk-mapshow").checked = d.map.show !== false; $("sk-mapleg").checked = !!d.map.leg; $("sk-mapbase").value = d.map.base || "osm"; $("sk-mapflow").checked = !!d.map.fl && d.map.flow !== false; $("sk-mapflow").disabled = !d.map.fl; $("sk-maplegpos").value = d.map.legpos || "br"; $("sk-maposm").checked = d.map.osm !== false; $("sk-mapcont").checked = d.map.cont !== false; $("sk-mapgrey").checked = d.map.grey !== false; if (document.activeElement !== $("sk-maprot")) $("sk-maprot").value = d.map.rot || 0; $("sk-maprot-r").value = d.map.rot || 0; $("sk-mapop").value = d.map.op || 0.55; $("sk-mapcop").value = d.map.cop || 1; }
     renderMapExtra();
     Array.prototype.forEach.call(app.querySelectorAll("[data-ml]"), function (c) { c.checked = !!(d.map && d.map.on && d.map.on[c.dataset.ml]); });
     var nOn = MAPL.filter(function (L) { return d.map && d.map.on && d.map.on[L.id]; }).length; $("sk-mlcount").textContent = nOn ? "(" + nOn + " on)" : "(" + MAPL.length + " available)"; $("sk-gridinfo").textContent = d.dscale ? "grid " + fmtM(toM(GRID)) : "";
@@ -1291,6 +1338,8 @@
   $("sk-wmtext").addEventListener("input", function () { doc().wm = this.value; persist(); renderAll(); });
   $("sk-color").addEventListener("input", function () { style.c = this.value; syncControls(); });
   $("sk-color").addEventListener("change", function () { style.c = this.value; restyle(function (it) { it.c = style.c; }); });
+  app.addEventListener("change", function (e) { if (e.target.id !== "sk-kit") return; var p = pinsFor(mode).slice(), on = e.target.checked; KIT.forEach(function (k) { var i = p.indexOf(k); if (on && i < 0) p.push(k); if (!on && i > -1) p.splice(i, 1); }); S.pins[mode] = p; persist(); renderTools(); syncControls(); status(on ? "Beam and frame kit added to the toolbar: members, supports and loads. Lengths read from the grid square until you set a drawing scale." : "Beam and frame kit taken off the toolbar."); });
+  $("sk-op").addEventListener("change", function () { style.op = +this.value; restyle(function (it) { if (style.op < 1) it.op = style.op; else delete it.op; }); });
   $("sk-ls").addEventListener("change", function () { style.ls = this.value; restyle(function (it) { if (/^(stroke|line|member|hatch|arrow|rect|circle|poly)$/.test(it.type)) it.ls = style.ls; }); });
   $("sk-veg").addEventListener("change", function () { style.veg = this.value; if (tool[mode] === "veg") return; /* while placing, it just sets the next stamp */ if (!(sel && byId(sel.id) && byId(sel.id).type === "veg")) { setTool("veg"); return; } restyle(function (it) { if (it.type === "veg") it.kind = style.veg; }); renderProps(); });
   $("sk-pat").addEventListener("change", function () { style.pat = this.value; if (tool[mode] !== "hatch" && !(sel && byId(sel.id) && byId(sel.id).type === "hatch")) setTool("hatch"); restyle(function (it) { if (it.type === "hatch") it.pat = style.pat; }); renderProps(); });
@@ -1557,7 +1606,7 @@
   }
   function deleteSel() { var l = selList().filter(function (x) { return !locked(x); }), ids = l.map(function (x) { return x.id; }); syncLeaders(); doc().items = doc().items.filter(function (x) { return ids.indexOf(x.id) < 0; }); sel = null; }
   function selectItem(it) { sel = it ? { k: "item", id: it.id } : null; renderContent(); renderProps(); }
-  function base(type, extra) { var o = { id: newId(), type: type, c: style.c }; if (/^(leader|pload|udl|moment|dim)$/.test(type)) o.fs = style.fs; if (type === "hatch" && style.hsc && style.hsc !== 1) o.ps = style.hsc; if (type === "hatch" && style.ha) o.ha = style.ha; if (type === "hatch" && style.hbg) { o.bg = style.hbg; o.bo = style.hbo == null ? 1 : style.hbo; } for (var p in extra) o[p] = extra[p]; return o; }
+  function base(type, extra) { var o = { id: newId(), type: type, c: style.c }; if (style.op && style.op < 1) o.op = style.op; if (/^(leader|pload|udl|moment|dim)$/.test(type)) o.fs = style.fs; if (type === "hatch" && style.hsc && style.hsc !== 1) o.ps = style.hsc; if (type === "hatch" && style.ha) o.ha = style.ha; if (type === "hatch" && style.hbg) { o.bg = style.hbg; o.bo = style.hbo == null ? 1 : style.hbo; } for (var p in extra) o[p] = extra[p]; return o; }
   function addItem(it) { begin(); doc().items.push(it); commit(); return it; }
   function constrain(a, p) { var dx = p.x - a.x, dy = p.y - a.y, ang = Math.round(Math.atan2(dy, dx) / (Math.PI / 4)) * (Math.PI / 4), L = Math.hypot(dx, dy); return { x: r1(a.x + Math.cos(ang) * L), y: r1(a.y + Math.sin(ang) * L) }; }
   function nextSectionLetter() { var used = doc().items.filter(function (x) { return x.type === "section"; }).map(function (x) { return x.label; }), L = "ABCDEFGHJKLMNPQRSTUVWXYZ"; for (var i = 0; i < L.length; i++) if (used.indexOf(L[i]) < 0) return L[i]; return "A"; }
@@ -1821,7 +1870,7 @@
     if (mod && e.key.toLowerCase() === "d") { var dl = selList(); if (dl.length) { e.preventDefault(); syncLeaders(); paste(clone(dl), GRID); } return; }
     if (sel && sel.k !== "img" && /^Arrow/.test(e.key)) { /* nudge the selection */
       var nl = selList(); if (!nl.length || nl.some(locked)) return; e.preventDefault();
-      var st = (e.shiftKey ? 5 : 1) * (mode === "struct" && doc().snap ? GRID : 4), ddx = e.key === "ArrowLeft" ? -st : e.key === "ArrowRight" ? st : 0, ddy = e.key === "ArrowUp" ? -st : e.key === "ArrowDown" ? st : 0;
+      var st = (e.shiftKey ? 5 : 1) * (kitOn() && doc().snap ? GRID : 4), ddx = e.key === "ArrowLeft" ? -st : e.key === "ArrowRight" ? st : 0, ddy = e.key === "ArrowUp" ? -st : e.key === "ArrowDown" ? st : 0;
       begin(); nl.forEach(function (o) { replaceItem(shifted(o, ddx, ddy)); }); commit(); return;
     }
     if ((e.key === "Delete" || e.key === "Backspace") && sel) {
@@ -2460,8 +2509,9 @@
   function fetchContours(cb) {
     var d = doc(), m = d.map, F = mapFrame(); if (!m) return; if (!d.dscale) { mapStatus("Set a drawing scale in Sheet first (it's on NTS): contours need the map at a scale."); return; }
     var CM = mapClipM(), Wm = CM.x1 - CM.x0, Hm = CM.y1 - CM.y0, mcx = (CM.x0 + CM.x1) / 2, mcy = (CM.y0 + CM.y1) / 2;
-    if (Math.max(Wm, Hm) > 6000) { mapStatus("The sheet covers more than 6 km at this scale, too much LiDAR to fetch. Pick a larger scale (smaller number) for contours."); return; }
-    var cell = Math.max(1, Math.ceil(Math.max(Wm, Hm) / 300)), x0 = Math.floor(mcx - Wm / 2 - cell), y0 = Math.floor(mcy - Hm / 2 - cell), nx = Math.ceil((Wm + 2 * cell) / cell), ny = Math.ceil((Hm + 2 * cell) / cell);
+    if (Math.max(Wm, Hm) > 30000) { mapStatus("The sheet covers more than 30 km at this scale, too much LiDAR to fetch. Pick a larger scale (smaller number) for contours."); return; }
+    /* about 300 cells across the sheet: 1 m LiDAR on small areas, thinned to a round spacing (2, 5, 10, 20, 50 or 100 m) on big ones */
+    var cell = [1, 2, 5, 10, 20, 50, 100].filter(function (c0) { return c0 >= Math.max(Wm, Hm) / 300; })[0] || 100, x0 = Math.floor(mcx - Wm / 2 - cell), y0 = Math.floor(mcy - Hm / 2 - cell), nx = Math.ceil((Wm + 2 * cell) / cell), ny = Math.ceil((Hm + 2 * cell) / cell);
     var R = RO(), url = R.EA_WCS + "?service=WCS&version=2.0.1&request=GetCoverage&coverageId=" + R.EA_COVERAGE + "&subset=E(" + x0 + "," + (x0 + nx * cell) + ")&subset=N(" + y0 + "," + (y0 + ny * cell) + ")&scaleSize=i(" + nx + "),j(" + ny + ")&format=text%2Fplain";
     var iv = +$("sk-mapiv").value, sheet = d, key = m.e + "," + m.n;
     mapStatus("Fetching LiDAR terrain from the Environment Agency (" + nx + " × " + ny + " cells at " + cell + " m)…");
@@ -2472,7 +2522,7 @@
       if (cb) cb(g);
       if (!c) { mapStatus("No LiDAR came back for this spot. The EA's LiDAR covers England only, and has a few gaps."); return; }
       c.src = "EA LiDAR DTM © Environment Agency (OGL)"; sheet.map.c = c; sheet.map.csrc = "ea"; persist(); renderAll();
-      mapStatus(c.lines.length + " contour lines every " + c.iv + " m" + (c.iv !== iv ? " (widened from " + iv + " m: the ground is steep here)" : "") + ", from the EA's LiDAR terrain model.");
+      mapStatus(c.lines.length + " contour lines every " + c.iv + " m" + (c.iv !== iv ? " (widened from " + iv + " m: the ground is steep here)" : "") + ", from the EA's LiDAR terrain model" + (cell > 1 ? ", thinned to " + cell + " m spacing to cover this big an area, so they're smoother than the 1 m data" : " at 1 m spacing") + ".");
     }).catch(function (err) { mapStatus("Couldn't fetch LiDAR: " + err.message + ". The EA service may be busy; try again. LiDAR covers England only."); });
   }
 
@@ -2513,7 +2563,7 @@
   function noTerrain(g) {
     var n = 0, lo = Infinity, hi = -Infinity, step = Math.max(1, Math.floor(g.z.length / 20000));
     for (var q = 0; q < g.z.length; q += step) { var v = g.z[q]; if (v === v && v !== 0) { n++; if (v < lo) lo = v; if (v > hi) hi = v; } }
-    return n < 0.2 * g.z.length / step || hi - lo < 0.05;
+    return n < 0.02 * g.z.length / step || hi - lo < 0.05; /* a coastal sheet can be mostly sea: only refuse when almost nothing is land */
   }
   function terrainSrc() { var m = doc().map; return m && m.csrc === "file" && m.c && m.c.src ? m.c.src : "EA LiDAR DTM © Environment Agency (OGL)"; }
 
