@@ -51,6 +51,8 @@
     rect: '<rect x="4" y="6" width="16" height="12" rx="1"/>',
     circle: '<circle cx="12" cy="12" r="8"/>',
     poly: '<path d="M5 18l2-11 8-3 5 9-6 7z"/>',
+    curve: '<path d="M3 18c3-10 7-12 9-6s6 4 9-6"/>',
+    fig: '<circle cx="12" cy="5" r="2"/><path d="M12 8v7M8 11h8M12 15l-3 6M12 15l3 6"/>',
     section: '<path d="M4 12h16" stroke-dasharray="4 2 1 2"/><path d="M4 12v-6M20 12v-6M4 6l2 2M4 6L2 8M20 6l2 2M20 6l-2 2"/>',
     north: '<path d="M12 3l5 16-5-4-5 4z"/><path d="M12 3v12"/>',
     veg: '<path d="M12 14c-4 0-6-2-6-5s3-6 6-6 6 3 6 6-2 5-6 5z"/><path d="M12 14v7M9 21h6M12 17l-2-2M12 16l2-2"/>',
@@ -63,7 +65,7 @@
     free: [["select", "Select"], ["pen", "Pen"], ["eraser", "Eraser"], ["hatch", "Hatch"], ["text", "Text"], ["leader", "Leader"], ["dim", "Dimension"]],
     struct: [["select", "Select"], ["member", "Member"], ["pin", "Pin"], ["roller", "Roller"], ["fixed", "Fixed"], ["pload", "Point load"], ["udl", "UDL"], ["moment", "Moment"], ["dim", "Dimension"], ["hatch", "Hatch"], ["text", "Text"], ["leader", "Leader"], ["eraser", "Eraser"]],
     kit: [["member", "Member"], ["pin", "Pin"], ["roller", "Roller"], ["fixed", "Fixed"], ["pload", "Point load"], ["udl", "UDL"], ["moment", "Moment"]], /* beam and frame diagram kit, a group in All tools */
-    shapes: [["line", "Line"], ["arrow", "Arrow"], ["rect", "Rectangle"], ["circle", "Circle"], ["poly", "Polygon"], ["section", "Section"], ["north", "North"], ["veg", "Vegetation"], ["brk", "Break line"], ["cloud", "Rev cloud"], ["slope", "Slope"], ["wl", "Water level"], ["image", "Image"], ["inset", "Detail window"], ["window", "New viewport"]]
+    shapes: [["line", "Line"], ["arrow", "Arrow"], ["rect", "Rectangle"], ["circle", "Circle"], ["poly", "Polygon"], ["curve", "Curve"], ["section", "Section"], ["north", "North"], ["veg", "Vegetation"], ["fig", "Scale figure"], ["brk", "Break line"], ["cloud", "Rev cloud"], ["slope", "Slope"], ["wl", "Water level"], ["image", "Image"], ["inset", "Detail window"], ["window", "New viewport"]]
   };
   var HINTS = {
     select: "Click to select, drag a box to select several, Shift or Ctrl click to add or remove. Drag to move, drag a corner square to resize, drag the round grip above to rotate (Shift for 15° steps). Delete removes, Ctrl+C / Ctrl+V copy and paste, Ctrl+D duplicates, Ctrl+A selects all, Esc clears.",
@@ -84,6 +86,8 @@
     arrow: "Drag from the tail to the point. Arrowhead size is in the panel below once it's drawn.",
     rect: "Drag from one corner to the opposite corner.",
     circle: "Press on the centre and drag out to the radius.",
+    curve: "Click points along the curve; it bends smoothly through them. Press Enter or double-click to finish, or click the first point to close it.",
+    fig: "Click to place a person, car or item of plant at true size for the drawing scale. Pick which one in its options. Sizes are typical: check the machine you'll actually use.",
     poly: "Click each corner, then click the first point again (or press Enter, or double-click) to close the shape.",
     section: "Drag along the line of the cut. Arrows show the viewing direction; Flip side turns them round and you can set the letter.",
     veg: "Pick tree, bush, grass or planting above, then click to place one or drag to size it. Drag its square handle to resize it later.",
@@ -296,6 +300,15 @@
   }
   function hpath(it) { return poly(it.pts) + (it.holes || []).map(poly).join(""); }
   function opath(pts) { return "M" + pts.map(function (p) { return p[0] + " " + p[1]; }).join("L"); }
+  /* a smooth curve through the points (Catmull-Rom as cubic Beziers) */
+  function cmr(pts, closed) {
+    var n = pts.length; if (n < 3) return opath(pts) + (closed ? "Z" : "");
+    var P = function (i) { return closed ? pts[(i + n) % n] : pts[Math.max(0, Math.min(n - 1, i))]; }, o = "M" + pts[0][0] + " " + pts[0][1], m = closed ? n : n - 1;
+    for (var i = 0; i < m; i++) { var p0 = P(i - 1), p1 = P(i), p2 = P(i + 1), p3 = P(i + 2);
+      o += "C" + r1(p1[0] + (p2[0] - p0[0]) / 6) + " " + r1(p1[1] + (p2[1] - p0[1]) / 6) + " " + r1(p2[0] - (p3[0] - p1[0]) / 6) + " " + r1(p2[1] - (p3[1] - p1[1]) / 6) + " " + p2[0] + " " + p2[1]; }
+    return o + (closed ? "Z" : "");
+  }
+  function ppath(it) { return it.curve ? cmr(it.pts, !it.open) : it.open ? opath(it.pts) : poly(it.pts); }
   function poly(pts) { return "M" + pts.map(function (p) { return p[0] + " " + p[1]; }).join("L") + "Z"; }
   function patId(pat, c, sc, an) { return "hp-" + pat + "-" + c.replace(/[^0-9a-z]/gi, "") + (sc && sc !== 1 ? "-s" + String(sc).replace(".", "_") : "") + (an ? "-a" + String(an).replace("-", "m").replace(".", "_") : ""); }
   function patDef(pat, c, sc, an) { var d0 = patDef0(pat, c), tf = (an ? "rotate(" + an + ") " : "") + (sc && sc !== 1 ? "scale(" + sc + ")" : ""); return tf ? d0.replace('<pattern id="' + patId(pat, c) + '"', '<pattern id="' + patId(pat, c, sc, an) + '" patternTransform="' + tf.trim() + '"') : d0; }
@@ -404,7 +417,8 @@
       case "arrow": return arrow(it.x1, it.y1, it.x2, it.y2, c, it.w, it.ah || Math.max(11, it.w * 4)).replace("<line ", "<line" + dash(it.ls, it.w) + " ");
       case "rect": return '<rect x="' + Math.min(it.x1, it.x2) + '" y="' + Math.min(it.y1, it.y2) + '" width="' + r1(Math.abs(it.x2 - it.x1)) + '" height="' + r1(Math.abs(it.y2 - it.y1)) + '" fill="' + (it.fill ? "#fff" : "none") + '" stroke="' + c + '" stroke-width="' + it.w + '" stroke-linejoin="round"' + dash(it.ls, it.w) + "/>";
       case "circle": return '<circle cx="' + it.x1 + '" cy="' + it.y1 + '" r="' + r1(Math.hypot(it.x2 - it.x1, it.y2 - it.y1)) + '" fill="' + (it.fill || "none") + '" stroke="' + c + '" stroke-width="' + it.w + '"' + dash(it.ls, it.w) + "/>";
-      case "poly": return '<path d="' + (it.open ? opath(it.pts) : poly(it.pts)) + '" fill="none" stroke="' + c + '" stroke-width="' + it.w + '" stroke-linejoin="round"' + dash(it.ls, it.w) + "/>";
+      case "fig": return figStr(it, c);
+      case "poly": return '<path d="' + ppath(it) + '" fill="none" stroke="' + c + '" stroke-width="' + it.w + '" stroke-linejoin="round"' + dash(it.ls, it.w) + "/>";
       case "cloud": return '<path d="' + cloudPath(it) + '" fill="none" stroke="' + c + '" stroke-width="' + (it.w || 2) + '" stroke-linejoin="round"/>';
       case "brk":
         var bn = norm(it), mx2 = (it.x1 + it.x2) / 2, my2 = (it.y1 + it.y2) / 2, zz = [[it.x1 - bn.dx * 8, it.y1 - bn.dy * 8], [mx2 - bn.dx * 9, my2 - bn.dy * 9], [mx2 - bn.dx * 4 + bn.nx * 16, my2 - bn.dy * 4 + bn.ny * 16], [mx2 + bn.dx * 4 - bn.nx * 16, my2 + bn.dy * 4 - bn.ny * 16], [mx2 + bn.dx * 9, my2 + bn.dy * 9], [it.x2 + bn.dx * 8, it.y2 + bn.dy * 8]];
@@ -488,6 +502,34 @@
     for (i = 0; i < n; i++) { var A = pts[i], B = pts[(i + 1) % n], am = (A[2] + (i === n - 1 ? B[2] + Math.PI * 2 : B[2])) / 2; if (!i) d += "M" + r1(A[0]) + " " + r1(A[1]); d += "Q" + r1(cx + Math.cos(am) * R * bulge) + " " + r1(cy + Math.sin(am) * ry * bulge) + " " + r1(B[0]) + " " + r1(B[1]); }
     return d + "Z";
   }
+  /* Scale figures and plant, drawn at true size for the sheet's scale. Sizes are typical, worked out from first
+     principles: [length, width, x offset of the box centre, y offset] in metres. */
+  var FIG = [["person", "Person (plan)"], ["personel", "Person, 1.75 m (elevation)"], ["car", "Car, 4.5 × 1.8 m (plan)"], ["exc", "Excavator, 21 t (plan)"], ["dumper", "Dumper, 9 t (plan)"], ["tipper", "Tipper lorry, 8-wheel (plan)"], ["tele", "Telehandler (plan)"], ["crane", "Mobile crane, 50 t, outriggers out (plan)"]];
+  var FIGE = { person: [0.55, 0.35], personel: [0.6, 1.8, 0, 0.9], car: [4.5, 1.8], exc: [10.2, 3.2, 2.6], dumper: [4.3, 2.3], tipper: [10, 2.55], tele: [6.4, 2.4, 0.75], crane: [11.5, 7.0] };
+  function figStr(it, c) {
+    var u = fromM(1), x = it.x, y = it.y, kd = it.kind || "person", sw = Math.max(0.8, Math.min(2, u * 0.05)), o = "";
+    var S = ' fill="none" stroke="' + c + '" stroke-width="' + r1(sw) + '" stroke-linejoin="round" stroke-linecap="round"', F = ' fill="' + c + '" fill-opacity="0.08" stroke="' + c + '" stroke-width="' + r1(sw) + '" stroke-linejoin="round"';
+    var ds = ' fill="none" stroke="' + c + '" stroke-width="' + r1(sw * 0.8) + '" stroke-dasharray="' + r1(u * 0.4) + " " + r1(u * 0.25) + '"';
+    var R = function (cx, cy, w, h, st, rr) { return '<rect x="' + r1(x + (cx - w / 2) * u) + '" y="' + r1(y + (cy - h / 2) * u) + '" width="' + r1(w * u) + '" height="' + r1(h * u) + '"' + (rr ? ' rx="' + r1(rr * u) + '"' : "") + (st || S) + "/>"; };
+    var L = function (pts, st) { return '<path d="M' + pts.map(function (q) { return r1(x + q[0] * u) + " " + r1(y + q[1] * u); }).join("L") + '"' + (st || S) + "/>"; };
+    var C = function (cx, cy, r, st) { return '<circle cx="' + r1(x + cx * u) + '" cy="' + r1(y + cy * u) + '" r="' + r1(r * u) + '"' + (st || S) + "/>"; };
+    if (kd === "person") o += '<ellipse cx="' + r1(x) + '" cy="' + r1(y) + '" rx="' + r1(0.27 * u) + '" ry="' + r1(0.14 * u) + '"' + F + "/>" + C(0, 0, 0.1, F);
+    else if (kd === "personel") { /* (x, y) is at the feet */
+      o += C(0, -1.64, 0.11, F) + '<path d="M' + [[-0.08, -1.52], [-0.21, -1.45], [-0.25, -1.0], [-0.2, -0.98], [-0.17, -1.3], [-0.15, -0.9], [-0.14, 0], [-0.03, 0], [0, -0.85], [0.03, 0], [0.14, 0], [0.15, -0.9], [0.17, -1.3], [0.2, -0.98], [0.25, -1.0], [0.21, -1.45], [0.08, -1.52]].map(function (q) { return r1(x + q[0] * u) + " " + r1(y + q[1] * u); }).join("L") + 'Z"' + F + "/>";
+      o += L([[-0.5, 0], [0.5, 0]]);
+    } else if (kd === "car") o += R(0, 0, 4.5, 1.8, F, 0.35) + L([[0.9, -0.8], [1.2, 0], [0.9, 0.8]]) + L([[-1.3, -0.8], [-1.5, 0], [-1.3, 0.8]]) + R(-0.2, 0, 2.0, 1.4, S, 0.2);
+    else if (kd === "exc") /* tracks, slewing upper body and boom, facing right */
+      o += R(0, -1.3, 4.45, 0.6, F) + R(0, 1.3, 4.45, 0.6, F) + C(-0.3, 0, 1.45, F) + R(-0.3, 0, 2.6, 2.5, S, 0.3) + R(0.6, -0.75, 0.9, 0.9, S) + R(3.9, 0, 5.4, 0.55, F) + R(7.1, 0, 1.1, 1.3, F, 0.15);
+    else if (kd === "dumper") o += R(0, 0, 4.3, 2.3, F, 0.15) + R(1.15, 0, 1.9, 2.2, S, 0.1) + R(-1.25, 0, 0.9, 1.6, S) + [[-1.4, -1.05], [-1.4, 1.05], [1.3, -1.05], [1.3, 1.05]].map(function (q) { return R(q[0], q[1], 1.1, 0.4, F); }).join("");
+    else if (kd === "tipper") o += R(-1.15, 0, 7.4, 2.55, F, 0.1) + R(3.85, 0, 2.3, 2.5, F, 0.2) + L([[-4.85, -1.27], [2.55, 1.27]], ds);
+    else if (kd === "tele") o += R(0, 0, 4.9, 2.4, F, 0.3) + R(-0.4, -0.65, 1.2, 0.95, S) + R(1.4, 0.35, 5.2, 0.45, S) + L([[3.6, -0.6], [3.6, 0.9]]) + L([[3.6, -0.4], [4.8, -0.4]]) + L([[3.6, 0.7], [4.8, 0.7]]);
+    else if (kd === "crane") { /* carrier with outriggers out and pads, the boom stowed over the front */
+      o += R(0, 0, 11.5, 2.75, F, 0.2) + R(4.6, 0, 1.6, 2.6, S) + C(-1.2, 0, 1.3, S) + R(1.5, 0, 6.5, 0.7, S);
+      [[-3.0, -1], [-3.0, 1], [3.3, -1], [3.3, 1]].forEach(function (q) { o += L([[q[0], q[1] * 1.37], [q[0], q[1] * 3.0]], ds) + R(q[0], q[1] * 3.15, 0.6, 0.6, F); });
+    }
+    if (it.lab !== false) { var nm = (FIG.filter(function (f) { return f[0] === kd; })[0] || [0, ""])[1].replace(/ \((plan|elevation)\)/, "").replace(/, outriggers out/, ""), ext = FIGE[kd] || [1, 1]; o += txt(x + (ext[2] || 0) * u, y + (ext[1] / 2 - (ext[3] || 0)) * u + 12, nm, c, 9, "middle", ' stroke="#fff" stroke-width="3" paint-order="stroke"'); }
+    return o;
+  }
   /* the trunk in plan: a dot, or a circle at its true diameter when one is set */
   function trunkStr(it, x, y, r0, c, sw) { return it.tr ? '<circle cx="' + r1(x) + '" cy="' + r1(y) + '" r="' + r1(it.tr) + '" fill="#fff" stroke="' + c + '" stroke-width="' + r1(sw) + '"/>' : '<circle cx="' + r1(x) + '" cy="' + r1(y) + '" r="' + r1(Math.max(2, r0)) + '" fill="' + c + '"/>'; }
   function vegStr(it, c) {
@@ -539,7 +581,8 @@
       case "stroke": return '<path d="' + smooth(it.pts) + '" ' + T + Math.max(w, (it.w || 2) + 8) + '"/>';
       case "rect": case "cloud": var rx1 = Math.min(it.x1, it.x2), ry1 = Math.min(it.y1, it.y2); return '<rect x="' + rx1 + '" y="' + ry1 + '" width="' + r1(Math.abs(it.x2 - it.x1)) + '" height="' + r1(Math.abs(it.y2 - it.y1)) + '" ' + T + Math.max(w, (it.w || 2) + 8) + '"/>';
       case "circle": return '<circle cx="' + it.x1 + '" cy="' + it.y1 + '" r="' + r1(Math.hypot(it.x2 - it.x1, it.y2 - it.y1)) + '" ' + T + Math.max(w, (it.w || 2) + 8) + '"/>';
-      case "poly": return '<path d="' + (it.open ? opath(it.pts) : poly(it.pts)) + '" ' + T + Math.max(w, (it.w || 2) + 8) + '"/>';
+      case "fig": var fe = FIGE[it.kind || "person"] || [1, 1], fw = fromM(fe[0]), fh = fromM(fe[1]); return '<rect x="' + r1(it.x - fw / 2 + fromM(fe[2] || 0)) + '" y="' + r1(it.y - fh / 2 - fromM(fe[3] || 0)) + '" width="' + r1(Math.max(fw, 14 * k)) + '" height="' + r1(Math.max(fh, 14 * k)) + '" fill="transparent" pointer-events="all"/>';
+      case "poly": return '<path d="' + ppath(it) + '" ' + T + Math.max(w, (it.w || 2) + 8) + '"/>';
       case "slope": var sn = norm(it), sd = it.side === -1 ? -1 : 1, hl = 36 * (it.s || 1); return '<path d="M' + it.x1 + " " + it.y1 + "L" + it.x2 + " " + it.y2 + "L" + r1(it.x2 + sn.nx * sd * hl) + " " + r1(it.y2 + sn.ny * sd * hl) + "L" + r1(it.x1 + sn.nx * sd * hl) + " " + r1(it.y1 + sn.ny * sd * hl) + 'Z" fill="transparent" pointer-events="all"/>';
       case "arrow": case "section": case "brk":
       case "line": case "member": return '<line x1="' + it.x1 + '" y1="' + it.y1 + '" x2="' + it.x2 + '" y2="' + it.y2 + '" ' + T + Math.max(w, (it.w || 2) + 8) + '"/>';
@@ -1277,7 +1320,7 @@
     var o = "";
     if (pend && pend.pts.length) {
       var pts = pend.pts.concat(pend.cur ? [[pend.cur.x, pend.cur.y]] : []);
-      o += '<path d="M' + pts.map(function (p) { return p[0] + " " + p[1]; }).join("L") + '" fill="' + style.c + '" fill-opacity="0.08" stroke="' + style.c + '" stroke-width="' + r1(1.5 * Math.max(k, 1)) + '" stroke-dasharray="6 4"/>';
+      o += '<path d="' + (pend.curve ? cmr(pts, false) : "M" + pts.map(function (p) { return p[0] + " " + p[1]; }).join("L")) + '" fill="' + (pend.curve ? "none" : style.c) + '" fill-opacity="0.08" stroke="' + style.c + '" stroke-width="' + r1(1.5 * Math.max(k, 1)) + '" stroke-dasharray="6 4"/>';
       o += hnd("first", pend.pts[0][0], pend.pts[0][1]);
     }
     if (drag && drag.temp) o += draw(drag.temp);
@@ -1340,7 +1383,7 @@
     $("sk-undo").disabled = !H().u.length; $("sk-redo").disabled = !H().r.length;
   }
   function setMode(m) { mode = m; S.mode = m; pend = null; sel = null; persist(); renderTools(); renderAll(); renderLive(); renderProps(); }
-  function setTool(t) { if (mapMode) setMapMode(mapMode); if (pend && pend.poly && t !== "poly") finishPoly(); else if (pend && !pend.poly && t !== "hatch") finishHatch(); tool[mode] = t; snapHit = null; showSnap(); renderTools(); if (t !== "select" && t !== "xform") sel = null; renderUI(); renderProps(); }
+  function setTool(t) { if (mapMode) setMapMode(mapMode); if (pend && pend.poly && t !== "poly" && t !== "curve") finishPoly(); else if (pend && !pend.poly && t !== "hatch") finishHatch(); tool[mode] = t; snapHit = null; showSnap(); renderTools(); if (t !== "select" && t !== "xform") sel = null; renderUI(); renderProps(); }
 
   /* Turning the sheet keeps everything on it, shifted so it stays centred on the new sheet. */
   function setOrient(o, paper) {
@@ -1460,7 +1503,7 @@
     }
     if (!it) { p.innerHTML = ""; return; }
     updateCtx();
-    var NAMES = { inset: "Detail or viewport", image: "Image", arrow: "Arrow", rect: "Rectangle", circle: "Circle", poly: "Polygon", cloud: "Revision cloud", brk: "Break line", slope: "Slope marker", section: "Section marker", veg: "Vegetation", north: "North arrow", wl: "Water level", stroke: "Pen stroke", line: "Line", member: "Member", support: "Support", pload: "Point load", udl: "Distributed load", moment: "Moment", dim: "Dimension", text: "Text", leader: "Leader note", hatch: "Hatched area" };
+    var NAMES = { inset: "Detail or viewport", image: "Image", arrow: "Arrow", rect: "Rectangle", circle: "Circle", poly: "Polygon", curve: "Curve", fig: "Scale figure", cloud: "Revision cloud", brk: "Break line", slope: "Slope marker", section: "Section marker", veg: "Vegetation", north: "North arrow", wl: "Water level", stroke: "Pen stroke", line: "Line", member: "Member", support: "Support", pload: "Point load", udl: "Distributed load", moment: "Moment", dim: "Dimension", text: "Text", leader: "Leader note", hatch: "Hatched area" };
     var h = '<span class="sk-lab">' + NAMES[it.type] + "</span>";
     if (locked(it)) {
       h += '<span class="small">' + (doc().lockDraw ? "The drawing is locked. Untick \"Lock drawing\" to change it." : "Locked in place.") + "</span>";
@@ -1474,6 +1517,7 @@
     if (measured() && (it.type === "rect" || it.type === "cloud")) h += '<label class="sk-check">W <input type="number" id="skp-rw" step="0.01" min="0" style="width:6em" value="' + r3(toM(Math.abs(it.x2 - it.x1))) + '"></label><label class="sk-check">H <input type="number" id="skp-rh" step="0.01" min="0" style="width:6em" value="' + r3(toM(Math.abs(it.y2 - it.y1))) + '"> m</label>';
     if (measured() && it.type === "circle") h += '<label class="sk-check">Radius <input type="number" id="skp-rad" step="0.01" min="0" style="width:6em" value="' + r3(toM(Math.hypot(it.x2 - it.x1, it.y2 - it.y1))) + '"> m</label>';
     if (it.type === "section" || it.type === "wl") h += '<input type="text" id="skp-label" spellcheck="true" lang="en-GB" value="' + esc(it.label || "") + '" aria-label="Label" style="width:' + (it.type === "wl" ? 11 : 4) + 'em">';
+    if (it.type === "fig") h += '<select id="skp-fig" aria-label="Figure">' + FIG.map(function (x) { return '<option value="' + x[0] + '"' + ((it.kind || "person") === x[0] ? " selected" : "") + ">" + x[1] + "</option>"; }).join("") + '</select><label class="sk-check"><input type="checkbox" id="skp-flab"' + (it.lab !== false ? " checked" : "") + "> Label</label>";
     if (it.type === "veg") h += '<select id="skp-veg" aria-label="Planting type">' + VEG.map(function (x) { return '<option value="' + x[0] + '"' + ((it.kind || "tree") === x[0] ? " selected" : "") + ">" + x[1] + "</option>"; }).join("") + '</select><label class="sk-check">' + (/^(tree|conifer|treel)$/.test(it.kind || "tree") ? "Canopy" : measured() ? "Spread" : "Size") + ' <input type="number" id="skp-vr" min="0.01" step="any" style="width:5.5em" value="' + (measured() ? r3(toM(2 * (it.r || 40))) : Math.round(2 * (it.r || 40) / 4)) + '"> ' + (measured() ? "m" : "mm") + "</label>" + (/^(tree|conifer|treel)$/.test(it.kind || "tree") ? '<label class="sk-check" title="Leave blank for a simple dot">Trunk diameter <input type="number" id="skp-vt" min="0" step="any" style="width:5em" value="' + (it.tr ? (measured() ? r3(toM(2 * it.tr)) : Math.round(2 * it.tr / 4)) : "") + '" placeholder="' + (measured() ? "m" : "mm") + '"> ' + (measured() ? "m" : "mm") + "</label>" : "");
     if (it.type === "slope" || it.type === "north" || it.type === "wl") h += '<label class="sk-check">Size <select id="skp-s">' + [0.5, 0.75, 1, 1.5, 2, 3].map(function (v) { return '<option value="' + v + '"' + ((it.s || 1) === v ? " selected" : "") + ">×" + v + "</option>"; }).join("") + "</select></label>";
     if (it.type === "section" || it.type === "slope") h += '<button type="button" class="sk-btn" data-act="flip">Flip side</button>';
@@ -1537,6 +1581,8 @@
     liveEdit("skp-s", function (it, el) { it.s = +el.value; });
     liveEdit("skp-vt", function (it, el) { var v = parseFloat(el.value); if (!(v > 0)) { delete it.tr; return; } it.tr = r1(measured() ? fromM(v) / 2 : v * 4 / 2); });
     liveEdit("skp-vr", function (it, el) { var v = parseFloat(el.value); if (!(v > 0)) return; it.r = r1(measured() ? fromM(v) / 2 : v * 4 / 2); });
+    var fsel = $("skp-fig"); if (fsel) fsel.addEventListener("change", function () { var it = byId(sel.id); if (!it) return; begin(); it.kind = this.value; style.fig = this.value; commit(); renderProps(); });
+    liveEdit("skp-flab", function (it, el) { it.lab = el.checked; });
     var vsel = $("skp-veg"); if (vsel) vsel.addEventListener("change", function () { var it = byId(sel.id); if (!it) return; begin(); it.kind = this.value; style.veg = this.value; commit(); renderProps(); });
     liveEdit("skp-mask", function (it, el) { it.mask = el.checked; });
     liveEdit("skp-unit", function (it, el) { it.unit = el.value || undefined; });
@@ -1654,7 +1700,9 @@
   function addItem(it) { begin(); doc().items.push(it); commit(); return it; }
   function constrain(a, p) { var dx = p.x - a.x, dy = p.y - a.y, ang = Math.round(Math.atan2(dy, dx) / (Math.PI / 4)) * (Math.PI / 4), L = Math.hypot(dx, dy); return { x: r1(a.x + Math.cos(ang) * L), y: r1(a.y + Math.sin(ang) * L) }; }
   function nextSectionLetter() { var used = doc().items.filter(function (x) { return x.type === "section"; }).map(function (x) { return x.label; }), L = "ABCDEFGHJKLMNPQRSTUVWXYZ"; for (var i = 0; i < L.length; i++) if (used.indexOf(L[i]) < 0) return L[i]; return "A"; }
-  function finishPoly() { if (!pend) return; var pts = pend.pts; pend = null; renderLive(); if (pts.length >= 3) selectAfterCreate(addItem(base("poly", { pts: pts, w: style.w, ls: style.ls }))); }
+  function finishPoly(close) { if (!pend) return; var pts = pend.pts, cv = pend.curve; pend = null; renderLive();
+    if (cv) { if (pts.length >= 2) selectAfterCreate(addItem(base("poly", { pts: pts, w: style.w, ls: style.ls, curve: true, open: !close }))); return; }
+    if (pts.length >= 3) selectAfterCreate(addItem(base("poly", { pts: pts, w: style.w, ls: style.ls }))); }
   function finishHatch() {
     if (!pend) return; var pts = pend.pts; pend = null; renderLive();
     if (pts.length >= 3) { var it = addItem(base("hatch", { pts: pts, pat: style.pat, outline: true, w: Math.min(style.w, 4), ls: style.ls })); selectAfterCreate(it); }
@@ -1730,15 +1778,16 @@
       }
       drag = { type: "hatch0", start: sp, raw: { x: p.x, y: p.y } }; return;
     }
-    if (t === "poly") {
+    if (t === "poly" || t === "curve") {
       var pp = snapPt(p);
       if (pend && pend.poly) {
-        if (pend.pts.length >= 3 && dist(pp, { x: pend.pts[0][0], y: pend.pts[0][1] }) < 14 * Math.max(k, 1)) { finishPoly(); return; }
+        if (pend.pts.length >= 3 && dist(pp, { x: pend.pts[0][0], y: pend.pts[0][1] }) < 14 * Math.max(k, 1)) { finishPoly(true); return; }
         var lp = pend.pts[pend.pts.length - 1]; if (dist(pp, { x: lp[0], y: lp[1] }) > 2) pend.pts.push([pp.x, pp.y]); renderLive(); return;
       }
-      pend = { pts: [[pp.x, pp.y]], cur: pp, poly: true }; renderLive(); return;
+      pend = { pts: [[pp.x, pp.y]], cur: pp, poly: true, curve: t === "curve" }; renderLive(); return;
     }
     if (t === "veg") { var qv = snapPt(p, { free: true }); drag = { type: "veg0", start: qv, temp: base("veg", { kind: style.veg || "tree", x: r1(qv.x), y: r1(qv.y), r: 40, sd: String(Math.floor(Math.random() * 1e9)), c: style.c === COLORS[0][0] ? "#2e7d32" : style.c }) }; drag.temp.id = "vtmp"; renderLive(); return; }
+    if (t === "fig") { var qf = snapPt(p, { free: true }); var fg = addItem(base("fig", { x: qf.x, y: qf.y, kind: style.fig || "person" })); selectAfterCreate(fg); if (!measured()) status("No drawing scale is set, so it's sized from the grid square (" + (doc().scale || 0.2) + " m). Set a scale in Page settings for true size."); return; }
     if (t === "north" || t === "wl") { var qn = snapPt(p, { free: t === "wl" ? false : true }); var sn = addItem(base(t, t === "north" ? { x: qn.x, y: qn.y, rot: doc().map && doc().map.rot ? (doc().map.rot + 360) % 360 : 0, s: 1 } : { x: qn.x, y: qn.y, s: 1, label: "WL ___ m AOD" })); selectAfterCreate(sn); if (t === "wl") setTimeout(function () { var el = $("skp-label"); if (el) { el.focus({ preventScroll: true }); el.select(); } }, 0); else { begin(); drag = { type: "move", orig: clone(sn), start: p }; } return; }
     if (DRAG2[t]) {
       var a = snapPt(p), ex = { x1: a.x, y1: a.y, x2: a.x, y2: a.y };
@@ -1756,7 +1805,7 @@
       drag = { type: "leader", temp: ld, start: p }; renderLive(); return;
     }
   });
-  var SNAP_TOOLS = { line: 1, arrow: 1, rect: 1, circle: 1, poly: 1, member: 1, dim: 1, udl: 1, section: 1, brk: 1, slope: 1, cloud: 1, pin: 1, roller: 1, fixed: 1, pload: 1, moment: 1, wl: 1, hatch: 1, leader: 1 };
+  var SNAP_TOOLS = { curve: 1, line: 1, arrow: 1, rect: 1, circle: 1, poly: 1, member: 1, dim: 1, udl: 1, section: 1, brk: 1, slope: 1, cloud: 1, pin: 1, roller: 1, fixed: 1, pload: 1, moment: 1, wl: 1, hatch: 1, leader: 1 };
   /* while drawing to scale, the status line reads out the true length */
   function lenStatus(a, b, type) {
     if (!measured() || !a) return; var A = a.x != null ? a : { x: a[0], y: a[1] }, dx = b.x - A.x, dy = b.y - A.y;
@@ -3290,7 +3339,7 @@
   }
   $("sk-legedit").addEventListener("click", openLeg);
   document.addEventListener("keydown", function (e) { if (e.key === "Escape" && legDlg) closeLeg(); });
-  var NAMES_ALL = { line: "Line", member: "Member", stroke: "Pen stroke", text: "Text", dim: "Dimension", leader: "Leader", hatch: "Hatch", udl: "UDL", pload: "Point load", moment: "Moment", support: "Support", inset: "Detail or viewport", image: "Image", arrow: "Arrow", rect: "Rectangle", circle: "Circle", poly: "Polygon", cloud: "Revision cloud", brk: "Break line", slope: "Slope marker", section: "Section marker", veg: "Vegetation", north: "North arrow", wl: "Water level" };
+  var NAMES_ALL = { line: "Line", member: "Member", stroke: "Pen stroke", text: "Text", dim: "Dimension", leader: "Leader", hatch: "Hatch", udl: "UDL", pload: "Point load", moment: "Moment", support: "Support", inset: "Detail or viewport", image: "Image", arrow: "Arrow", rect: "Rectangle", circle: "Circle", poly: "Polygon", curve: "Curve", fig: "Scale figure", cloud: "Revision cloud", brk: "Break line", slope: "Slope marker", section: "Section marker", veg: "Vegetation", north: "North arrow", wl: "Water level" };
   svg.addEventListener("contextmenu", ctxMenu);
   document.addEventListener("pointerdown", function (e) { if (ctxEl && !ctxEl.contains(e.target)) closeCtx(); }, true);
   document.addEventListener("keydown", function (e) { if (e.key === "Escape" && ctxEl) closeCtx(); }, true);
