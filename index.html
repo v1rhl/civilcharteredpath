@@ -1511,6 +1511,11 @@ html:not(.sk-mob) .sk-app .sk-tbar-all, html:not(.sk-mob) .sk-app .sk-snapmenu >
 html:not(.sk-mob) .sk-app .sk-tabs button { font-size: var(--sk-t) !important; }
 #sk-export { display: flex !important; align-items: center; justify-content: center; }
 #sk-export svg { display: block; flex: 0 0 auto; }
+/* icon buttons in the map panel */
+.sk-app .sk-btn.sk-ibtn, html:not(.sk-mob) .sk-app :is(.sk-sec-in, .sk-dlg, .sk-toolpop, .sk-props) .sk-btn.sk-ibtn { width: 32px !important; max-width: 32px !important; height: 28px; min-height: 28px; padding: 0 !important; display: inline-flex; align-items: center; justify-content: center; flex: 0 0 auto; }
+.sk-app .sk-btn.sk-icbtn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
+.sk-app .sk-btn.sk-ibtn svg, .sk-app .sk-btn.sk-icbtn svg { flex: 0 0 auto; display: block; }
+.sk-mappanel .sk-maprow { gap: 4px 6px !important; }
 /* map panel groups */
 .sk-mgrp { border-top: 1px solid var(--line); padding: 4px 0; }
 .sk-mgrp:first-child { border-top: 0; }
@@ -3093,9 +3098,9 @@ html:not(.sk-mob) .sk-app .sk-tabs button { font-size: var(--sk-t) !important; }
 <script src="js/news-feed.js?v=20261122b"></script>
 <script src="js/news-archive.js?v=20261122b"></script>
 <script src="js/pages.js?v=20261122b"></script>
-<script src="js/tools/sketch-templates.js?v=20261129l"></script>
-<script src="js/tools/sketch.js?v=20261129l"></script>
-<script src="js/tools/drawing-check.js?v=20261129l"></script>
+<script src="js/tools/sketch-templates.js?v=20261129n"></script>
+<script src="js/tools/sketch.js?v=20261129n"></script>
+<script src="js/tools/drawing-check.js?v=20261129n"></script>
 <script src="js/tools/hydraulics.js?v=20261127a"></script>
 <script src="js/tools/pipeflow.js?v=20261127a"></script>
 <script src="js/tools/catchment.js?v=20261127a"></script>
@@ -3107,7 +3112,7 @@ html:not(.sk-mob) .sk-app .sk-tabs button { font-size: var(--sk-t) !important; }
 <script src="js/tools/culvert.js?v=20261127a"></script>
 <script src="js/tools/site-diary.js?v=20261127a"></script>
 <script src="js/learn.js?v=20261127m"></script>
-<script src="js/site.js?v=20261129l"></script>
+<script src="js/site.js?v=20261129n"></script>
 <script src="js/art.js?v=20261127m"></script>
 </body>
 </html>
