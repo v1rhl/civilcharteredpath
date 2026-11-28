@@ -597,7 +597,8 @@
       '<div class="sk-maprow"><label class="sk-check"><input type="checkbox" id="sk-mapcont" checked> Contours</label><label class="sk-check">every <select id="sk-mapiv">' + [0.1, 0.25, 0.5, 1, 2, 5, 10].map(function (v) { return '<option value="' + v + '"' + (v === 0.5 ? " selected" : "") + ">" + v + " m</option>"; }).join("") + "</select></label>" +
         '<label class="sk-check">Fade <input type="range" id="sk-mapcop" min="0.15" max="1" step="0.05" value="1"></label>' +
         '<button type="button" class="sk-btn" id="sk-mapea" title="Fetch the EA 1 m LiDAR DTM for the map area (England only)">EA LiDAR</button><button type="button" class="sk-btn" id="sk-mapfile-b" title="Load a terrain grid you have downloaded, e.g. from the EA survey portal">Load LiDAR file</button><input type="file" id="sk-mapfile" accept=".asc,.txt,.tif,.tiff" hidden></div>' +
-      '<div class="sk-maprow"><span class="sk-lab">From the terrain</span><button type="button" class="sk-btn" id="sk-mapsect" aria-pressed="false" title="Drag a line on the map to draw a ground section from the LiDAR">Draw section</button><button type="button" class="sk-btn" id="sk-mapcatch" aria-pressed="false" title="Click a ditch, stream or low point to outline the land that drains to it">Find catchment</button><button type="button" class="sk-btn" id="sk-mapfall" title="Arrows showing which way the ground falls, with gradients">Fall arrows</button></div>' +
+      '<div class="sk-maprow"><span class="sk-lab">From the terrain</span><button type="button" class="sk-btn" id="sk-mapsect" aria-pressed="false" title="Drag a line on the map to draw a ground section from the LiDAR">Draw section</button><button type="button" class="sk-btn" id="sk-mapcatch" aria-pressed="false" title="Click a ditch, stream or low point to outline the land that drains to it">Find catchment</button><button type="button" class="sk-btn" id="sk-mapfall" aria-pressed="false" title="Click on the map to add an arrow showing which way the ground falls there, with its gradient">Fall arrow</button><label class="sk-check"><input type="checkbox" id="sk-mapflow"> Flow lines</label></div>' +
+      '<p class="small">Find catchment works like the Catchment runoff tool: it shows the flow lines, then outlines the land draining to the point you click, with the longest flow path and outlet. It uses EA LiDAR, or your file if you loaded one with Load LiDAR file.</p>' +
       '<div class="sk-maprow sk-maplayers"><span class="sk-lab">Layers</span>' + MAPL.map(function (L) { return '<label class="sk-check" title="' + esc(L.src) + '"><input type="checkbox" data-ml="' + L.id + '"> ' + L.name + "</label>"; }).join("") +
         '<label class="sk-check sk-wide">ArcGIS layer URL <input type="url" id="sk-mlurl" placeholder="https://…/FeatureServer/0"></label><button type="button" class="sk-btn" id="sk-mladd">Add layer</button><button type="button" class="sk-btn" id="sk-mlgj-b">Load GeoJSON</button><input type="file" id="sk-mlgj" accept=".geojson,.json" hidden></div>' +
       '<div id="sk-mlextra" class="sk-maprow"></div>' +
@@ -853,7 +854,7 @@
     Array.prototype.forEach.call(app.querySelectorAll("[data-orient]"), function (b) { b.setAttribute("aria-pressed", b.dataset.orient === d.orient); });
     $("sk-color").value = style.c; $("sk-ls").value = style.ls; $("sk-pat").value = style.pat;
     $("sk-grid").checked = d.grid; $("sk-snap").checked = d.snap; $("sk-scale").value = d.scale; $("sk-dscale").value = d.dscale || 0; $("sk-sbar-l").hidden = !d.dscale; $("sk-sbar").checked = d.sbar !== false;
-    $("sk-gsq").hidden = !!d.dscale || mode !== "struct"; $("sk-mapshow-l").hidden = !d.map; if (d.map) { $("sk-mapshow").checked = d.map.show !== false; $("sk-mapleg").checked = !!d.map.leg; $("sk-maplegpos").value = d.map.legpos || "br"; $("sk-maposm").checked = d.map.osm !== false; $("sk-mapcont").checked = d.map.cont !== false; $("sk-mapgrey").checked = d.map.grey !== false; $("sk-mapop").value = d.map.op || 0.55; $("sk-mapcop").value = d.map.cop || 1; }
+    $("sk-gsq").hidden = !!d.dscale || mode !== "struct"; $("sk-mapshow-l").hidden = !d.map; if (d.map) { $("sk-mapshow").checked = d.map.show !== false; $("sk-mapleg").checked = !!d.map.leg; $("sk-mapflow").checked = !!d.map.fl && d.map.flow !== false; $("sk-mapflow").disabled = !d.map.fl; $("sk-maplegpos").value = d.map.legpos || "br"; $("sk-maposm").checked = d.map.osm !== false; $("sk-mapcont").checked = d.map.cont !== false; $("sk-mapgrey").checked = d.map.grey !== false; $("sk-mapop").value = d.map.op || 0.55; $("sk-mapcop").value = d.map.cop || 1; }
     renderMapExtra();
     Array.prototype.forEach.call(app.querySelectorAll("[data-ml]"), function (c) { c.checked = !!(d.map && d.map.on && d.map.on[c.dataset.ml]); }); $("sk-gridinfo").textContent = d.dscale ? "grid " + fmtM(toM(GRID)) : "";
     Array.prototype.forEach.call(app.querySelectorAll("[data-snap]"), function (c) { c.checked = !!S.snaps[c.dataset.snap]; c.disabled = !d.snap; });
@@ -1138,7 +1139,7 @@
     if (e.button !== 0) return;
     measureK();
     var p = world(e), d = doc(), t = tool[mode];
-    if (mapMode && d.map) { e.preventDefault(); try { svg.setPointerCapture(e.pointerId); } catch (er) {} if (mapMode === "catch") { setMapMode("catch"); findCatchment(p); return; } drag = mapMode === "pan" ? { type: "mappan", start: p, e0: d.map.e, n0: d.map.n } : mapMode === "sect" ? { type: "mapsect", start: p } : { type: "mapbox", start: p }; return; }
+    if (mapMode && d.map) { e.preventDefault(); try { svg.setPointerCapture(e.pointerId); } catch (er) {} if (mapMode === "catch") { setMapMode("catch"); findCatchment(p); return; } if (mapMode === "fall") { getFine(function (g) { fallArrowAt(p, g); }); return; } drag = mapMode === "pan" ? { type: "mappan", start: p, e0: d.map.e, n0: d.map.n } : mapMode === "sect" ? { type: "mapsect", start: p } : { type: "mapbox", start: p }; return; }
     var tbc = e.target.closest("[data-tb]"); if (tbc && !pend) { e.preventDefault(); openTB(tbc.dataset.tb); return; }
     if (tbKey) closeTB(true);
     try { svg.setPointerCapture(e.pointerId); } catch (er) {}
@@ -1483,7 +1484,7 @@
   var mapKeyV = "", tileCache = {}, tilePending = {};
   function RO() { return window.Runoff; }
   function mapFrame() { var d = doc(), G = geo(), mu = (d.dscale || 0) / 4000; return { cx: G.inner.x + G.inner.w / 2, cy: G.inner.y + G.inner.h / 2, mu: mu, inner: G.inner }; }
-  function mapKey() { var d = doc(), m = d.map; return m ? [m.e, m.n, d.dscale, d.paper, d.orient, d.tbs, m.show, m.osm, m.cont, m.op, m.cop, m.grey, m.box, m.c ? m.c.lines.length + ":" + m.c.iv + ":" + m.c.oe : "", JSON.stringify(m.on || {}), Object.keys(m.L || {}).map(function (k2) { return k2 + (m.L[k2].f || []).length; }).join(), m.leg, m.legpos, legVer].join("|") : ""; }
+  function mapKey() { var d = doc(), m = d.map; return m ? [m.e, m.n, d.dscale, d.paper, d.orient, d.tbs, m.show, m.osm, m.cont, m.op, m.cop, m.grey, m.box, m.c ? m.c.lines.length + ":" + m.c.iv + ":" + m.c.oe : "", JSON.stringify(m.on || {}), Object.keys(m.L || {}).map(function (k2) { return k2 + (m.L[k2].f || []).length; }).join(), m.leg, m.legpos, legVer, m.flow, m.fl ? m.fl.lines.length + ":" + m.fl.oe + ":" + m.fl.on : ""].join("|") : ""; }
   /* contours and vector layers are stored in metres from their own origin, so the map can move under them */
   function cOff(m, c) { return [(c.oe == null ? m.e : c.oe) - m.e, (c.on == null ? m.n : c.on) - m.n]; }
   function mapLayers() { return MAPL.concat(doc().map && doc().map.extra || []); }
@@ -1570,6 +1571,7 @@
       });
       o += "</g>" + lab + "</g>";
     }
+    o += flowStr(m, F);
     var attr = [m.osm !== false ? "Map © OpenStreetMap contributors" : "", m.cont !== false && m.c ? "Contours " + m.c.iv + " m from " + (m.c.src || "EA LiDAR DTM © Environment Agency (OGL)") + ", indicative" : ""].concat(layerAttr(m)).filter(Boolean).join(" · ");
     if (m.box) o += '<rect x="' + r1(I.x) + '" y="' + r1(I.y) + '" width="' + r1(I.w) + '" height="' + r1(I.h) + '" fill="none" stroke="#15233a" stroke-width="1.2"/>';
     if (m.leg) o += legendStr(m, I, forExport);
@@ -1584,6 +1586,7 @@
   function legendStr(m, I, forExport) {
     var rows = [], fs = 10, sw = 22;
     if (m.cont !== false && m.c && m.c.lines.length) rows.push({ kind: "line", c: "#8a5a2b", w: 1.3, t: "Contour, every " + m.c.iv + " m (m AOD)" });
+    if (m.flow !== false && m.fl && m.fl.lines.length) rows.push({ kind: "line", c: "#2f7fd6", w: 1.6, t: "Flow line from LiDAR (drains over " + (m.fl.thr >= 10000 ? (m.fl.thr / 10000).toFixed(1) + " ha" : m.fl.thr + " m²") + ")" });
     mapLayers().forEach(function (L) {
       if (!m.on || !m.on[L.id]) return;
       if (L.kind === "wms") {
@@ -1795,7 +1798,7 @@
   }
   /* moving the map and limiting it to an area are done by dragging on the sheet */
   var mapMode = null, mapPanning = false;
-  function setMapMode(mm) { mapMode = mapMode === mm ? null : mm; $("sk-mappan").setAttribute("aria-pressed", mapMode === "pan"); $("sk-mapbox").setAttribute("aria-pressed", mapMode === "box"); $("sk-mapsect").setAttribute("aria-pressed", mapMode === "sect"); $("sk-mapcatch").setAttribute("aria-pressed", mapMode === "catch"); stage.dataset.map = mapMode || ""; if (mapMode === "sect" || mapMode === "catch") mapStatus(mapMode === "sect" ? "Drag a line across the map where you want the ground section." : "Click on a ditch, stream or low point. The land that drains to it is outlined. It can take a few seconds."); else if (mapMode) mapStatus(mapMode === "pan" ? "Drag on the sheet to move the map. Your drawing stays where it is. Click Move map again to finish." : "Drag a box on the sheet for the map area."); }
+  function setMapMode(mm) { mapMode = mapMode === mm ? null : mm; $("sk-mappan").setAttribute("aria-pressed", mapMode === "pan"); $("sk-mapbox").setAttribute("aria-pressed", mapMode === "box"); $("sk-mapsect").setAttribute("aria-pressed", mapMode === "sect"); $("sk-mapcatch").setAttribute("aria-pressed", mapMode === "catch"); $("sk-mapfall").setAttribute("aria-pressed", mapMode === "fall"); stage.dataset.map = mapMode || ""; if (mapMode === "sect" || mapMode === "catch" || mapMode === "fall") mapStatus(mapMode === "sect" ? "Drag a line across the map where you want the ground section." : mapMode === "fall" ? "Click on the map to add a fall arrow there." : "Finding the flow lines. Then click on one where you want the outlet."); else if (mapMode) mapStatus(mapMode === "pan" ? "Drag on the sheet to move the map. Your drawing stays where it is. Click Move map again to finish." : "Drag a box on the sheet for the map area."); }
   $("sk-mappan").addEventListener("click", function () { if (!doc().map) { mapStatus("Place the map first."); return; } setMapMode("pan"); });
   $("sk-mapbox").addEventListener("click", function () { if (!doc().map) { mapStatus("Place the map first."); return; } setMapMode("box"); });
   $("sk-mapall").addEventListener("click", function () { var m = doc().map; if (!m) return; delete m.box; persist(); renderAll(); afterMapMove(); });
@@ -1864,12 +1867,12 @@
     if (d.map.csrc === "file") { mapStatus("Load your LiDAR file again: files aren't kept once the page reloads."); return; }
     fetchContours(cb);
   }
-  function getWide(c, cb) {
+  function getWide(c, cb, ext0) {
     var d = doc();
     if (terrain && terrain.sheet === d && terrain.file) return cb(terrain.wide);
     var w = terrain && terrain.sheet === d && terrain.wide;
-    if (w) { var fx = (c.e - w.x0) / (w.nx * w.cell), fy = (c.n - w.y0) / (w.ny * w.cell); if (fx > 0.25 && fx < 0.75 && fy > 0.25 && fy < 0.75) return cb(w); }
-    var CM = mapClipM(), ext = Math.max(800, Math.min(5000, 3 * Math.max(CM.x1 - CM.x0, CM.y1 - CM.y0))), cell = Math.max(1, Math.ceil(ext / 450)), n = Math.ceil(ext / cell), x0 = Math.round(c.e - n * cell / 2), y0 = Math.round(c.n - n * cell / 2);
+    if (w && !ext0) { var fx = (c.e - w.x0) / (w.nx * w.cell), fy = (c.n - w.y0) / (w.ny * w.cell); if (fx > 0.25 && fx < 0.75 && fy > 0.25 && fy < 0.75) return cb(w); }
+    var CM = mapClipM(), ext = ext0 || Math.max(800, Math.min(5000, 3 * Math.max(CM.x1 - CM.x0, CM.y1 - CM.y0))), cell = Math.max(1, Math.ceil(ext / 450)), n = Math.ceil(ext / cell), x0 = Math.round(c.e - n * cell / 2), y0 = Math.round(c.n - n * cell / 2);
     var R = RO(), url = R.EA_WCS + "?service=WCS&version=2.0.1&request=GetCoverage&coverageId=" + R.EA_COVERAGE + "&subset=E(" + x0 + "," + (x0 + n * cell) + ")&subset=N(" + y0 + "," + (y0 + n * cell) + ")&scaleSize=i(" + n + "),j(" + n + ")&format=text%2Fplain";
     mapStatus("Fetching " + (n * cell / 1000).toFixed(1) + " km of LiDAR round that point from the Environment Agency (" + cell + " m cells)…");
     fetch(url).then(function (r) { if (!r.ok) throw new Error("the EA service answered " + r.status); return r.text(); }).then(function (t) {
@@ -1931,64 +1934,109 @@
     });
     return P;
   }
-  /* The land draining to a clicked point, from a depression-filled D8 flow model of the LiDAR. */
-  function findCatchment(p) {
-    var d = doc(); if (!d.map) return; var c = w2bng(p);
-    getWide(c, function (g) {
+  /* Flow lines: cells whose upstream area passes a threshold (as in the Catchment runoff tool), traced
+     downstream from each head or junction into polylines kept in metres from the map origin. */
+  var DXc = [1, 1, 0, -1, -1, -1, 0, 1], DYc = [0, 1, 1, 1, 0, -1, -1, -1];
+  function flowLines(g) {
+    if (!g.an) g.an = RO().analyse(g);
+    var an = g.an, nx = g.nx, ny = g.ny, n = nx * ny, thr = Math.max(40, an.maxAcc / 150), m = doc().map, top = g.y0 + ny * g.cell;
+    var on = new Uint8Array(n), up = new Uint8Array(n), down = new Int32Array(n).fill(-1), i;
+    for (i = 0; i < n; i++) if (an.acc[i] >= thr && an.dir[i] >= 0) on[i] = 1;
+    for (i = 0; i < n; i++) if (on[i]) { var x = i % nx + DXc[an.dir[i]], y = ((i / nx) | 0) + DYc[an.dir[i]]; if (x < 0 || y < 0 || x >= nx || y >= ny) continue; var j = x + y * nx; down[i] = j; if (on[j] && up[j] < 255) up[j]++; }
+    var P = function (k) { return [Math.round((g.x0 + (k % nx + 0.5) * g.cell - m.e) * 10) / 10, Math.round((top - (Math.floor(k / nx) + 0.5) * g.cell - m.n) * 10) / 10]; }, lines = [];
+    for (i = 0; i < n; i++) {
+      if (!on[i] || up[i] === 1) continue;
+      var pts = [i], k2 = i, nxt;
+      while ((nxt = down[k2]) >= 0) { pts.push(nxt); if (!on[nxt] || up[nxt] !== 1) break; k2 = nxt; }
+      if (pts.length > 1) lines.push({ p: dpS(pts.map(P), g.cell * 0.5), a: Math.round(an.acc[pts[pts.length - 2]] * g.cell * g.cell) });
+    }
+    return { lines: lines, oe: m.e, on: m.n, thr: Math.round(thr * g.cell * g.cell), src: terrainSrc() };
+  }
+  function showFlow(g, then) {
+    var d = doc(); if (!d.map) return;
+    if (terrain && terrain.flowG === g && d.map.fl) { if (then) then(); return; }
+    mapStatus("Tracing the flow lines…");
+    setTimeout(function () {
+      if (doc() !== d || !d.map) return;
+      d.map.fl = flowLines(g); d.map.flow = true; if (terrain) terrain.flowG = g; persist(); renderAll(); syncControls();
+      if (then) then(); else mapStatus("Flow lines shown in blue (each drains at least " + fmtArea(fromM(1) * fromM(1) * d.map.fl.thr).replace(/ \(.*\)$/, "") + "). Click on one where you want the outlet.");
+    }, 20);
+  }
+  function flowStr(m, F) {
+    if (!m.fl || m.flow === false || !m.fl.lines.length) return "";
+    var o2 = cOff(m, m.fl), W2 = function (q) { return r1(F.cx + (q[0] + o2[0]) / F.mu) + " " + r1(F.cy - (q[1] + o2[1]) / F.mu); }, o = '<g fill="none" stroke="#2f7fd6" stroke-linejoin="round" stroke-linecap="round">';
+    m.fl.lines.forEach(function (l) { o += '<path d="M' + l.p.map(W2).join("L") + '" stroke-width="' + r1(0.7 + 1.8 * Math.min(1, Math.log(Math.max(1, l.a / m.fl.thr)) / 5)) + '"/>'; });
+    return o + "</g>";
+  }
+
+  /* The land draining to a clicked point, from a depression-filled D8 flow model of the LiDAR, as in the
+     Catchment runoff tool: outline, longest flow path, outlet and the numbers that tool reports. */
+  function findCatchment(p, tries) {
+    var d = doc(); if (!d.map) return; var c = p.e != null ? p : w2bng(p);
+    var run = function (g) {
       if (doc() !== d || !d.map) return;
       var R = RO(), top = g.y0 + g.ny * g.cell, i = Math.floor((c.e - g.x0) / g.cell), j = Math.floor((top - c.n) / g.cell);
       if (i < 0 || j < 0 || i >= g.nx || j >= g.ny || isNaN(g.z[j * g.nx + i])) { mapStatus("There's no terrain at that point. EA LiDAR covers England only."); return; }
-      mapStatus("Working out where the water goes…");
-      setTimeout(function () {
-        if (!g.an) g.an = R.analyse(g);
-        var outlet = R.snap(g, g.an, j * g.nx + i, Math.max(2, Math.round(10 / g.cell))), cat = R.catchment(g, g.an, outlet);
-        if (cat.cells < 4) { mapStatus("Hardly any land drains to that point. Click on the line of a ditch or stream, or the lowest point of a hollow."); return; }
+      showFlow(g, function () { mapStatus("Working out where the water goes…"); setTimeout(function () { outline(g, R, top, i, j); }, 20); });
+    };
+    var outline = function (g, R, top, i, j) {
+        var outlet = R.snap(g, g.an, j * g.nx + i, tries ? 2 : Math.max(2, Math.round(10 / g.cell))), cat = R.catchment(g, g.an, outlet);
+        if (cat.cells < 4) { mapStatus("Hardly any land drains to that point. Click on one of the blue flow lines."); return; }
+        var cE = function (k2) { return g.x0 + (k2 % g.nx + 0.5) * g.cell; }, cN = function (k2) { return top - (Math.floor(k2 / g.nx) + 0.5) * g.cell; };
+        if (cat.touchesEdge && !terrain.file && (tries || 0) < 2) { /* fetch a bigger area centred upstream and try again, as the runoff tool does */
+          var x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9; for (var q = 0; q < cat.mask.length; q++) if (cat.mask[q]) { var qe = cE(q), qn = cN(q); if (qe < x0) x0 = qe; if (qe > x1) x1 = qe; if (qn < y0) y0 = qn; if (qn > y1) y1 = qn; }
+          var oE = cE(outlet), oN = cN(outlet), ext = Math.min(12000, g.nx * g.cell * 2.2), bc = { e: (x0 + x1) / 2, n: (y0 + y1) / 2 }, ce = { e: bc.e + (bc.e - oE) * 0.6, n: bc.n + (bc.n - oN) * 0.6 }, lim = ext / 2 * 0.85;
+          ce.e = Math.min(Math.max(ce.e, oE - lim), oE + lim); ce.n = Math.min(Math.max(ce.n, oN - lim), oN + lim);
+          if (ext > g.nx * g.cell * 1.2) { mapStatus("The catchment runs off the terrain fetched, so fetching a bigger area upstream…"); getWide(ce, function (g2) { c = { e: oE, n: oN }; tries = (tries || 0) + 1; run(g2); }, ext); return; }
+        }
         var nx = g.nx + 2, ny = g.ny + 2, z = new Float32Array(nx * ny).fill(-0.5);
         for (var jj = 0; jj < g.ny; jj++) for (var ii = 0; ii < g.nx; ii++) if (cat.mask[jj * g.nx + ii]) z[(jj + 1) * nx + ii + 1] = 0.5;
         var tc = traceContours({ nx: nx, ny: ny, cell: g.cell, x0: g.x0 - g.cell, y0: g.y0 - g.cell, z: z }, 1, 0, 0);
-        var loops = (tc ? tc.lines : []).map(function (l) { return l.p.map(function (q) { var w = bng2w(q[0], q[1]); return [r1(w.x), r1(w.y)]; }); }).filter(function (l) { return l.length > 3; });
-        if (!loops.length) { mapStatus("Couldn't outline that catchment."); return; }
-        var CI = mapClipM().I, inI = function (q) { return q[0] >= CI.x && q[0] <= CI.x + CI.w && q[1] >= CI.y && q[1] <= CI.y + CI.h; };
+        var loops = (tc ? tc.lines : []).map(function (l) { return l.p.map(function (q2) { var w = bng2w(q2[0], q2[1]); return [r1(w.x), r1(w.y)]; }); }).filter(function (l) { return l.length > 3; });
+        var CI = mapClipM().I, inI = function (q2) { return q2[0] >= CI.x && q2[0] <= CI.x + CI.w && q2[1] >= CI.y && q2[1] <= CI.y + CI.h; };
         loops = loops.map(function (l) { return clipRect(l, CI.x, CI.y, CI.x + CI.w, CI.y + CI.h); }).filter(function (l) { return l.length > 2; });
         if (!loops.length) { mapStatus("That catchment lies outside the map area."); return; }
         loops.sort(function (a2, b2) { return shoelace(b2) - shoelace(a2); });
-        var gid = "cat" + Date.now().toString(36), B = "#3f6fd1", out = [], cell2 = function (k2) { var w = bng2w(g.x0 + (k2 % g.nx + 0.5) * g.cell, top - (Math.floor(k2 / g.nx) + 0.5) * g.cell); return [r1(w.x), r1(w.y)]; };
+        var gid = "cat" + Date.now().toString(36), B = "#0d6b78", RED = "#d6452f", out = [], cw = function (k2) { var w = bng2w(cE(k2), cN(k2)); return [r1(w.x), r1(w.y)]; };
         out.push(base("hatch", { pts: loops[0], holes: loops.slice(1), pat: "diag", ps: 2, outline: true, w: 2, ls: "dashed", c: B, g: gid }));
-        var fp = dpS(cat.path.map(cell2).filter(inI), Math.max(1, g.cell / mapFrame().mu * 0.6));
-        if (fp.length > 1) {
-          out.push(base("poly", { pts: fp, open: true, w: 2, ls: "solid", c: "#0d6b78", g: gid }));
-          var q1 = fp[fp.length - 2], q2 = fp[fp.length - 1]; out.push(base("arrow", { x1: q1[0], y1: q1[1], x2: q2[0], y2: q2[1], w: 2, ls: "solid", c: "#0d6b78", g: gid }));
-        }
-        var A = cat.area, fall = cat.zTop - cat.zOut, at = A >= 10000 ? (A / 10000).toFixed(2) + " ha" : Math.round(A) + " m²";
-        var tl = ["Catchment " + at + " (" + (A / 1e6).toFixed(3) + " km²)", "Longest flow path " + Math.round(cat.L) + " m, fall " + fall.toFixed(1) + " m" + (fall > 0.05 ? " (1:" + Math.round(cat.L / fall) + ")" : "")];
-        var cx = 0, cy = 0; loops[0].forEach(function (q) { cx += q[0]; cy += q[1]; }); cx /= loops[0].length; cy /= loops[0].length;
-        var twm = Math.max(tw(tl[0], 12), tw(tl[1], 12));
-        out.push(base("text", { x: r1(cx - twm / 2), y: r1(cy - 15), text: tl.join("\n"), size: 12, mask: true, c: "#15233a", g: gid }));
+        var fp = dpS(cat.path.map(cw).filter(inI), Math.max(1, g.cell / mapFrame().mu * 0.6));
+        if (fp.length > 1) out.push(base("poly", { pts: fp, open: true, w: 3, ls: "solid", c: RED, g: gid }));
+        var ow = cw(outlet), rO = 9;
+        out.push(base("circle", { x1: ow[0], y1: ow[1], x2: r1(ow[0] + rO), y2: ow[1], w: 3, ls: "solid", c: "#15233a", g: gid }));
+        out.push(base("text", { x: r1(ow[0] + 13), y: r1(ow[1] - 8), text: "Outlet " + cat.zOut.toFixed(2) + " m AOD", size: 11, bold: true, mask: true, c: "#15233a", g: gid }));
+        var A = cat.area, s1085 = isFinite(cat.slope1085) && cat.slope1085 > 0 ? cat.slope1085 : cat.slope, at = (A / 10000).toFixed(A >= 1e5 ? 1 : 2) + " ha";
+        var tl = ["Catchment " + at + " (" + cat.cells.toLocaleString("en-GB") + " cells)", "Longest flow path " + Math.round(cat.L) + " m, " + cat.zTop.toFixed(1) + " to " + cat.zOut.toFixed(1) + " m AOD", "Slope along path " + (s1085 * 100).toFixed(2) + " % (10–85%)", "Outlet E " + Math.round(cE(outlet)) + ", N " + Math.round(cN(outlet))];
+        var cx = 0, cy = 0; loops[0].forEach(function (q2) { cx += q2[0]; cy += q2[1]; }); cx /= loops[0].length; cy /= loops[0].length;
+        var twm = 0; tl.forEach(function (t) { twm = Math.max(twm, tw(t, 12)); });
+        out.push(base("text", { x: r1(cx - twm / 2), y: r1(cy - 30), text: tl.join("\n"), size: 12, mask: true, c: "#15233a", g: gid }));
         begin(); out.forEach(function (x) { d.items.push(x); }); commit(); persist(); setSel(out);
-        mapStatus("Catchment of " + at + " found from " + g.cell + " m LiDAR cells; the click was moved onto the nearest flow line. " + (cat.touchesEdge ? "It runs off the edge of the terrain fetched, so the real catchment is bigger: pick a smaller drawing scale (a larger number) and try again, or load a larger LiDAR file. " : "") + "Indicative only: drains, culverts and buildings aren't in the terrain model, so check it on site.");
-      }, 30);
-    });
+        mapStatus("Catchment of " + at + " from " + g.cell + " m LiDAR cells: outline dashed, longest flow path in red, outlet circled. " + (cat.touchesEdge ? "It still runs off the edge of the terrain, so the real catchment is bigger" + (terrain.file ? ": load a larger LiDAR file." : ".") + " " : "") + "Indicative only: drains, culverts and buildings aren't in the terrain model, so check it on site.");
+    };
+    getWide(c, run);
   }
 
-  /* Arrows pointing down the steepest fall across the map area, labelled with the gradient. */
-  function fallArrows(g) {
+  /* A single fall arrow where you click, pointing down the steepest slope and labelled with the gradient. */
+  function fallArrowAt(p, g) {
     var d = doc(); if (!d.map) return;
-    var F = mapFrame(), I = mapClipM().I, sp = 120, hm = Math.max(g.cell * 2, sp * F.mu / 4), out = [], gid = "fa" + Date.now().toString(36), C = "#0d6b78";
-    for (var y = I.y + sp / 2; y < I.y + I.h; y += sp) for (var x = I.x + sp / 2; x < I.x + I.w; x += sp) {
-      var c = w2bng({ x: x, y: y }), zx1 = zAt(g, c.e - hm, c.n), zx2 = zAt(g, c.e + hm, c.n), zy1 = zAt(g, c.e, c.n - hm), zy2 = zAt(g, c.e, c.n + hm);
-      if (!(zx1 === zx1 && zx2 === zx2 && zy1 === zy1 && zy2 === zy2)) continue;
-      var gx = (zx2 - zx1) / (2 * hm), gy = (zy2 - zy1) / (2 * hm), s = Math.hypot(gx, gy); if (s < 0.002) continue;
-      var ux = -gx / s, uy = gy / s, L = 28, n = 1 / s, lab = "1:" + (n < 10 ? (Math.round(n * 10) / 10) : Math.round(n));
-      out.push(base("arrow", { x1: r1(x - ux * L), y1: r1(y - uy * L), x2: r1(x + ux * L), y2: r1(y + uy * L), w: 1.5, ls: "solid", c: C, g: gid }));
-      out.push(base("text", { x: r1(x - uy * 14 - tw(lab, 10) / 2), y: r1(y + ux * 14 - 5), text: lab, size: 10, mask: true, c: C, g: gid }));
-    }
-    if (!out.length) { mapStatus("The ground in the map area is flat (flatter than 1:500) or has no terrain."); return; }
-    begin(); out.forEach(function (it) { d.items.push(it); }); commit(); persist(); setSel(out);
-    mapStatus(out.length / 2 + " fall arrows added, pointing downhill and labelled with the gradient over about " + Math.round(2 * hm) + " m. They're grouped: select one to move or delete them all.");
+    var F = mapFrame(), c = w2bng(p), hm = Math.max(g.cell * 2, 30 * F.mu / 4), C = "#0d6b78";
+    var zx1 = zAt(g, c.e - hm, c.n), zx2 = zAt(g, c.e + hm, c.n), zy1 = zAt(g, c.e, c.n - hm), zy2 = zAt(g, c.e, c.n + hm);
+    if (!(zx1 === zx1 && zx2 === zx2 && zy1 === zy1 && zy2 === zy2)) { mapStatus("There's no terrain there."); return; }
+    var gx = (zx2 - zx1) / (2 * hm), gy = (zy2 - zy1) / (2 * hm), s = Math.hypot(gx, gy);
+    if (s < 0.002) { mapStatus("The ground is flat there (flatter than 1:500)."); return; }
+    var ux = -gx / s, uy = gy / s, L = 28, n = 1 / s, lab = "1:" + (n < 10 ? (Math.round(n * 10) / 10) : Math.round(n)), gid = "fa" + Date.now().toString(36);
+    var out = [base("arrow", { x1: r1(p.x - ux * L), y1: r1(p.y - uy * L), x2: r1(p.x + ux * L), y2: r1(p.y + uy * L), w: 2, ls: "solid", c: C, g: gid }),
+      base("text", { x: r1(p.x - uy * 16 - tw(lab, 11) / 2), y: r1(p.y + ux * 16 - 6), text: lab, size: 11, mask: true, c: C, g: gid })];
+    begin(); out.forEach(function (it) { d.items.push(it); }); commit(); persist(); renderContent();
+    mapStatus("Fall arrow added: " + lab + " (" + (s * 100).toFixed(1) + " %) over about " + Math.round(2 * hm) + " m. Click to add more; Esc or Fall arrow again to stop.");
   }
   $("sk-mapsect").addEventListener("click", function () { if (!doc().map) { mapStatus("Place the map first."); return; } setMapMode("sect"); });
-  $("sk-mapcatch").addEventListener("click", function () { if (!doc().map) { mapStatus("Place the map first."); return; } if (!doc().dscale) { mapStatus("Set a drawing scale first."); return; } setMapMode("catch"); });
-  $("sk-mapfall").addEventListener("click", function () { if (!doc().map) { mapStatus("Place the map first."); return; } getFine(fallArrows); });
+  $("sk-mapcatch").addEventListener("click", function () {
+    var d = doc(); if (!d.map) { mapStatus("Place the map first."); return; } if (!d.dscale) { mapStatus("Set a drawing scale first."); return; }
+    setMapMode("catch"); if (mapMode !== "catch") return;
+    getWide({ e: d.map.e, n: d.map.n }, function (g) { showFlow(g); });
+  });
+  $("sk-mapfall").addEventListener("click", function () { if (!doc().map) { mapStatus("Place the map first."); return; } setMapMode("fall"); if (mapMode === "fall") getFine(function () { mapStatus("Click on the map to add a fall arrow there."); }); });
+  $("sk-mapflow").addEventListener("change", function () { var v = this.checked; mapSet(function (m) { m.flow = v; }); });
 
   /* ---------- DXF export ----------
      Writes an AutoCAD R12 (AC1009) ASCII DXF, which every CAD package reads. Each item is drawn to a
