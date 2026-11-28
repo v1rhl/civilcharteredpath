@@ -2509,8 +2509,9 @@
   function fetchContours(cb) {
     var d = doc(), m = d.map, F = mapFrame(); if (!m) return; if (!d.dscale) { mapStatus("Set a drawing scale in Sheet first (it's on NTS): contours need the map at a scale."); return; }
     var CM = mapClipM(), Wm = CM.x1 - CM.x0, Hm = CM.y1 - CM.y0, mcx = (CM.x0 + CM.x1) / 2, mcy = (CM.y0 + CM.y1) / 2;
-    if (Math.max(Wm, Hm) > 6000) { mapStatus("The sheet covers more than 6 km at this scale, too much LiDAR to fetch. Pick a larger scale (smaller number) for contours."); return; }
-    var cell = Math.max(1, Math.ceil(Math.max(Wm, Hm) / 300)), x0 = Math.floor(mcx - Wm / 2 - cell), y0 = Math.floor(mcy - Hm / 2 - cell), nx = Math.ceil((Wm + 2 * cell) / cell), ny = Math.ceil((Hm + 2 * cell) / cell);
+    if (Math.max(Wm, Hm) > 30000) { mapStatus("The sheet covers more than 30 km at this scale, too much LiDAR to fetch. Pick a larger scale (smaller number) for contours."); return; }
+    /* about 300 cells across the sheet: 1 m LiDAR on small areas, thinned to a round spacing (2, 5, 10, 20, 50 or 100 m) on big ones */
+    var cell = [1, 2, 5, 10, 20, 50, 100].filter(function (c0) { return c0 >= Math.max(Wm, Hm) / 300; })[0] || 100, x0 = Math.floor(mcx - Wm / 2 - cell), y0 = Math.floor(mcy - Hm / 2 - cell), nx = Math.ceil((Wm + 2 * cell) / cell), ny = Math.ceil((Hm + 2 * cell) / cell);
     var R = RO(), url = R.EA_WCS + "?service=WCS&version=2.0.1&request=GetCoverage&coverageId=" + R.EA_COVERAGE + "&subset=E(" + x0 + "," + (x0 + nx * cell) + ")&subset=N(" + y0 + "," + (y0 + ny * cell) + ")&scaleSize=i(" + nx + "),j(" + ny + ")&format=text%2Fplain";
     var iv = +$("sk-mapiv").value, sheet = d, key = m.e + "," + m.n;
     mapStatus("Fetching LiDAR terrain from the Environment Agency (" + nx + " × " + ny + " cells at " + cell + " m)…");
@@ -2521,7 +2522,7 @@
       if (cb) cb(g);
       if (!c) { mapStatus("No LiDAR came back for this spot. The EA's LiDAR covers England only, and has a few gaps."); return; }
       c.src = "EA LiDAR DTM © Environment Agency (OGL)"; sheet.map.c = c; sheet.map.csrc = "ea"; persist(); renderAll();
-      mapStatus(c.lines.length + " contour lines every " + c.iv + " m" + (c.iv !== iv ? " (widened from " + iv + " m: the ground is steep here)" : "") + ", from the EA's LiDAR terrain model.");
+      mapStatus(c.lines.length + " contour lines every " + c.iv + " m" + (c.iv !== iv ? " (widened from " + iv + " m: the ground is steep here)" : "") + ", from the EA's LiDAR terrain model" + (cell > 1 ? ", thinned to " + cell + " m spacing to cover this big an area, so they're smoother than the 1 m data" : " at 1 m spacing") + ".");
     }).catch(function (err) { mapStatus("Couldn't fetch LiDAR: " + err.message + ". The EA service may be busy; try again. LiDAR covers England only."); });
   }
 
