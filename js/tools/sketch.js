@@ -643,8 +643,8 @@
     side.appendChild(sec("sheet", "Sheet", false, [sheet]));
     side.appendChild(sec("layers", "Layers and map", false, [layers, mp]));
     var main = mk("div", "sk-main"); main.id = "sk-main";
-    top.insertAdjacentHTML("beforeend", '<button type="button" class="sk-btn" id="sk-full" title="Full screen (F)" aria-pressed="false">Full screen</button>');
-    top.querySelector(".sk-actions").appendChild($("sk-full"));
+    top.insertAdjacentHTML("beforeend", '<button type="button" class="sk-btn" id="sk-fit" title="See the whole sheet (0)" hidden>Fit sheet</button><button type="button" class="sk-btn" id="sk-full" title="Full screen (F)" aria-pressed="false">Full screen</button>');
+    top.querySelector(".sk-actions").appendChild($("sk-fit")); top.querySelector(".sk-actions").appendChild($("sk-full"));
     var hint = mk("p", "small sk-hint"); hint.id = "sk-hint";
     var row1 = mk("div", "sk-row1"); row1.appendChild($("sk-tabs")); row1.appendChild(top); /* sheet tabs and the undo/export bar share one row */
     [$("sk-props"), row1, $("sk-stage"), hint, $("sk-status")].forEach(function (n) { main.appendChild(n); });
@@ -751,13 +751,25 @@
     app.style.setProperty("--sk-top", th + "px");
     var avail = window.innerHeight - th - hh - $("sk-tabs").offsetHeight - (full ? 24 : 36);
     svg.style.maxWidth = Math.max(320, avail * G.W / G.H) + "px";
-    var mn = $("sk-main"); if (document.documentElement.classList.contains("sk-lock") && mn) { var over = mn.scrollHeight - mn.clientHeight; if (over > 0) svg.style.maxWidth = Math.max(320, (avail - over - 2) * G.W / G.H) + "px"; }
+    var mn = $("sk-main"); if ((document.documentElement.classList.contains("sk-lock") || full) && mn) { var over = mn.scrollHeight - mn.clientHeight; if (over > 0) svg.style.maxWidth = Math.max(320, (avail - over - 2) * G.W / G.H) + "px"; }
   }
-  function measureK() { var w = svg.getBoundingClientRect().width; k = w ? geo().W / w : 1; }
+  function measureK() { var w = svg.getBoundingClientRect().width; k = w ? (zv ? zv.w : geo().W) / w : 1; }
+  /* Zoom: the wheel (or a trackpad pinch) zooms about the pointer; drag with the middle button, or hold
+     Space and drag, to pan; double-click the middle button, press 0, or use Fit to see the whole sheet. */
+  var zv = null, zvSheet = null, spaceDown = false;
+  function vbStr() { var G = geo(); if (zv && (zvSheet !== doc() || zv.w >= G.W - 0.5)) zv = null; return zv ? [zv.x, zv.y, zv.w, zv.h].map(r1).join(" ") : "0 0 " + G.W + " " + G.H; }
+  function clampView(v) { var G = geo(); v.x = Math.min(Math.max(v.x, -v.w * 0.25), G.W - v.w * 0.75); v.y = Math.min(Math.max(v.y, -v.h * 0.25), G.H - v.h * 0.75); return v; }
+  function applyView() { svg.setAttribute("viewBox", vbStr()); measureK(); renderUI(); var fb = $("sk-fit"); if (fb) fb.hidden = !zv; }
+  function zoomAt(p, f) {
+    var G = geo(), v = zv || { x: 0, y: 0, w: G.W, h: G.H }, nw = Math.min(G.W, Math.max(G.W / 50, v.w * f)), s2 = nw / v.w;
+    if (nw >= G.W - 0.5) { zv = null; } else { zv = clampView({ x: p.x - (p.x - v.x) * s2, y: p.y - (p.y - v.y) * s2, w: nw, h: v.h * s2 }); zvSheet = doc(); }
+    applyView(); status(zv ? "Zoom " + Math.round(G.W / zv.w * 100) + "%. Drag with the middle button or hold Space to pan; press 0 to fit the sheet." : "");
+  }
+  function fitView() { zv = null; applyView(); status(""); }
   var underKey = "";
   function renderAll() {
     var d = doc(), G = geo();
-    svg.setAttribute("viewBox", "0 0 " + G.W + " " + G.H); fitSheet();
+    svg.setAttribute("viewBox", vbStr()); fitSheet(); var fb0 = $("sk-fit"); if (fb0) fb0.hidden = !zv;
     stage.classList.toggle("port", d.orient === "port");
     $("sk-bg").setAttribute("width", G.W); $("sk-bg").setAttribute("height", G.H);
     measureK();
@@ -1164,6 +1176,7 @@
   function selectAfterCreate(it) { sel = { k: "item", id: it.id }; renderContent(); renderProps(); }
 
   svg.addEventListener("pointerdown", function (e) {
+    if (e.button === 1 || (e.button === 0 && spaceDown)) { e.preventDefault(); if (!zv) return; try { svg.setPointerCapture(e.pointerId); } catch (er) {} drag = { type: "zpan", cx: e.clientX, cy: e.clientY, v: { x: zv.x, y: zv.y, w: zv.w, h: zv.h } }; return; }
     if (e.button !== 0) return;
     measureK();
     var p = world(e), d = doc(), t = tool[mode];
@@ -1328,6 +1341,7 @@
         if (!e.shiftKey) { var uf = Math.max(0.05, (fx + fy) / 2); fx = fy = uf; } else { fx = Math.max(0.05, fx); fy = Math.max(0.05, fy); }
         drag.orig.forEach(function (o) { replaceItem(scaleItem(o, drag.ax, drag.ay, fx, fy)); }); renderContent(); status("Scale ×" + (+fx.toFixed(2)) + (fx !== fy ? " by ×" + (+fy.toFixed(2)) : "")); return;
       case "mappan": mapPanning = true; var mf = mapFrame(), mpm = doc().map; mpm.e = Math.round(drag.e0 - (p.x - drag.start.x) * mf.mu); mpm.n = Math.round(drag.n0 + (p.y - drag.start.y) * mf.mu); renderAll(); return;
+      case "zpan": var rw = svg.getBoundingClientRect().width || 1, sc2 = drag.v.w / rw; zv = clampView({ x: drag.v.x - (e.clientX - drag.cx) * sc2, y: drag.v.y - (e.clientY - drag.cy) * sc2, w: drag.v.w, h: drag.v.h }); applyView(); return;
       case "inset0": case "mapsect":
         drag.cur = p; gLive.innerHTML = drag.type === "inset0" ? '<rect x="' + r1(Math.min(p.x, drag.start.x)) + '" y="' + r1(Math.min(p.y, drag.start.y)) + '" width="' + r1(Math.abs(p.x - drag.start.x)) + '" height="' + r1(Math.abs(p.y - drag.start.y)) + '" fill="rgba(11,79,108,0.06)" stroke="#0b4f6c" stroke-dasharray="6 4" vector-effect="non-scaling-stroke"/>' : ln(drag.start.x, drag.start.y, p.x, p.y, "#b84a32", 2, "dashed");
         if (drag.type === "mapsect") status("Section " + fmtM(toM(dist(drag.start, p))) + " long. Let go to draw it.");
@@ -1352,6 +1366,7 @@
     switch (d.type) {
       case "pen": d.el.remove(); addItem(d.item); return;
       case "mappan": mapPanning = false; mapKeyV = ""; renderAll(); persist(); afterMapMove(); mapStatus("Map moved to " + doc().map.e + ", " + doc().map.n + "."); return;
+      case "zpan": return;
       case "inset0": gLive.innerHTML = ""; if (d.cur) (d.blank ? makeWindow : makeInset)(d.start, d.cur); return;
       case "mapsect": gLive.innerHTML = ""; setMapMode("sect"); if (d.cur && dist(d.cur, d.start) > 20) { var sa = d.start, sb = d.cur; getFine(function (g) { makeSection(sa, sb, g); }); } else mapStatus("Drag a line across the map for the section."); return;
       case "mapbox": gLive.innerHTML = ""; if (d.cur && Math.abs(d.cur.x - d.start.x) > 20 && Math.abs(d.cur.y - d.start.y) > 20) { doc().map.box = [r1(d.start.x), r1(d.start.y), r1(d.cur.x), r1(d.cur.y)]; persist(); renderAll(); afterMapMove(); } setMapMode("box"); return;
@@ -1377,6 +1392,9 @@
     var mod = e.ctrlKey || e.metaKey;
     if (mod && e.key.toLowerCase() === "z") { e.preventDefault(); if (e.shiftKey) redo(); else undo(); return; }
     if (mod && e.key.toLowerCase() === "y") { e.preventDefault(); redo(); return; }
+    if (e.key === " " && !mod) { if (!spaceDown) { spaceDown = true; stage.classList.add("sk-panning"); } e.preventDefault(); return; }
+    if (!mod && (e.key === "0" || e.key === "Home")) { e.preventDefault(); fitView(); return; }
+    if (!mod && (e.key === "+" || e.key === "=" || e.key === "-")) { var G0 = geo(), v0 = zv || { x: 0, y: 0, w: G0.W, h: G0.H }; e.preventDefault(); zoomAt({ x: v0.x + v0.w / 2, y: v0.y + v0.h / 2 }, e.key === "-" ? 1.25 : 0.8); return; }
     if (e.key === "Enter" && pend) { e.preventDefault(); if (pend.poly) finishPoly(); else finishHatch(); return; }
     if ((e.key === "f" || e.key === "F") && !mod && !e.altKey) { e.preventDefault(); setFull(!isFull()); return; }
     if (e.key === "Escape" && app.classList.contains("sk-full") && !pend && !sel) { setFull(false); return; }
@@ -2401,6 +2419,15 @@
   }
   function afterFull() { var f = isFull(); $("sk-full").setAttribute("aria-pressed", f); $("sk-full").textContent = f ? "Exit full screen" : "Full screen"; app.style.setProperty("--sk-top", f ? "0px" : ((document.querySelector(".topbar") || {}).offsetHeight || 0) + "px"); setTimeout(function () { renderAll(); measureK(); renderUI(); }, 60); }
   $("sk-full").addEventListener("click", function () { setFull(!isFull()); });
+  svg.addEventListener("wheel", function (e) {
+    if (e.shiftKey && !e.ctrlKey && zv) { e.preventDefault(); var rw = svg.getBoundingClientRect().width || 1; zv = clampView({ x: zv.x + (e.deltaY || e.deltaX) * zv.w / rw, y: zv.y, w: zv.w, h: zv.h }); applyView(); return; } /* Shift+wheel pans sideways */
+    e.preventDefault();
+    var dy = e.deltaMode === 1 ? e.deltaY * 16 : e.deltaY; zoomAt(world(e), Math.exp(Math.max(-1, Math.min(1, dy * (e.ctrlKey ? 0.01 : 0.0015)))));
+  }, { passive: false });
+  svg.addEventListener("auxclick", function (e) { if (e.button === 1) e.preventDefault(); });
+  svg.addEventListener("dblclick", function (e) { if (e.button === 1) fitView(); });
+  document.addEventListener("keyup", function (e) { if (e.key === " " && spaceDown) { spaceDown = false; stage.classList.remove("sk-panning"); } });
+  $("sk-fit").addEventListener("click", fitView);
   document.addEventListener("fullscreenchange", afterFull);
   function toTop() { var top = document.querySelector(".topbar"), th = top ? top.offsetHeight : 0; window.scrollTo(0, Math.max(0, app.getBoundingClientRect().top + window.scrollY - th - 8)); }
   new MutationObserver(function () { if (!view.hidden) setTimeout(function () { renderAll(); if (window.innerWidth > 760) toTop(); }, 30); }).observe(view, { attributes: true, attributeFilter: ["hidden"] });
