@@ -332,7 +332,7 @@
     var t = toM(L).toFixed(2) + " m", w0 = tw(t, 10) + 8;
     return '<g transform="rotate(' + r1(ang) + " " + r1(q[0]) + " " + r1(q[1]) + ')"><rect x="' + r1(q[0] - w0 / 2) + '" y="' + r1(q[1] - 16) + '" width="' + r1(w0) + '" height="13" fill="#fff"/>' + txt(q[0], q[1] - 6, t, c, 10, "middle") + "</g>";
   }
-  /* Angle dimension: pts are the vertex and a point on each arm; the arc spans the smaller angle between them */
+  /* Angle dimension: pts are the vertex and a point on each arm (drawn as: end of first line, corner, end of second line); the arc spans the smaller angle between them */
   function adimStr(it, c) {
     var v = it.pts[0], a = it.pts[1], b = it.pts[2], ta = Math.atan2(a[1] - v[1], a[0] - v[0]), tb = Math.atan2(b[1] - v[1], b[0] - v[0]), d = tb - ta;
     while (d > Math.PI) d -= 2 * Math.PI; while (d <= -Math.PI) d += 2 * Math.PI;
@@ -798,7 +798,7 @@
 
       '<div class="sk-actions"><button type="button" class="sk-btn" id="sk-undo" title="Undo (Ctrl+Z)">Undo</button><button type="button" class="sk-btn" id="sk-redo" title="Redo (Ctrl+Y)">Redo</button>' +
         '<button type="button" class="sk-btn" id="sk-clear">Clear</button>' +
-        '<select id="sk-fmt" hidden aria-hidden="true" tabindex="-1">' + EXPF.map(function (f) { return '<option value="' + f[0] + '">' + f[1] + "</option>"; }).join("") + '</select><button type="button" class="btn" id="sk-export" aria-haspopup="menu" aria-expanded="false" aria-controls="sk-expmenu">Export <span aria-hidden="true">\u25BE</span></button></div>' +
+        '<select id="sk-fmt" hidden aria-hidden="true" tabindex="-1">' + EXPF.map(function (f) { return '<option value="' + f[0] + '">' + f[1] + "</option>"; }).join("") + '</select><button type="button" class="btn" id="sk-export" aria-haspopup="menu" aria-expanded="false" aria-controls="sk-expmenu" title="Export" aria-label="Export"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg></button></div>' +
     "</div>" +
     '<div class="sk-toolrow"><div class="sk-tools" id="sk-tools" role="toolbar" aria-label="Drawing tools"></div><div class="sk-tools sk-tools2" id="sk-tools2" role="toolbar" aria-label="Shapes and symbols"></div>' +
       '<label class="sk-check" id="sk-ermode" hidden>Erase <select id="sk-erm"><option value="whole">Whole item</option><option value="part">Part of a line</option></select></label>' +
@@ -840,23 +840,38 @@
         '<label class="sk-check" id="sk-mapshow-l" hidden><input type="checkbox" id="sk-mapshow"> Map</label><button type="button" class="sk-btn" id="sk-map-btn" aria-expanded="false">Map and contours</button></span>' +
     "</div>" +
     '<div class="sk-mappanel" id="sk-mappanel" hidden>' +
+      mgO("place", "Location and placement", true) +
       '<div class="sk-maprow"><label class="sk-check sk-wide">Location <input type="text" id="sk-maploc" placeholder="Postcode, grid ref (SK 012 813), E, N or lat, long"></label>' +
         '<button type="button" class="btn" id="sk-mapgo">Place or recentre map</button><button type="button" class="sk-btn" id="sk-mapgeo">Use my location</button><button type="button" class="sk-btn danger" id="sk-mapdel">Remove map</button></div>' +
       '<div class="sk-maprow"><button type="button" class="sk-btn" id="sk-mappan" aria-pressed="false" title="Drag on the sheet to move the map under the drawing">Move map</button><button type="button" class="sk-btn" id="sk-mapbox" aria-pressed="false" title="Drag a box on the sheet to limit the map to it">Draw map area</button><button type="button" class="sk-btn" id="sk-mapall">Whole sheet</button></div>' +
-      '<div class="sk-maprow"><label class="sk-check"><input type="checkbox" id="sk-maposm" checked> Base map</label><select id="sk-mapbase" aria-label="Base map"><option value="osm">OpenStreetMap</option><option value="sat">Satellite (Esri World Imagery)</option></select><label class="sk-check">Fade <input type="range" id="sk-mapop" min="0.15" max="1" step="0.05" value="0.55"></label><label class="sk-check"><input type="checkbox" id="sk-mapgrey" checked> Greyscale</label></div>' +
       '<div class="sk-maprow"><label class="sk-check" title="Turn the map so the site sits square on the sheet. North arrows follow unless you set their angle yourself.">Rotate map <input type="number" id="sk-maprot" min="-180" max="180" step="1" value="0" style="width:4.5em">°</label><input type="range" id="sk-maprot-r" min="-180" max="180" step="1" value="0" aria-label="Map rotation"><button type="button" class="sk-btn" id="sk-maprot0">North up</button></div>' +
+      '<p class="small">Placing the map sends its location to the map and data services listed under Data sources below.</p>' +
+      "</div></details>" +
+      mgO("base", "Base map", true) +
+      '<div class="sk-maprow"><label class="sk-check"><input type="checkbox" id="sk-maposm" checked> Base map</label><select id="sk-mapbase" aria-label="Base map"><option value="osm">OpenStreetMap</option><option value="sat">Satellite (Esri World Imagery)</option></select><label class="sk-check">Fade <input type="range" id="sk-mapop" min="0.15" max="1" step="0.05" value="0.55"></label><label class="sk-check"><input type="checkbox" id="sk-mapgrey" checked> Greyscale</label></div>' +
+      "</div></details>" +
+      mgO("terrain", "Contours and hillshade (LiDAR)", true) +
       '<div class="sk-maprow"><label class="sk-check"><input type="checkbox" id="sk-mapcont" checked> Contours</label><label class="sk-check">every <select id="sk-mapiv">' + [0.1, 0.25, 0.5, 1, 2, 5, 10].map(function (v) { return '<option value="' + v + '"' + (v === 0.5 ? " selected" : "") + ">" + v + " m</option>"; }).join("") + "</select></label>" +
         '<label class="sk-check" title="Height labels on the contours, each on a white mask"><input type="checkbox" id="sk-mapclab" checked> Labels</label><label class="sk-check">Fade <input type="range" id="sk-mapcop" min="0.15" max="1" step="0.05" value="1"></label>' +
         '<button type="button" class="sk-btn" id="sk-mapea" title="Fetch the EA 1 m LiDAR DTM for the map area (England only)">EA LiDAR</button><button type="button" class="sk-btn" id="sk-mapfile-b" title="Load a terrain grid you have downloaded, e.g. from the EA survey portal">Load LiDAR file</button><input type="file" id="sk-mapfile" accept=".asc,.txt,.tif,.tiff" hidden></div>' +
       '<div class="sk-ivprev" id="sk-ivprev" hidden></div>' +
       '<div class="sk-maprow"><label class="sk-check" title="Shaded relief worked out from the same LiDAR as the contours, lit from the north-west"><input type="checkbox" id="sk-maphs"> Hillshade</label><label class="sk-check">Fade <input type="range" id="sk-maphop" min="0.15" max="1" step="0.05" value="0.5"></label></div>' +
-      '<div class="sk-maprow"><span class="sk-lab">From the terrain</span><button type="button" class="sk-btn" id="sk-mapsect" aria-pressed="false" title="Drag a line on the map to draw a ground section from the LiDAR">Draw section</button><button type="button" class="sk-btn" id="sk-mapcatch" aria-pressed="false" title="Click a ditch, stream or low point to outline the land that drains to it">Find catchment</button><button type="button" class="sk-btn" id="sk-mapfall" aria-pressed="false" title="Click on the map to add an arrow showing which way the ground falls there, with its gradient">Fall arrow</button><label class="sk-check"><input type="checkbox" id="sk-mapflow"> Flow lines</label></div>' +
+      "</div></details>" +
+      mgO("fromt", "From the terrain", false) +
+      '<div class="sk-maprow"><button type="button" class="sk-btn" id="sk-mapsect" aria-pressed="false" title="Drag a line on the map to draw a ground section from the LiDAR">Draw section</button><button type="button" class="sk-btn" id="sk-mapcatch" aria-pressed="false" title="Click a ditch, stream or low point to outline the land that drains to it">Find catchment</button><button type="button" class="sk-btn" id="sk-mapfall" aria-pressed="false" title="Click on the map to add an arrow showing which way the ground falls there, with its gradient">Fall arrow</button><label class="sk-check"><input type="checkbox" id="sk-mapflow"> Flow lines</label></div>' +
       '<p class="small">Find catchment works like the Catchment runoff tool: it shows the flow lines, then outlines the land draining to the point you click, with the longest flow path and outlet. It uses EA LiDAR, or your file if you loaded one with Load LiDAR file.</p>' +
-      '<div class="sk-maprow sk-maplayers"><details class="sk-mldd" id="sk-mldd"><summary>Map layers <span class="small" id="sk-mlcount"></span></summary><div class="sk-mldd-in">' + MAPL.map(function (L) { return (L.grp ? '<span class="sk-lab sk-mlgrp">' + L.grp + "</span>" : "") + '<label class="sk-check" title="' + esc(L.src) + '"><input type="checkbox" data-ml="' + L.id + '"> ' + L.name + ' <span data-mls="' + L.id + '"></span></label>'; }).join("") + "</div></details>" +
+      "</div></details>" +
+      mgO("layers", "Extra map layers", false, '<span class="small" id="sk-mlcount"></span>') +
+      '<div class="sk-maprow sk-maplayers"><details class="sk-mldd" id="sk-mldd" open><summary>Map layers</summary><div class="sk-mldd-in">' + MAPL.map(function (L) { return (L.grp ? '<span class="sk-lab sk-mlgrp">' + L.grp + "</span>" : "") + '<label class="sk-check" title="' + esc(L.src) + '"><input type="checkbox" data-ml="' + L.id + '"> ' + L.name + ' <span data-mls="' + L.id + '"></span></label>'; }).join("") + "</div></details>" +
         '<label class="sk-check sk-wide">ArcGIS layer URL <input type="url" id="sk-mlurl" placeholder="FeatureServer/0 or Hub dataset link"></label><button type="button" class="sk-btn" id="sk-mladd">Add layer</button><button type="button" class="sk-btn" id="sk-mlgj-b">Load GeoJSON</button><input type="file" id="sk-mlgj" accept=".geojson,.json" hidden></div>' +
       '<p id="sk-mlmsg" class="sk-mlmsg" role="status" hidden></p><div id="sk-mlextra" class="sk-maprow"></div>' +
+      "</div></details>" +
+      mgO("leg", "Legend", false) +
       '<div class="sk-maprow"><label class="sk-check"><input type="checkbox" id="sk-mapleg"> Legend for the layers</label><label class="sk-check">at <select id="sk-maplegpos"><option value="br">bottom right</option><option value="bl">bottom left</option><option value="tr">top right</option><option value="tl">top left</option></select></label></div>' +
+      "</div></details>" +
+      mgO("about", "Data sources and licences", false) +
       '<p class="small">Grid north up, centred on the drawing frame (or the map area you draw) at the drawing scale. Map tiles come from OpenStreetMap (or Esri World Imagery for satellite), terrain from the Environment Agency, postcodes from postcodes.io, geology and rock unit names from BGS, designations from Natural England, OS rivers and roads from Esri UK (ArcGIS Living Atlas) and the flood layers from the Environment Agency, so the location is sent to them. Layers you add from a link are fetched from the service that link points to. <strong>EA LiDAR covers England only.</strong> Files you load stay in this browser. Contours, designations, geology and flood layers are indicative: check them against the source before relying on them. © OpenStreetMap contributors (ODbL). LiDAR © Environment Agency, OGL. Contains Natural England data © Natural England, OGL. Contains British Geological Survey materials © UKRI, OGL. Flood data © Environment Agency copyright and/or database right 2025, OGL. Contains OS data © Crown copyright and database right, OGL.</p>' +
+      "</div></details>" +
     "</div>" +
     "</div>" +
     '<div class="sk-tabs" id="sk-tabs" role="tablist" aria-label="Sheets"></div>' +
@@ -1110,7 +1125,7 @@
       if (e.target.closest('[data-tp="x"]')) return close();
       var lm = e.target.closest("[data-lm]"), dm = e.target.closest("[data-dm]");
       if (lm) { style.lmode = lm.dataset.lm; pop.querySelectorAll("[data-lm]").forEach(function (b) { b.setAttribute("aria-pressed", b === lm); }); status(style.lmode === "poly" ? "Polyline: click each point, then press Enter or double-click to finish." : HINTS.line); }
-      if (dm) { style.dmode = dm.dataset.dm; pop.querySelectorAll("[data-dm]").forEach(function (b) { b.setAttribute("aria-pressed", b === dm); }); status(style.dmode === "ang" ? "Angle: click the corner, then a point on each of the two lines." : HINTS.dim); }
+      if (dm) { style.dmode = dm.dataset.dm; pop.querySelectorAll("[data-dm]").forEach(function (b) { b.setAttribute("aria-pressed", b === dm); }); status(style.dmode === "ang" ? "Angle: click the end of the first line, then the corner, then the end of the second line." : HINTS.dim); }
     });
     pop.addEventListener("change", function (e) { if (e.target.matches("[data-ml]")) style.ml = e.target.checked; });
     document.addEventListener("pointerdown", function (e) { if (!pop.hidden && !pop.contains(e.target) && !(at && at.contains(e.target))) close(); }, true);
@@ -1149,6 +1164,8 @@
   /* Style starts pinned open; the rest start closed */
   function winState(name) { var w = null; try { w = JSON.parse(localStorage.getItem("cp-sketch-win2-" + name)); } catch (e) {} w = w || {}; if (w.pin == null) w.pin = name === "style"; return w; }
   function winSave(dd, patch) { var w = winState(dd.dataset.sec); for (var k in patch) w[k] = patch[k]; try { localStorage.setItem("cp-sketch-win2-" + dd.dataset.sec, JSON.stringify(w)); } catch (e) {} }
+  /* the map panel's collapsible groups; open or shut is remembered */
+  function mgO(key, title, dflt, extra) { var st = null; try { st = localStorage.getItem("cp-sketch-mg-" + key); } catch (e) {} var on = st == null ? dflt : st === "1"; return '<details class="sk-mgrp" data-mg="' + key + '"' + (on ? " open" : "") + '><summary>' + title + (extra ? " " + extra : "") + '</summary><div class="sk-mgrp-in">'; }
   function unfly(d) { var b = d.querySelector(".sk-sec-body"), n = d.querySelector(".sk-sec-in"); d.classList.remove("sk-fly"); if (b) b.removeAttribute("style"); if (n) n.removeAttribute("style"); }
   function openWin(dd) {
     Array.prototype.forEach.call(document.querySelectorAll(".sk-side > details.sk-sec[open]"), function (o) { if (o !== dd && !winState(o.dataset.sec).pin) closeWin(o); });
@@ -1394,7 +1411,8 @@
     var o = "";
     if (pend && pend.pts.length) {
       var pts = pend.pts.concat(pend.cur ? [[pend.cur.x, pend.cur.y]] : []);
-      o += '<path d="' + (pend.curve ? cmr(pts, false) : "M" + pts.map(function (p) { return p[0] + " " + p[1]; }).join("L")) + '" fill="' + (pend.curve ? "none" : style.c) + '" fill-opacity="0.08" stroke="' + style.c + '" stroke-width="' + r1(1.5 * Math.max(k, 1)) + '" stroke-dasharray="6 4"/>';
+      o += '<path d="' + (pend.curve ? cmr(pts, false) : "M" + pts.map(function (p) { return p[0] + " " + p[1]; }).join("L")) + '" fill="' + (pend.curve || pend.adim ? "none" : style.c) + '" fill-opacity="0.08" stroke="' + style.c + '" stroke-width="' + r1(1.5 * Math.max(k, 1)) + '" stroke-dasharray="6 4"/>';
+      if (pend.adim && pts.length === 3) o += '<g opacity="0.7">' + adimStr({ pts: [pts[1], pts[0], pts[2]], w: 1.2 }, style.c) + "</g>"; /* live angle while placing the third point */
       o += hnd("first", pend.pts[0][0], pend.pts[0][1]);
     }
     if (drag && drag.temp) o += draw(drag.temp);
@@ -1855,10 +1873,10 @@
       }
       drag = { type: "hatch0", start: sp, raw: { x: p.x, y: p.y } }; return;
     }
-    if (t === "dim" && style.dmode === "ang") { /* three clicks: the corner, then a point on each arm */
+    if (t === "dim" && style.dmode === "ang") { /* three clicks: end of the first line, the corner, end of the second line */
       var pq = snapPt(p);
-      if (pend && pend.adim) { pend.pts.push([pq.x, pq.y]); if (pend.pts.length === 3) { var ap = pend.pts; pend = null; renderLive(); selectAfterCreate(addItem(base("adim", { pts: ap, w: Math.min(style.w, 1.5) }))); return; } status("Now click a point on the second line."); renderLive(); return; }
-      pend = { pts: [[pq.x, pq.y]], cur: pq, adim: true }; status("Angle: now click a point on the first line."); renderLive(); return;
+      if (pend && pend.adim) { pend.pts.push([pq.x, pq.y]); if (pend.pts.length === 3) { var ap = pend.pts; pend = null; renderLive(); selectAfterCreate(addItem(base("adim", { pts: [ap[1], ap[0], ap[2]], w: Math.min(style.w, 1.5) }))); return; } status(pend.pts.length === 2 ? "Now click the end of the second line." : ""); renderLive(); return; }
+      pend = { pts: [[pq.x, pq.y]], cur: pq, adim: true }; status("Angle: now click the corner, where the two lines meet."); renderLive(); return;
     }
     if (t === "poly" || t === "curve" || (t === "line" && style.lmode === "poly")) {
       var pp = snapPt(p);
@@ -2702,6 +2720,7 @@
     mapStatus(feats.length + " features loaded" + (ll ? " (converted from lat/long)" : " (read as British National Grid)") + ". Add an attribution in a note if the data needs one.");
   }
   function renderMapExtra() { var m = doc().map, ex = m && m.extra || []; $("sk-mlextra").innerHTML = ex.map(function (L) { return '<label class="sk-check" title="' + esc(L.src) + '"><input type="checkbox" data-ml="' + L.id + '"' + (m.on && m.on[L.id] ? " checked" : "") + "> " + esc(L.name) + ' <span data-mls="' + L.id + '"></span></label><button type="button" class="sk-btn danger" data-mlx="' + L.id + '" aria-label="Remove layer">×</button>'; }).join(""); badges(); }
+  Array.prototype.forEach.call(app.querySelectorAll(".sk-mgrp"), function (g) { g.addEventListener("toggle", function () { try { localStorage.setItem("cp-sketch-mg-" + g.dataset.mg, g.open ? "1" : "0"); } catch (e) {} var w = app.querySelector('details.sk-sec[data-sec="layers"]'); if (w && w.classList.contains("sk-fly")) { var z = w.querySelector(".sk-sec-body").style.zIndex; placeWin(w); w.querySelector(".sk-sec-body").style.zIndex = z; } }); });
   $("sk-mldd").addEventListener("toggle", function () { var w = app.querySelector('details.sk-sec[data-sec="layers"]'); if (w && w.classList.contains("sk-fly")) { var z = w.querySelector(".sk-sec-body").style.zIndex; placeWin(w); w.querySelector(".sk-sec-body").style.zIndex = z; } });
   $("sk-mlextra").addEventListener("click", function (e) { var b = e.target.closest("[data-mlx]"); if (!b) return; var m = doc().map, id = b.dataset.mlx; m.extra = m.extra.filter(function (x) { return x.id !== id; }); if (m.L) delete m.L[id]; if (m.on) delete m.on[id]; persist(); renderMapExtra(); renderAll(); });
   /* contours from a terrain file: ESRI ASCII grid, or GeoTIFF read with geotiff.js (loaded on first use) */
@@ -2754,6 +2773,8 @@
   /* moving the map and limiting it to an area are done by dragging on the sheet */
   var mapMode = null, mapPanning = false;
   function closeFly() { Array.prototype.forEach.call(document.querySelectorAll(".sk-sec.sk-fly[open]"), function (d) { if (!winState(d.dataset.sec).pin) closeWin(d); }); }
+  /* a click anywhere outside an unpinned window closes it (its own toggle buttons, menus and dialogs excepted) */
+  document.addEventListener("pointerdown", function (e) { if (isMob() || !document.querySelector(".sk-sec.sk-fly[open]")) return; var t = e.target; if (t && t.closest && t.closest(".sk-sec.sk-fly, #sk-tball, .sk-ctx, .sk-dlg")) return; closeFly(); }, true);
   function setMapMode(mm) { mapMode = mapMode === mm ? null : mm; if (mapMode) closeFly(); $("sk-mappan").setAttribute("aria-pressed", mapMode === "pan"); $("sk-mapbox").setAttribute("aria-pressed", mapMode === "box"); $("sk-mapsect").setAttribute("aria-pressed", mapMode === "sect"); $("sk-mapcatch").setAttribute("aria-pressed", mapMode === "catch"); $("sk-mapfall").setAttribute("aria-pressed", mapMode === "fall"); stage.dataset.map = mapMode || ""; if (mapMode === "sect" || mapMode === "catch" || mapMode === "fall") mapStatus(mapMode === "sect" ? "Drag a line across the map where you want the ground section." : mapMode === "fall" ? "Click on the map to add a fall arrow there." : "Finding the flow lines. Then click on one where you want the outlet."); else if (mapMode) mapStatus(mapMode === "pan" ? "Drag on the sheet to move the map. Your drawing stays where it is. Click Move map again to finish." : "Drag a box on the sheet for the map area."); }
   $("sk-mappan").addEventListener("click", function () { if (!doc().map) { mapStatus("Place the map first."); return; } setMapMode("pan"); });
   $("sk-mapbox").addEventListener("click", function () { if (!doc().map) { mapStatus("Place the map first."); return; } setMapMode("box"); });

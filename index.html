@@ -1486,6 +1486,44 @@ footer .wrap { font-family: var(--font-body); }
 .learn-card:hover h3 { color: var(--accent); }
 .learn-card .more { color: var(--accent); font-weight: 600; }
 @media print { .lr-toc, .lr-f10, .lt-builder { display: none; } }
+
+/* ---- One type scale for the sketch pad (desktop): 12px for controls and text, 11px for notes and headings, 10px under tool icons ---- */
+html:not(.sk-mob) .sk-app { --sk-t: 12px; --sk-ts: 11px; --sk-tx: 10px; }
+html:not(.sk-mob) .sk-app :is(.sk-sec-in, .sk-dlg, .sk-ctx, .sk-toolpop, .sk-props, .sk-vbar, .sk-expmenu, .sk-snapmenu > div) :is(label, .sk-check, select, input, textarea, button, .sk-btn, .btn, summary, span:not(.sr-only), a, li, td, th, b, strong, em, i, p, div, h4, h5) { font-size: var(--sk-t) !important; line-height: 1.35; }
+html:not(.sk-mob) .sk-app :is(.sk-sec-in, .sk-dlg, .sk-ctx, .sk-toolpop, .sk-props, .sk-vbar, .sk-expmenu, .sk-snapmenu > div) :is(label, .sk-check) { font-weight: 400; }
+html:not(.sk-mob) .sk-app :is(.sk-sec-in, .sk-dlg, .sk-ctx, .sk-toolpop, .sk-props, .sk-vbar, .sk-expmenu) :is(button, .sk-btn, .btn, .sk-seg button) { font-weight: 600 !important; }
+html:not(.sk-mob) .sk-app :is(.sk-sec-in, .sk-dlg, .sk-ctx, .sk-toolpop, .sk-props, .sk-vbar, .sk-expmenu, .sk-snapmenu > div) :is(.small, .small *, .sk-lab, h4, .sk-mlmsg, .sk-props-none) { font-size: var(--sk-ts) !important; }
+html:not(.sk-mob) .sk-app :is(.sk-sec-in, .sk-dlg, .sk-toolpop) :is(h4, .sk-lab, .sk-mgrp > summary) { font-weight: 600 !important; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); }
+html:not(.sk-mob) .sk-app :is(.sk-sec-in, .sk-dlg, .sk-ctx, .sk-toolpop, .sk-props, .sk-vbar) :is(select, input[type="text"], input[type="number"], input[type="url"]) { height: 26px; padding: 2px 6px !important; min-height: 0; }
+html:not(.sk-mob) .sk-app :is(.sk-sec-in, .sk-dlg, .sk-toolpop, .sk-props) :is(.sk-btn, .btn) { min-height: 26px; padding: 3px 10px !important; }
+html:not(.sk-mob) .sk-app :is(.sk-sec-in, .sk-dlg, .sk-toolpop) input[type="checkbox"] { width: 14px; height: 14px; margin: 0; }
+html:not(.sk-mob) .sk-app .sk-sec-in .sk-seg { display: grid !important; grid-auto-flow: column; grid-auto-columns: 1fr; grid-template-columns: none !important; width: 100%; border-radius: 6px; }
+html:not(.sk-mob) .sk-app .sk-sec-in .sk-seg button { padding: 3px 4px !important; border-radius: 4px; }
+html:not(.sk-mob) .sk-app .sk-win-t, html:not(.sk-mob) .sk-app .sk-dlg-h b { font: 600 var(--sk-ts) var(--font-mono) !important; letter-spacing: 0.05em; text-transform: uppercase; }
+html:not(.sk-mob) .sk-app .sk-tool, html:not(.sk-mob) .sk-app .sk-tbar .sk-ltog, html:not(.sk-mob) .sk-app .sk-tbar-side > .sk-side :is(button, select, summary, label, .sk-btn, .btn) { font-size: var(--sk-tx) !important; }
+html:not(.sk-mob) .sk-app .sk-tbar-side > .sk-side .sk-sec-in :is(label, .sk-check, select, input, button, .sk-btn, .btn, summary, span:not(.sr-only), p, div) { font-size: var(--sk-t) !important; }
+html:not(.sk-mob) .sk-app .sk-tbar-side > .sk-side .sk-sec-in :is(.small, .small *, .sk-lab, h4) { font-size: var(--sk-ts) !important; }
+html:not(.sk-mob) .sk-app :is(.sk-hint, .sk-status) { font-size: var(--sk-ts) !important; }
+html:not(.sk-mob) .sk-app .sk-sec-in .sk-tool, html:not(.sk-mob) .sk-app .sk-sec-in .sk-tool * { font-size: var(--sk-tx) !important; font-weight: 600 !important; }
+html:not(.sk-mob) .sk-app .sk-sec[data-sec="layers"].sk-fly .sk-sec-in { flex-wrap: nowrap; }
+html:not(.sk-mob) .sk-app .sk-tbar-side > .sk-side > details.sk-sec > summary { text-transform: none; letter-spacing: 0; }
+html:not(.sk-mob) .sk-app .sk-tbar-all, html:not(.sk-mob) .sk-app .sk-snapmenu > summary { font-size: var(--sk-tx) !important; }
+html:not(.sk-mob) .sk-app .sk-tabs button { font-size: var(--sk-t) !important; }
+#sk-export { display: flex !important; align-items: center; justify-content: center; }
+#sk-export svg { display: block; flex: 0 0 auto; }
+/* map panel groups */
+.sk-mgrp { border-top: 1px solid var(--line); padding: 4px 0; }
+.sk-mgrp:first-child { border-top: 0; }
+.sk-mgrp > summary { cursor: pointer; padding: 4px 0; list-style: none; display: flex; align-items: center; gap: 6px; }
+.sk-mgrp > summary::-webkit-details-marker { display: none; }
+.sk-mgrp > summary::before { content: "\25B8"; font-size: 10px; transition: transform .15s; }
+.sk-mgrp[open] > summary::before { transform: rotate(90deg); }
+.sk-mgrp > summary .small { text-transform: none; letter-spacing: 0; font-weight: 400; }
+.sk-mgrp-in { display: flex; flex-direction: column; gap: 6px; padding: 2px 0 6px; }
+.sk-mgrp-in > .sk-maprow + .sk-maprow, .sk-mappanel .sk-mgrp-in > * { margin-top: 0 !important; }
+.sk-mgrp-in p { margin: 0 !important; }
+.sk-mgrp .sk-mldd > summary { display: none; }
+.sk-mgrp .sk-mldd-in { padding-left: 0; }
 </style>
 </head>
 <body>
@@ -3055,9 +3093,9 @@ footer .wrap { font-family: var(--font-body); }
 <script src="js/news-feed.js?v=20261122b"></script>
 <script src="js/news-archive.js?v=20261122b"></script>
 <script src="js/pages.js?v=20261122b"></script>
-<script src="js/tools/sketch-templates.js?v=20261129h"></script>
-<script src="js/tools/sketch.js?v=20261129h"></script>
-<script src="js/tools/drawing-check.js?v=20261129h"></script>
+<script src="js/tools/sketch-templates.js?v=20261129k"></script>
+<script src="js/tools/sketch.js?v=20261129k"></script>
+<script src="js/tools/drawing-check.js?v=20261129k"></script>
 <script src="js/tools/hydraulics.js?v=20261127a"></script>
 <script src="js/tools/pipeflow.js?v=20261127a"></script>
 <script src="js/tools/catchment.js?v=20261127a"></script>
@@ -3069,7 +3107,7 @@ footer .wrap { font-family: var(--font-body); }
 <script src="js/tools/culvert.js?v=20261127a"></script>
 <script src="js/tools/site-diary.js?v=20261127a"></script>
 <script src="js/learn.js?v=20261127m"></script>
-<script src="js/site.js?v=20261129h"></script>
+<script src="js/site.js?v=20261129k"></script>
 <script src="js/art.js?v=20261127m"></script>
 </body>
 </html>
