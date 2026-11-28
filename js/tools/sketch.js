@@ -821,12 +821,12 @@
       '<p class="small" id="sk-ctxhint" hidden>Pick a drawing tool or select something to see its line, text and hatch options.</p>' +
     "</div>" +
     '<div class="sk-style sk-sheetopts">' +
-      '<div class="sk-seg sk-seg-sm" role="group" aria-label="Paper size"><button type="button" data-paper="A4">A4</button><button type="button" data-paper="A3">A3</button><button type="button" data-paper="A2">A2</button><button type="button" data-paper="A1">A1</button><button type="button" data-paper="A0">A0</button></div>' +
+      '<span class="sk-lab sk-wlab">Paper</span><div class="sk-seg sk-seg-sm" role="group" aria-label="Paper size"><button type="button" data-paper="A4">A4</button><button type="button" data-paper="A3">A3</button><button type="button" data-paper="A2">A2</button><button type="button" data-paper="A1">A1</button><button type="button" data-paper="A0">A0</button></div>' +
       '<div class="sk-seg sk-seg-sm" role="group" aria-label="Orientation"><button type="button" data-orient="land">Landscape</button><button type="button" data-orient="port">Portrait</button></div>' +
-      '<label class="sk-check"><input type="checkbox" id="sk-showframe"> Frame</label>' +
+      '<span class="sk-lab sk-wlab">Frame and title block</span><label class="sk-check"><input type="checkbox" id="sk-showframe"> Frame</label>' +
       '<label class="sk-check">Title block <select id="sk-tbs"><option value="small">Small</option><option value="medium">Medium</option><option value="large">Large</option><option value="off">Off</option></select></label>' +
       '<label class="sk-check"><input type="checkbox" id="sk-rev"> Revisions</label><button type="button" class="sk-btn" id="sk-addrev">Add revision</button><button type="button" class="sk-btn" id="sk-delrev" title="Remove the last revision row">Remove last</button>' +
-      '<button type="button" class="sk-btn" id="sk-legedit" title="Build a legend from the line types and hatches on the drawing">Legend editor</button>' +
+      '<span class="sk-lab sk-wlab">Legend</span><button type="button" class="sk-btn" id="sk-legedit" title="Build a legend from the line types and hatches on the drawing">Legend editor</button>' +
       '<label class="sk-check">Watermark <select id="sk-wm"><option value="">None</option><option>DRAFT</option><option>NOT FOR CONSTRUCTION</option><option>PRELIMINARY</option><option>FOR INFORMATION</option><option value="*">Your own text…</option></select></label><input type="text" id="sk-wmtext" spellcheck="true" lang="en-GB" placeholder="Watermark text" hidden style="width:12em">' +
       '<label class="sk-check"><input type="checkbox" id="sk-grid"> Grid</label>' +
       '<label class="sk-check" title="A small bar at the right of the sheet listing drawing checklist items the sheet seems to miss, numbered like the checklist. Point at one to see where. Never exported."><input type="checkbox" id="sk-chkw"> Checklist warnings</label>' +
@@ -1192,7 +1192,7 @@
       b.style.height = ""; b.style.left = "0px"; b.style.top = "0px"; b.style.width = Math.max(320, VW - 16) + "px";
       var hh = h.offsetHeight, H = Math.max(140, VH - y - 8 - hh - 2); n.style.height = H + "px"; /* fits below where it opens, flowing into more columns if it must */
       var mx = 0, my = 0, n0 = n.getBoundingClientRect(); Array.prototype.forEach.call(n.querySelectorAll("*"), function (c) { var q = c.getBoundingClientRect(); if (q.width) { if (q.right > mx) mx = q.right; if (q.bottom > my) my = q.bottom; } });
-      var cw = Math.min(VW - 16, 560, Math.max(300, mx - n0.left + 30)); /* no wider than two columns to start with: drag the corner for more */
+      var cw = /^(sheet|layers|alltools)$/.test(dd.dataset.sec) ? Math.min(VW - 16, 340) : Math.min(VW - 16, 560, Math.max(300, mx - n0.left + 30)); /* the toolbar windows share one width */ /* no wider than two columns to start with: drag the corner for more */
       n.style.height = Math.min(H, Math.max(60, my - n0.top + 16)) + "px"; b.style.width = cw + "px";
     }
     var bw = b.offsetWidth, bh = b.offsetHeight;

@@ -1585,6 +1585,12 @@ html.sk-mob .sk-tgh { flex: 1 1 100%; }
 .sk-tour-b > span { flex: 1 1 auto; }
 .sk-tour-b .btn, .sk-tour-b .sk-btn { font-size: 12px !important; padding: 4px 10px !important; min-height: 0; }
 .sk-tour-ring { position: fixed; z-index: 2147483500; border: 2px solid var(--accent); border-radius: 8px; box-shadow: 0 0 0 4000px rgba(10,20,30,.25); pointer-events: none; transition: all .2s; }
+.sk-wlab { display: none; }
+.sk-sec.sk-fly .sk-wlab { display: block; margin-top: 4px; }
+.sk-sec.sk-fly .sk-wlab:first-child { margin-top: 0; }
+/* Page settings, Layers and map, and All tools: one window style, one column, the same width */
+html:not(.sk-mob) .sk-sec:is([data-sec="sheet"], [data-sec="layers"]).sk-fly .sk-sec-in { flex-wrap: nowrap; }
+html:not(.sk-mob) .sk-sec:is([data-sec="sheet"], [data-sec="layers"]).sk-fly .sk-sec-in > *, html:not(.sk-mob) .sk-sec:is([data-sec="sheet"], [data-sec="layers"]).sk-fly .sk-layers > *, html:not(.sk-mob) .sk-sec[data-sec="sheet"].sk-fly .sk-sheetopts > *:not(.sk-check), html:not(.sk-mob) .sk-sec[data-sec="layers"].sk-fly #sk-mappanel > * { width: auto !important; max-width: none !important; align-self: stretch; }
 /* icon buttons in the map panel */
 .sk-app .sk-btn.sk-ibtn, html:not(.sk-mob) .sk-app :is(.sk-sec-in, .sk-dlg, .sk-toolpop, .sk-props) .sk-btn.sk-ibtn { width: 32px !important; max-width: 32px !important; height: 28px; min-height: 28px; padding: 0 !important; display: inline-flex; align-items: center; justify-content: center; flex: 0 0 auto; }
 .sk-app .sk-btn.sk-icbtn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
@@ -3172,9 +3178,9 @@ html.sk-mob .sk-tgh { flex: 1 1 100%; }
 <script src="js/news-feed.js?v=20261122b"></script>
 <script src="js/news-archive.js?v=20261122b"></script>
 <script src="js/pages.js?v=20261122b"></script>
-<script src="js/tools/sketch-templates.js?v=20261129y"></script>
-<script src="js/tools/sketch.js?v=20261129y"></script>
-<script src="js/tools/drawing-check.js?v=20261129y"></script>
+<script src="js/tools/sketch-templates.js?v=20261130a"></script>
+<script src="js/tools/sketch.js?v=20261130a"></script>
+<script src="js/tools/drawing-check.js?v=20261130a"></script>
 <script src="js/tools/hydraulics.js?v=20261127a"></script>
 <script src="js/tools/pipeflow.js?v=20261127a"></script>
 <script src="js/tools/catchment.js?v=20261127a"></script>
@@ -3186,7 +3192,7 @@ html.sk-mob .sk-tgh { flex: 1 1 100%; }
 <script src="js/tools/culvert.js?v=20261127a"></script>
 <script src="js/tools/site-diary.js?v=20261127a"></script>
 <script src="js/learn.js?v=20261127m"></script>
-<script src="js/site.js?v=20261129y"></script>
+<script src="js/site.js?v=20261130a"></script>
 <script src="js/art.js?v=20261127m"></script>
 </body>
 </html>
