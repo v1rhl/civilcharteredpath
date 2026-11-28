@@ -15,6 +15,7 @@
   var COLORS = [["#15233a", "Black"], ["#b84a32", "Red"], ["#0d6b78", "Teal"], ["#3f6fd1", "Blue"], ["#2e7d32", "Green"], ["#b07a06", "Amber"], ["#7a7f87", "Grey"]];
   var WIDTHS = [[1, "Hairline"], [2, "Fine"], [4, "Medium"], [7, "Heavy"], [14, "Marker"]];
   var LINES = [["solid", "Solid"], ["dashed", "Dashed"], ["dashdot", "Dash-dot"], ["dotted", "Dotted"], ["centre", "Centreline"]];
+  var VEG = [["tree", "Tree (plan)"], ["conifer", "Conifer (plan)"], ["bush", "Bush or shrub (plan)"], ["grassp", "Grass or planting (plan)"], ["treel", "Tree (section)"], ["shrubl", "Shrub (section)"], ["grassl", "Grass (section)"]];
   var PATS = [["diag", "Diagonal"], ["cross", "Cross-hatch"], ["concrete", "Concrete"], ["earth", "Soil / earth"], ["steel", "Steel"], ["granular", "Granular stone"], ["sand", "Sand"], ["solid", "Solid tint"]];
   var SEG = { member: 1, line: 1, udl: 1, dim: 1, arrow: 1, rect: 1, circle: 1, section: 1, brk: 1, cloud: 1, slope: 1 }, PTS = { stroke: 1, hatch: 1, poly: 1 };
   /* Tools placed by dragging from one point to another */
@@ -45,6 +46,7 @@
     poly: '<path d="M5 18l2-11 8-3 5 9-6 7z"/>',
     section: '<path d="M4 12h16" stroke-dasharray="4 2 1 2"/><path d="M4 12v-6M20 12v-6M4 6l2 2M4 6L2 8M20 6l2 2M20 6l-2 2"/>',
     north: '<path d="M12 3l5 16-5-4-5 4z"/><path d="M12 3v12"/>',
+    veg: '<path d="M12 14c-4 0-6-2-6-5s3-6 6-6 6 3 6 6-2 5-6 5z"/><path d="M12 14v7M9 21h6M12 17l-2-2M12 16l2-2"/>',
     brk: '<path d="M2 12h7l1.5-5 3 10 1.5-5h7"/>',
     cloud: '<path d="M6 8a2 2 0 0 1 4 0a2 2 0 0 1 4 0a2 2 0 0 1 4 0a2 2 0 0 1 0 4a2 2 0 0 1 0 4a2 2 0 0 1-4 0a2 2 0 0 1-4 0a2 2 0 0 1-4 0a2 2 0 0 1 0-4a2 2 0 0 1 0-4z"/>',
     slope: '<path d="M3 6h18"/><path d="M4 6v12M8 6v5M12 6v12M16 6v5M20 6v12"/>',
@@ -53,7 +55,7 @@
   var TOOLS = {
     free: [["select", "Select"], ["xform", "Move/resize"], ["pen", "Pen"], ["eraser", "Eraser"], ["hatch", "Hatch"], ["text", "Text"], ["leader", "Leader"], ["dim", "Dimension"]],
     struct: [["select", "Select"], ["xform", "Move/resize"], ["member", "Member"], ["pin", "Pin"], ["roller", "Roller"], ["fixed", "Fixed"], ["pload", "Point load"], ["udl", "UDL"], ["moment", "Moment"], ["dim", "Dimension"], ["hatch", "Hatch"], ["text", "Text"], ["leader", "Leader"], ["eraser", "Eraser"]],
-    shapes: [["line", "Line"], ["arrow", "Arrow"], ["rect", "Rectangle"], ["circle", "Circle"], ["poly", "Polygon"], ["section", "Section"], ["north", "North"], ["brk", "Break line"], ["cloud", "Rev cloud"], ["slope", "Slope"], ["wl", "Water level"], ["image", "Image"], ["inset", "Detail window"], ["window", "New viewport"]]
+    shapes: [["line", "Line"], ["arrow", "Arrow"], ["rect", "Rectangle"], ["circle", "Circle"], ["poly", "Polygon"], ["section", "Section"], ["north", "North"], ["veg", "Vegetation"], ["brk", "Break line"], ["cloud", "Rev cloud"], ["slope", "Slope"], ["wl", "Water level"], ["image", "Image"], ["inset", "Detail window"], ["window", "New viewport"]]
   };
   var HINTS = {
     select: "Click to select, drag a box to select several, Shift or Ctrl click to add or remove. Drag to move, Delete removes, Ctrl+C / Ctrl+V copy and paste, Ctrl+D duplicates, Ctrl+A selects all, Esc clears.",
@@ -76,6 +78,7 @@
     circle: "Press on the centre and drag out to the radius.",
     poly: "Click each corner, then click the first point again (or press Enter, or double-click) to close the shape.",
     section: "Drag along the line of the cut. Arrows show the viewing direction; Flip side turns them round and you can set the letter.",
+    veg: "Pick tree, bush, grass or planting above, then click to place one or drag to size it. Drag its square handle to resize it later.",
     north: "Click to place a north arrow. Drag its round handle to turn it to any angle, or type the angle below.",
     brk: "Drag where the break line should run; the zigzag goes in the middle.",
     cloud: "Drag a box round the change to draw a revision cloud.",
@@ -116,7 +119,7 @@
   /* ---------- State ---------- */
   var mode = S.mode === "struct" ? "struct" : "free";
   var tool = { free: "pen", struct: "member" };
-  var style = { c: COLORS[0][0], w: 2, ls: "solid", pat: "diag", fs: 14 };
+  var style = { c: COLORS[0][0], w: 2, ls: "solid", pat: "diag", fs: 14, veg: "tree" };
   var sel = null; /* {k:"item"|"img", id} */
   var drag = null, pend = null, before = null, k = 1;
   var hist = {}; function H() { var id = S.cur; return hist[id] || (hist[id] = { u: [], r: [] }); }
@@ -393,6 +396,7 @@
           o += txt(q[0] + cn.nx * cs * (ar + 14) , q[1] + cn.ny * cs * (ar + 14) + fz * 0.35, lab2, c, fz, "middle", ' font-weight="bold"');
         });
         return o;
+      case "veg": return vegStr(it, c);
       case "north":
         var ns = it.s || 1;
         return '<g transform="translate(' + it.x + " " + it.y + ") rotate(" + (it.rot || 0) + ") scale(" + ns + ')"><circle r="24" fill="none" stroke="' + c + '" stroke-width="1.4"/><path d="M0 -30L11 14L0 5L-11 14Z" fill="#fff" stroke="' + c + '" stroke-width="1.6" stroke-linejoin="round"/><path d="M0 -30L0 5L-11 14Z" fill="' + c + '"/>' + txt(0, -36, "N", c, 16, "middle", ' font-weight="bold"') + "</g>";
@@ -437,9 +441,60 @@
   function fmtArea(u2, N0) { var m1 = toM(1, N0), a = u2 * m1 * m1; return a >= 10000 ? (Math.round(a / 100) / 100) + " ha (" + Math.round(a).toLocaleString("en-GB") + " m²)" : a >= 100 ? Math.round(a).toLocaleString("en-GB") + " m²" : (Math.round(a * 100) / 100) + " m²"; }
   function scaleAt(x, y) { var N = 0; doc().items.forEach(function (o) { if (o.type === "inset" && o.blank && x >= o.x && x <= o.x + o.w && y >= o.y && y <= o.y + o.h) N = o.N; }); return N || doc().dscale; }
   function dimAuto(it) { var m = toM(Math.hypot(it.x2 - it.x1, it.y2 - it.y1), scaleAt((it.x1 + it.x2) / 2, (it.y1 + it.y2) / 2)); return it.unit === "mm" ? Math.round(m * 1000) + "" : it.unit === "m" ? (Math.round(m * 1000) / 1000) + " m" : fmtM(m); }
+  /* Vegetation stamps: drawn from the item's radius with a fixed pseudo-random pattern seeded by its id,
+     so each one looks hand-drawn but never changes when redrawn or exported. */
+  function vegRand(seed) { var h = 2166136261; String(seed).split("").forEach(function (ch) { h = Math.imul(h ^ ch.charCodeAt(0), 16777619); }); return function () { h = Math.imul(h ^ (h >>> 15), 2246822507); h = Math.imul(h ^ (h >>> 13), 3266489909); h ^= h >>> 16; return (h >>> 0) / 4294967296; }; }
+  function vegBlob(cx, cy, R, ry, n, rnd, bulge) { /* scalloped outline round an ellipse */
+    var pts = [], d = "", i; for (i = 0; i < n; i++) { var a = (i + rnd() * 0.3) / n * Math.PI * 2, f = 0.9 + rnd() * 0.1; pts.push([cx + Math.cos(a) * R * f, cy + Math.sin(a) * ry * f, a]); }
+    for (i = 0; i < n; i++) { var A = pts[i], B = pts[(i + 1) % n], am = (A[2] + (i === n - 1 ? B[2] + Math.PI * 2 : B[2])) / 2; if (!i) d += "M" + r1(A[0]) + " " + r1(A[1]); d += "Q" + r1(cx + Math.cos(am) * R * bulge) + " " + r1(cy + Math.sin(am) * ry * bulge) + " " + r1(B[0]) + " " + r1(B[1]); }
+    return d + "Z";
+  }
+  function vegStr(it, c) {
+    var R = Math.max(4, it.r || 40), x = it.x, y = it.y, rnd = vegRand(it.sd || it.id || "v"), sw = Math.max(1, Math.min(2.2, R / 30)), kind = it.kind || "tree", o = "", i, a, L;
+    var S0 = ' fill="none" stroke="' + c + '" stroke-width="' + r1(sw) + '" stroke-linecap="round" stroke-linejoin="round"', F = ' fill="' + c + '" fill-opacity="0.1" stroke="' + c + '" stroke-width="' + r1(sw * 1.2) + '" stroke-linejoin="round"';
+    if (kind === "tree") {
+      o += '<path d="' + vegBlob(x, y, R, R, Math.max(9, Math.round(R / 7)), rnd, 1.16) + '"' + F + "/>";
+      for (i = 0; i < 6; i++) { a = (i + rnd() * 0.6) / 6 * Math.PI * 2; L = R * (0.45 + rnd() * 0.2); o += '<path d="M' + r1(x) + " " + r1(y) + "L" + r1(x + Math.cos(a) * L) + " " + r1(y + Math.sin(a) * L) + '"' + S0 + ' stroke-width="' + r1(sw * 0.7) + '"/>'; }
+      o += '<circle cx="' + r1(x) + '" cy="' + r1(y) + '" r="' + r1(Math.max(2, R * 0.07)) + '" fill="' + c + '"/>';
+    } else if (kind === "conifer") {
+      var n = Math.max(12, Math.round(R / 4)) * 2, d = ""; for (i = 0; i < n; i++) { a = i / n * Math.PI * 2; L = R * (i % 2 ? 0.72 : 1) * (0.94 + rnd() * 0.06); d += (i ? "L" : "M") + r1(x + Math.cos(a) * L) + " " + r1(y + Math.sin(a) * L); }
+      o += '<path d="' + d + 'Z"' + F + "/>";
+      for (i = 0; i < n / 2; i++) { a = i / (n / 2) * Math.PI * 2; o += '<path d="M' + r1(x) + " " + r1(y) + "L" + r1(x + Math.cos(a) * R * 0.6) + " " + r1(y + Math.sin(a) * R * 0.6) + '"' + S0 + ' stroke-width="' + r1(sw * 0.6) + '"/>'; }
+      o += '<circle cx="' + r1(x) + '" cy="' + r1(y) + '" r="' + r1(Math.max(2, R * 0.06)) + '" fill="' + c + '"/>';
+    } else if (kind === "bush") {
+      o += '<path d="' + vegBlob(x, y, R, R * 0.92, Math.max(7, Math.round(R / 5)), rnd, 1.22) + '"' + F + "/>";
+      o += '<path d="' + vegBlob(x + R * 0.05, y - R * 0.05, R * 0.55, R * 0.5, Math.max(5, Math.round(R / 8)), rnd, 1.2) + '"' + S0 + ' stroke-width="' + r1(sw * 0.7) + '"/>';
+    } else if (kind === "grassp") {
+      o += '<circle cx="' + r1(x) + '" cy="' + r1(y) + '" r="' + r1(R) + '" fill="' + c + '" fill-opacity="0.06" stroke="' + c + '" stroke-width="' + r1(sw * 0.6) + '" stroke-dasharray="' + r1(sw * 3) + " " + r1(sw * 3) + '"/>';
+      var tn = Math.min(70, Math.max(5, Math.round(R * R / 140))), t2 = Math.max(2.5, Math.min(7, R / 8)), dd = "";
+      for (i = 0; i < tn; i++) { var rr = R * 0.85 * Math.sqrt(rnd()), aa = rnd() * Math.PI * 2, tx = x + Math.cos(aa) * rr, ty = y + Math.sin(aa) * rr; dd += "M" + r1(tx - t2 * 0.6) + " " + r1(ty - t2) + "L" + r1(tx) + " " + r1(ty) + "L" + r1(tx + t2 * 0.6) + " " + r1(ty - t2); }
+      o += '<path d="' + dd + '"' + S0 + ' stroke-width="' + r1(sw * 0.7) + '"/>';
+    } else if (kind === "treel") { /* (x, y) is the foot of the trunk */
+      var cy2 = y - R * 1.9;
+      o += '<path d="M' + r1(x - R * 0.09) + " " + r1(y) + "Q" + r1(x - R * 0.05) + " " + r1(y - R * 0.6) + " " + r1(x - R * 0.06) + " " + r1(y - R * 1.2) + "M" + r1(x + R * 0.09) + " " + r1(y) + "Q" + r1(x + R * 0.05) + " " + r1(y - R * 0.6) + " " + r1(x + R * 0.06) + " " + r1(y - R * 1.2) + '"' + S0 + "/>";
+      o += '<path d="' + vegBlob(x, cy2, R, R * 1.05, Math.max(10, Math.round(R / 7)), rnd, 1.15) + '"' + F + "/>";
+      o += '<path d="M' + r1(x) + " " + r1(y - R * 1.1) + "L" + r1(x) + " " + r1(cy2 - R * 0.2) + "M" + r1(x) + " " + r1(cy2 + R * 0.3) + "L" + r1(x - R * 0.45) + " " + r1(cy2 - R * 0.15) + "M" + r1(x) + " " + r1(cy2 + R * 0.1) + "L" + r1(x + R * 0.5) + " " + r1(cy2 - R * 0.3) + '"' + S0 + ' stroke-width="' + r1(sw * 0.7) + '"/>';
+      o += '<path d="M' + r1(x - R * 0.5) + " " + r1(y) + "L" + r1(x + R * 0.5) + " " + r1(y) + '"' + S0 + "/>";
+    } else if (kind === "shrubl") {
+      var m = Math.max(5, Math.round(R / 7)), dS = "M" + r1(x - R) + " " + r1(y);
+      for (i = 0; i < m; i++) { var a0 = Math.PI + i / m * Math.PI, a1 = Math.PI + (i + 1) / m * Math.PI, am2 = (a0 + a1) / 2, hh = R * (0.95 + rnd() * 0.15); dS += "Q" + r1(x + Math.cos(am2) * R * 1.2) + " " + r1(y + Math.sin(am2) * hh * 1.25) + " " + r1(x + Math.cos(a1) * R) + " " + r1(y + Math.sin(a1) * hh); }
+      o += '<path d="' + dS + 'Z"' + F + "/>";
+      o += '<path d="M' + r1(x) + " " + r1(y) + "L" + r1(x - R * 0.35) + " " + r1(y - R * 0.55) + "M" + r1(x) + " " + r1(y) + "L" + r1(x + R * 0.3) + " " + r1(y - R * 0.6) + "M" + r1(x) + " " + r1(y) + "L" + r1(x) + " " + r1(y - R * 0.7) + '"' + S0 + ' stroke-width="' + r1(sw * 0.7) + '"/>';
+    } else { /* grassl: tufts along the ground, (x, y) the middle of the strip */
+      var nt = Math.max(2, Math.round(R / 9)), dg = "";
+      for (i = 0; i < nt; i++) { var gx = x - R + (i + 0.5) * 2 * R / nt + (rnd() - 0.5) * R / nt * 0.6, gh = R * (0.22 + rnd() * 0.14), nb = 3 + Math.floor(rnd() * 3);
+        for (var j = 0; j < nb; j++) { var lean = (j - (nb - 1) / 2) * gh * 0.35 + (rnd() - 0.5) * gh * 0.2; dg += "M" + r1(gx + (j - (nb - 1) / 2) * 1.2) + " " + r1(y) + "Q" + r1(gx + lean * 0.3) + " " + r1(y - gh * 0.6) + " " + r1(gx + lean) + " " + r1(y - gh * (0.8 + rnd() * 0.3)); } }
+      o += '<path d="' + dg + '"' + S0 + "/>";
+    }
+    return o;
+  }
+  function vegStatus(it) { status((VEG.filter(function (v) { return v[0] === (it.kind || "tree"); })[0] || [0, "Planting"])[1] + ": " + (measured() ? "spread " + r3(toM(2 * it.r)) + " m" : "size " + Math.round(2 * it.r / 4) + " mm on the sheet")); }
+  function vegCentre(it) { var R = it.r || 40, k2 = it.kind || "tree"; return k2 === "treel" ? { x: it.x, y: it.y - R * 1.45, h: R * 1.5 } : k2 === "shrubl" ? { x: it.x, y: it.y - R * 0.5, h: R * 1.05 } : k2 === "grassl" ? { x: it.x, y: it.y - R * 0.2, h: R } : { x: it.x, y: it.y, h: R }; }
+  function vegHandle(it) { var R = it.r || 40, k2 = it.kind || "tree"; return k2 === "treel" ? { x: it.x + R, y: it.y - R * 1.9 } : k2 === "shrubl" || k2 === "grassl" ? { x: it.x + R, y: it.y } : { x: it.x + R * 0.71, y: it.y + R * 0.71 }; }
   function hit(it) {
     var w = Math.max(16 * k, 10), T = 'stroke="transparent" fill="none" pointer-events="stroke" stroke-linecap="round" stroke-width="';
     switch (it.type) {
+      case "veg": var vc = vegCentre(it); return '<circle cx="' + r1(vc.x) + '" cy="' + r1(vc.y) + '" r="' + r1(Math.max(vc.h, 14 * k)) + '" fill="transparent" pointer-events="all"/>';
       case "stroke": return '<path d="' + smooth(it.pts) + '" ' + T + Math.max(w, (it.w || 2) + 8) + '"/>';
       case "rect": case "cloud": var rx1 = Math.min(it.x1, it.x2), ry1 = Math.min(it.y1, it.y2); return '<rect x="' + rx1 + '" y="' + ry1 + '" width="' + r1(Math.abs(it.x2 - it.x1)) + '" height="' + r1(Math.abs(it.y2 - it.y1)) + '" ' + T + Math.max(w, (it.w || 2) + 8) + '"/>';
       case "circle": return '<circle cx="' + it.x1 + '" cy="' + it.y1 + '" r="' + r1(Math.hypot(it.x2 - it.x1, it.y2 - it.y1)) + '" ' + T + Math.max(w, (it.w || 2) + 8) + '"/>';
@@ -525,7 +580,8 @@
     if (n.type === "image" || n.type === "inset") { n.w = r1(n.w * fx); n.h = r1(n.h * fy); }
     if (n.type === "text") n.size = Math.max(4, r1((n.size || 18) * m));
     if (n.fs) n.fs = Math.max(4, r1(n.fs * m));
-    if (n.s != null || /^(north|wl|slope)$/.test(n.type)) n.s = r1((n.s || 1) * m * 100) / 100;
+    if (n.type === "veg") n.r = r1((n.r || 40) * m);
+    else if (n.s != null || /^(north|wl|slope)$/.test(n.type)) n.s = r1((n.s || 1) * m * 100) / 100;
     if (n.type === "dim" && n.o != null) n.o = r1(n.o * m);
     return n;
   }
@@ -587,6 +643,7 @@
       '<div class="sk-group" data-ctx="line"><span class="sk-lab">Weight</span><div class="sk-chips" id="sk-widths"></div></div>' +
       '<div class="sk-group" data-ctx="line"><label class="sk-lab" for="sk-ls">Line</label><select id="sk-ls">' + LINES.map(function (l) { return '<option value="' + l[0] + '">' + l[1] + "</option>"; }).join("") + "</select></div>" +
       '<div class="sk-group" data-ctx="text"><label class="sk-lab" for="sk-fs">Text</label><select id="sk-fs">' + [8, 10, 12, 14, 16, 18, 24, 32].map(function (v) { return '<option value="' + v + '">' + v + "</option>"; }).join("") + "</select></div>" +
+      '<div class="sk-group" data-ctx="veg"><label class="sk-lab" for="sk-veg">Planting</label><select id="sk-veg">' + VEG.map(function (l) { return '<option value="' + l[0] + '">' + l[1] + "</option>"; }).join("") + "</select></div>" +
       '<div class="sk-group" data-ctx="hatch"><label class="sk-lab" for="sk-pat">Hatch</label><select id="sk-pat">' + PATS.map(function (l) { return '<option value="' + l[0] + '">' + l[1] + "</option>"; }).join("") + "</select>" +
         '<label class="sr-only" for="sk-hsc">Hatch scale</label><select id="sk-hsc" title="Hatch pattern scale">' + [0.1, 0.25, 0.5, 0.75, 1, 1.5, 2, 3, 4].map(function (v) { return '<option value="' + v + '">×' + v + "</option>"; }).join("") + "</select>" +
         '<label class="sr-only" for="sk-hby">Hatch by</label><select id="sk-hby"><option value="pick">Click inside an area</option><option value="shape">Draw a shape</option></select></div>' +
@@ -865,6 +922,7 @@
           if (it.type === "leader") { var A = anchorOf(it); o += hnd("anc", A.x, A.y); }
           if (it.type === "north") { var nr = (it.rot || 0) * Math.PI / 180, nL = 58 * (it.s || 1), hx = it.x + Math.sin(nr) * nL, hy = it.y - Math.cos(nr) * nL; o += '<line x1="' + it.x + '" y1="' + it.y + '" x2="' + r1(hx) + '" y2="' + r1(hy) + '" class="sk-sel" stroke-width="1"/>' + hnd("nrot", hx, hy); }
           if (it.type === "image" || it.type === "inset") o += hnd("isz", it.x + it.w, it.y + it.h, "sq");
+          if (it.type === "veg") { var vh = vegHandle(it); o += hnd("vr", vh.x, vh.y, "sq"); }
           if (it.type === "inset" && !it.blank) o += '<line x1="' + r1(it.x + it.w / 2) + '" y1="' + r1(it.y + it.h / 2) + '" x2="' + it.sx + '" y2="' + it.sy + '" class="sk-sel" stroke-width="1"/>' + hnd("isrc", it.sx, it.sy);
         }
       }
@@ -896,8 +954,8 @@
 
   /* ---------- Toolbar ---------- */
   /* Show only the style options that matter for the active tool or the selected items. */
-  var CTX_TOOL = { line: /^(pen|line|arrow|rect|circle|poly|member|brk|cloud|hatch)$/, text: /^(text|leader|dim|udl|pload|moment|section|wl)$/, hatch: /^hatch$/ };
-  var CTX_TYPE = { line: /^(stroke|line|arrow|rect|circle|poly|member|brk|cloud|hatch)$/, text: /^(text|leader|dim|udl|pload|moment|section|wl)$/, hatch: /^hatch$/ };
+  var CTX_TOOL = { veg: /^veg$/, line: /^(pen|line|arrow|rect|circle|poly|member|brk|cloud|hatch)$/, text: /^(text|leader|dim|udl|pload|moment|section|wl)$/, hatch: /^hatch$/ };
+  var CTX_TYPE = { veg: /^veg$/, line: /^(stroke|line|arrow|rect|circle|poly|member|brk|cloud|hatch)$/, text: /^(text|leader|dim|udl|pload|moment|section|wl)$/, hatch: /^hatch$/ };
   function updateCtx() {
     var t = tool[mode], l = sel && sel.k !== "img" ? selList() : [], any = false;
     Array.prototype.forEach.call(app.querySelectorAll("[data-ctx]"), function (el) {
@@ -976,6 +1034,7 @@
   $("sk-color").addEventListener("input", function () { style.c = this.value; syncControls(); });
   $("sk-color").addEventListener("change", function () { style.c = this.value; restyle(function (it) { it.c = style.c; }); });
   $("sk-ls").addEventListener("change", function () { style.ls = this.value; restyle(function (it) { if (/^(stroke|line|member|hatch|arrow|rect|circle|poly)$/.test(it.type)) it.ls = style.ls; }); });
+  $("sk-veg").addEventListener("change", function () { style.veg = this.value; if (tool[mode] === "veg") return; /* while placing, it just sets the next stamp */ if (!(sel && byId(sel.id) && byId(sel.id).type === "veg")) { setTool("veg"); return; } restyle(function (it) { if (it.type === "veg") it.kind = style.veg; }); renderProps(); });
   $("sk-pat").addEventListener("change", function () { style.pat = this.value; if (tool[mode] !== "hatch" && !(sel && byId(sel.id) && byId(sel.id).type === "hatch")) setTool("hatch"); restyle(function (it) { if (it.type === "hatch") it.pat = style.pat; }); renderProps(); });
   function opt(id, key, after) { $(id).addEventListener("change", function () { doc()[key] = this.type === "checkbox" ? this.checked : +this.value || doc()[key]; persist(); if (after) after(); renderAll(); }); }
   opt("sk-showframe", "frame"); 
@@ -1041,7 +1100,7 @@
     }
     if (!it) { p.innerHTML = ""; return; }
     updateCtx();
-    var NAMES = { inset: "Detail or viewport", image: "Image", arrow: "Arrow", rect: "Rectangle", circle: "Circle", poly: "Polygon", cloud: "Revision cloud", brk: "Break line", slope: "Slope marker", section: "Section marker", north: "North arrow", wl: "Water level", stroke: "Pen stroke", line: "Line", member: "Member", support: "Support", pload: "Point load", udl: "Distributed load", moment: "Moment", dim: "Dimension", text: "Text", leader: "Leader note", hatch: "Hatched area" };
+    var NAMES = { inset: "Detail or viewport", image: "Image", arrow: "Arrow", rect: "Rectangle", circle: "Circle", poly: "Polygon", cloud: "Revision cloud", brk: "Break line", slope: "Slope marker", section: "Section marker", veg: "Vegetation", north: "North arrow", wl: "Water level", stroke: "Pen stroke", line: "Line", member: "Member", support: "Support", pload: "Point load", udl: "Distributed load", moment: "Moment", dim: "Dimension", text: "Text", leader: "Leader note", hatch: "Hatched area" };
     var h = '<span class="sk-lab">' + NAMES[it.type] + "</span>";
     if (locked(it)) {
       h += '<span class="small">' + (doc().lockDraw ? "The drawing is locked. Untick \"Lock drawing\" to change it." : "Locked in place.") + "</span>";
@@ -1055,6 +1114,7 @@
     if (measured() && (it.type === "rect" || it.type === "cloud")) h += '<label class="sk-check">W <input type="number" id="skp-rw" step="0.01" min="0" style="width:6em" value="' + r3(toM(Math.abs(it.x2 - it.x1))) + '"></label><label class="sk-check">H <input type="number" id="skp-rh" step="0.01" min="0" style="width:6em" value="' + r3(toM(Math.abs(it.y2 - it.y1))) + '"> m</label>';
     if (measured() && it.type === "circle") h += '<label class="sk-check">Radius <input type="number" id="skp-rad" step="0.01" min="0" style="width:6em" value="' + r3(toM(Math.hypot(it.x2 - it.x1, it.y2 - it.y1))) + '"> m</label>';
     if (it.type === "section" || it.type === "wl") h += '<input type="text" id="skp-label" spellcheck="true" lang="en-GB" value="' + esc(it.label || "") + '" aria-label="Label" style="width:' + (it.type === "wl" ? 11 : 4) + 'em">';
+    if (it.type === "veg") h += '<select id="skp-veg" aria-label="Planting type">' + VEG.map(function (x) { return '<option value="' + x[0] + '"' + ((it.kind || "tree") === x[0] ? " selected" : "") + ">" + x[1] + "</option>"; }).join("") + '</select><label class="sk-check">' + (measured() ? "Spread" : "Size") + ' <input type="number" id="skp-vr" min="0.01" step="any" style="width:5.5em" value="' + (measured() ? r3(toM(2 * (it.r || 40))) : Math.round(2 * (it.r || 40) / 4)) + '"> ' + (measured() ? "m" : "mm") + "</label>";
     if (it.type === "slope" || it.type === "north" || it.type === "wl") h += '<label class="sk-check">Size <select id="skp-s">' + [0.5, 0.75, 1, 1.5, 2, 3].map(function (v) { return '<option value="' + v + '"' + ((it.s || 1) === v ? " selected" : "") + ">×" + v + "</option>"; }).join("") + "</select></label>";
     if (it.type === "section" || it.type === "slope") h += '<button type="button" class="sk-btn" data-act="flip">Flip side</button>';
     if (it.type === "leader" || it.type === "arrow") h += '<label class="sk-check">Arrowhead <select id="skp-ah">' + (it.type === "leader" ? [[0, "None"], [-1, "Dot"], [7, "Small"], [11, "Medium"], [16, "Large"]] : [[8, "Small"], [11, "Medium"], [16, "Large"], [22, "Extra large"]]).map(function (x) { var cur = it.ah == null ? (it.type === "leader" ? 11 : 11) : it.ah; return '<option value="' + x[0] + '"' + (cur === x[0] ? " selected" : "") + ">" + x[1] + "</option>"; }).join("") + "</select></label>";
@@ -1111,6 +1171,8 @@
     liveEdit("skp-label", function (it, el) { it.label = el.value; });
     liveEdit("skp-size", function (it, el) { it.size = +el.value; });
     liveEdit("skp-s", function (it, el) { it.s = +el.value; });
+    liveEdit("skp-vr", function (it, el) { var v = parseFloat(el.value); if (!(v > 0)) return; it.r = r1(measured() ? fromM(v) / 2 : v * 4 / 2); });
+    var vsel = $("skp-veg"); if (vsel) vsel.addEventListener("change", function () { var it = byId(sel.id); if (!it) return; begin(); it.kind = this.value; style.veg = this.value; commit(); renderProps(); });
     liveEdit("skp-mask", function (it, el) { it.mask = el.checked; });
     liveEdit("skp-unit", function (it, el) { it.unit = el.value || undefined; });
     liveEdit("skp-border", function (it, el) { it.border = el.checked; });
@@ -1282,6 +1344,7 @@
       }
       pend = { pts: [[pp.x, pp.y]], cur: pp, poly: true }; renderLive(); return;
     }
+    if (t === "veg") { var qv = snapPt(p, { free: true }); drag = { type: "veg0", start: qv, temp: base("veg", { kind: style.veg || "tree", x: r1(qv.x), y: r1(qv.y), r: 40, sd: String(Math.floor(Math.random() * 1e9)), c: style.c === COLORS[0][0] ? "#2e7d32" : style.c }) }; drag.temp.id = "vtmp"; renderLive(); return; }
     if (t === "north" || t === "wl") { var qn = snapPt(p, { free: t === "wl" ? false : true }); var sn = addItem(base(t, t === "north" ? { x: qn.x, y: qn.y, rot: 0, s: 1 } : { x: qn.x, y: qn.y, s: 1, label: "WL ___ m AOD" })); selectAfterCreate(sn); if (t === "wl") setTimeout(function () { var el = $("skp-label"); if (el) { el.focus({ preventScroll: true }); el.select(); } }, 0); else { begin(); drag = { type: "move", orig: clone(sn), start: p }; } return; }
     if (DRAG2[t]) {
       var a = snapPt(p), ex = { x1: a.x, y1: a.y, x2: a.x, y2: a.y };
@@ -1357,6 +1420,7 @@
       case "seg":
         var b = snapPt(p); if (e.shiftKey) b = constrain(drag.a, b);
         drag.temp.x2 = b.x; drag.temp.y2 = b.y; renderLive(); lenStatus(drag.a, b, drag.temp.type); return;
+      case "veg0": var vk0 = drag.temp.kind, vd = /^(treel|shrubl|grassl)$/.test(vk0) ? Math.abs(p.x - drag.start.x) : dist(p, drag.start); if (vd > 8 * Math.max(k, 1)) { drag.temp.r = r1(vd); drag.sized = true; } renderLive(); vegStatus(drag.temp); return;
       case "hatch0": if (dist(p, drag.start) > 8 * Math.max(k, 1)) drag.type = "hatchR";
       /* falls through */
       case "hatchR":
@@ -1375,6 +1439,7 @@
         else if (hh === "off") { var nn = norm(it); it.o = r1((p.x - it.x1) * nn.nx + (p.y - it.y1) * nn.ny); }
         else if (hh === "anc") { var tg = itemAt(e, it.id); it.att = makeAttach(tg, p); var ap = tg ? p : snapPt(p); it.ax = r1(ap.x); it.ay = r1(ap.y); if (!tg) it.att = null; }
         else if (hh === "isz" && it.type === "inset") { it.w = r1(Math.max(40, p.x - it.x)); it.h = r1(Math.max(40, p.y - it.y)); }
+        else if (hh === "vr") { var vk = it.kind || "tree"; it.r = r1(Math.max(6, /^(treel|shrubl|grassl)$/.test(vk) ? Math.abs(p.x - it.x) : Math.hypot(p.x - it.x, p.y - it.y))); vegStatus(it); }
         else if (hh === "nrot") { var na = Math.atan2(p.x - it.x, -(p.y - it.y)) * 180 / Math.PI, nst = e.shiftKey ? 15 : 0.1; it.rot = Math.round(((Math.round(na / nst) * nst) % 360 + 360) % 360 * 10) / 10; status("North arrow at " + it.rot + "°" + (e.shiftKey ? "" : ". Hold Shift to snap to 15° steps.")); }
         else if (hh === "isrc") { it.sx = r1(p.x); it.sy = r1(p.y); }
         else if (hh === "isz") { var ar0 = drag.orig.h / drag.orig.w, nw = Math.max(10, p.x - it.x); it.w = r1(nw); it.h = r1(e.shiftKey ? Math.max(10, p.y - it.y) : nw * ar0); }
@@ -1415,6 +1480,7 @@
       case "mapsect": gLive.innerHTML = ""; setMapMode("sect"); if (d.cur && dist(d.cur, d.start) > 20) { var sa = d.start, sb = d.cur; getFine(function (g) { makeSection(sa, sb, g); }); } else mapStatus("Drag a line across the map for the section."); return;
       case "mapbox": gLive.innerHTML = ""; if (d.cur && Math.abs(d.cur.x - d.start.x) > 20 && Math.abs(d.cur.y - d.start.y) > 20) { doc().map.box = [r1(d.start.x), r1(d.start.y), r1(d.cur.x), r1(d.cur.y)]; persist(); renderAll(); afterMapMove(); } setMapMode("box"); return;
       case "marquee": gLive.innerHTML = ""; if (d.cur && Math.abs(d.cur.x - d.start.x) + Math.abs(d.cur.y - d.start.y) > 4) setSel(d.base.concat(inBox(d.start, d.cur))); else if (!d.add) setSel([]); return;
+      case "veg0": var vt = d.temp; drag = null; delete vt.id; var vit = base("veg", {}); for (var vq in vt) vit[vq] = vt[vq]; renderLive(); selectAfterCreate(addItem(vit)); return;
       case "seg": renderLive(); if (Math.hypot(d.temp.x2 - d.temp.x1, d.temp.y2 - d.temp.y1) < 6) return; var it = addItem(d.temp); if (it.type !== "line") selectAfterCreate(it); if (it.type === "udl" || it.type === "dim") setTimeout(function () { var el = $("skp-label"); if (el) el.focus({ preventScroll: true }); }, 0); return;
       case "hatch0":
         if (hatchBy === "pick") { pickHatch(d.raw || d.start); return; }
@@ -2590,7 +2656,7 @@
   }
   $("sk-legedit").addEventListener("click", openLeg);
   document.addEventListener("keydown", function (e) { if (e.key === "Escape" && legDlg) closeLeg(); });
-  var NAMES_ALL = { line: "Line", member: "Member", stroke: "Pen stroke", text: "Text", dim: "Dimension", leader: "Leader", hatch: "Hatch", udl: "UDL", pload: "Point load", moment: "Moment", support: "Support", inset: "Detail or viewport", image: "Image", arrow: "Arrow", rect: "Rectangle", circle: "Circle", poly: "Polygon", cloud: "Revision cloud", brk: "Break line", slope: "Slope marker", section: "Section marker", north: "North arrow", wl: "Water level" };
+  var NAMES_ALL = { line: "Line", member: "Member", stroke: "Pen stroke", text: "Text", dim: "Dimension", leader: "Leader", hatch: "Hatch", udl: "UDL", pload: "Point load", moment: "Moment", support: "Support", inset: "Detail or viewport", image: "Image", arrow: "Arrow", rect: "Rectangle", circle: "Circle", poly: "Polygon", cloud: "Revision cloud", brk: "Break line", slope: "Slope marker", section: "Section marker", veg: "Vegetation", north: "North arrow", wl: "Water level" };
   svg.addEventListener("contextmenu", ctxMenu);
   document.addEventListener("pointerdown", function (e) { if (ctxEl && !ctxEl.contains(e.target)) closeCtx(); }, true);
   document.addEventListener("keydown", function (e) { if (e.key === "Escape" && ctxEl) closeCtx(); }, true);
