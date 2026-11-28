@@ -864,6 +864,8 @@
   function placeTools() {
     var t = $("sk-tools"), slot = $("sk-tbslot"), bar = $("sk-tbar"); if (!t || !slot) return;
     var row = app.querySelector(".sk-toolrow");
+    var act = $("sk-head"), side = $("sk-side"), r1w = app.querySelector(".sk-row1"); /* undo, redo, clear, export and full screen: under Layers and map on wide screens */
+    if (act && side && r1w) { if (isMob()) { if (act.parentNode !== r1w) r1w.appendChild(act); act.classList.remove("sk-sideacts"); } else { if (act.parentNode !== side) side.appendChild(act); act.classList.add("sk-sideacts"); } }
     if (isMob()) { if (t.parentNode !== row) row.insertBefore(t, row.firstChild); bar.hidden = true; return; }
     if (t.parentNode !== slot) slot.appendChild(t);
     bar.hidden = false; var w = tbState(), fl = !!w.float;
