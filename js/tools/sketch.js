@@ -284,8 +284,8 @@
   function hpath(it) { return poly(it.pts) + (it.holes || []).map(poly).join(""); }
   function opath(pts) { return "M" + pts.map(function (p) { return p[0] + " " + p[1]; }).join("L"); }
   function poly(pts) { return "M" + pts.map(function (p) { return p[0] + " " + p[1]; }).join("L") + "Z"; }
-  function patId(pat, c, sc) { return "hp-" + pat + "-" + c.replace(/[^0-9a-z]/gi, "") + (sc && sc !== 1 ? "-s" + String(sc).replace(".", "_") : ""); }
-  function patDef(pat, c, sc) { var d0 = patDef0(pat, c); return sc && sc !== 1 ? d0.replace('<pattern id="' + patId(pat, c) + '"', '<pattern id="' + patId(pat, c, sc) + '" patternTransform="scale(' + sc + ')"') : d0; }
+  function patId(pat, c, sc, an) { return "hp-" + pat + "-" + c.replace(/[^0-9a-z]/gi, "") + (sc && sc !== 1 ? "-s" + String(sc).replace(".", "_") : "") + (an ? "-a" + String(an).replace("-", "m").replace(".", "_") : ""); }
+  function patDef(pat, c, sc, an) { var d0 = patDef0(pat, c), tf = (an ? "rotate(" + an + ") " : "") + (sc && sc !== 1 ? "scale(" + sc + ")" : ""); return tf ? d0.replace('<pattern id="' + patId(pat, c) + '"', '<pattern id="' + patId(pat, c, sc, an) + '" patternTransform="' + tf.trim() + '"') : d0; }
   function patDef0(pat, c) {
     var id = patId(pat, c), L = function (d, w) { return '<path d="' + d + '" stroke="' + c + '" stroke-width="' + (w || 1) + '" fill="none" stroke-linecap="round"/>'; }, body, s;
     if (pat === "diag") { s = 14; body = L("M0 14L14 0M-4 4L4 -4M10 18L18 10"); }
@@ -335,7 +335,7 @@
       case "stroke": return '<path d="' + smooth(it.pts) + '" fill="none" stroke="' + c + '" stroke-width="' + it.w + '" stroke-linecap="round" stroke-linejoin="round"' + dash(it.ls, it.w) + "/>";
       case "line": case "member": return ln(it.x1, it.y1, it.x2, it.y2, c, it.w, it.ls);
       case "hatch":
-        return '<path d="' + hpath(it) + '" fill-rule="evenodd" fill="url(#' + patId(it.pat, c, it.ps) + ')" stroke="' + (it.outline ? it.oc || c : "none") + '" stroke-width="' + (it.w || 2) + '" stroke-linejoin="round"' + (it.outline ? dash(it.ls, it.w || 2) : "") + "/>";
+        return '<path d="' + hpath(it) + '" fill-rule="evenodd" fill="url(#' + patId(it.pat, c, it.ps, it.ha) + ')" stroke="' + (it.outline ? it.oc || c : "none") + '" stroke-width="' + (it.w || 2) + '" stroke-linejoin="round"' + (it.outline ? dash(it.ls, it.w || 2) : "") + "/>";
       case "support":
         o = '<g transform="translate(' + it.x + " " + it.y + ") rotate(" + (it.rot || 0) + ')" stroke="' + c + '" fill="none" stroke-linecap="round" stroke-linejoin="round">';
         var ground = function (y) { var g = '<path d="M-24 ' + y + "H24"; for (i = -18; i <= 24; i += 8) g += "M" + i + " " + y + "l-7 8"; return g + '" stroke-width="1.6"/>'; };
@@ -428,17 +428,29 @@
     { id: "phi", name: "Priority habitats", kind: "fs", url: NE + "Priority_Habitats_Inventory_England/FeatureServer/0", src: "Natural England, Priority Habitats Inventory", stroke: "#7a9a2b", fill: "#9bbf3b", fo: 0.12, attr: "Contains Natural England data © Natural England" },
     { id: "rivers", name: "OS Open Rivers (2017 copy)", kind: "fs", url: "https://services3.arcgis.com/Bb8lfThdhugyc4G3/ArcGIS/rest/services/OSOpenRiversCaBA2017/FeatureServer/0", src: "OS Open Rivers 2017, hosted by the Catchment Based Approach (CaBA). OS publishes the current version only as a download.", stroke: "#3f6fd1", line: true, attr: "Contains OS data © Crown copyright and database right" }
   ];
-  var SCALES = [1, 2, 5, 10, 20, 25, 50, 100, 200, 250, 500, 1000, 1250, 2000, 2500, 5000, 10000];
+  /* Environment Agency flood data (England), drawn by the EA's own WMS services in the EA's own colours;
+     the legend shows the EA's published key for each (its GetLegendGraphic image). */
+  var EAA = "© Environment Agency copyright and/or database right 2025. All rights reserved. Open Government Licence v3.0";
+  var EA = "https://environment.data.gov.uk/spatialdata/", EAG = "https://environment.data.gov.uk/geoservices/datasets/", EAL = "/wms?service=WMS&version=1.3.0&request=GetLegendGraphic&format=image%2Fpng&width=20&height=20&layer=";
+  MAPL = MAPL.concat([
+    { id: "eafz", grp: "Flood (Environment Agency, England)", name: "Flood Zones 2 and 3", kind: "wms", mpp: 1, url: EA + "flood-map-for-planning-flood-zones/wms", layer: "Flood_Zones_2_3_Rivers_and_Sea", leg: EAG + "04532375-a198-476e-985e-0579a0a11b47" + EAL + "Flood_Zones_2_3_Rivers_and_Sea", src: "Environment Agency, Flood Map for Planning (Rivers and Sea): Flood Zones 2 and 3. Ignores flood defences.", attr: "Flood zones: " + EAA },
+    { id: "earofsw", name: "Surface water flood risk (extent)", kind: "wms", mpp: 1, maxN: 50000, url: EA + "nafra2-risk-of-flooding-from-surface-water/wms", layer: "rofsw", leg: EAG + "b5aaa28d-6eb9-460e-8d6f-43caa71fbe0e" + EAL + "rofsw", src: "Environment Agency, Risk of Flooding from Surface Water (NaFRA2), flood extent. Shown at 1:50,000 or larger.", attr: "Surface water flood risk: " + EAA },
+    { id: "eafsa", name: "Flood storage areas", kind: "wms", mpp: 1, url: EA + "flood-map-for-planning-rivers-and-sea-flood-storage-areas/wms", layer: "Flood_Map_for_Planning_Rivers_and_Sea_Flood_Storage_Areas", leg: EAG + "86ca7c80-d465-11e4-afe1-f0def148f590" + EAL + "Flood_Map_for_Planning_Rivers_and_Sea_Flood_Storage_Areas", src: "Environment Agency, Flood Map for Planning (Rivers and Sea): flood storage areas", attr: "Flood storage areas: " + EAA },
+    { id: "eahfm", name: "Historic flood map", kind: "wms", mpp: 1, url: EA + "historic-flood-map/wms", layer: "Historic_Flood_Map", leg: EAG + "889885c0-d465-11e4-9507-f0def148f590" + EAL + "Historic_Flood_Map", src: "Environment Agency, Historic Flood Map: the maximum extent of recorded floods", attr: "Historic flood map: " + EAA },
+    { id: "eafwa", name: "Flood warning areas", kind: "wms", mpp: 1, url: EA + "flood-warning-areas/wms", layer: "Flood_Warning_Areas", leg: EAG + "87e5d78f-d465-11e4-9343-f0def148f590" + EAL + "Flood_Warning_Areas", src: "Environment Agency, Flood Warning Areas", attr: "Flood warning areas: " + EAA }
+  ]);
+  var SCALES = [1, 2, 5, 10, 20, 25, 50, 100, 200, 250, 500, 1000, 1250, 2000, 2500, 5000, 10000, 20000, 25000, 50000, 100000, 200000]; /* out to 1:200,000 for catchment and location plans */
+  function nS(n) { return "1:" + Number(n).toLocaleString("en-GB"); }
   function toM(u, N0) { var N = N0 || doc().dscale; return N ? u / 4 * N / 1000 : u / GRID * (doc().scale || 0.2); }
   function fromM(m) { var N = doc().dscale; return N ? m * 1000 / N * 4 : m / (doc().scale || 0.2) * GRID; }
-  function fmtM(m) { var a = Math.abs(m); return a >= 1 || !doc().dscale ? (Math.round(m * 100) / 100) + " m" : Math.round(m * 1000) + " mm"; }
+  function fmtM(m) { var a = Math.abs(m); if (a >= 10000) return (Math.round(m / 10) / 100) + " km"; return a >= 1 || !doc().dscale ? (Math.round(m * 100) / 100) + " m" : Math.round(m * 1000) + " mm"; }
   function measured() { return !!doc().dscale || mode === "struct"; }
   function loopsOf(it) { if (it.type === "circle") return null; if (it.type === "rect" || it.type === "cloud") { var o = outlineOf({ type: "rect", x1: it.x1, y1: it.y1, x2: it.x2, y2: it.y2 }); return [o.slice(0, 4)]; } return [it.pts].concat(it.holes || []); }
   function shoelace(L) { var a = 0; for (var i = 0; i < L.length; i++) { var p = L[i], q = L[(i + 1) % L.length]; a += p[0] * q[1] - q[0] * p[1]; } return Math.abs(a / 2); }
   function areaOf(it) { if (it.type === "circle") { var R = Math.hypot(it.x2 - it.x1, it.y2 - it.y1); return Math.PI * R * R; } var ls = loopsOf(it); return Math.max(0, shoelace(ls[0]) - ls.slice(1).reduce(function (s2, L) { return s2 + shoelace(L); }, 0)); }
   function perimOf(it) { if (it.type === "circle") return 2 * Math.PI * Math.hypot(it.x2 - it.x1, it.y2 - it.y1); return loopsOf(it).reduce(function (s2, L) { for (var i = 0; i < L.length; i++) { var p = L[i], q = L[(i + 1) % L.length]; s2 += Math.hypot(q[0] - p[0], q[1] - p[1]); } return s2; }, 0); }
   function centroidOf(it) { if (it.type === "circle") return { x: it.x1, y: it.y1 }; var L = loopsOf(it)[0], x = 0, y = 0; L.forEach(function (q) { x += q[0]; y += q[1]; }); return { x: x / L.length, y: y / L.length }; }
-  function fmtArea(u2, N0) { var m1 = toM(1, N0), a = u2 * m1 * m1; return a >= 10000 ? (Math.round(a / 100) / 100) + " ha (" + Math.round(a).toLocaleString("en-GB") + " m²)" : a >= 100 ? Math.round(a).toLocaleString("en-GB") + " m²" : (Math.round(a * 100) / 100) + " m²"; }
+  function fmtArea(u2, N0) { var m1 = toM(1, N0), a = u2 * m1 * m1; if (a >= 1e6) return (Math.round(a / 1e4) / 100) + " km² (" + Math.round(a / 1e4).toLocaleString("en-GB") + " ha)"; return a >= 10000 ? (Math.round(a / 100) / 100) + " ha (" + Math.round(a).toLocaleString("en-GB") + " m²)" : a >= 100 ? Math.round(a).toLocaleString("en-GB") + " m²" : (Math.round(a * 100) / 100) + " m²"; }
   function scaleAt(x, y) { var N = 0; doc().items.forEach(function (o) { if (o.type === "inset" && o.blank && x >= o.x && x <= o.x + o.w && y >= o.y && y <= o.y + o.h) N = o.N; }); return N || doc().dscale; }
   function dimAuto(it) { var m = toM(Math.hypot(it.x2 - it.x1, it.y2 - it.y1), scaleAt((it.x1 + it.x2) / 2, (it.y1 + it.y2) / 2)); return it.unit === "mm" ? Math.round(m * 1000) + "" : it.unit === "m" ? (Math.round(m * 1000) / 1000) + " m" : fmtM(m); }
   /* Vegetation stamps: drawn from the item's radius with a fixed pseudo-random pattern seeded by its id,
@@ -515,7 +527,7 @@
   /* Detail windows: a framed view of the drawing and map at a larger scale. The enlarged copy is drawn
      outside the item's own group, so selecting and moving the window works on its frame alone. */
   function insetN(it) { var N = doc().dscale; return it.blank ? it.N : N ? Math.round(N / (it.k || 2)) : 0; }
-  function insetScale(it) { var N = insetN(it); return N ? "1:" + N : "×" + (it.k || 2); }
+  function insetScale(it) { var N = insetN(it); return N ? nS(N) : "×" + (it.k || 2); }
   function insetFrame(it) {
     var c = it.c || "#15233a";
     /* viewports and details: title top left and scale bar bottom left, inside the box on a white mask */
@@ -621,6 +633,16 @@
   }
 
   /* ---------- Build the page ---------- */
+  /* Each drawing tool's cursor is a fine crosshair (the point that draws) with the tool's own icon beside it. */
+  var curCache = {};
+  function toolCursor(t) {
+    if (!IC[t] || t === "select" || t === "xform") return "auto";
+    if (curCache[t]) return curCache[t];
+    var ic = IC[t].replace(/currentColor/g, "#15233a");
+    var sv = '<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32"><g stroke="#fff" stroke-width="3" stroke-linecap="round"><path d="M8 1v5M8 10v5M1 8h5M10 8h5"/></g><g stroke="#15233a" stroke-width="1.2" stroke-linecap="round"><path d="M8 1v5M8 10v5M1 8h5M10 8h5"/></g>' +
+      '<rect x="13.5" y="13.5" width="18" height="18" rx="3" fill="#fff" fill-opacity="0.92" stroke="#15233a" stroke-opacity="0.35"/><g transform="translate(15 15) scale(0.625)" fill="none" stroke="#15233a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' + ic + "</g></svg>";
+    return (curCache[t] = 'url("data:image/svg+xml,' + encodeURIComponent(sv).replace(/'/g, "%27") + '") 8 8, crosshair');
+  }
   function iconSvg(name) { return '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="stroke:currentColor">' + IC[name] + "</svg>"; }
   var app = $("sk-app");
   app.innerHTML =
@@ -642,6 +664,7 @@
       '<div class="sk-group" data-ctx="veg"><label class="sk-lab" for="sk-veg">Planting</label><select id="sk-veg">' + VEG.map(function (l) { return '<option value="' + l[0] + '">' + l[1] + "</option>"; }).join("") + "</select></div>" +
       '<div class="sk-group" data-ctx="hatch"><label class="sk-lab" for="sk-pat">Hatch</label><select id="sk-pat">' + PATS.map(function (l) { return '<option value="' + l[0] + '">' + l[1] + "</option>"; }).join("") + "</select>" +
         '<label class="sr-only" for="sk-hsc">Hatch scale</label><select id="sk-hsc" title="Hatch pattern scale">' + [0.1, 0.25, 0.5, 0.75, 1, 1.5, 2, 3, 4].map(function (v) { return '<option value="' + v + '">×' + v + "</option>"; }).join("") + "</select>" +
+        '<label class="sr-only" for="sk-hang">Hatch angle</label><select id="sk-hang" title="Hatch pattern angle">' + [0, 15, 30, 45, 60, 75, 90, 105, 120, 135, 150, 165].map(function (v) { return '<option value="' + v + '">' + v + "°</option>"; }).join("") + "</select>" +
         '<label class="sr-only" for="sk-hby">Hatch by</label><select id="sk-hby"><option value="pick">Click inside an area</option><option value="shape">Draw a shape</option></select></div>' +
       '<p class="small" id="sk-ctxhint" hidden>Pick a drawing tool or select something to see its line, text and hatch options.</p>' +
     "</div>" +
@@ -654,7 +677,7 @@
       '<button type="button" class="sk-btn" id="sk-legedit" title="Build a legend from the line types and hatches on the drawing">Legend editor</button>' +
       '<label class="sk-check">Watermark <select id="sk-wm"><option value="">None</option><option>DRAFT</option><option>NOT FOR CONSTRUCTION</option><option>PRELIMINARY</option><option>FOR INFORMATION</option><option value="*">Your own text…</option></select></label><input type="text" id="sk-wmtext" placeholder="Watermark text" hidden style="width:12em">' +
       '<label class="sk-check"><input type="checkbox" id="sk-grid"> Grid</label>' +
-      '<label class="sk-check">Scale <select id="sk-dscale"><option value="0">Not to scale</option>' + SCALES.map(function (n) { return '<option value="' + n + '">1:' + n + "</option>"; }).join("") + '</select></label><span class="small" id="sk-gridinfo"></span><label class="sk-check" id="sk-sbar-l"><input type="checkbox" id="sk-sbar"> Scale bar</label>' +
+      '<label class="sk-check">Scale <select id="sk-dscale"><option value="0">Not to scale</option>' + SCALES.map(function (n) { return '<option value="' + n + '">' + nS(n) + "</option>"; }).join("") + '</select></label><span class="small" id="sk-gridinfo"></span><label class="sk-check" id="sk-sbar-l"><input type="checkbox" id="sk-sbar"> Scale bar</label>' +
       '<label class="sk-check" id="sk-gsq">Grid square = <input type="number" id="sk-scale" min="0.01" step="0.05" style="width:5.5em"> m</label>' +
       '<span class="sk-snapwrap"><label class="sk-check"><input type="checkbox" id="sk-snap"> Snap</label><details class="sk-snapmenu"><summary>Snaps</summary><div>' +
         SNAPS.map(function (x) { return '<label class="sk-check"><input type="checkbox" data-snap="' + x[0] + '"> ' + x[1] + "</label>"; }).join("") + '<p class="small">Hold Alt to draw without snapping.</p></div></details></span>' +
@@ -674,11 +697,11 @@
         '<button type="button" class="sk-btn" id="sk-mapea" title="Fetch the EA 1 m LiDAR DTM for the map area (England only)">EA LiDAR</button><button type="button" class="sk-btn" id="sk-mapfile-b" title="Load a terrain grid you have downloaded, e.g. from the EA survey portal">Load LiDAR file</button><input type="file" id="sk-mapfile" accept=".asc,.txt,.tif,.tiff" hidden></div>' +
       '<div class="sk-maprow"><span class="sk-lab">From the terrain</span><button type="button" class="sk-btn" id="sk-mapsect" aria-pressed="false" title="Drag a line on the map to draw a ground section from the LiDAR">Draw section</button><button type="button" class="sk-btn" id="sk-mapcatch" aria-pressed="false" title="Click a ditch, stream or low point to outline the land that drains to it">Find catchment</button><button type="button" class="sk-btn" id="sk-mapfall" aria-pressed="false" title="Click on the map to add an arrow showing which way the ground falls there, with its gradient">Fall arrow</button><label class="sk-check"><input type="checkbox" id="sk-mapflow"> Flow lines</label></div>' +
       '<p class="small">Find catchment works like the Catchment runoff tool: it shows the flow lines, then outlines the land draining to the point you click, with the longest flow path and outlet. It uses EA LiDAR, or your file if you loaded one with Load LiDAR file.</p>' +
-      '<div class="sk-maprow sk-maplayers"><span class="sk-lab">Layers</span>' + MAPL.map(function (L) { return '<label class="sk-check" title="' + esc(L.src) + '"><input type="checkbox" data-ml="' + L.id + '"> ' + L.name + "</label>"; }).join("") +
+      '<div class="sk-maprow sk-maplayers"><span class="sk-lab">Layers</span>' + MAPL.map(function (L) { return (L.grp ? '<span class="sk-lab sk-mlgrp">' + L.grp + "</span>" : "") + '<label class="sk-check" title="' + esc(L.src) + '"><input type="checkbox" data-ml="' + L.id + '"> ' + L.name + ' <span data-mls="' + L.id + '"></span></label>'; }).join("") +
         '<label class="sk-check sk-wide">ArcGIS layer URL <input type="url" id="sk-mlurl" placeholder="FeatureServer/0 or Hub dataset link"></label><button type="button" class="sk-btn" id="sk-mladd">Add layer</button><button type="button" class="sk-btn" id="sk-mlgj-b">Load GeoJSON</button><input type="file" id="sk-mlgj" accept=".geojson,.json" hidden></div>' +
-      '<div id="sk-mlextra" class="sk-maprow"></div>' +
+      '<p id="sk-mlmsg" class="sk-mlmsg" role="status" hidden></p><div id="sk-mlextra" class="sk-maprow"></div>' +
       '<div class="sk-maprow"><label class="sk-check"><input type="checkbox" id="sk-mapleg"> Legend for the layers</label><label class="sk-check">at <select id="sk-maplegpos"><option value="br">bottom right</option><option value="bl">bottom left</option><option value="tr">top right</option><option value="tl">top left</option></select></label></div>' +
-      '<p class="small">Grid north up, centred on the drawing frame (or the map area you draw) at the drawing scale. Map tiles come from OpenStreetMap (or Esri World Imagery for satellite), terrain from the Environment Agency, postcodes from postcodes.io, geology from BGS and designations from Natural England, so the location is sent to them. <strong>EA LiDAR covers England only.</strong> Files you load stay in this browser. Contours, designations and geology are indicative: check them against the source before relying on them. © OpenStreetMap contributors (ODbL). LiDAR © Environment Agency, OGL. Contains Natural England data © Natural England, OGL. Contains British Geological Survey materials © UKRI, OGL. Contains OS data © Crown copyright and database right, OGL.</p>' +
+      '<p class="small">Grid north up, centred on the drawing frame (or the map area you draw) at the drawing scale. Map tiles come from OpenStreetMap (or Esri World Imagery for satellite), terrain from the Environment Agency, postcodes from postcodes.io, geology and rock unit names from BGS, designations from Natural England and the flood layers from the Environment Agency, so the location is sent to them. Layers you add from a link are fetched from the service that link points to. <strong>EA LiDAR covers England only.</strong> Files you load stay in this browser. Contours, designations, geology and flood layers are indicative: check them against the source before relying on them. © OpenStreetMap contributors (ODbL). LiDAR © Environment Agency, OGL. Contains Natural England data © Natural England, OGL. Contains British Geological Survey materials © UKRI, OGL. Flood data © Environment Agency copyright and/or database right 2025, OGL. Contains OS data © Crown copyright and database right, OGL.</p>' +
     "</div>" +
     "</div>" +
     '<div class="sk-tabs" id="sk-tabs" role="tablist" aria-label="Sheets"></div>' +
@@ -695,11 +718,22 @@
      properties above it, so the drawing sits at the top of the screen without scrolling. */
   (function () {
     function mk(tag, cls, html) { var e = document.createElement(tag); if (cls) e.className = cls; if (html) e.innerHTML = html; return e; }
-    function sec(name, title, open, nodes) { var dd = mk("details", "sk-sec"); dd.dataset.sec = name; var st = null; try { st = localStorage.getItem("cp-sketch-sec-" + name); } catch (e) {} dd.open = st == null ? open : st === "1"; dd.appendChild(mk("summary", "", title)); var body = mk("div", "sk-sec-body"); dd.appendChild(body); nodes.forEach(function (n) { if (n) body.appendChild(n); }); dd.addEventListener("toggle", function () { if (dd.open && window.innerWidth > 1000) Array.prototype.forEach.call(document.querySelectorAll(".sk-side > details.sk-sec"), function (o) { if (o !== dd && o.open) o.open = false; }); /* one section open at a time, so the side bar fits without scrolling */ try { localStorage.setItem("cp-sketch-sec-" + name, dd.open ? "1" : "0"); } catch (e) {} if (window.innerWidth > 1000) fitSheet(); }); return dd; }
+    function sec(name, title, open, nodes) {
+      var dd = mk("details", "sk-sec"); dd.dataset.sec = name; var st = null; try { st = localStorage.getItem("cp-sketch-sec-" + name); } catch (e) {}
+      var sum = mk("summary", "", title); dd.appendChild(sum);
+      var body = mk("div", "sk-sec-body"), head = mk("div", "sk-win-h"), inner = mk("div", "sk-sec-in");
+      head.innerHTML = '<span class="sk-win-t">' + title + '</span><button type="button" class="sk-win-b" data-win="pin" aria-pressed="false" title="Pin: keep this window open while you draw" aria-label="Pin window"><svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><path d="M6 1h4v1l-1 1v4l2 2v1H8.6L8 15l-.6-5H5V9l2-2V3L6 2z" fill="currentColor"/></svg></button><button type="button" class="sk-win-b" data-win="x" title="Close" aria-label="Close window">×</button>';
+      body.appendChild(head); body.appendChild(inner); dd.appendChild(body);
+      nodes.forEach(function (n) { if (n) inner.appendChild(n); });
+      var ws = winState(name); if (ws.pin == null) ws.pin = !!open; dd.open = isMob() ? (st == null ? open : st === "1") : ws.pin;
+      sum.addEventListener("click", function (e) { if (isMob()) return; e.preventDefault(); if (dd.open) closeWin(dd); else openWin(dd); });
+      dd.addEventListener("toggle", function () { if (isMob()) try { localStorage.setItem("cp-sketch-sec-" + name, dd.open ? "1" : "0"); } catch (e) {} });
+      wireWin(dd, head); return dd;
+    }
     var head = $("sk-head"), top = head.querySelector(".sk-top"), modes = top.querySelector(".sk-seg"), toolrow = head.querySelector(".sk-toolrow"), styleEl = head.querySelector(".sk-style:not(.sk-sheetopts)"), sheet = head.querySelector(".sk-sheetopts"), layers = sheet.querySelector(".sk-layers"), mp = $("sk-mappanel");
     var side = mk("aside", "sk-side"); side.id = "sk-side"; side.setAttribute("aria-label", "Tools and options");
     side.appendChild(modes); side.appendChild(toolrow);
-    var all = toolrow.querySelector("#sk-tools2"), tpl = toolrow.querySelector("#sk-tpl"), allSec = sec("alltools", "All tools", false, [all]); allSec.classList.add("sk-alltools"); side.appendChild(allSec); side.appendChild(tpl);
+    var all = toolrow.querySelector("#sk-tools2"), tpl = toolrow.querySelector("#sk-tpl"), allSec = sec("alltools", "All tools", false, [mk("p", "small sk-alltip", "Click ☆ on a tool to star it onto the toolbar."), all]); allSec.classList.add("sk-alltools"); side.appendChild(allSec); side.appendChild(tpl);
     side.appendChild(sec("style", "Style", true, [styleEl]));
     side.appendChild(sec("sheet", "Sheet", false, [sheet]));
     side.appendChild(sec("layers", "Layers and map", false, [layers, mp]));
@@ -709,7 +743,10 @@
     top.querySelector(".sk-actions").appendChild($("sk-fit")); top.querySelector(".sk-actions").appendChild($("sk-full"));
     var hint = mk("p", "small sk-hint"); hint.id = "sk-hint";
     var row1 = mk("div", "sk-row1"); row1.appendChild($("sk-tabs")); row1.appendChild(top); /* sheet tabs and the undo/export bar share one row */
-    [$("sk-props"), row1, $("sk-stage"), hint, $("sk-status")].forEach(function (n) { main.appendChild(n); });
+    var tbar = mk("div", "sk-tbar"); tbar.id = "sk-tbar"; tbar.setAttribute("role", "group"); tbar.setAttribute("aria-label", "Starred tools");
+    tbar.innerHTML = '<button type="button" class="sk-tbar-grip" id="sk-tbgrip" title="Drag to move the toolbar anywhere" aria-label="Move toolbar"><svg viewBox="0 0 8 16" width="8" height="16" aria-hidden="true"><g fill="currentColor"><circle cx="2" cy="3" r="1.2"/><circle cx="6" cy="3" r="1.2"/><circle cx="2" cy="8" r="1.2"/><circle cx="6" cy="8" r="1.2"/><circle cx="2" cy="13" r="1.2"/><circle cx="6" cy="13" r="1.2"/></g></svg></button><div class="sk-tbar-slot" id="sk-tbslot"></div>' +
+      '<div class="sk-tbar-end"><button type="button" class="sk-btn sk-tbar-all" id="sk-tball" title="All tools: star the ones you want on this toolbar">All tools</button><button type="button" class="sk-win-b" id="sk-tbvert" aria-pressed="false" title="Stand the toolbar up as a column" aria-label="Vertical toolbar" hidden>⇅</button><button type="button" class="sk-win-b" id="sk-tbdock" title="Put the toolbar back along the top" aria-label="Dock toolbar at the top" hidden>⤒</button></div>';
+    [$("sk-props"), row1, tbar, $("sk-stage"), hint, $("sk-status")].forEach(function (n) { main.appendChild(n); });
     var lay = mk("div", "sk-layout"); lay.appendChild(side); lay.appendChild(main);
     head.remove(); app.innerHTML = ""; app.appendChild(lay);
     top.id = "sk-head"; /* the bar above the sheet: kept in view on wide screens */
@@ -720,7 +757,7 @@
   function contentStr(forExport) {
     var d = doc(), pats = {}, s = "";
     d.items.forEach(function (it) {
-      if (it.type === "hatch") pats[patId(it.pat, it.c, it.ps)] = patDef(it.pat, it.c, it.ps);
+      if (it.type === "hatch") pats[patId(it.pat, it.c, it.ps, it.ha)] = patDef(it.pat, it.c, it.ps, it.ha);
       if (it.type === "inset") s += forExport ? insetBody(it) : '<g pointer-events="none">' + insetBody(it) + "</g>";
       s += forExport ? draw(it) : '<g data-id="' + it.id + '"' + (isOn(it) ? ' class="sk-on"' : "") + '><g class="v">' + draw(it) + "</g>" + (locked(it) ? "" : hit(it)) + "</g>";
     });
@@ -731,17 +768,17 @@
       '<pattern id="sk-g5" width="100" height="100" patternUnits="userSpaceOnUse"><rect width="100" height="100" fill="url(#sk-g1)"/><path d="M100 0H0V100" fill="none" stroke="#c9d4d3" stroke-width="1"/></pattern>';
   }
   function gridStr() { var g = geo().inner; return '<rect x="' + g.x + '" y="' + g.y + '" width="' + g.w + '" height="' + g.h + '" fill="url(#sk-g5)"/>'; }
-  function tbGet(key) { var d = doc(), m = /^r\.(\d+)\.(\w+)$/.exec(key); if (m) return ((d.revs || [])[+m[1]] || {})[m[2]] || ""; if (key === "note") return d.tb.note == null ? (d.dscale ? NOTE_SC : NOTE) : d.tb.note; if (key === "scale") return d.tb.scale == null ? (d.dscale ? "1:" + d.dscale + " at " + (d.paper || "A4") : "NTS") : d.tb.scale; return d.tb[key] || ""; }
+  function tbGet(key) { var d = doc(), m = /^r\.(\d+)\.(\w+)$/.exec(key); if (m) return ((d.revs || [])[+m[1]] || {})[m[2]] || ""; if (key === "note") return d.tb.note == null ? (d.dscale ? NOTE_SC : NOTE) : d.tb.note; if (key === "scale") return d.tb.scale == null ? (d.dscale ? nS(d.dscale) + " at " + (d.paper || "A4") : "NTS") : d.tb.scale; return d.tb[key] || ""; }
   function tbSet(key, v) { var d = doc(), m = /^r\.(\d+)\.(\w+)$/.exec(key); if (m) { d.revs = d.revs || []; while (d.revs.length <= +m[1]) d.revs.push({ rev: "", date: "", desc: "", by: "" }); d.revs[+m[1]][m[2]] = v; } else d.tb[key] = v; }
   /* Scale bar: a round length of about 60 to 100 mm on paper, in alternate black and white blocks. */
   function scaleBar(G, d) { return sbarAt(G.inner.x + 16, G.inner.y + G.inner.h - (d.map ? 34 : 22), d.dscale, 320, " at " + (d.paper || "A4")); }
   function sbarAt(x0, y0, N, maxW, extra, mask) {
     var mPerU = N / 4000, target = maxW * mPerU, p10 = Math.pow(10, Math.floor(Math.log10(target))), L = [1, 2, 5, 10].map(function (x) { return x * p10; }).filter(function (x) { return x <= target * 1.25; }).pop() || p10;
     var n = /^[15]/.test(String(L / p10)) ? 5 : 4, seg = L / n / mPerU, c = "#15233a", o = '<g class="sk-sbar">';
-    if (mask) o += '<rect x="' + r1(x0 - 10) + '" y="' + r1(y0 - 17) + '" width="' + r1(n * seg + 24 + tw("1:" + N + (extra || ""), 8.5)) + '" height="29" fill="#fff" fill-opacity="0.92" stroke="' + c + '" stroke-width="0.6"/>';
+    if (mask) o += '<rect x="' + r1(x0 - 10) + '" y="' + r1(y0 - 17) + '" width="' + r1(n * seg + 24 + tw(nS(N) + (extra || ""), 8.5)) + '" height="29" fill="#fff" fill-opacity="0.92" stroke="' + c + '" stroke-width="0.6"/>';
     for (var i = 0; i < n; i++) o += '<rect x="' + r1(x0 + i * seg) + '" y="' + y0 + '" width="' + r1(seg) + '" height="6" fill="' + (i % 2 ? "#fff" : c) + '" stroke="' + c + '" stroke-width="0.8"/>';
     var lab = function (v) { return v >= 1000 ? v / 1000 + " km" : v >= 1 ? +v.toFixed(2) + " m" : Math.round(v * 1000) + " mm"; };
-    o += txt(x0, y0 - 4, "0", c, 9, "middle") + txt(x0 + n * seg / 2, y0 - 4, lab(L / 2), c, 9, "middle") + txt(x0 + n * seg, y0 - 4, lab(L), c, 9, "middle") + txt(x0 + n * seg + 10, y0 + 6, "1:" + N + (extra || ""), "#5a6677", 8.5, "start");
+    o += txt(x0, y0 - 4, "0", c, 9, "middle") + txt(x0 + n * seg / 2, y0 - 4, lab(L / 2), c, 9, "middle") + txt(x0 + n * seg, y0 - 4, lab(L), c, 9, "middle") + txt(x0 + n * seg + 10, y0 + 6, nS(N) + (extra || ""), "#5a6677", 8.5, "start");
     return o + "</g>";
   }
   function frameStr(forExport) {
@@ -806,8 +843,42 @@
     var shown = !view.hidden && !isFull(), on = shown && !isMob(), mob = !view.hidden && isMob(), h = document.documentElement, was = h.classList.contains("sk-lock");
     if (on !== was) h.classList.toggle("sk-lock", on);
     if (mob !== h.classList.contains("sk-mob")) { h.classList.toggle("sk-mob", mob); if (!mob) side0().classList.remove("sk-drawer"); }
+    placeTools();
     if (on || (mob && !isFull())) { if (window.scrollY) window.scrollTo(0, 0); var lay = app.querySelector(".sk-layout"); if (lay) app.style.setProperty("--sk-avail", Math.max(360, Math.floor(window.innerHeight - lay.getBoundingClientRect().top - 10)) + "px"); }
   }
+  /* Starred tools: on wide screens they sit in a toolbar along the top of the sheet (one or two rows). Drag
+     its grip to float it anywhere; it stays where you leave it, can stand up as a column, and ⤒ docks it again.
+     On phones they stay in the strip along the bottom. */
+  function tbState() { try { return JSON.parse(localStorage.getItem("cp-sketch-tbar")) || {}; } catch (e) { return {}; } }
+  function tbSave(w) { try { localStorage.setItem("cp-sketch-tbar", JSON.stringify(w)); } catch (e) {} }
+  function placeTools() {
+    var t = $("sk-tools"), slot = $("sk-tbslot"), bar = $("sk-tbar"); if (!t || !slot) return;
+    var row = app.querySelector(".sk-toolrow");
+    if (isMob()) { if (t.parentNode !== row) row.insertBefore(t, row.firstChild); bar.hidden = true; return; }
+    if (t.parentNode !== slot) slot.appendChild(t);
+    bar.hidden = false; var w = tbState(), fl = !!w.float;
+    bar.classList.toggle("sk-tbar-float", fl); bar.classList.toggle("sk-tbar-vert", fl && !!w.vert);
+    $("sk-tbdock").hidden = !fl; $("sk-tbvert").hidden = !fl; $("sk-tbvert").setAttribute("aria-pressed", !!w.vert);
+    if (fl) { var bw = bar.offsetWidth || 200, bh = bar.offsetHeight || 50; bar.style.left = Math.max(4, Math.min(w.x || 0, window.innerWidth - bw - 4)) + "px"; bar.style.top = Math.max(4, Math.min(w.y || 0, window.innerHeight - bh - 4)) + "px"; }
+    else { bar.style.left = ""; bar.style.top = ""; }
+  }
+  (function () {
+    var grip = $("sk-tbgrip"), bar = $("sk-tbar");
+    grip.addEventListener("pointerdown", function (e) {
+      if (e.button !== 0) return; e.preventDefault();
+      var r = bar.getBoundingClientRect(), ox = e.clientX - r.left, oy = e.clientY - r.top, moved = false; grip.setPointerCapture(e.pointerId);
+      var mv = function (ev) {
+        if (!moved && Math.hypot(ev.clientX - e.clientX, ev.clientY - e.clientY) < 4) return;
+        if (!moved) { moved = true; var w = tbState(); w.float = true; tbSave(w); bar.classList.add("sk-tbar-float"); $("sk-tbdock").hidden = false; $("sk-tbvert").hidden = false; fitSheet(); }
+        var br = bar.getBoundingClientRect(); bar.style.left = Math.max(4, Math.min(window.innerWidth - br.width - 4, ev.clientX - ox)) + "px"; bar.style.top = Math.max(4, Math.min(window.innerHeight - br.height - 4, ev.clientY - oy)) + "px";
+      };
+      var up = function () { grip.removeEventListener("pointermove", mv); grip.removeEventListener("pointerup", up); grip.removeEventListener("pointercancel", up); if (moved) { var w = tbState(); w.x = parseFloat(bar.style.left); w.y = parseFloat(bar.style.top); tbSave(w); } };
+      grip.addEventListener("pointermove", mv); grip.addEventListener("pointerup", up); grip.addEventListener("pointercancel", up);
+    });
+    $("sk-tbdock").addEventListener("click", function () { var w = tbState(); w.float = false; tbSave(w); placeTools(); fitSheet(); });
+    $("sk-tbvert").addEventListener("click", function () { var w = tbState(); w.vert = !w.vert; tbSave(w); placeTools(); });
+    $("sk-tball").addEventListener("click", function () { var d = app.querySelector('details.sk-sec[data-sec="alltools"]'); if (!d) return; if (isMob()) { d.open = true; setDrawer(true); return; } if (d.open) closeWin(d); else openWin(d); });
+  })();
   /* the site bar and tool links stay at the top; only the sketch pad's own panels scroll */
   window.addEventListener("scroll", function () { var hc = document.documentElement.classList; if ((hc.contains("sk-lock") || hc.contains("sk-mob")) && window.scrollY) window.scrollTo(0, 0); });
   function side0() { return $("sk-side") || document.createElement("div"); }
@@ -821,19 +892,53 @@
     if (document.documentElement.classList.contains("sk-lock") || document.documentElement.classList.contains("sk-mob") || full) { var sh = stage.clientHeight - (isMob() ? 10 : 22); if (sh > 120) svg.style.maxWidth = Math.max(320, sh * G.W / G.H) + "px"; } /* the stage fills what's left of the column */
     flyCheck();
   }
-  /* A side section too long for the side bar opens as a panel beside it, its options flowed into columns,
-     so nothing needs scrolling. Closing the section (click its heading again) puts it back. */
-  function unfly(d) { var b = d.querySelector(".sk-sec-body"); d.classList.remove("sk-fly"); if (b) b.removeAttribute("style"); }
+  /* On wide screens each side section opens as a small window beside the side bar instead of dropping
+     down inside it. Drag its title bar to move it; the pin keeps it open while you draw (otherwise it closes
+     when you click on the sheet or open another section); × closes it. Position and pin are remembered. */
+  var winZ = 40;
+  /* Style starts pinned open; the rest start closed */
+  function winState(name) { var w = null; try { w = JSON.parse(localStorage.getItem("cp-sketch-win-" + name)); } catch (e) {} w = w || {}; if (w.pin == null) w.pin = name === "style"; return w; }
+  function winSave(dd, patch) { var w = winState(dd.dataset.sec); for (var k in patch) w[k] = patch[k]; try { localStorage.setItem("cp-sketch-win-" + dd.dataset.sec, JSON.stringify(w)); } catch (e) {} }
+  function unfly(d) { var b = d.querySelector(".sk-sec-body"), n = d.querySelector(".sk-sec-in"); d.classList.remove("sk-fly"); if (b) b.removeAttribute("style"); if (n) n.removeAttribute("style"); }
+  function openWin(dd) {
+    Array.prototype.forEach.call(document.querySelectorAll(".sk-side > details.sk-sec[open]"), function (o) { if (o !== dd && !winState(o.dataset.sec).pin) closeWin(o); });
+    dd.classList.add("sk-fly"); dd.open = true; placeWin(dd); /* laid out before the browser paints, so it never shows dropping down first */
+  }
+  function closeWin(dd) { dd.open = false; unfly(dd); }
+  function placeWin(dd) {
+    var b = dd.querySelector(".sk-sec-body"), n = dd.querySelector(".sk-sec-in"), h = dd.querySelector(".sk-win-h"), side = $("sk-side"), w = winState(dd.dataset.sec);
+    var pin = h.querySelector('[data-win="pin"]'); pin.setAttribute("aria-pressed", !!w.pin);
+    var r = side.getBoundingClientRect(), x = w.x != null ? w.x : r.right + 8, y = w.y != null ? w.y : Math.max(r.top, 8), VW = window.innerWidth, VH = window.innerHeight;
+    b.style.zIndex = ++winZ;
+    b.style.left = "0px"; b.style.top = "0px"; b.style.width = Math.max(320, VW - 16) + "px";
+    var hh = h.offsetHeight, H = Math.max(200, VH - 16 - hh - 22); n.style.height = H + "px";
+    var mx = 0, my = 0, n0 = n.getBoundingClientRect(); Array.prototype.forEach.call(n.querySelectorAll("*"), function (c) { var q = c.getBoundingClientRect(); if (q.width) { if (q.right > mx) mx = q.right; if (q.bottom > my) my = q.bottom; } });
+    var cw = Math.min(VW - 16, Math.max(300, mx - n0.left + 30)); n.style.height = Math.min(H, Math.max(60, my - n0.top + 16)) + "px"; /* + the bottom padding (border-box) */ b.style.width = cw + "px";
+    var bw = b.offsetWidth, bh = b.offsetHeight;
+    if (w.x == null) { var tb = $("sk-tbar"), tr = tb && !tb.hidden && !tb.classList.contains("sk-tbar-float") ? tb.getBoundingClientRect() : null; x = VW - bw - 16; if (tr) y = tr.bottom + 8; } /* first time: top right, under the toolbar */
+    x = Math.max(8, Math.min(x, VW - bw - 8)); y = Math.max(8, Math.min(y, VH - bh - 8));
+    b.style.left = x + "px"; b.style.top = y + "px";
+  }
+  function wireWin(dd, head) {
+    var body = head.parentNode;
+    body.addEventListener("pointerdown", function () { if (dd.classList.contains("sk-fly")) body.style.zIndex = ++winZ; });
+    head.addEventListener("click", function (e) { var b = e.target.closest("[data-win]"); if (!b) return;
+      if (b.dataset.win === "x") closeWin(dd); else { var on = !winState(dd.dataset.sec).pin; winSave(dd, { pin: on }); b.setAttribute("aria-pressed", on); } });
+    head.addEventListener("pointerdown", function (e) {
+      if (e.button !== 0 || e.target.closest("[data-win]") || !dd.classList.contains("sk-fly")) return; e.preventDefault();
+      var r = body.getBoundingClientRect(), ox = e.clientX - r.left, oy = e.clientY - r.top; head.setPointerCapture(e.pointerId); head.classList.add("sk-drag");
+      var mv = function (ev) { var x = Math.max(4, Math.min(window.innerWidth - r.width - 4, ev.clientX - ox)), y = Math.max(4, Math.min(window.innerHeight - r.height - 4, ev.clientY - oy)); body.style.left = x + "px"; body.style.top = y + "px"; };
+      var up = function () { head.removeEventListener("pointermove", mv); head.removeEventListener("pointerup", up); head.removeEventListener("pointercancel", up); head.classList.remove("sk-drag"); winSave(dd, { x: parseFloat(body.style.left), y: parseFloat(body.style.top) }); };
+      head.addEventListener("pointermove", mv); head.addEventListener("pointerup", up); head.addEventListener("pointercancel", up);
+    });
+  }
   function flyCheck() {
     var side = $("sk-side"); if (!side) return;
-    var secs = side.querySelectorAll(".sk-side > details.sk-sec"), wide = window.innerWidth > 1000, d = null;
-    Array.prototype.forEach.call(secs, function (o) { if (o.open && wide && !d) d = o; else if (o.classList.contains("sk-fly")) unfly(o); });
-    if (!d) return;
-    if (!d.classList.contains("sk-fly")) { if (side.scrollHeight <= side.clientHeight + 1) return; d.classList.add("sk-fly"); }
-    var b = d.querySelector(".sk-sec-body"), r = side.getBoundingClientRect(), left = r.right + 8, top = Math.max(r.top, 4), H = Math.max(240, Math.min(r.bottom, window.innerHeight - 8) - top), avail = Math.max(300, window.innerWidth - left - 16);
-    b.style.left = left + "px"; b.style.top = top + "px"; b.style.height = H + "px"; b.style.width = avail + "px";
-    var mx = left; Array.prototype.forEach.call(b.querySelectorAll("*"), function (c) { var q = c.getBoundingClientRect(); if (q.width && q.right > mx) mx = q.right; });
-    b.style.width = Math.min(avail, mx - left + 16) + "px";
+    Array.prototype.forEach.call(side.querySelectorAll(".sk-side > details.sk-sec"), function (o) {
+      if (isMob()) { if (o.classList.contains("sk-fly")) unfly(o); return; }
+      if (!o.open) { if (o.classList.contains("sk-fly")) unfly(o); return; }
+      var z = o.querySelector(".sk-sec-body").style.zIndex; o.classList.add("sk-fly"); placeWin(o); if (z) o.querySelector(".sk-sec-body").style.zIndex = z;
+    });
   }
   function measureK() { var w = svg.getBoundingClientRect().width; k = w ? geo().W / w : 1; }
   /* Zoom and pan move the sheet itself about the grey desk, like sliding a sheet of paper: the wheel (or a
@@ -969,15 +1074,16 @@
   function pinsFor(md) { S.pins = S.pins || {}; return S.pins[md] || PIN_DEF[md].slice(); }
   function togglePin(id) { var p = pinsFor(mode), i = p.indexOf(id); if (i > -1) { if (p.length > 1) p.splice(i, 1); } else p.push(id); S.pins[mode] = p; persist(); renderTools(); }
   function renderTools() {
-    var tb = function (t, pinUI) { var pinned = pinUI && pinsFor(mode).indexOf(t[0]) > -1; return '<button type="button" class="sk-tool" data-tool="' + t[0] + '" aria-pressed="' + (tool[mode] === t[0]) + '" title="' + esc(HINTS[t[0]]) + '">' + iconSvg(t[0]) + "<span>" + t[1] + "</span>" + (pinUI ? '<span class="sk-pin' + (pinned ? " on" : "") + '" data-pin="' + t[0] + '" role="button" tabindex="0" title="' + (pinned ? "Unpin from" : "Pin to") + ' the tools at the top" aria-label="' + (pinned ? "Unpin " : "Pin ") + t[1] + '">' + (pinned ? "★" : "☆") + "</span>" : "") + "</button>"; };
+    var tb = function (t, pinUI) { var pinned = pinUI && pinsFor(mode).indexOf(t[0]) > -1; return '<button type="button" class="sk-tool' + (toolLock === t[0] ? " sk-locked" : "") + '" data-tool="' + t[0] + '" aria-pressed="' + (tool[mode] === t[0]) + '" title="' + esc(HINTS[t[0]]) + '">' + iconSvg(t[0]) + "<span>" + t[1] + "</span>" + (pinUI ? '<span class="sk-pin' + (pinned ? " on" : "") + '" data-pin="' + t[0] + '" role="button" tabindex="0" title="' + (pinned ? "Unpin from" : "Pin to") + ' the tools at the top" aria-label="' + (pinned ? "Unpin " : "Pin ") + t[1] + '">' + (pinned ? "★" : "☆") + "</span>" : "") + "</button>"; };
     var all = TOOLS[mode].concat(TOOLS.shapes), byT = {}; all.forEach(function (t) { byT[t[0]] = t; });
     $("sk-tools").innerHTML = pinsFor(mode).filter(function (id) { return byT[id]; }).map(function (id) { return tb(byT[id]); }).join("");
     $("sk-tools2").innerHTML = all.map(function (t) { return tb(t, true); }).join("");
     $("sk-ermode").hidden = tool[mode] !== "eraser";
     Array.prototype.forEach.call(app.querySelectorAll("[data-mode]"), function (b) { b.setAttribute("aria-pressed", b.dataset.mode === mode); });
     Array.prototype.forEach.call(app.querySelectorAll("[data-only]"), function (el) { el.hidden = el.dataset.only !== mode; });
-    stage.dataset.tool = tool[mode];
+    stage.dataset.tool = tool[mode]; stage.style.setProperty("--sk-cur", toolCursor(tool[mode]));
     updateCtx();
+    var aw = app.querySelector('details.sk-sec[data-sec="alltools"]'); if (aw && aw.open && aw.classList.contains("sk-fly")) { var z = aw.querySelector(".sk-sec-body").style.zIndex; placeWin(aw); aw.querySelector(".sk-sec-body").style.zIndex = z; }
   }
   $("sk-swatches").innerHTML = COLORS.map(function (c) { return '<button type="button" class="sk-sw" data-color="' + c[0] + '" style="background:' + c[0] + '" title="' + c[1] + '" aria-label="' + c[1] + '"></button>'; }).join("");
   $("sk-widths").innerHTML = WIDTHS.map(function (w) { return '<button type="button" class="sk-chip" data-w="' + w[0] + '" title="' + w[1] + '" aria-label="' + w[1] + '"><i style="height:' + Math.min(w[0], 10) + 'px"></i></button>'; }).join("");
@@ -994,7 +1100,7 @@
     Array.prototype.forEach.call(app.querySelectorAll("[data-snap]"), function (c) { c.checked = !!S.snaps[c.dataset.snap]; c.disabled = !d.snap; });
     $("sk-show-draw").checked = d.showDraw; $("sk-lock-draw").checked = d.lockDraw; $("sk-show-under").checked = d.showUnder; $("sk-lock-under").checked = d.lockUnder;
     Array.prototype.forEach.call(app.querySelectorAll("[data-paper]"), function (b) { b.setAttribute("aria-pressed", b.dataset.paper === (d.paper || "A4")); });
-    $("sk-showframe").checked = d.frame !== false; $("sk-tbs").value = d.tbs || "medium"; $("sk-rev").checked = !!d.showRev; $("sk-addrev").hidden = !d.showRev || geo().tb.off; $("sk-delrev").hidden = $("sk-addrev").hidden || !(d.revs && d.revs.length > 1); $("sk-fs").value = style.fs; $("sk-hsc").value = style.hsc || 1;
+    $("sk-showframe").checked = d.frame !== false; $("sk-tbs").value = d.tbs || "medium"; $("sk-rev").checked = !!d.showRev; $("sk-addrev").hidden = !d.showRev || geo().tb.off; $("sk-delrev").hidden = $("sk-addrev").hidden || !(d.revs && d.revs.length > 1); $("sk-fs").value = style.fs; $("sk-hsc").value = style.hsc || 1; $("sk-hang").value = style.ha || 0;
     $("sk-wm").value = d.wmc ? "*" : (d.wm || ""); $("sk-wmtext").hidden = !d.wmc; if (d.wmc && document.activeElement !== $("sk-wmtext")) $("sk-wmtext").value = d.wm || "";
     $("sk-tabs").innerHTML = S.sheets.map(function (s, i) {
       var on = i === S.cur;
@@ -1021,13 +1127,17 @@
     var b = e.target.closest("button"); if (!b || !app.contains(b)) return;
     if (b.dataset.mode) return setMode(b.dataset.mode);
     if (b.dataset.tool === "image") { $("sk-img2").click(); return; }
-    if (b.dataset.tool) return setTool(b.dataset.tool);
+    if (b.dataset.tool) { /* a second click on the same tool within 400 ms is a double-click: lock or release it (the buttons are redrawn on each click, so the browser's own dblclick can miss) */
+      var tt = b.dataset.tool, now = Date.now(), dbl = lastToolClick.t === tt && now - lastToolClick.at < 400; lastToolClick = { t: tt, at: dbl ? 0 : now };
+      if (dbl && tt !== "select" && tt !== "xform") { toolLock = toolLock === tt ? null : tt; setTool(tt); status(toolLock ? (HINTS[tt] || "") + " Locked on: double-click it again to release." : "Released: the pointer goes back to Select after each one."); return; }
+      if (toolLock !== tt) toolLock = null; return setTool(tt); }
     if (b.dataset.color) { style.c = b.dataset.color; restyle(function (it) { it.c = style.c; }); syncControls(); return; }
     if (b.dataset.w) { style.w = +b.dataset.w; restyle(function (it) { if ("w" in it) it.w = style.w; }); syncControls(); return; }
     if (b.dataset.paper) { if ((doc().paper || "A4") !== b.dataset.paper) setOrient(null, b.dataset.paper); return; }
     if (b.dataset.orient) { if (doc().orient !== b.dataset.orient) setOrient(b.dataset.orient); return; }
   });
   $("sk-fs").addEventListener("change", function () { style.fs = +this.value; restyle(function (it) { if (it.type === "text") it.size = style.fs; else if (it.type === "leader" || it.label != null || it.type === "dim") keepTL(it, function (x) { x.fs = style.fs; }); }); renderProps(); });
+  $("sk-hang").addEventListener("change", function () { style.ha = +this.value; restyle(function (it) { if (it.type === "hatch") { if (style.ha) it.ha = style.ha; else delete it.ha; } }); renderProps(); });
   $("sk-hsc").addEventListener("change", function () { style.hsc = +this.value; restyle(function (it) { if (it.type === "hatch") it.ps = style.hsc; }); renderProps(); });
   $("sk-wm").addEventListener("change", function () { var v = this.value; $("sk-wmtext").hidden = v !== "*"; begin(); doc().wm = v === "*" ? ($("sk-wmtext").value || "COPY") : v; doc().wmc = v === "*"; commit(); if (v === "*") $("sk-wmtext").focus({ preventScroll: true }); });
   $("sk-wmtext").addEventListener("input", function () { doc().wm = this.value; persist(); renderAll(); });
@@ -1124,18 +1234,19 @@
     if (it.type === "udl" || it.type === "dim") h += '<button type="button" class="sk-btn" data-act="flip">Flip side</button>';
     if (it.type === "moment") h += '<button type="button" class="sk-btn" data-act="dir">Reverse</button>';
     if (it.type === "hatch") h += '<select id="skp-pat" aria-label="Hatch pattern">' + PATS.map(function (x) { return '<option value="' + x[0] + '"' + (it.pat === x[0] ? " selected" : "") + ">" + x[1] + "</option>"; }).join("") + '</select><label class="sk-check"><input type="checkbox" id="skp-outline"' + (it.outline ? " checked" : "") + "> Outline</label>" +
-      '<label class="sk-check">Scale <select id="skp-hsc">' + [0.1, 0.25, 0.5, 0.75, 1, 1.5, 2, 3, 4].map(function (v) { return '<option value="' + v + '"' + ((it.ps || 1) === v ? " selected" : "") + ">×" + v + "</option>"; }).join("") + "</select></label>";
+      '<label class="sk-check">Scale <select id="skp-hsc">' + [0.1, 0.25, 0.5, 0.75, 1, 1.5, 2, 3, 4].map(function (v) { return '<option value="' + v + '"' + ((it.ps || 1) === v ? " selected" : "") + ">×" + v + "</option>"; }).join("") + "</select></label>" +
+      '<label class="sk-check">Angle <select id="skp-ha">' + [0, 15, 30, 45, 60, 75, 90, 105, 120, 135, 150, 165].map(function (v) { return '<option value="' + v + '"' + ((it.ha || 0) === v ? " selected" : "") + ">" + v + "°</option>"; }).join("") + "</select></label>";
     if (it.type === "leader") h += '<label class="sk-check"><input type="checkbox" id="skp-box"' + (it.nobox ? "" : " checked") + "> Box</label>";
     if (it.type === "leader" && it.att) h += '<button type="button" class="sk-btn" data-act="detach">Detach arrow</button>';
     if (it.type === "text" || it.type === "dim" || (it.type === "leader" && it.nobox)) h += '<label class="sk-check"><input type="checkbox" id="skp-mask"' + (it.mask ? " checked" : "") + "> Mask behind</label>";
     if (it.type === "dim") h += '<label class="sk-check">Units <select id="skp-unit"><option value="">Auto</option><option value="m"' + (it.unit === "m" ? " selected" : "") + '>m</option><option value="mm"' + (it.unit === "mm" ? " selected" : "") + ">mm</option></select></label>";
     if (it.type === "rect") h += '<label class="sk-check"><input type="checkbox" id="skp-rfill"' + (it.fill ? " checked" : "") + "> White fill</label>";
     if (it.type === "inset" && it.blank) {
-      h += '<label class="sk-check">Title <input type="text" id="skp-ilabel" size="12" value="' + esc(it.label || "") + '"></label><label class="sk-check">Scale <select id="skp-iN">' + SCALES.map(function (n) { return '<option value="' + n + '"' + (n === it.N ? " selected" : "") + ">1:" + n + "</option>"; }).join("") + "</select></label>" +
+      h += '<label class="sk-check">Title <input type="text" id="skp-ilabel" size="12" value="' + esc(it.label || "") + '"></label><label class="sk-check">Scale <select id="skp-iN">' + SCALES.map(function (n) { return '<option value="' + n + '"' + (n === it.N ? " selected" : "") + ">" + nS(n) + "</option>"; }).join("") + "</select></label>" +
         '<label class="sk-check"><input type="checkbox" id="skp-isbar"' + (it.sbar === false ? "" : " checked") + "> Scale bar</label>";
     }
     if (it.type === "inset" && !it.blank) {
-      var N0 = doc().dscale, ks = N0 ? SCALES.filter(function (n) { return n < N0; }).map(function (n) { return [N0 / n, "1:" + n]; }) : [1.5, 2, 3, 4, 5, 10].map(function (v) { return [v, "×" + v]; });
+      var N0 = doc().dscale, ks = N0 ? SCALES.filter(function (n) { return n < N0; }).map(function (n) { return [N0 / n, nS(n)]; }) : [1.5, 2, 3, 4, 5, 10].map(function (v) { return [v, "×" + v]; });
       if (!ks.some(function (q) { return Math.abs(q[0] - it.k) < 1e-6; })) ks.push([it.k, insetScale(it)]);
       h += '<label class="sk-check">Detail <input type="text" id="skp-ilabel" size="4" value="' + esc(it.label || "") + '"></label><label class="sk-check">Scale <select id="skp-ik">' + ks.map(function (q) { return '<option value="' + q[0] + '"' + (Math.abs(q[0] - it.k) < 1e-6 ? " selected" : "") + ">" + q[1] + "</option>"; }).join("") + "</select></label>" +
         '<label class="sk-check"><input type="checkbox" id="skp-isrc"' + (it.nosrc ? "" : " checked") + '> Mark the area on the drawing</label><label class="sk-check"><input type="checkbox" id="skp-imap"' + (it.map === false ? "" : " checked") + "> Show map</label>" + (N0 ? '<label class="sk-check"><input type="checkbox" id="skp-isbar"' + (it.sbar === false ? "" : " checked") + "> Scale bar</label>" : "");
@@ -1190,6 +1301,7 @@
     liveEdit("skp-rad", function (it, el) { var v = parseFloat(el.value); if (!(v > 0)) return; var n = norm(it), L = fromM(v); it.x2 = r1(it.x1 + n.dx * L); it.y2 = r1(it.y1 + n.dy * L); });
     liveEdit("skp-ah", function (it, el) { it.ah = +el.value; });
     liveEdit("skp-hsc", function (it, el) { it.ps = +el.value; });
+    liveEdit("skp-ha", function (it, el) { if (+el.value) it.ha = +el.value; else delete it.ha; });
     liveEdit("skp-bold", function (it, el) { it.bold = el.checked; });
     liveEdit("skp-kind", function (it, el) { it.kind = el.value; });
     liveEdit("skp-pat", function (it, el) { it.pat = el.value; });
@@ -1269,7 +1381,7 @@
   }
   function deleteSel() { var l = selList().filter(function (x) { return !locked(x); }), ids = l.map(function (x) { return x.id; }); syncLeaders(); doc().items = doc().items.filter(function (x) { return ids.indexOf(x.id) < 0; }); sel = null; }
   function selectItem(it) { sel = it ? { k: "item", id: it.id } : null; renderContent(); renderProps(); }
-  function base(type, extra) { var o = { id: newId(), type: type, c: style.c }; if (/^(leader|pload|udl|moment|dim)$/.test(type)) o.fs = style.fs; if (type === "hatch" && style.hsc && style.hsc !== 1) o.ps = style.hsc; for (var p in extra) o[p] = extra[p]; return o; }
+  function base(type, extra) { var o = { id: newId(), type: type, c: style.c }; if (/^(leader|pload|udl|moment|dim)$/.test(type)) o.fs = style.fs; if (type === "hatch" && style.hsc && style.hsc !== 1) o.ps = style.hsc; if (type === "hatch" && style.ha) o.ha = style.ha; for (var p in extra) o[p] = extra[p]; return o; }
   function addItem(it) { begin(); doc().items.push(it); commit(); return it; }
   function constrain(a, p) { var dx = p.x - a.x, dy = p.y - a.y, ang = Math.round(Math.atan2(dy, dx) / (Math.PI / 4)) * (Math.PI / 4), L = Math.hypot(dx, dy); return { x: r1(a.x + Math.cos(ang) * L), y: r1(a.y + Math.sin(ang) * L) }; }
   function nextSectionLetter() { var used = doc().items.filter(function (x) { return x.type === "section"; }).map(function (x) { return x.label; }), L = "ABCDEFGHJKLMNPQRSTUVWXYZ"; for (var i = 0; i < L.length; i++) if (used.indexOf(L[i]) < 0) return L[i]; return "A"; }
@@ -1278,9 +1390,21 @@
     if (!pend) return; var pts = pend.pts; pend = null; renderLive();
     if (pts.length >= 3) { var it = addItem(base("hatch", { pts: pts, pat: style.pat, outline: true, w: Math.min(style.w, 4), ls: style.ls })); selectAfterCreate(it); }
   }
-  function selectAfterCreate(it) { sel = { k: "item", id: it.id }; renderContent(); renderProps(); }
+  function selectAfterCreate(it) { sel = { k: "item", id: it.id }; renderContent(); renderProps(); backToSelect(); }
+  /* After placing something the pointer goes back to Select. Double-click a tool to keep it on for
+     placing several in a row (it shows a lock); double-click it again, or pick another tool, to release it. */
+  var toolLock = null;
+  function backToSelect() { var t = tool[mode]; if (t === "select" || t === "xform" || t === "eraser" || toolLock === t) return; setTool("select"); status("Back to Select. Double-click a tool to keep it on for placing several."); }
+  var lastToolClick = {};
 
+  var lastDown = {};
   svg.addEventListener("pointerdown", function (e) { closeFly(); closeCtx(); if (e.button === 2) return;
+    /* double-click with Select on an item: text opens for editing, anything else opens its formatting window
+       where you clicked. Detected here because the item is redrawn after the first click, so the browser's
+       own dblclick event doesn't reach it. */
+    var nowD = Date.now(), gD = e.target.closest && e.target.closest("[data-id]"), dblD = e.button === 0 && tool[mode] === "select" && gD && lastDown.id === gD.dataset.id && nowD - lastDown.at < 450 && Math.hypot(e.clientX - lastDown.x, e.clientY - lastDown.y) < 6;
+    lastDown = dblD ? {} : { id: gD && gD.dataset.id, at: nowD, x: e.clientX, y: e.clientY };
+    if (dblD) { var itD = byId(gD.dataset.id); if (itD && !locked(itD)) { e.preventDefault(); if (drag) { drag = null; } if (itD.type === "text" || itD.type === "leader") { selectItem(itD); focusText(); } else { setSel([itD]); var ev = { target: gD, clientX: e.clientX, clientY: e.clientY, preventDefault: function () {} }; setTimeout(function () { ctxMenu(ev); }, 0); } return; } }
     if (e.button === 1 || (e.button === 0 && spaceDown)) { e.preventDefault(); try { svg.setPointerCapture(e.pointerId); } catch (er) {} drag = { type: "zpan", cx: e.clientX, cy: e.clientY, v: zv ? { s: zv.s, tx: zv.tx, ty: zv.ty } : null }; stage.classList.add("sk-panning"); return; }
     if (e.button !== 0) return;
     measureK();
@@ -1473,7 +1597,7 @@
     if (snapHit) { snapHit = null; showSnap(); }
     if (!drag) return; var d = drag; drag = null;
     switch (d.type) {
-      case "pen": d.el.remove(); addItem(d.item); return;
+      case "pen": d.el.remove(); addItem(d.item); backToSelect(); return;
       case "mappan": mapPanning = false; mapKeyV = ""; renderAll(); persist(); afterMapMove(); mapStatus("Map moved to " + doc().map.e + ", " + doc().map.n + "."); return;
       case "zpan": return;
       case "inset0": gLive.innerHTML = ""; if (d.cur) (d.blank ? makeWindow : makeInset)(d.start, d.cur); return;
@@ -1481,7 +1605,7 @@
       case "mapbox": gLive.innerHTML = ""; if (d.cur && Math.abs(d.cur.x - d.start.x) > 20 && Math.abs(d.cur.y - d.start.y) > 20) { doc().map.box = [r1(d.start.x), r1(d.start.y), r1(d.cur.x), r1(d.cur.y)]; persist(); renderAll(); afterMapMove(); } setMapMode("box"); return;
       case "marquee": gLive.innerHTML = ""; if (d.cur && Math.abs(d.cur.x - d.start.x) + Math.abs(d.cur.y - d.start.y) > 4) setSel(d.base.concat(inBox(d.start, d.cur))); else if (!d.add) setSel([]); return;
       case "veg0": var vt = d.temp; drag = null; delete vt.id; var vit = base("veg", {}); for (var vq in vt) vit[vq] = vt[vq]; renderLive(); selectAfterCreate(addItem(vit)); return;
-      case "seg": renderLive(); if (Math.hypot(d.temp.x2 - d.temp.x1, d.temp.y2 - d.temp.y1) < 6) return; var it = addItem(d.temp); if (it.type !== "line") selectAfterCreate(it); if (it.type === "udl" || it.type === "dim") setTimeout(function () { var el = $("skp-label"); if (el) el.focus({ preventScroll: true }); }, 0); return;
+      case "seg": renderLive(); if (Math.hypot(d.temp.x2 - d.temp.x1, d.temp.y2 - d.temp.y1) < 6) return; var it = addItem(d.temp); if (it.type !== "line") selectAfterCreate(it); else backToSelect(); if (it.type === "udl" || it.type === "dim") setTimeout(function () { var el = $("skp-label"); if (el) el.focus({ preventScroll: true }); }, 0); return;
       case "hatch0":
         if (hatchBy === "pick") { pickHatch(d.raw || d.start); return; }
         pend = { pts: [[d.start.x, d.start.y]], cur: d.start }; renderLive(); return;
@@ -1493,7 +1617,9 @@
   window.addEventListener("pointercancel", function () { if (drag && drag.el) drag.el.remove(); drag = null; renderLive(); if (before !== null) commit(); });
   svg.addEventListener("dblclick", function (e) {
     if (pend) { e.preventDefault(); if (pend.poly) finishPoly(); else finishHatch(); return; }
-    var g = e.target.closest("[data-id]"); if (g) { var it = byId(g.dataset.id); if (it && (it.type === "text" || it.type === "leader") && !locked(it)) { selectItem(it); focusText(); } }
+    var g = e.target.closest("[data-id]"); if (!g || !svg.contains(g)) { var hitEl = document.elementFromPoint(e.clientX, e.clientY); g = hitEl && hitEl.closest && hitEl.closest("[data-id]"); } /* the item may have been redrawn between the two clicks */
+    if (g) { var it = byId(g.dataset.id); if (it && (it.type === "text" || it.type === "leader") && !locked(it)) { selectItem(it); focusText(); return; }
+      if (it && !locked(it) && tool[mode] === "select") { setSel([it]); ctxMenu(e); } } /* double-click anything else: its formatting window, where you clicked */
   });
 
   document.addEventListener("keydown", function (e) {
@@ -1621,7 +1747,27 @@
       });
     })();
   }
+  /* Before exporting: if the drawing has a legend and some of its line types or hatches aren't in it,
+     say which, with a choice to add them, open the legend editor, or export as it is. */
   $("sk-export").addEventListener("click", function () {
+    var d = doc(), off = false; try { off = localStorage.getItem("cp-sketch-legwarn") === "off"; } catch (e) {}
+    var inUse = (d.legItems || []).length || mapLegOn(), have = {}; (d.legItems || []).forEach(function (L) { have[legKey(L)] = 1; });
+    var miss = inUse && !off ? legFound().filter(function (F) { return !have[legKey(F.L)]; }) : [];
+    if (!miss.length) return doExport();
+    closeCtx(); closeFly(); var dl = document.createElement("div"); dl.className = "sk-dlg sk-legwarn"; dl.setAttribute("role", "dialog"); dl.setAttribute("aria-label", "Check the legend");
+    dl.innerHTML = '<div class="sk-dlg-h"><b>Check the legend before exporting</b><button type="button" class="sk-win-b" data-lw="x" aria-label="Close">×</button></div><p class="small">' + miss.length + " line type" + (miss.length > 1 ? "s or hatches on the drawing aren't" : " or hatch on the drawing isn't") + ' in the legend:</p><div class="sk-lg-list">' +
+      miss.map(function (F) { return '<div class="sk-lg-row">' + legSvg(F.L) + '<span class="sk-lg-t">' + esc(legDefault(F.L)) + " <i>(" + esc(Object.keys(F.types).join(", ")) + ")</i></span></div>"; }).join("") +
+      '</div><div class="sk-lg-foot" style="flex-wrap:wrap;gap:8px"><button type="button" class="btn" data-lw="add">Add them and export</button><button type="button" class="sk-btn" data-lw="edit">Open the legend editor</button><button type="button" class="sk-btn" data-lw="go">Export as it is</button><label class="sk-check"><input type="checkbox" data-lw="off"> Don\'t check again</label></div>';
+    app.appendChild(dl);
+    dl.addEventListener("click", function (e) {
+      var b = e.target.closest("[data-lw]"); if (!b || b.tagName === "INPUT") return;
+      if (dl.querySelector('input[data-lw="off"]').checked) try { localStorage.setItem("cp-sketch-legwarn", "off"); } catch (er) {}
+      dl.remove(); var w = b.dataset.lw;
+      if (w === "add") { begin(); d.legItems = (d.legItems || []).concat(miss.map(function (F) { var L = {}; for (var k in F.L) L[k] = F.L[k]; L.t = legDefault(F.L); return L; })); commit(); renderAll(); setTimeout(doExport, 50); }
+      else if (w === "edit") openLeg(); else if (w === "go") doExport();
+    });
+  });
+  function doExport() {
     var f = $("sk-fmt").value, G = geo(), fail = function () { status("Couldn't export in this browser. Try SVG instead."); };
     if (f === "svg") return download(new Blob([exportSvg()], { type: "image/svg+xml" }), fname("svg"));
     if (f === "dxf") { try { var dx = exportDxf(); download(new Blob([dx.text], { type: "application/dxf" }), fname("dxf")); status(dx.note); } catch (er) { status("Couldn't build the DXF: " + er.message); } return; }
@@ -1629,7 +1775,7 @@
     if (miss) setTimeout(function () { status(miss + " map tile" + (miss > 1 ? "s hadn't" : " hadn't") + " finished loading, so they're blank in this export. Wait a moment and export again."); }, 1500);
     if (f === "png" || f === "jpeg") raster(exportSvg(), G.W, G.H, 2, "image/" + f, 0.92, function (b) { if (!b) return fail(); status(""); download(b, fname(f === "jpeg" ? "jpg" : "png")); });
     else exportPdf(f === "pdfall", function (b) { if (!b) return fail(); status(f === "pdfall" ? S.sheets.length + " sheets saved as one PDF, one A4 page each." : ""); download(b, fname("pdf", f === "pdfall")); });
-  });
+  }
 
   /* ---------- Map backdrop: OpenStreetMap tiles and EA LiDAR contours ----------
      The sheet is laid out in British National Grid, grid north up, with the centre of the drawing frame
@@ -1657,7 +1803,8 @@
         if (mapPanning) return; /* fetched again when the drag ends */
         /* BGS draws the 1:50k geology only at 1:25,000 or smaller, so ask for no more than about 6 m per pixel */
         var url = wmsUrl(L);
-        var src = tileCache[url] || (forExport ? "" : url); if (!forExport) cacheTile(url); if (!src) { mapMissing++; return; }
+        if (!forExport && !wmsState(L, url)) return;
+        var src = tileCache[url] || (forExport ? "" : url); if (!src) { mapMissing++; return; }
         o += '<image href="' + esc(src) + '" x="' + r1(I.x) + '" y="' + r1(I.y) + '" width="' + r1(I.w) + '" height="' + r1(I.h) + '" preserveAspectRatio="none" opacity="' + (m.lop || 0.6) + '"/>';
         return;
       }
@@ -1665,15 +1812,25 @@
       o += '<g fill="' + (L.line ? "none" : L.fill || "#3f6fd1") + '" fill-opacity="' + (L.fo || 0.12) + '" fill-rule="evenodd" stroke="' + (L.stroke || "#3f6fd1") + '" stroke-width="' + (L.line ? 1.6 : 1.1) + '"' + (L.dash ? ' stroke-dasharray="' + L.dash + '"' : "") + ' stroke-linejoin="round">';
       lay.f.forEach(function (f) { if (f.p) { var pp = P(f.p).split(" "); o += '<circle cx="' + pp[0] + '" cy="' + pp[1] + '" r="4" fill-opacity="0.85"/>'; return; } o += '<path d="' + f.r.map(function (rg) { return "M" + rg.map(P).join("L") + (L.line ? "" : "Z"); }).join("") + '"/>'; });
       o += "</g>";
-      lay.f.forEach(function (f) { if (f.n && !L.line && f.r && f.r[0] && f.r[0].length > 3) { var c = f.r[0].reduce(function (a, q) { return [a[0] + q[0] / f.r[0].length, a[1] + q[1] / f.r[0].length]; }, [0, 0]), xy = P(c).split(" "); o += txt(+xy[0], +xy[1], f.n.length > 40 ? f.n.slice(0, 39) + "…" : f.n, L.stroke || "#333", 8.5, "middle", ' stroke="#fff" stroke-width="2.5" paint-order="stroke"'); } });
+      if (lay.f.length <= 200) lay.f.forEach(function (f) { if (f.n && !L.line && f.r && f.r[0] && f.r[0].length > 3) { var c = f.r[0].reduce(function (a, q) { return [a[0] + q[0] / f.r[0].length, a[1] + q[1] / f.r[0].length]; }, [0, 0]), xy = P(c).split(" "); o += txt(+xy[0], +xy[1], f.n.length > 40 ? f.n.slice(0, 39) + "…" : f.n, L.stroke || "#333", 8.5, "middle", ' stroke="#fff" stroke-width="2.5" paint-order="stroke"'); } });
     });
     return o;
   }
   /* ArcGIS feature service query for the map area, in British National Grid, simplified to the drawing scale */
+  /* How each layer is doing (loading, how many features, nothing here, or why it failed), shown beside
+     its tick box, plus a result line under Add layer for the one just added. */
+  var layerSt = {};
+  function setLSt(id, st, t) { layerSt[id] = { s: st, t: t }; badges(); }
+  function badges() {
+    var m = doc().map;
+    Array.prototype.forEach.call(app.querySelectorAll("[data-mls]"), function (el) { var id = el.dataset.mls, q = layerSt[id], on = m && m.on && m.on[id] && q; el.className = on ? "sk-mls sk-mls-" + q.s : "sk-mls"; el.textContent = on ? (q.s === "ok" ? "✓ " : q.s === "err" ? "✗ " : "") + q.t : ""; el.title = on && q.why ? q.why : ""; });
+  }
+  function mlMsg(st, t) { var el = $("sk-mlmsg"); if (!el) return; el.hidden = !t; el.className = "sk-mlmsg sk-mlmsg-" + st; el.textContent = t || ""; if (t && st !== "busy") mapStatus(t); }
+  function netWhy(er) { return er && er.name === "TypeError" ? "the service couldn't be reached. It may be offline, need a sign-in, or not let other websites read it" : er && er.name === "SyntaxError" ? "the address didn't return map data" : (er && er.message) || "unknown error"; }
   function fetchLayer(L) {
     var d = doc(), m = d.map; if (!m || !d.dscale) return; var C = mapClipM(), F = mapFrame();
     var url = L.url + "/query?where=1%3D1&geometry=" + [C.x0, C.y0, C.x1, C.y1].map(function (v) { return Math.round(v); }).join(",") + "&geometryType=esriGeometryEnvelope&inSR=27700&spatialRel=esriSpatialRelIntersects&outFields=*&returnGeometry=true&outSR=27700&maxAllowableOffset=" + (+(F.mu * 0.8).toFixed(2)) + "&geometryPrecision=1&resultRecordCount=2000&f=json";
-    mapStatus("Fetching " + L.name + "…"); var sheet = d;
+    mapStatus("Fetching " + L.name + "…"); setLSt(L.id, "busy", "loading…"); var sheet = d;
     fetch(url).then(function (r) { if (!r.ok) throw new Error("the service answered " + r.status); return r.json(); }).then(function (j) {
       if (j.error) throw new Error(j.error.message || "the service refused the request");
       var nameF = null; (j.fields || []).some(function (f) { if (/^(name|.*_name|sssi_name|name1)$/i.test(f.name) && f.type === "esriFieldTypeString") { nameF = f.name; return true; } return false; });
@@ -1682,14 +1839,40 @@
       var feats = (j.features || []).filter(function (f) { return !(f.geometry && f.geometry.x != null); }).map(function (f) { var g = f.geometry || {}, rings = g.rings || g.paths || []; return { n: nameF ? f.attributes[nameF] : null, r: rings.map(function (rg) { return rg.map(function (q) { return [Math.round((q[0] - m.e) * 10) / 10, Math.round((q[1] - m.n) * 10) / 10]; }); }) }; }).filter(function (f) { return f.r.length; });
       feats = feats.concat(pts);
       if (!sheet.map) return; sheet.map.L = sheet.map.L || {}; sheet.map.L[L.id] = { f: feats, oe: m.e, on: m.n }; persist(); renderAll();
-      mapStatus(feats.length ? feats.length + " " + L.name + " feature" + (feats.length > 1 ? "s" : "") + " in the map area." + (j.exceededTransferLimit ? " There are more than this; zoom in to see them all." : "") : "No " + L.name + " in the map area.");
-    }).catch(function (err) { mapStatus("Couldn't fetch " + L.name + ": " + err.message + "."); });
+      var okMsg = feats.length ? feats.length + " " + L.name + " feature" + (feats.length > 1 ? "s" : "") + " in the map area." + (j.exceededTransferLimit ? " There are more than this; zoom in to see them all." : "") : "No " + L.name + " in the map area. The layer works, there's just nothing from it here: move the map or check the layer covers this place.";
+      mapStatus(okMsg); setLSt(L.id, feats.length ? "ok" : "none", feats.length ? feats.length + (j.exceededTransferLimit ? "+" : "") + " shown" : "none here");
+      if (L.announce) { delete L.announce; mlMsg(feats.length ? "ok" : "none", (feats.length ? "Added " + L.name + ": " : "Added " + L.name + ". ") + okMsg.replace(/^No .*? in the map area\./, "Nothing from it in the map area yet.")); }
+    }).catch(function (err) { var why = netWhy(err); mapStatus("Couldn't fetch " + L.name + ": " + why + "."); setLSt(L.id, "err", "failed"); layerSt[L.id].why = why; badges(); if (L.announce) { delete L.announce; mlMsg("err", "Added " + L.name + " to the list, but its features didn't load: " + why + "."); } });
   }
   function refreshLayers() { var m = doc().map; if (!m || !m.on) return; mapLayers().forEach(function (L) { if (m.on[L.id] && L.kind !== "wms" && !L.local) fetchLayer(L); }); }
   function merc(lat, lon, z) { var n = 256 * Math.pow(2, z), la = lat * Math.PI / 180; return [(lon + 180) / 360 * n, (1 - Math.log(Math.tan(la) + 1 / Math.cos(la)) / Math.PI) / 2 * n]; }
-  function cacheTile(url) {
-    if (tileCache[url] || tilePending[url] || !window.fetch) return; tilePending[url] = 1;
-    fetch(url).then(function (r) { if (!r.ok) throw 0; return r.blob(); }).then(function (b) { var fr = new FileReader(); fr.onload = function () { tileCache[url] = fr.result; }; fr.readAsDataURL(b); }).catch(function () {}).then(function () { delete tilePending[url]; });
+  function cacheTile(url, cb) {
+    if (tileCache[url]) { if (cb) cb(null, tileCache[url]); return; }
+    if (tilePending[url] || !window.fetch) return; tilePending[url] = 1;
+    fetch(url).then(function (r) { if (!r.ok) throw new Error("the service answered " + r.status); return r.blob(); }).then(function (b) {
+      if (cb && b.type && !/^image\//.test(b.type)) return b.text().then(function (t) { var mm = /<(?:ows:)?(?:ServiceException|ExceptionText)[^>]*>([\s\S]*?)<\//.exec(t); throw new Error(mm ? "the service said: " + plain(mm[1]).slice(0, 160) : "the service didn't send a map image"); });
+      return new Promise(function (res) { var fr = new FileReader(); fr.onload = function () { tileCache[url] = fr.result; res(fr.result); }; fr.readAsDataURL(b); });
+    }).then(function (src) { if (cb) cb(null, src); }).catch(function (er) { if (cb) cb(er); }).then(function () { delete tilePending[url]; });
+  }
+  /* A WMS layer's state: once its image arrives, count the drawn pixels so "nothing here" can be told apart from "shown". */
+  function wmsState(L, url) {
+    var q = layerSt[L.id]; if (q && q.key === url) return q.s !== "err";
+    layerSt[L.id] = { s: "busy", t: "loading…", key: url }; badges();
+    cacheTile(url, function (er, src) {
+      if (er && er.name === "TypeError") { /* the service may just not allow scripts to read it: try it as a plain image, which the map can still show (exports may leave it out) */
+        var pr = new Image(); pr.onload = function () { layerSt[L.id] = { s: "ok", t: "shown", key: url, why: "Shown straight from the service. Its image can't be copied into exports." }; badges(); mapKeyV = ""; renderAll(); };
+        pr.onerror = function () { layerSt[L.id] = { s: "err", t: "failed", why: netWhy(er), key: url }; badges(); mapStatus("Couldn't load " + L.name + ": " + netWhy(er) + "."); mapKeyV = ""; renderAll(); }; pr.src = url; return;
+      }
+      if (er) { layerSt[L.id] = { s: "err", t: "failed", why: netWhy(er), key: url }; badges(); mapStatus("Couldn't load " + L.name + ": " + netWhy(er) + "."); mapKeyV = ""; renderAll(); return; }
+      var im = new Image(); im.onload = function () {
+        var n = 0; try { var cv = document.createElement("canvas"), w = cv.width = Math.min(256, im.naturalWidth), h = cv.height = Math.max(1, Math.round(w * im.naturalHeight / im.naturalWidth)), cx = cv.getContext("2d"); cx.drawImage(im, 0, 0, w, h); var px = cx.getImageData(0, 0, w, h).data; for (var i = 3; i < px.length; i += 4) if (px[i] > 24) n++; } catch (e2) { n = 1; }
+        var far = L.maxN && doc().dscale > L.maxN;
+        layerSt[L.id] = n ? { s: "ok", t: "shown", key: url } : { s: "none", t: far ? "zoom in" : "none here", why: far ? "The EA only draws this layer at 1:" + L.maxN.toLocaleString("en-GB") + " or larger scales." : "The layer loaded but has nothing in the map area.", key: url };
+        badges(); if (!n) mapStatus(L.name + ": " + layerSt[L.id].why); legVer++; mapKeyV = ""; renderAll();
+      };
+      im.src = src;
+    });
+    return true;
   }
   var mapMissing = 0;
   function mapStr(forExport) {
@@ -1741,10 +1924,30 @@
      One entry per layer that is switched on. Vector layers use the colours they're drawn in. For BGS
      geology the units actually showing are found by matching the colours in the fetched map image to
      the BGS service's own renderer (its published key), and listed by their BGS LEX-RCS codes. */
-  var bgsRend = {}, bgsUnits = {}, legVer = 0;
+  var bgsRend = {}, bgsUnits = {}, legVer = 0, legImgs = {}, lexN = {};
+  /* Unit names from the BGS Lexicon of Named Rock Units (its linked-data pages, in Turtle): the part of a
+     LEX-RCS code before the dash is the lexicon code, e.g. PET is the Peterborough Member. */
+  function lexName(cd) {
+    var lx = String(cd).split("-")[0].toUpperCase(); if (!/^[A-Z0-9]{1,8}$/.test(lx)) return "";
+    var q = lexN[lx]; if (q) return q.n || "";
+    try { var st = JSON.parse(localStorage.getItem("cp-lex") || "{}"); if (st[lx]) { lexN[lx] = { n: st[lx] }; return st[lx]; } } catch (e) {}
+    lexN[lx] = { busy: 1 };
+    fetch("https://data.bgs.ac.uk/id/Lexicon/NamedRockUnit/" + lx, { headers: { Accept: "text/turtle" } }).then(function (r) { if (!r.ok) throw 0; return r.text(); }).then(function (t) {
+      var mm = /skos:prefLabel\s+"([^"]+)"(?:@en)?/.exec(t) || /rdfs:label\s+"([^"]+)"/.exec(t); if (!mm) throw 0;
+      var nm = mm[1].replace(/\s*\[Obsolete[^\]]*\]/i, "").trim(); lexN[lx] = { n: nm };
+      try { var st2 = JSON.parse(localStorage.getItem("cp-lex") || "{}"); st2[lx] = nm; localStorage.setItem("cp-lex", JSON.stringify(st2)); } catch (e) {}
+      legVer++; mapKeyV = ""; renderAll();
+    }).catch(function () { lexN[lx] = { n: "" }; legVer++; mapKeyV = ""; renderAll(); });
+    return "";
+  }
+  function legImg(u) { /* the service's own key image: fetched once, measured, then drawn into the legend */
+    if (legImgs[u]) return; legImgs[u] = { busy: 1 };
+    var done = function (src) { var im = new Image(); im.onload = function () { legImgs[u] = { w: im.naturalWidth, h: im.naturalHeight }; legVer++; mapKeyV = ""; renderAll(); }; im.onerror = function () { legImgs[u] = { w: 0, err: 1 }; }; im.src = src; };
+    cacheTile(u, function (er, src) { done(er ? u : src); });
+  }
   function mapLegOn() { var d = doc(), m = d.map; return !!(m && m.show !== false && d.dscale && m.leg && RO()); }
   function legSwatch(L, x, y, sw, lh) { /* a legend entry's sample, drawn with the item renderer so it matches the drawing */
-    if (L.kind === "hatch") return '<defs>' + patDef(L.pat, L.c, L.ps) + '</defs>' + draw({ type: "hatch", pts: [[x, y + 2], [x + sw, y + 2], [x + sw, y + lh - 3], [x, y + lh - 3]], pat: L.pat, c: L.c, ps: L.ps, outline: true, w: 1, ls: "solid" });
+    if (L.kind === "hatch") return '<defs>' + patDef(L.pat, L.c, L.ps, L.ha) + '</defs>' + draw({ type: "hatch", pts: [[x, y + 2], [x + sw, y + 2], [x + sw, y + lh - 3], [x, y + lh - 3]], pat: L.pat, c: L.c, ps: L.ps, ha: L.ha, outline: true, w: 1, ls: "solid" });
     return draw({ type: "line", x1: r1(x), y1: r1(y + lh / 2), x2: r1(x + sw), y2: r1(y + lh / 2), c: L.c, w: Math.min(L.w || 2, 8), ls: L.ls || "solid" });
   }
   function legendStr(m, I, forExport) {
@@ -1754,14 +1957,23 @@
     if (m.flow !== false && m.fl && m.fl.lines.length) rows.push({ kind: "line", c: "#2f7fd6", w: 1.6, t: "Flow line from LiDAR (drains over " + (m.fl.thr >= 10000 ? (m.fl.thr / 10000).toFixed(1) + " ha" : m.fl.thr + " m²") + ")" });
     mapLayers().forEach(function (L) {
       if (!m.on || !m.on[L.id]) return;
+      if (L.kind === "wms" && L.leg) {
+        rows.push({ kind: "head", t: L.name + " (Environment Agency)" });
+        var q = layerSt[L.id], li = legImgs[L.leg];
+        if (q && (q.s === "none" || q.s === "err")) rows.push({ kind: "note", t: q.s === "err" ? "Not loaded: " + (q.why || "failed") : q.why || "Nothing in the map area" });
+        else if (li && li.w) { var src = tileCache[L.leg] || (forExport ? "" : L.leg); if (src) rows.push({ kind: "img", src: src, w: li.w * 0.8, h: li.h * 0.8, t: "" }); else rows.push({ kind: "note", t: "Key as published by the EA (not included in this export)" }); }
+        else { legImg(L.leg); rows.push({ kind: "note", t: "Reading the EA key…" }); }
+        return;
+      }
       if (L.kind === "wms") {
         var u = bgsUnits[L.id];
         var nm = L.name.replace(/^BGS /, ""); rows.push({ kind: "head", t: nm.charAt(0).toUpperCase() + nm.slice(1) + " geology (BGS 1:50,000)" });
         if (u && u.key === mapClipKey(L)) {
           if (!u.list.length) rows.push({ kind: "note", t: "No mapped units in this area" + (doc().dscale < 25000 ? " (BGS shows it only at 1:25,000 or smaller)" : "") });
-          u.list.slice(0, 14).forEach(function (q) { rows.push({ kind: "fill", c: q.c, fo: m.lop || 0.6, t: q.labels.slice(0, 3).join(", ") + (q.labels.length > 3 ? " …" : "") }); });
+          var anyName = false;
+          u.list.slice(0, 14).forEach(function (q) { var labs = q.labels.slice(0, 2).map(function (cd) { var nm = lexName(cd); if (nm) anyName = true; return nm ? nm + " (" + cd + ")" : cd; }); rows.push({ kind: "fill", c: q.c, fo: m.lop || 0.6, t: labs.join("; ") + (q.labels.length > 2 ? " …" : "") }); });
           if (u.list.length > 14) rows.push({ kind: "note", t: "+ " + (u.list.length - 14) + " more units" });
-          if (u.list.length) rows.push({ kind: "note", t: "Codes are BGS LEX-RCS: look them up in the BGS Lexicon" });
+          if (u.list.length) rows.push({ kind: "note", t: anyName ? "Names from the BGS Lexicon of Named Rock Units; codes are LEX-RCS" : "Codes are BGS LEX-RCS (the BGS Lexicon couldn't be reached for the names)" });
         } else rows.push({ kind: "note", t: u && u.err ? "Key unavailable: " + u.err : "Reading the BGS key…" });
         return;
       }
@@ -1770,8 +1982,8 @@
     (doc().legItems || []).forEach(function (L) { rows.push({ kind: "item", L: L, t: L.t || "" }); });
     if (!rows.length) return "";
     if (rows.some(function (r) { return r.kind === "item" && r.L.kind === "hatch"; })) sw = 30;
-    var w = 0; rows.forEach(function (r) { w = Math.max(w, tw(r.t, r.kind === "head" ? fs + 0.5 : r.kind === "note" ? fs - 1.5 : fs, r.kind === "head") + (r.kind === "head" || r.kind === "note" ? 0 : sw + 8)); });
-    var lh = 15, W = Math.min(I.w - 20, w + 20), H = 26 + rows.length * lh, pos = m.legpos || "br";
+    var w = 0; rows.forEach(function (r) { w = Math.max(w, r.kind === "img" ? r.w : tw(r.t, r.kind === "head" ? fs + 0.5 : r.kind === "note" ? fs - 1.5 : fs, r.kind === "head") + (r.kind === "head" || r.kind === "note" ? 0 : sw + 8)); });
+    var lh = 15, rh = function (r) { return r.kind === "img" ? r.h + 4 : lh; }, W = Math.min(I.w - 20, w + 20), H = 26 + rows.reduce(function (a, r) { return a + rh(r); }, 0), pos = m.legpos || "br";
     var x = pos[1] === "l" ? I.x + 10 : I.x + I.w - W - 10, y = pos[0] === "t" ? I.y + 10 : I.y + I.h - H - 22;
     var TB = geo().tb; if (pos === "br" && doc().frame !== false && !TB.off && x + W > TB.x && y + H > TB.y) y = Math.max(I.y + 10, TB.y - H - 10); /* keep clear of the title block */
     var D0 = doc(), G0 = geo(); if (D0.dscale && D0.sbar !== false && pos[0] === "b") { /* and stack above the sheet scale bar, never on it */
@@ -1779,8 +1991,10 @@
       if (x < sbX1 && y + H > sbY) y = Math.max(I.y + 10, sbY - H - 8);
     }
     var o = '<g><rect x="' + r1(x) + '" y="' + r1(y) + '" width="' + r1(W) + '" height="' + r1(H) + '" fill="#fff" fill-opacity="0.94" stroke="#15233a" stroke-width="1"/>' + txt(x + 10, y + 16, "LEGEND", "#15233a", fs + 1, "start", ' font-weight="bold"');
-    rows.forEach(function (r, i) {
-      var yy = y + 24 + i * lh, tx = x + 10;
+    var yc = y + 24;
+    rows.forEach(function (r) {
+      var yy = yc, tx = x + 10; yc += rh(r);
+      if (r.kind === "img") { o += '<image href="' + esc(r.src) + '" x="' + r1(tx) + '" y="' + r1(yy + 2) + '" width="' + r1(r.w) + '" height="' + r1(r.h) + '"/>'; return; }
       if (r.kind === "line") o += '<line x1="' + r1(tx) + '" y1="' + r1(yy + lh / 2) + '" x2="' + r1(tx + sw) + '" y2="' + r1(yy + lh / 2) + '" stroke="' + r.c + '" stroke-width="' + r.w + '"/>';
       if (r.kind === "fill") o += '<rect x="' + r1(tx) + '" y="' + r1(yy + 2) + '" width="' + sw + '" height="' + (lh - 5) + '" fill="' + r.c + '" fill-opacity="' + r.fo + '" stroke="' + (r.st || r.c) + '" stroke-width="' + (r.st ? 1.1 : 0.4) + '"' + (r.dash ? ' stroke-dasharray="' + r.dash + '"' : "") + "/>";
       if (r.kind === "item") o += legSwatch(r.L, tx, yy, sw, lh);
@@ -1789,7 +2003,7 @@
     });
     return o + "</g>";
   }
-  function wmsUrl(L) { var C = mapClipM(), I = C.I, px = Math.max(2, Math.min(2048, Math.round((C.x1 - C.x0) / 6))), py = Math.max(2, Math.round(px * I.h / I.w)); return L.url + "?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=" + encodeURIComponent(L.layer) + "&STYLES=&CRS=EPSG:27700&BBOX=" + [C.x0, C.y0, C.x1, C.y1].map(function (v) { return Math.round(v); }).join(",") + "&WIDTH=" + px + "&HEIGHT=" + py + "&FORMAT=image/png&TRANSPARENT=TRUE"; }
+  function wmsUrl(L) { var C = mapClipM(), I = C.I, px = Math.max(2, Math.min(2048, Math.round((C.x1 - C.x0) / Math.max(L.mpp || 6, (C.x1 - C.x0) / 2048)))), py = Math.max(2, Math.round(px * I.h / I.w)); return L.url + "?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=" + encodeURIComponent(L.layer) + "&STYLES=&CRS=EPSG:27700&BBOX=" + [C.x0, C.y0, C.x1, C.y1].map(function (v) { return Math.round(v); }).join(",") + "&WIDTH=" + px + "&HEIGHT=" + py + "&FORMAT=image/png&TRANSPARENT=TRUE"; }
   function mapClipKey(L) { return wmsUrl(L); }
   /* Find which BGS units are on the map: colours in the WMS image matched to the service renderer. */
   function updateBgsLegend() {
@@ -1800,7 +2014,9 @@
       bgsUnits[L.id] = { busy: key };
       var fail = function (er) { bgsUnits[L.id] = { key: "", err: er }; legVer++; mapKeyV = ""; renderAll(); };
       var rend = bgsRend[L.id] ? Promise.resolve(bgsRend[L.id]) : fetch(L.rest + "?f=json").then(function (r) { if (!r.ok) throw new Error("BGS answered " + r.status); return r.json(); }).then(function (j) {
-        var infos = (j.drawingInfo && j.drawingInfo.renderer && j.drawingInfo.renderer.uniqueValueInfos) || []; if (!infos.length) throw new Error("no key in the BGS service");
+        var rd = (j.drawingInfo && j.drawingInfo.renderer) || {}, infos = (rd.uniqueValueInfos || []).slice();
+        (rd.uniqueValueGroups || []).forEach(function (gp) { (gp.classes || []).forEach(function (c) { infos.push({ label: c.label || String(((c.values || [])[0] || [])[0] || ""), symbol: c.symbol }); }); }); /* newer services group the classes */
+        if (!infos.length) throw new Error("no key in the BGS service");
         return (bgsRend[L.id] = infos.map(function (v) { var c = v.symbol && v.symbol.color || [0, 0, 0, 0]; return { label: v.label || String(v.value), rgb: [c[0], c[1], c[2]] }; }));
       });
       var img = new Promise(function (res, rej) {
@@ -1892,7 +2108,7 @@
   $("sk-mapfile").addEventListener("change", function () { var f = this.files[0]; this.value = ""; if (f) loadTerrainFile(f); });
   app.addEventListener("change", function (e) {
     var id = e.target.dataset && e.target.dataset.ml; if (!id) return; var m = doc().map; if (!m) { e.target.checked = false; mapStatus("Place the map first."); return; }
-    m.on = m.on || {}; m.on[id] = e.target.checked; persist(); renderAll();
+    m.on = m.on || {}; m.on[id] = e.target.checked; persist(); renderAll(); badges();
     var L = mapLayers().filter(function (x) { return x.id === id; })[0]; if (e.target.checked && L && L.kind === "fs" && !L.local) fetchLayer(L);
   });
   /* Add a layer from an ArcGIS FeatureServer/MapServer address, or from an ArcGIS Hub or ArcGIS Online
@@ -1900,9 +2116,22 @@
   var XCOL = ["#6a3fa0", "#c2185b", "#00838f", "#ef6c00", "#5d4037", "#1565c0"];
   function addArcLayer(u, meta) {
     var m = doc().map; if (!m) return;
+    mlMsg("busy", "Checking the layer…");
+    fetch(u + "?f=json").then(function (r) { if (!r.ok) throw new Error("the service answered " + r.status); return r.json(); }).then(function (info) {
+      if (info.error) throw new Error(info.error.code === 499 || info.error.code === 498 ? "it needs a sign-in, so it isn't public" : info.error.code === 400 && /exist|invalid/i.test(info.error.message || "") ? "there's no layer at that address" : (info.error.message || "the service refused the request"));
+      if (/group layer/i.test(info.type || "")) throw new Error("that's a group of layers. Add one of these instead: " + (info.subLayers || []).slice(0, 6).map(function (q) { return q.name + " (" + u.replace(/\/\d+$/, "/" + q.id) + ")"; }).join(", "));
+      if (/^table$/i.test(info.type || "")) throw new Error("it's a table with no map shapes");
+      if (/raster/i.test(info.type || "")) throw new Error("it's a raster image layer, which the sketch pad can't draw as shapes");
+      if (info.capabilities && !/query/i.test(info.capabilities)) throw new Error("the service doesn't allow its features to be queried");
+      if (!meta || !meta.title) { meta = meta || {}; meta.title = info.name; meta.credit = meta.credit || plain(info.copyrightText).slice(0, 160); }
+      addArcLayer0(u, meta);
+    }).catch(function (er) { mlMsg("err", "Couldn't add that layer: " + netWhy(er) + "."); });
+  }
+  function addArcLayer0(u, meta) {
+    var m = doc().map; if (!m) return;
     var n = (m.extra || []).length, col = XCOL[n % XCOL.length], host = u.split("/")[2];
     var L = { id: "x" + Date.now().toString(36), name: (meta && meta.title) || u.split("/").slice(-3, -2)[0].replace(/_/g, " "), kind: "fs", url: u, src: (meta && meta.page) || u, stroke: col, fill: col, fo: 0.1, attr: (meta && meta.credit) ? meta.credit : "Layer: " + host };
-    m.extra = (m.extra || []).concat([L]); m.on = m.on || {}; m.on[L.id] = true; persist(); renderMapExtra(); fetchLayer(L); $("sk-mlurl").value = "";
+    m.extra = (m.extra || []).concat([L]); m.on = m.on || {}; m.on[L.id] = true; persist(); L.announce = true; renderMapExtra(); mlMsg("busy", "Added " + L.name + ". Loading its features for the map area…"); fetchLayer(L); $("sk-mlurl").value = "";
     if (meta && meta.lic) setTimeout(function () { mapStatus("Added " + L.name + (meta.credit ? " (" + meta.credit + ")" : "") + ". Licence: " + meta.lic.slice(0, 260) + (meta.lic.length > 260 ? "…" : /[.!?]$/.test(meta.lic) ? "" : ".") + " Check it allows your use."); }, 1800);
   }
   function plain(h) { var dv = document.createElement("div"); dv.innerHTML = String(h || ""); return (dv.textContent || "").replace(/\s+/g, " ").trim(); }
@@ -1912,15 +2141,15 @@
     var hub = /(?:datasets|items?|item\.html\?id=|id=)\/?([0-9a-f]{32})(?:_(\d+))?/i.exec(raw);
     if (/^https:\/\/[^\s]+\/(FeatureServer|MapServer)$/i.test(u)) u += "/0";
     if (/^https:\/\/[^\s]+\/(FeatureServer|MapServer)\/\d+$/i.test(u)) { addArcLayer(u); return; }
-    if (!hub) { mapStatus("Paste an ArcGIS layer address ending in /FeatureServer/0 or /MapServer/0, or an ArcGIS Hub or ArcGIS Online dataset page address."); return; }
-    mapStatus("Looking up that dataset on ArcGIS Online…");
+    if (!hub) { mlMsg("err", "That isn't a layer address the sketch pad knows. Paste an ArcGIS layer address ending in /FeatureServer/0 or /MapServer/0, or an ArcGIS Hub or ArcGIS Online dataset page address."); return; }
+    mlMsg("busy", "Looking up that dataset on ArcGIS Online…");
     fetch("https://www.arcgis.com/sharing/rest/content/items/" + hub[1] + "?f=json").then(function (r) { return r.json(); }).then(function (it) {
       if (it.error) throw new Error(it.error.message || "not found or not public");
       var su = (it.url || "").replace(/[?#].*$/, "").replace(/\/+$/, "");
       if (!/\/(FeatureServer|MapServer)(\/\d+)?$/i.test(su)) throw new Error("it's a " + (it.type || "item") + ", not a feature layer the sketch pad can draw" + (/csv|shapefile|geojson|file/i.test(it.type || "") ? ". Download it and use Load GeoJSON if it's GeoJSON" : ""));
       if (!/\/\d+$/.test(su)) su += "/" + (hub[2] || 0);
       addArcLayer(su, { title: it.title, credit: plain(it.accessInformation).slice(0, 160), lic: plain(it.licenseInfo), page: raw });
-    }).catch(function (er) { mapStatus("Couldn't add that dataset: " + er.message + "."); });
+    }).catch(function (er) { mlMsg("err", "Couldn't add that dataset: " + netWhy(er) + "."); });
   });
   $("sk-mlgj-b").addEventListener("click", function () { $("sk-mlgj").click(); });
   $("sk-mlgj").addEventListener("change", function () { var f = this.files[0]; this.value = ""; if (f) f.text().then(loadGeoJson).catch(function (er) { mapStatus("Couldn't read that file: " + er.message); }); });
@@ -1940,7 +2169,7 @@
     m.extra = (m.extra || []).concat([L]); m.on = m.on || {}; m.on[L.id] = true; m.L = m.L || {}; m.L[L.id] = { f: feats, oe: m.e, on: m.n }; persist(); renderMapExtra(); renderAll();
     mapStatus(feats.length + " features loaded" + (ll ? " (converted from lat/long)" : " (read as British National Grid)") + ". Add an attribution in a note if the data needs one.");
   }
-  function renderMapExtra() { var m = doc().map, ex = m && m.extra || []; $("sk-mlextra").innerHTML = ex.map(function (L) { return '<label class="sk-check" title="' + esc(L.src) + '"><input type="checkbox" data-ml="' + L.id + '"' + (m.on && m.on[L.id] ? " checked" : "") + "> " + esc(L.name) + '</label><button type="button" class="sk-btn danger" data-mlx="' + L.id + '" aria-label="Remove layer">×</button>'; }).join(""); }
+  function renderMapExtra() { var m = doc().map, ex = m && m.extra || []; $("sk-mlextra").innerHTML = ex.map(function (L) { return '<label class="sk-check" title="' + esc(L.src) + '"><input type="checkbox" data-ml="' + L.id + '"' + (m.on && m.on[L.id] ? " checked" : "") + "> " + esc(L.name) + ' <span data-mls="' + L.id + '"></span></label><button type="button" class="sk-btn danger" data-mlx="' + L.id + '" aria-label="Remove layer">×</button>'; }).join(""); badges(); }
   $("sk-mlextra").addEventListener("click", function (e) { var b = e.target.closest("[data-mlx]"); if (!b) return; var m = doc().map, id = b.dataset.mlx; m.extra = m.extra.filter(function (x) { return x.id !== id; }); if (m.L) delete m.L[id]; if (m.on) delete m.on[id]; persist(); renderMapExtra(); renderAll(); });
   /* contours from a terrain file: ESRI ASCII grid, or GeoTIFF read with geotiff.js (loaded on first use) */
   function loadTerrainFile(f) {
@@ -1950,7 +2179,7 @@
       if (g.x0 < 0 || g.x0 > 800000 || g.y0 < 0 || g.y0 > 1400000) { mapStatus("That grid isn't in British National Grid (EPSG:27700) metres, so it can't be placed. Reproject it first, e.g. in QGIS."); return; }
       var d = doc(), ce = g.x0 + g.nx * g.cell / 2, cn = g.y0 + g.ny * g.cell / 2, placed = !!d.map;
       if (!d.map) {
-        var G = geo(), need = Math.max(g.nx * g.cell / (G.inner.w / 4000), g.ny * g.cell / (G.inner.h / 4000)); d.dscale = SCALES.filter(function (n) { return n >= need; })[0] || 10000;
+        var G = geo(), need = Math.max(g.nx * g.cell / (G.inner.w / 4000), g.ny * g.cell / (G.inner.h / 4000)); d.dscale = SCALES.filter(function (n) { return n >= need; })[0] || 200000;
         d.map = { e: Math.round(ce), n: Math.round(cn), osm: $("sk-maposm").checked, cont: true, op: +$("sk-mapop").value, grey: true, show: true };
       }
       var m = d.map, C = mapClipM(), g2 = cropGrid(g, C.x0, C.y0, C.x1, C.y1);
@@ -1991,7 +2220,7 @@
   }
   /* moving the map and limiting it to an area are done by dragging on the sheet */
   var mapMode = null, mapPanning = false;
-  function closeFly() { Array.prototype.forEach.call(document.querySelectorAll(".sk-sec.sk-fly[open]"), function (d) { d.open = false; }); }
+  function closeFly() { Array.prototype.forEach.call(document.querySelectorAll(".sk-sec.sk-fly[open]"), function (d) { if (!winState(d.dataset.sec).pin) closeWin(d); }); }
   function setMapMode(mm) { mapMode = mapMode === mm ? null : mm; if (mapMode) closeFly(); $("sk-mappan").setAttribute("aria-pressed", mapMode === "pan"); $("sk-mapbox").setAttribute("aria-pressed", mapMode === "box"); $("sk-mapsect").setAttribute("aria-pressed", mapMode === "sect"); $("sk-mapcatch").setAttribute("aria-pressed", mapMode === "catch"); $("sk-mapfall").setAttribute("aria-pressed", mapMode === "fall"); stage.dataset.map = mapMode || ""; if (mapMode === "sect" || mapMode === "catch" || mapMode === "fall") mapStatus(mapMode === "sect" ? "Drag a line across the map where you want the ground section." : mapMode === "fall" ? "Click on the map to add a fall arrow there." : "Finding the flow lines. Then click on one where you want the outlet."); else if (mapMode) mapStatus(mapMode === "pan" ? "Drag on the sheet to move the map. Your drawing stays where it is. Click Move map again to finish." : "Drag a box on the sheet for the map area."); }
   $("sk-mappan").addEventListener("click", function () { if (!doc().map) { mapStatus("Place the map first."); return; } setMapMode("pan"); });
   $("sk-mapbox").addEventListener("click", function () { if (!doc().map) { mapStatus("Place the map first."); return; } setMapMode("box"); });
@@ -2123,7 +2352,7 @@
     var zs = pr.map(function (q) { return q[1]; }).filter(function (z) { return z === z; });
     if (zs.length < 2) return null;
     var zmn = Math.min.apply(null, zs), zmx = Math.max.apply(null, zs), I = geo().inner, N = d.dscale || 500;
-    var Hs = N; if (Lm * 4000 / Hs > I.w * 0.75) Hs = SCALES.filter(function (n) { return Lm * 4000 / n <= I.w * 0.75; })[0] || 10000;
+    var Hs = N; if (Lm * 4000 / Hs > I.w * 0.75) Hs = SCALES.filter(function (n) { return Lm * 4000 / n <= I.w * 0.75; })[0] || 200000;
     var R = Math.max(zmx - zmn, 0.5), Vs = SCALES.filter(function (n) { return R * 4000 / n <= 160; })[0] || Hs; if (Vs > Hs) Vs = Hs;
     var hu = 4000 / Hs, vu = 4000 / Vs, ls = niceStep(R, Math.max(2, Math.floor(R * vu / 24))), datum = Math.floor((zmn - ls * 0.5) / ls) * ls, ztop = Math.ceil((zmx + ls * 0.2) / ls) * ls;
     var W = Lm * hu, Hh = (ztop - datum) * vu, x0 = I.x + (I.w - W) / 2 + 50, yb = r1((A.y + B.y) / 2 < I.y + I.h / 2 ? I.y + I.h - 130 : I.y + 50 + Hh); /* on the other half of the sheet from the line */
@@ -2605,7 +2834,7 @@
     if (l.some(function (x) { return "w" in x; })) o += '<div class="sk-ctx-row"><span>Weight</span>' + WIDTHS.map(function (w) { return '<button type="button" class="sk-chip' + (l[0].w === w[0] ? " on" : "") + '" data-cw="' + w[0] + '" title="' + w[1] + '" aria-label="' + w[1] + '"><i style="height:' + Math.min(w[0], 10) + 'px"></i></button>'; }).join("") + "</div>";
     if (has(/^(stroke|line|member|hatch|arrow|rect|circle|poly)$/)) o += '<div class="sk-ctx-row"><span>Line</span><select data-cs="sk-ls">' + LINES.map(function (x) { return '<option value="' + x[0] + '"' + ((l[0].ls || "solid") === x[0] ? " selected" : "") + ">" + x[1] + "</option>"; }).join("") + "</select></div>";
     if (l.some(function (x) { return x.type === "text" || x.type === "leader" || x.type === "dim" || x.label != null; })) o += '<div class="sk-ctx-row"><span>Text size</span><select data-cs="sk-fs">' + [8, 10, 12, 14, 16, 18, 24, 32].map(function (v) { var cur = l[0].size || l[0].fs || style.fs; return '<option value="' + v + '"' + (cur === v ? " selected" : "") + ">" + v + "</option>"; }).join("") + "</select></div>";
-    if (has(/^hatch$/)) { var h0 = l.filter(function (x) { return x.type === "hatch"; })[0]; o += '<div class="sk-ctx-row"><span>Hatch</span><select data-cs="sk-pat">' + PATS.map(function (x) { return '<option value="' + x[0] + '"' + (h0.pat === x[0] ? " selected" : "") + ">" + x[1] + "</option>"; }).join("") + '</select><select data-cs="sk-hsc" aria-label="Hatch scale">' + [0.1, 0.25, 0.5, 0.75, 1, 1.5, 2, 3, 4].map(function (v) { return '<option value="' + v + '"' + ((h0.ps || 1) === v ? " selected" : "") + ">×" + v + "</option>"; }).join("") + "</select></div>"; }
+    if (has(/^hatch$/)) { var h0 = l.filter(function (x) { return x.type === "hatch"; })[0]; o += '<div class="sk-ctx-row"><span>Hatch</span><select data-cs="sk-pat">' + PATS.map(function (x) { return '<option value="' + x[0] + '"' + (h0.pat === x[0] ? " selected" : "") + ">" + x[1] + "</option>"; }).join("") + '</select><select data-cs="sk-hsc" aria-label="Hatch scale">' + [0.1, 0.25, 0.5, 0.75, 1, 1.5, 2, 3, 4].map(function (v) { return '<option value="' + v + '"' + ((h0.ps || 1) === v ? " selected" : "") + ">×" + v + "</option>"; }).join("") + '</select><select data-cs="sk-hang" aria-label="Hatch angle">' + [0, 15, 30, 45, 60, 75, 90, 105, 120, 135, 150, 165].map(function (v) { return '<option value="' + v + '"' + ((h0.ha || 0) === v ? " selected" : "") + ">" + v + "°</option>"; }).join("") + "</select></div>"; }
     var acts = Array.prototype.map.call(propsEl.querySelectorAll("button[data-act]"), function (b) { return '<button type="button" class="sk-ctx-act' + (b.dataset.act === "del" || b.dataset.act === "gdel" ? " del" : "") + '" data-ca="' + esc(b.dataset.act) + '">' + esc(b.textContent) + "</button>"; });
     if (acts.length) o += '<div class="sk-ctx-acts">' + acts.join("") + "</div>";
     ctxEl = document.createElement("div"); ctxEl.className = "sk-ctx"; ctxEl.setAttribute("role", "menu"); ctxEl.innerHTML = o; app.appendChild(ctxEl);
@@ -2624,11 +2853,11 @@
     });
   }
   /* Legend editor: the line types and hatches used on the drawing, to add to the legend with your own words. */
-  function legKey(L) { return L.kind === "hatch" ? ["h", L.pat, L.c, L.ps || 1].join("|") : ["l", L.c, L.w, L.ls || "solid"].join("|"); }
+  function legKey(L) { return L.kind === "hatch" ? ["h", L.pat, L.c, L.ps || 1, L.ha || 0].join("|") : ["l", L.c, L.w, L.ls || "solid"].join("|"); }
   function legFound() {
     var f = {}, out = [];
     doc().items.forEach(function (it) {
-      var L = it.type === "hatch" ? { kind: "hatch", pat: it.pat, c: it.c, ps: it.ps || 1 } : /^(line|member|stroke|poly|rect|circle|arrow|cloud|brk)$/.test(it.type) ? { kind: "line", c: it.c, w: it.w || 2, ls: it.ls || "solid" } : null;
+      var L = it.type === "hatch" ? { kind: "hatch", pat: it.pat, c: it.c, ps: it.ps || 1, ha: it.ha || 0 } : /^(line|member|stroke|poly|rect|circle|arrow|cloud|brk)$/.test(it.type) ? { kind: "line", c: it.c, w: it.w || 2, ls: it.ls || "solid" } : null;
       if (!L) return; var k2 = legKey(L);
       if (!f[k2]) { f[k2] = { L: L, n: 0, types: {} }; out.push(f[k2]); }
       f[k2].n++; f[k2].types[NAMES_ALL[it.type] || it.type] = 1;
