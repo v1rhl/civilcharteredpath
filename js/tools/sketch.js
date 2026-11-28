@@ -634,17 +634,20 @@
      properties above it, so the drawing sits at the top of the screen without scrolling. */
   (function () {
     function mk(tag, cls, html) { var e = document.createElement(tag); if (cls) e.className = cls; if (html) e.innerHTML = html; return e; }
-    function sec(name, title, open, nodes) { var dd = mk("details", "sk-sec"); dd.dataset.sec = name; var st = null; try { st = localStorage.getItem("cp-sketch-sec-" + name); } catch (e) {} dd.open = st == null ? open : st === "1"; dd.appendChild(mk("summary", "", title)); nodes.forEach(function (n) { if (n) dd.appendChild(n); }); dd.addEventListener("toggle", function () { try { localStorage.setItem("cp-sketch-sec-" + name, dd.open ? "1" : "0"); } catch (e) {} if (window.innerWidth > 1000) fitSheet(); }); return dd; }
+    function sec(name, title, open, nodes) { var dd = mk("details", "sk-sec"); dd.dataset.sec = name; var st = null; try { st = localStorage.getItem("cp-sketch-sec-" + name); } catch (e) {} dd.open = st == null ? open : st === "1"; dd.appendChild(mk("summary", "", title)); nodes.forEach(function (n) { if (n) dd.appendChild(n); }); dd.addEventListener("toggle", function () { if (dd.open && window.innerWidth > 1000) Array.prototype.forEach.call(document.querySelectorAll(".sk-side > details.sk-sec"), function (o) { if (o !== dd && o.open) o.open = false; }); /* one section open at a time, so the side bar fits without scrolling */ try { localStorage.setItem("cp-sketch-sec-" + name, dd.open ? "1" : "0"); } catch (e) {} if (window.innerWidth > 1000) fitSheet(); }); return dd; }
     var head = $("sk-head"), top = head.querySelector(".sk-top"), modes = top.querySelector(".sk-seg"), toolrow = head.querySelector(".sk-toolrow"), styleEl = head.querySelector(".sk-style:not(.sk-sheetopts)"), sheet = head.querySelector(".sk-sheetopts"), layers = sheet.querySelector(".sk-layers"), mp = $("sk-mappanel");
     var side = mk("aside", "sk-side"); side.id = "sk-side"; side.setAttribute("aria-label", "Tools and options");
     side.appendChild(modes); side.appendChild(toolrow);
+    var all = toolrow.querySelector("#sk-tools2"), tpl = toolrow.querySelector("#sk-tpl"), allSec = sec("alltools", "All tools", false, [all]); allSec.classList.add("sk-alltools"); side.appendChild(allSec); side.appendChild(tpl);
     side.appendChild(sec("style", "Style", true, [styleEl]));
-    side.appendChild(sec("sheet", "Sheet", true, [sheet]));
+    side.appendChild(sec("sheet", "Sheet", false, [sheet]));
     side.appendChild(sec("layers", "Layers and map", false, [layers, mp]));
     var main = mk("div", "sk-main"); main.id = "sk-main";
     top.insertAdjacentHTML("beforeend", '<button type="button" class="sk-btn" id="sk-full" title="Full screen (F)" aria-pressed="false">Full screen</button>');
     top.querySelector(".sk-actions").appendChild($("sk-full"));
-    [top, $("sk-props"), $("sk-tabs"), $("sk-stage"), $("sk-status")].forEach(function (n) { main.appendChild(n); });
+    var hint = mk("p", "small sk-hint"); hint.id = "sk-hint";
+    var row1 = mk("div", "sk-row1"); row1.appendChild($("sk-tabs")); row1.appendChild(top); /* sheet tabs and the undo/export bar share one row */
+    [$("sk-props"), row1, $("sk-stage"), hint, $("sk-status")].forEach(function (n) { main.appendChild(n); });
     var lay = mk("div", "sk-layout"); lay.appendChild(side); lay.appendChild(main);
     head.remove(); app.innerHTML = ""; app.appendChild(lay);
     top.id = "sk-head"; /* the bar above the sheet: kept in view on wide screens */
@@ -737,13 +740,10 @@
   function lockPage() {
     var on = !view.hidden && window.innerWidth > 1000 && !isFull(), h = document.documentElement, was = h.classList.contains("sk-lock");
     if (on !== was) h.classList.toggle("sk-lock", on);
-    if (on) pinTop();
+    if (on) { if (window.scrollY) window.scrollTo(0, 0); var lay = app.querySelector(".sk-layout"); if (lay) app.style.setProperty("--sk-avail", Math.max(360, Math.floor(window.innerHeight - lay.getBoundingClientRect().top - 10)) + "px"); }
   }
-  function pinTop() { /* the sketch pad's top sits just under the site bar */
-    var tb = document.querySelector(".topbar"), th = tb ? tb.offsetHeight : 0, y = Math.max(0, Math.round(app.getBoundingClientRect().top + window.scrollY - th - 8));
-    if (Math.abs(window.scrollY - y) > 1) window.scrollTo(0, y);
-  }
-  window.addEventListener("scroll", function () { if (document.documentElement.classList.contains("sk-lock")) pinTop(); });
+  /* the site bar and tool links stay at the top; only the sketch pad's own panels scroll */
+  window.addEventListener("scroll", function () { if (document.documentElement.classList.contains("sk-lock") && window.scrollY) window.scrollTo(0, 0); });
   new MutationObserver(function () { lockPage(); if (!view.hidden) setTimeout(fitSheet, 0); }).observe(view, { attributes: true, attributeFilter: ["hidden"] });
   function fitSheet() {
     lockPage();
@@ -850,10 +850,16 @@
     });
     var hint = $("sk-ctxhint"); if (hint) hint.hidden = any;
   }
+  /* Pinned tools sit at the top of the side bar; every tool is under "All tools", where the pin on each
+     one adds it to or removes it from the pinned set. The set is remembered per mode. */
+  var PIN_DEF = { free: ["select", "xform", "pen", "line", "rect", "text", "dim", "leader", "hatch", "eraser"], struct: ["select", "xform", "member", "pin", "roller", "pload", "udl", "dim", "text", "eraser"] };
+  function pinsFor(md) { S.pins = S.pins || {}; return S.pins[md] || PIN_DEF[md].slice(); }
+  function togglePin(id) { var p = pinsFor(mode), i = p.indexOf(id); if (i > -1) { if (p.length > 1) p.splice(i, 1); } else p.push(id); S.pins[mode] = p; persist(); renderTools(); }
   function renderTools() {
-    var tb = function (t) { return '<button type="button" class="sk-tool" data-tool="' + t[0] + '" aria-pressed="' + (tool[mode] === t[0]) + '" title="' + esc(HINTS[t[0]]) + '">' + iconSvg(t[0]) + "<span>" + t[1] + "</span></button>"; };
-    $("sk-tools").innerHTML = TOOLS[mode].map(tb).join("");
-    $("sk-tools2").innerHTML = TOOLS.shapes.map(tb).join("");
+    var tb = function (t, pinUI) { var pinned = pinUI && pinsFor(mode).indexOf(t[0]) > -1; return '<button type="button" class="sk-tool" data-tool="' + t[0] + '" aria-pressed="' + (tool[mode] === t[0]) + '" title="' + esc(HINTS[t[0]]) + '">' + iconSvg(t[0]) + "<span>" + t[1] + "</span>" + (pinUI ? '<span class="sk-pin' + (pinned ? " on" : "") + '" data-pin="' + t[0] + '" role="button" tabindex="0" title="' + (pinned ? "Unpin from" : "Pin to") + ' the tools at the top" aria-label="' + (pinned ? "Unpin " : "Pin ") + t[1] + '">' + (pinned ? "★" : "☆") + "</span>" : "") + "</button>"; };
+    var all = TOOLS[mode].concat(TOOLS.shapes), byT = {}; all.forEach(function (t) { byT[t[0]] = t; });
+    $("sk-tools").innerHTML = pinsFor(mode).filter(function (id) { return byT[id]; }).map(function (id) { return tb(byT[id]); }).join("");
+    $("sk-tools2").innerHTML = all.map(function (t) { return tb(t, true); }).join("");
     $("sk-ermode").hidden = tool[mode] !== "eraser";
     Array.prototype.forEach.call(app.querySelectorAll("[data-mode]"), function (b) { b.setAttribute("aria-pressed", b.dataset.mode === mode); });
     Array.prototype.forEach.call(app.querySelectorAll("[data-only]"), function (el) { el.hidden = el.dataset.only !== mode; });
@@ -898,6 +904,7 @@
   /* Applying a colour, weight, line type or pattern also restyles the selected item. */
   function restyle(fn) { var l = selList().filter(function (it) { return !locked(it); }); if (!l.length) return; begin(); l.forEach(fn); commit(); }
   app.addEventListener("click", function (e) {
+    var pb = e.target.closest("[data-pin]"); if (pb && app.contains(pb)) { e.stopPropagation(); togglePin(pb.dataset.pin); return; }
     var b = e.target.closest("button"); if (!b || !app.contains(b)) return;
     if (b.dataset.mode) return setMode(b.dataset.mode);
     if (b.dataset.tool === "image") { $("sk-img2").click(); return; }
@@ -959,7 +966,7 @@
 
   /* ---------- Properties bar ---------- */
   var ROT_TYPES = { support: 90, pload: 45, north: 45 };
-  function renderProps() { updateCtx(); renderProps0(); }
+  function renderProps() { updateCtx(); renderProps0(); var pe = $("sk-props"); pe.hidden = !pe.innerHTML; var hn = $("sk-hint"); if (hn) hn.textContent = HINTS[tool[mode]] || ""; if (window.innerWidth > 1000) fitSheet(); }
   function renderProps0() {
     var p = $("sk-props"), it = sel && sel.k === "item" ? byId(sel.id) : null, im = sel && sel.k === "img" ? imgById(sel.id) : null;
     if (im) {
@@ -977,7 +984,7 @@
           ORDER_BTNS + '<button type="button" class="sk-btn" data-act="dup" title="Ctrl+D">Duplicate</button><button type="button" class="sk-btn" data-act="glock">Lock</button><button type="button" class="sk-btn danger" data-act="gdel">Delete</button>');
       return;
     }
-    if (!it) { p.innerHTML = '<span class="small">' + esc(HINTS[tool[mode]] || "") + "</span>"; return; }
+    if (!it) { p.innerHTML = ""; return; }
     updateCtx();
     var NAMES = { inset: "Detail or window", image: "Image", arrow: "Arrow", rect: "Rectangle", circle: "Circle", poly: "Polygon", cloud: "Revision cloud", brk: "Break line", slope: "Slope marker", section: "Section marker", north: "North arrow", wl: "Water level", stroke: "Pen stroke", line: "Line", member: "Member", support: "Support", pload: "Point load", udl: "Distributed load", moment: "Moment", dim: "Dimension", text: "Text", leader: "Leader note", hatch: "Hatched area" };
     var h = '<span class="sk-lab">' + NAMES[it.type] + "</span>";
