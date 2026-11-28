@@ -16,7 +16,12 @@
   var WIDTHS = [[1, "Hairline"], [2, "Fine"], [4, "Medium"], [7, "Heavy"], [14, "Marker"]];
   var LINES = [["solid", "Solid"], ["dashed", "Dashed"], ["dashdot", "Dash-dot"], ["dotted", "Dotted"], ["centre", "Centreline"]];
   var VEG = [["tree", "Tree (plan)"], ["conifer", "Conifer (plan)"], ["bush", "Bush or shrub (plan)"], ["grassp", "Grass or planting (plan)"], ["treel", "Tree (section)"], ["shrubl", "Shrub (section)"], ["grassl", "Grass (section)"]];
-  var PATS = [["diag", "Diagonal"], ["cross", "Cross-hatch"], ["concrete", "Concrete"], ["earth", "Soil / earth"], ["steel", "Steel"], ["granular", "Granular stone"], ["sand", "Sand"], ["solid", "Solid tint"]];
+  var PATS = [["diag", "Diagonal"], ["cross", "Cross-hatch"], ["concrete", "Concrete"], ["earth", "Soil / earth"], ["steel", "Steel"], ["granular", "Granular stone"], ["sand", "Sand"], ["solid", "Solid tint"], ["none", "No pattern (fill only)"]];
+  /* a hatch can also have a solid fill under its pattern, in any colour and strength */
+  var HFILLS = [["", "No fill"]].concat(COLORS).concat([["#ffffff", "White"], ["#f2d16b", "Yellow"], ["#9ec5e8", "Light blue"], ["#b9d9a5", "Light green"], ["#d9c2a5", "Buff"]]);
+  var HOPS = [[1, "Solid"], [0.75, "75%"], [0.5, "50%"], [0.3, "30%"], [0.15, "15%"]];
+  function hfillOpts(v) { return HFILLS.map(function (x) { return '<option value="' + x[0] + '"' + ((v || "") === x[0] ? " selected" : "") + ">" + x[1] + "</option>"; }).join(""); }
+  function hopOpts(v) { return HOPS.map(function (x) { return '<option value="' + x[0] + '"' + ((v == null ? 1 : v) === x[0] ? " selected" : "") + ">" + x[1] + "</option>"; }).join(""); }
   var SEG = { member: 1, line: 1, udl: 1, dim: 1, arrow: 1, rect: 1, circle: 1, section: 1, brk: 1, cloud: 1, slope: 1 }, PTS = { stroke: 1, hatch: 1, poly: 1 };
   /* Tools placed by dragging from one point to another */
   var DRAG2 = { member: 1, line: 1, udl: 1, dim: 1, arrow: 1, rect: 1, circle: 1, section: 1, brk: 1, cloud: 1, slope: 1 };
@@ -288,7 +293,8 @@
   function patDef(pat, c, sc, an) { var d0 = patDef0(pat, c), tf = (an ? "rotate(" + an + ") " : "") + (sc && sc !== 1 ? "scale(" + sc + ")" : ""); return tf ? d0.replace('<pattern id="' + patId(pat, c) + '"', '<pattern id="' + patId(pat, c, sc, an) + '" patternTransform="' + tf.trim() + '"') : d0; }
   function patDef0(pat, c) {
     var id = patId(pat, c), L = function (d, w) { return '<path d="' + d + '" stroke="' + c + '" stroke-width="' + (w || 1) + '" fill="none" stroke-linecap="round"/>'; }, body, s;
-    if (pat === "diag") { s = 14; body = L("M0 14L14 0M-4 4L4 -4M10 18L18 10"); }
+    if (pat === "none") { s = 10; body = ""; }
+    else if (pat === "diag") { s = 14; body = L("M0 14L14 0M-4 4L4 -4M10 18L18 10"); }
     else if (pat === "cross") { s = 14; body = L("M0 14L14 0M-4 4L4 -4M10 18L18 10M0 0L14 14M-4 10L4 18M10 -4L18 4"); }
     else if (pat === "steel") { s = 6; body = L("M0 6L6 0M-2 2L2 -2M4 8L8 4", 0.9); }
     else if (pat === "earth") { s = 40; body = L("M3 17l9-9M8 19l9-9M13 21l9-9M23 37l9-9M28 39l9-9", 1.1) + '<circle cx="30" cy="10" r="1.3" fill="' + c + '"/><circle cx="8" cy="33" r="1.3" fill="' + c + '"/><circle cx="36" cy="20" r="1" fill="' + c + '"/>'; }
@@ -335,7 +341,7 @@
       case "stroke": return '<path d="' + smooth(it.pts) + '" fill="none" stroke="' + c + '" stroke-width="' + it.w + '" stroke-linecap="round" stroke-linejoin="round"' + dash(it.ls, it.w) + "/>";
       case "line": case "member": return ln(it.x1, it.y1, it.x2, it.y2, c, it.w, it.ls);
       case "hatch":
-        return '<path d="' + hpath(it) + '" fill-rule="evenodd" fill="url(#' + patId(it.pat, c, it.ps, it.ha) + ')" stroke="' + (it.outline ? it.oc || c : "none") + '" stroke-width="' + (it.w || 2) + '" stroke-linejoin="round"' + (it.outline ? dash(it.ls, it.w || 2) : "") + "/>";
+        return (it.bg ? '<path d="' + hpath(it) + '" fill-rule="evenodd" fill="' + it.bg + '" fill-opacity="' + (it.bo == null ? 1 : it.bo) + '" stroke="none"/>' : "") + '<path d="' + hpath(it) + '" fill-rule="evenodd" fill="' + (it.pat === "none" ? "none" : "url(#" + patId(it.pat, c, it.ps, it.ha) + ")") + '" stroke="' + (it.outline ? it.oc || c : "none") + '" stroke-width="' + (it.w || 2) + '" stroke-linejoin="round"' + (it.outline ? dash(it.ls, it.w || 2) : "") + "/>";
       case "support":
         o = '<g transform="translate(' + it.x + " " + it.y + ") rotate(" + (it.rot || 0) + ')" stroke="' + c + '" fill="none" stroke-linecap="round" stroke-linejoin="round">';
         var ground = function (y) { var g = '<path d="M-24 ' + y + "H24"; for (i = -18; i <= 24; i += 8) g += "M" + i + " " + y + "l-7 8"; return g + '" stroke-width="1.6"/>'; };
@@ -417,8 +423,8 @@
   }
   /* Drawing scale: with 1:N set, one sheet unit (0.25 mm on paper) is 0.25·N mm on the ground. */
   /* Extra map layers. Natural England publishes its open data as ArcGIS feature services; BGS publishes the
-     1:50k geology as a WMS; OS Open Rivers is only a download from OS, so the live option is a 2017 copy
-     hosted by the Catchment Based Approach (CaBA), and you can load your own GeoJSON instead. */
+     1:50k geology as a WMS; OS Open Rivers and OS Open Roads come from Esri UK's
+     copies in the ArcGIS Living Atlas (public, OGL), and you can load your own GeoJSON instead. */
   var NE = "https://services.arcgis.com/JJzESW51TqeY9uat/ArcGIS/rest/services/";
   var MAPL = [
     { id: "bgsb", name: "BGS bedrock", kind: "wms", url: "https://map.bgs.ac.uk/arcgis/services/BGS_Detailed_Geology/MapServer/WMSServer", layer: "BGS.50k.Bedrock", rest: "https://map.bgs.ac.uk/arcgis/rest/services/BGS_Detailed_Geology/MapServer/4", src: "BGS Geology 50k WMS", attr: "Geology: contains British Geological Survey materials © UKRI" },
@@ -426,7 +432,8 @@
     { id: "sssi", name: "SSSI", kind: "fs", url: NE + "SSSI_England/FeatureServer/0", src: "Natural England, Sites of Special Scientific Interest", stroke: "#b84a32", fill: "#b84a32", fo: 0.12, dash: "6 3", attr: "Contains Natural England data © Natural England" },
     { id: "awi", name: "Ancient woodland", kind: "fs", url: NE + "Ancient_Woodland_England/FeatureServer/0", src: "Natural England, Ancient Woodland Inventory", stroke: "#2e7d32", fill: "#2e7d32", fo: 0.15, attr: "Contains Natural England data © Natural England" },
     { id: "phi", name: "Priority habitats", kind: "fs", url: NE + "Priority_Habitats_Inventory_England/FeatureServer/0", src: "Natural England, Priority Habitats Inventory", stroke: "#7a9a2b", fill: "#9bbf3b", fo: 0.12, attr: "Contains Natural England data © Natural England" },
-    { id: "rivers", name: "OS Open Rivers (2017 copy)", kind: "fs", url: "https://services3.arcgis.com/Bb8lfThdhugyc4G3/ArcGIS/rest/services/OSOpenRiversCaBA2017/FeatureServer/0", src: "OS Open Rivers 2017, hosted by the Catchment Based Approach (CaBA). OS publishes the current version only as a download.", stroke: "#3f6fd1", line: true, attr: "Contains OS data © Crown copyright and database right" }
+    { id: "rivers", grp: "OS open data (ArcGIS Living Atlas, hosted by Esri UK)", name: "OS Open Rivers", kind: "fs", url: "https://services.arcgis.com/qHLhLQrcvEnxjtPr/arcgis/rest/services/OS_OpenRivers/FeatureServer/0", src: "OS Open Rivers (current release), hosted by Esri UK in the ArcGIS Living Atlas. GB watercourses, lakes and canals.", stroke: "#3f6fd1", line: true, attr: "Rivers: contains OS data © Crown copyright and database right 2026 (OGL), via Esri UK" },
+    { id: "roads", name: "OS Open Roads", kind: "fs", url: "https://services.arcgis.com/qHLhLQrcvEnxjtPr/arcgis/rest/services/OS_OpenRoads/FeatureServer/1", src: "OS Open Roads road links, hosted by Esri UK in the ArcGIS Living Atlas. GB road network.", stroke: "#8d6e63", line: true, attr: "Roads: contains OS data © Crown copyright and database right 2026 (OGL), via Esri UK" }
   ];
   /* Environment Agency flood data (England), drawn by the EA's own WMS services in the EA's own colours;
      the legend shows the EA's published key for each (its GetLegendGraphic image). */
@@ -664,6 +671,7 @@
       '<div class="sk-group" data-ctx="veg"><label class="sk-lab" for="sk-veg">Planting</label><select id="sk-veg">' + VEG.map(function (l) { return '<option value="' + l[0] + '">' + l[1] + "</option>"; }).join("") + "</select></div>" +
       '<div class="sk-group" data-ctx="hatch"><label class="sk-lab" for="sk-pat">Hatch</label><select id="sk-pat">' + PATS.map(function (l) { return '<option value="' + l[0] + '">' + l[1] + "</option>"; }).join("") + "</select>" +
         '<label class="sr-only" for="sk-hsc">Hatch scale</label><select id="sk-hsc" title="Hatch pattern scale">' + [0.1, 0.25, 0.5, 0.75, 1, 1.5, 2, 3, 4].map(function (v) { return '<option value="' + v + '">×' + v + "</option>"; }).join("") + "</select>" +
+        '<label class="sr-only" for="sk-hbg">Hatch fill</label><select id="sk-hbg" title="Solid fill under the hatch">' + hfillOpts("") + '</select><label class="sr-only" for="sk-hbo">Fill strength</label><select id="sk-hbo" title="Fill strength">' + hopOpts(1) + "</select>" +
         '<label class="sr-only" for="sk-hang">Hatch angle</label><select id="sk-hang" title="Hatch pattern angle">' + [0, 15, 30, 45, 60, 75, 90, 105, 120, 135, 150, 165].map(function (v) { return '<option value="' + v + '">' + v + "°</option>"; }).join("") + "</select>" +
         '<label class="sr-only" for="sk-hby">Hatch by</label><select id="sk-hby"><option value="pick">Click inside an area</option><option value="shape">Draw a shape</option></select></div>' +
       '<p class="small" id="sk-ctxhint" hidden>Pick a drawing tool or select something to see its line, text and hatch options.</p>' +
@@ -703,7 +711,7 @@
         '<label class="sk-check sk-wide">ArcGIS layer URL <input type="url" id="sk-mlurl" placeholder="FeatureServer/0 or Hub dataset link"></label><button type="button" class="sk-btn" id="sk-mladd">Add layer</button><button type="button" class="sk-btn" id="sk-mlgj-b">Load GeoJSON</button><input type="file" id="sk-mlgj" accept=".geojson,.json" hidden></div>' +
       '<p id="sk-mlmsg" class="sk-mlmsg" role="status" hidden></p><div id="sk-mlextra" class="sk-maprow"></div>' +
       '<div class="sk-maprow"><label class="sk-check"><input type="checkbox" id="sk-mapleg"> Legend for the layers</label><label class="sk-check">at <select id="sk-maplegpos"><option value="br">bottom right</option><option value="bl">bottom left</option><option value="tr">top right</option><option value="tl">top left</option></select></label></div>' +
-      '<p class="small">Grid north up, centred on the drawing frame (or the map area you draw) at the drawing scale. Map tiles come from OpenStreetMap (or Esri World Imagery for satellite), terrain from the Environment Agency, postcodes from postcodes.io, geology and rock unit names from BGS, designations from Natural England and the flood layers from the Environment Agency, so the location is sent to them. Layers you add from a link are fetched from the service that link points to. <strong>EA LiDAR covers England only.</strong> Files you load stay in this browser. Contours, designations, geology and flood layers are indicative: check them against the source before relying on them. © OpenStreetMap contributors (ODbL). LiDAR © Environment Agency, OGL. Contains Natural England data © Natural England, OGL. Contains British Geological Survey materials © UKRI, OGL. Flood data © Environment Agency copyright and/or database right 2025, OGL. Contains OS data © Crown copyright and database right, OGL.</p>' +
+      '<p class="small">Grid north up, centred on the drawing frame (or the map area you draw) at the drawing scale. Map tiles come from OpenStreetMap (or Esri World Imagery for satellite), terrain from the Environment Agency, postcodes from postcodes.io, geology and rock unit names from BGS, designations from Natural England, OS rivers and roads from Esri UK (ArcGIS Living Atlas) and the flood layers from the Environment Agency, so the location is sent to them. Layers you add from a link are fetched from the service that link points to. <strong>EA LiDAR covers England only.</strong> Files you load stay in this browser. Contours, designations, geology and flood layers are indicative: check them against the source before relying on them. © OpenStreetMap contributors (ODbL). LiDAR © Environment Agency, OGL. Contains Natural England data © Natural England, OGL. Contains British Geological Survey materials © UKRI, OGL. Flood data © Environment Agency copyright and/or database right 2025, OGL. Contains OS data © Crown copyright and database right, OGL.</p>' +
     "</div>" +
     "</div>" +
     '<div class="sk-tabs" id="sk-tabs" role="tablist" aria-label="Sheets"></div>' +
@@ -1013,7 +1021,7 @@
     if (!tbGet("ref")) { p = tbAt(2, 0); at("tb4", p.x, p.y, "No sketch number in the title block."); }
     if (d.dscale && d.sbar === false) at("sc1", I.x + 24, I.y + I.h - 24, "Drawn to scale but the scale bar is off.");
     if (d.map && d.map.show !== false && !d.items.some(function (it) { return it.type === "north"; })) at("sc4", I.x + I.w - 26, I.y + 24, "There's a map but no north arrow.");
-    var styles = {}, hasHatch = false; d.items.forEach(function (it) { if (it.type === "hatch") hasHatch = true; if (/^(line|stroke|poly|rect|circle|arrow|cloud|hatch)$/.test(it.type)) styles[legKey(it.type === "hatch" ? { kind: "hatch", pat: it.pat, c: it.c, ps: it.ps || 1, ha: it.ha || 0 } : { kind: "line", c: it.c, w: it.w || 2, ls: it.ls || "solid" })] = 1; });
+    var styles = {}, hasHatch = false; d.items.forEach(function (it) { if (it.type === "hatch") hasHatch = true; if (/^(line|stroke|poly|rect|circle|arrow|cloud|hatch)$/.test(it.type)) styles[legKey(it.type === "hatch" ? { kind: "hatch", pat: it.pat, c: it.c, ps: it.ps || 1, ha: it.ha || 0, bg: it.bg, bo: it.bo } : { kind: "line", c: it.c, w: it.w || 2, ls: it.ls || "solid" })] = 1; });
     var legOn = (d.legItems || []).length || mapLegOn(), lx = I.x + I.w - 26, ly = tbOff ? I.y + I.h - 50 : t.y - 26;
     if (!legOn && (hasHatch || Object.keys(styles).length > 2)) at("lg1", lx, ly, "Hatches or several line types are used but there's no legend.");
     if (legOn) { var have = {}; (d.legItems || []).forEach(function (L) { have[legKey(L)] = 1; }); var miss = Object.keys(styles).filter(function (k2) { return !have[k2]; }).length; if (miss) at("lg2", lx - 34, ly, miss + " line type" + (miss > 1 ? "s or hatches aren't" : " or hatch isn't") + " in the legend."); }
@@ -1131,7 +1139,7 @@
     Array.prototype.forEach.call(app.querySelectorAll("[data-snap]"), function (c) { c.checked = !!S.snaps[c.dataset.snap]; c.disabled = !d.snap; });
     $("sk-show-draw").checked = d.showDraw; $("sk-lock-draw").checked = d.lockDraw; $("sk-show-under").checked = d.showUnder; $("sk-lock-under").checked = d.lockUnder;
     Array.prototype.forEach.call(app.querySelectorAll("[data-paper]"), function (b) { b.setAttribute("aria-pressed", b.dataset.paper === (d.paper || "A4")); });
-    $("sk-showframe").checked = d.frame !== false; $("sk-tbs").value = d.tbs || "medium"; $("sk-rev").checked = !!d.showRev; $("sk-addrev").hidden = !d.showRev || geo().tb.off; $("sk-delrev").hidden = $("sk-addrev").hidden || !(d.revs && d.revs.length > 1); $("sk-fs").value = style.fs; $("sk-hsc").value = style.hsc || 1; $("sk-hang").value = style.ha || 0;
+    $("sk-showframe").checked = d.frame !== false; $("sk-tbs").value = d.tbs || "medium"; $("sk-rev").checked = !!d.showRev; $("sk-addrev").hidden = !d.showRev || geo().tb.off; $("sk-delrev").hidden = $("sk-addrev").hidden || !(d.revs && d.revs.length > 1); $("sk-fs").value = style.fs; $("sk-hsc").value = style.hsc || 1; $("sk-hang").value = style.ha || 0; $("sk-hbg").value = style.hbg || ""; $("sk-hbo").value = style.hbo == null ? 1 : style.hbo;
     $("sk-wm").value = d.wmc ? "*" : (d.wm || ""); $("sk-wmtext").hidden = !d.wmc; if (d.wmc && document.activeElement !== $("sk-wmtext")) $("sk-wmtext").value = d.wm || "";
     $("sk-tabs").innerHTML = S.sheets.map(function (s, i) {
       var on = i === S.cur;
@@ -1168,6 +1176,8 @@
     if (b.dataset.orient) { if (doc().orient !== b.dataset.orient) setOrient(b.dataset.orient); return; }
   });
   $("sk-fs").addEventListener("change", function () { style.fs = +this.value; restyle(function (it) { if (it.type === "text") it.size = style.fs; else if (it.type === "leader" || it.label != null || it.type === "dim") keepTL(it, function (x) { x.fs = style.fs; }); }); renderProps(); });
+  $("sk-hbg").addEventListener("change", function () { style.hbg = this.value; restyle(function (it) { if (it.type === "hatch") { if (style.hbg) { it.bg = style.hbg; it.bo = style.hbo == null ? 1 : style.hbo; } else { delete it.bg; delete it.bo; } } }); renderProps(); });
+  $("sk-hbo").addEventListener("change", function () { style.hbo = +this.value; restyle(function (it) { if (it.type === "hatch" && it.bg) it.bo = style.hbo; }); renderProps(); });
   $("sk-hang").addEventListener("change", function () { style.ha = +this.value; restyle(function (it) { if (it.type === "hatch") { if (style.ha) it.ha = style.ha; else delete it.ha; } }); renderProps(); });
   $("sk-hsc").addEventListener("change", function () { style.hsc = +this.value; restyle(function (it) { if (it.type === "hatch") it.ps = style.hsc; }); renderProps(); });
   $("sk-wm").addEventListener("change", function () { var v = this.value; $("sk-wmtext").hidden = v !== "*"; begin(); doc().wm = v === "*" ? ($("sk-wmtext").value || "COPY") : v; doc().wmc = v === "*"; commit(); if (v === "*") $("sk-wmtext").focus({ preventScroll: true }); });
@@ -1268,6 +1278,7 @@
     if (it.type === "moment") h += '<button type="button" class="sk-btn" data-act="dir">Reverse</button>';
     if (it.type === "hatch") h += '<select id="skp-pat" aria-label="Hatch pattern">' + PATS.map(function (x) { return '<option value="' + x[0] + '"' + (it.pat === x[0] ? " selected" : "") + ">" + x[1] + "</option>"; }).join("") + '</select><label class="sk-check"><input type="checkbox" id="skp-outline"' + (it.outline ? " checked" : "") + "> Outline</label>" +
       '<label class="sk-check">Scale <select id="skp-hsc">' + [0.1, 0.25, 0.5, 0.75, 1, 1.5, 2, 3, 4].map(function (v) { return '<option value="' + v + '"' + ((it.ps || 1) === v ? " selected" : "") + ">×" + v + "</option>"; }).join("") + "</select></label>" +
+      '<label class="sk-check">Fill <select id="skp-hbg">' + hfillOpts(it.bg) + '</select></label><select id="skp-hbo" aria-label="Fill strength">' + hopOpts(it.bo) + "</select>" +
       '<label class="sk-check">Angle <select id="skp-ha">' + [0, 15, 30, 45, 60, 75, 90, 105, 120, 135, 150, 165].map(function (v) { return '<option value="' + v + '"' + ((it.ha || 0) === v ? " selected" : "") + ">" + v + "°</option>"; }).join("") + "</select></label>";
     if (it.type === "leader") h += '<label class="sk-check"><input type="checkbox" id="skp-box"' + (it.nobox ? "" : " checked") + "> Box</label>";
     if (it.type === "leader" && it.att) h += '<button type="button" class="sk-btn" data-act="detach">Detach arrow</button>';
@@ -1335,6 +1346,8 @@
     liveEdit("skp-rad", function (it, el) { var v = parseFloat(el.value); if (!(v > 0)) return; var n = norm(it), L = fromM(v); it.x2 = r1(it.x1 + n.dx * L); it.y2 = r1(it.y1 + n.dy * L); });
     liveEdit("skp-ah", function (it, el) { it.ah = +el.value; });
     liveEdit("skp-hsc", function (it, el) { it.ps = +el.value; });
+    liveEdit("skp-hbg", function (it, el) { if (el.value) { it.bg = el.value; if (it.bo == null) it.bo = 1; } else { delete it.bg; delete it.bo; } });
+    liveEdit("skp-hbo", function (it, el) { it.bo = +el.value; if (!it.bg) it.bg = it.c || "#15233a"; });
     liveEdit("skp-ha", function (it, el) { if (+el.value) it.ha = +el.value; else delete it.ha; });
     liveEdit("skp-bold", function (it, el) { it.bold = el.checked; });
     liveEdit("skp-kind", function (it, el) { it.kind = el.value; });
@@ -1416,7 +1429,7 @@
   }
   function deleteSel() { var l = selList().filter(function (x) { return !locked(x); }), ids = l.map(function (x) { return x.id; }); syncLeaders(); doc().items = doc().items.filter(function (x) { return ids.indexOf(x.id) < 0; }); sel = null; }
   function selectItem(it) { sel = it ? { k: "item", id: it.id } : null; renderContent(); renderProps(); }
-  function base(type, extra) { var o = { id: newId(), type: type, c: style.c }; if (/^(leader|pload|udl|moment|dim)$/.test(type)) o.fs = style.fs; if (type === "hatch" && style.hsc && style.hsc !== 1) o.ps = style.hsc; if (type === "hatch" && style.ha) o.ha = style.ha; for (var p in extra) o[p] = extra[p]; return o; }
+  function base(type, extra) { var o = { id: newId(), type: type, c: style.c }; if (/^(leader|pload|udl|moment|dim)$/.test(type)) o.fs = style.fs; if (type === "hatch" && style.hsc && style.hsc !== 1) o.ps = style.hsc; if (type === "hatch" && style.ha) o.ha = style.ha; if (type === "hatch" && style.hbg) { o.bg = style.hbg; o.bo = style.hbo == null ? 1 : style.hbo; } for (var p in extra) o[p] = extra[p]; return o; }
   function addItem(it) { begin(); doc().items.push(it); commit(); return it; }
   function constrain(a, p) { var dx = p.x - a.x, dy = p.y - a.y, ang = Math.round(Math.atan2(dy, dx) / (Math.PI / 4)) * (Math.PI / 4), L = Math.hypot(dx, dy); return { x: r1(a.x + Math.cos(ang) * L), y: r1(a.y + Math.sin(ang) * L) }; }
   function nextSectionLetter() { var used = doc().items.filter(function (x) { return x.type === "section"; }).map(function (x) { return x.label; }), L = "ABCDEFGHJKLMNPQRSTUVWXYZ"; for (var i = 0; i < L.length; i++) if (used.indexOf(L[i]) < 0) return L[i]; return "A"; }
@@ -1992,7 +2005,7 @@
   }
   function mapLegOn() { var d = doc(), m = d.map; return !!(m && m.show !== false && d.dscale && m.leg && RO()); }
   function legSwatch(L, x, y, sw, lh) { /* a legend entry's sample, drawn with the item renderer so it matches the drawing */
-    if (L.kind === "hatch") return '<defs>' + patDef(L.pat, L.c, L.ps, L.ha) + '</defs>' + draw({ type: "hatch", pts: [[x, y + 2], [x + sw, y + 2], [x + sw, y + lh - 3], [x, y + lh - 3]], pat: L.pat, c: L.c, ps: L.ps, ha: L.ha, outline: true, w: 1, ls: "solid" });
+    if (L.kind === "hatch") return '<defs>' + patDef(L.pat, L.c, L.ps, L.ha) + '</defs>' + draw({ type: "hatch", pts: [[x, y + 2], [x + sw, y + 2], [x + sw, y + lh - 3], [x, y + lh - 3]], pat: L.pat, c: L.c, ps: L.ps, ha: L.ha, bg: L.bg, bo: L.bo, outline: true, w: 1, ls: "solid" });
     return draw({ type: "line", x1: r1(x), y1: r1(y + lh / 2), x2: r1(x + sw), y2: r1(y + lh / 2), c: L.c, w: Math.min(L.w || 2, 8), ls: L.ls || "solid" });
   }
   function legendStr(m, I, forExport) {
@@ -2894,7 +2907,8 @@
     if (l.some(function (x) { return "w" in x; })) o += '<div class="sk-ctx-row"><span>Weight</span>' + WIDTHS.map(function (w) { return '<button type="button" class="sk-chip' + (l[0].w === w[0] ? " on" : "") + '" data-cw="' + w[0] + '" title="' + w[1] + '" aria-label="' + w[1] + '"><i style="height:' + Math.min(w[0], 10) + 'px"></i></button>'; }).join("") + "</div>";
     if (has(/^(stroke|line|member|hatch|arrow|rect|circle|poly)$/)) o += '<div class="sk-ctx-row"><span>Line</span><select data-cs="sk-ls">' + LINES.map(function (x) { return '<option value="' + x[0] + '"' + ((l[0].ls || "solid") === x[0] ? " selected" : "") + ">" + x[1] + "</option>"; }).join("") + "</select></div>";
     if (l.some(function (x) { return x.type === "text" || x.type === "leader" || x.type === "dim" || x.label != null; })) o += '<div class="sk-ctx-row"><span>Text size</span><select data-cs="sk-fs">' + [8, 10, 12, 14, 16, 18, 24, 32].map(function (v) { var cur = l[0].size || l[0].fs || style.fs; return '<option value="' + v + '"' + (cur === v ? " selected" : "") + ">" + v + "</option>"; }).join("") + "</select></div>";
-    if (has(/^hatch$/)) { var h0 = l.filter(function (x) { return x.type === "hatch"; })[0]; o += '<div class="sk-ctx-row"><span>Hatch</span><select data-cs="sk-pat">' + PATS.map(function (x) { return '<option value="' + x[0] + '"' + (h0.pat === x[0] ? " selected" : "") + ">" + x[1] + "</option>"; }).join("") + '</select><select data-cs="sk-hsc" aria-label="Hatch scale">' + [0.1, 0.25, 0.5, 0.75, 1, 1.5, 2, 3, 4].map(function (v) { return '<option value="' + v + '"' + ((h0.ps || 1) === v ? " selected" : "") + ">×" + v + "</option>"; }).join("") + '</select><select data-cs="sk-hang" aria-label="Hatch angle">' + [0, 15, 30, 45, 60, 75, 90, 105, 120, 135, 150, 165].map(function (v) { return '<option value="' + v + '"' + ((h0.ha || 0) === v ? " selected" : "") + ">" + v + "°</option>"; }).join("") + "</select></div>"; }
+    if (has(/^hatch$/)) { var h0 = l.filter(function (x) { return x.type === "hatch"; })[0]; o += '<div class="sk-ctx-row"><span>Hatch</span><select data-cs="sk-pat">' + PATS.map(function (x) { return '<option value="' + x[0] + '"' + (h0.pat === x[0] ? " selected" : "") + ">" + x[1] + "</option>"; }).join("") + '</select><select data-cs="sk-hsc" aria-label="Hatch scale">' + [0.1, 0.25, 0.5, 0.75, 1, 1.5, 2, 3, 4].map(function (v) { return '<option value="' + v + '"' + ((h0.ps || 1) === v ? " selected" : "") + ">×" + v + "</option>"; }).join("") + '</select><select data-cs="sk-hang" aria-label="Hatch angle">' + [0, 15, 30, 45, 60, 75, 90, 105, 120, 135, 150, 165].map(function (v) { return '<option value="' + v + '"' + ((h0.ha || 0) === v ? " selected" : "") + ">" + v + "°</option>"; }).join("") + "</select></div>" +
+      '<div class="sk-ctx-row"><span>Fill</span><select data-cs="sk-hbg">' + hfillOpts(h0.bg) + '</select><select data-cs="sk-hbo" aria-label="Fill strength">' + hopOpts(h0.bo) + "</select></div>"; }
     var acts = Array.prototype.map.call(propsEl.querySelectorAll("button[data-act]"), function (b) { return '<button type="button" class="sk-ctx-act' + (b.dataset.act === "del" || b.dataset.act === "gdel" ? " del" : "") + '" data-ca="' + esc(b.dataset.act) + '">' + esc(b.textContent) + "</button>"; });
     if (acts.length) o += '<div class="sk-ctx-acts">' + acts.join("") + "</div>";
     ctxEl = document.createElement("div"); ctxEl.className = "sk-ctx"; ctxEl.setAttribute("role", "menu"); ctxEl.innerHTML = o; app.appendChild(ctxEl);
@@ -2913,11 +2927,11 @@
     });
   }
   /* Legend editor: the line types and hatches used on the drawing, to add to the legend with your own words. */
-  function legKey(L) { return L.kind === "hatch" ? ["h", L.pat, L.c, L.ps || 1, L.ha || 0].join("|") : ["l", L.c, L.w, L.ls || "solid"].join("|"); }
+  function legKey(L) { return L.kind === "hatch" ? ["h", L.pat, L.c, L.ps || 1, L.ha || 0, L.bg || "", L.bg ? (L.bo == null ? 1 : L.bo) : ""].join("|") : ["l", L.c, L.w, L.ls || "solid"].join("|"); }
   function legFound() {
     var f = {}, out = [];
     doc().items.forEach(function (it) {
-      var L = it.type === "hatch" ? { kind: "hatch", pat: it.pat, c: it.c, ps: it.ps || 1, ha: it.ha || 0 } : /^(line|member|stroke|poly|rect|circle|arrow|cloud|brk)$/.test(it.type) ? { kind: "line", c: it.c, w: it.w || 2, ls: it.ls || "solid" } : null;
+      var L = it.type === "hatch" ? { kind: "hatch", pat: it.pat, c: it.c, ps: it.ps || 1, ha: it.ha || 0, bg: it.bg, bo: it.bo } : /^(line|member|stroke|poly|rect|circle|arrow|cloud|brk)$/.test(it.type) ? { kind: "line", c: it.c, w: it.w || 2, ls: it.ls || "solid" } : null;
       if (!L) return; var k2 = legKey(L);
       if (!f[k2]) { f[k2] = { L: L, n: 0, types: {} }; out.push(f[k2]); }
       f[k2].n++; f[k2].types[NAMES_ALL[it.type] || it.type] = 1;
