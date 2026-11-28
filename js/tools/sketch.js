@@ -2553,7 +2553,7 @@
   function noTerrain(g) {
     var n = 0, lo = Infinity, hi = -Infinity, step = Math.max(1, Math.floor(g.z.length / 20000));
     for (var q = 0; q < g.z.length; q += step) { var v = g.z[q]; if (v === v && v !== 0) { n++; if (v < lo) lo = v; if (v > hi) hi = v; } }
-    return n < 0.2 * g.z.length / step || hi - lo < 0.05;
+    return n < 0.02 * g.z.length / step || hi - lo < 0.05; /* a coastal sheet can be mostly sea: only refuse when almost nothing is land */
   }
   function terrainSrc() { var m = doc().map; return m && m.csrc === "file" && m.c && m.c.src ? m.c.src : "EA LiDAR DTM © Environment Agency (OGL)"; }
 
