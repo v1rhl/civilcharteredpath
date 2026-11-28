@@ -762,7 +762,7 @@
     var row1 = mk("div", "sk-row1"); row1.appendChild($("sk-tabs")); row1.appendChild(top); /* sheet tabs and the undo/export bar share one row */
     var tbar = mk("div", "sk-tbar"); tbar.id = "sk-tbar"; tbar.setAttribute("role", "group"); tbar.setAttribute("aria-label", "Starred tools");
     tbar.innerHTML = '<button type="button" class="sk-tbar-grip" id="sk-tbgrip" title="Drag to move the toolbar anywhere" aria-label="Move toolbar"><svg viewBox="0 0 8 16" width="8" height="16" aria-hidden="true"><g fill="currentColor"><circle cx="2" cy="3" r="1.2"/><circle cx="6" cy="3" r="1.2"/><circle cx="2" cy="8" r="1.2"/><circle cx="6" cy="8" r="1.2"/><circle cx="2" cy="13" r="1.2"/><circle cx="6" cy="13" r="1.2"/></g></svg></button><div class="sk-tbar-slot" id="sk-tbslot"></div>' +
-      '<div class="sk-tbar-lay" id="sk-tblay"></div><div class="sk-tbar-end"><button type="button" class="sk-btn sk-tbar-all" id="sk-tball" title="All tools: star the ones you want on this toolbar">All tools</button><button type="button" class="sk-win-b" id="sk-tbvert" aria-pressed="false" title="Stand the toolbar up as a column" aria-label="Vertical toolbar" hidden>⇅</button><button type="button" class="sk-win-b" id="sk-tbdock" title="Put the toolbar back along the top" aria-label="Dock toolbar at the top" hidden>⤒</button></div>';
+      '<div class="sk-tbar-lay" id="sk-tblay"></div><div class="sk-tbar-end"><button type="button" class="sk-btn sk-tbar-all" id="sk-tball" title="All tools: star the ones you want on this toolbar">All tools</button><span class="sk-tbdocks"><button type="button" class="sk-win-b" id="sk-tbvert" aria-pressed="false" title="Stand the toolbar up as a column" aria-label="Vertical toolbar" hidden>⇅</button><button type="button" class="sk-win-b" data-dock="left" title="Dock the toolbar at the left of the drawing" aria-label="Dock toolbar at the left">⇤</button><button type="button" class="sk-win-b" data-dock="top" title="Dock the toolbar along the top of the drawing" aria-label="Dock toolbar at the top">⤒</button><button type="button" class="sk-win-b" data-dock="bottom" title="Dock the toolbar along the bottom of the drawing" aria-label="Dock toolbar at the bottom">⤓</button></span></div>';
     [row1, tbar, $("sk-stage"), $("sk-props"), hint, $("sk-status")].forEach(function (n) { main.appendChild(n); }); /* the item options and messages sit under the sheet, kept small */
     var lay = mk("div", "sk-layout"); lay.appendChild(side); lay.appendChild(main);
     head.remove(); app.innerHTML = ""; app.appendChild(lay);
@@ -866,8 +866,10 @@
   /* Starred tools: on wide screens they sit in a toolbar along the top of the sheet (one or two rows). Drag
      its grip to float it anywhere; it stays where you leave it, can stand up as a column, and ⤒ docks it again.
      On phones they stay in the strip along the bottom. */
-  function tbState() { try { return JSON.parse(localStorage.getItem("cp-sketch-tbar")) || {}; } catch (e) { return {}; } }
-  function tbSave(w) { try { localStorage.setItem("cp-sketch-tbar", JSON.stringify(w)); } catch (e) {} }
+  /* Docked at the left of the drawing (the default), along its top or bottom, or floating. Drag the grip near
+     an edge of the drawing to snap it there. */
+  function tbState() { var w; try { w = JSON.parse(localStorage.getItem("cp-sketch-tbar2")); } catch (e) {} w = w || {}; if (!/^(left|top|bottom)$/.test(w.dock)) w.dock = "left"; return w; }
+  function tbSave(w) { try { localStorage.setItem("cp-sketch-tbar2", JSON.stringify(w)); } catch (e) {} }
   function placeTools() {
     var t = $("sk-tools"), slot = $("sk-tbslot"), bar = $("sk-tbar"); if (!t || !slot) return;
     var row = app.querySelector(".sk-toolrow");
@@ -875,11 +877,17 @@
     if (act && side && r1w) { if (isMob()) { if (act.parentNode !== r1w) r1w.appendChild(act); act.classList.remove("sk-sideacts"); } else { if (act.parentNode !== side) side.appendChild(act); act.classList.add("sk-sideacts"); } }
     var lt = $("sk-laytogs"), ls = app.querySelector(".sk-layers"), tl = $("sk-tblay");
     if (lt && ls && tl) { if (isMob()) { if (lt.parentNode !== ls) ls.insertBefore(lt, ls.children[1] || null); } else if (lt.parentNode !== tl) tl.appendChild(lt); } /* drawing and underlay show / lock: toolbar icons on wide screens */
-    if (isMob()) { if (t.parentNode !== row) row.insertBefore(t, row.firstChild); bar.hidden = true; return; }
+    var lay = app.querySelector(".sk-layout"), main = $("sk-main");
+    if (isMob()) { if (t.parentNode !== row) row.insertBefore(t, row.firstChild); bar.hidden = true; if (lay) lay.classList.remove("sk-tl"); if (bar.parentNode !== main) main.insertBefore(bar, $("sk-stage")); return; }
     if (t.parentNode !== slot) slot.appendChild(t);
-    bar.hidden = false; var w = tbState(), fl = !!w.float;
-    bar.classList.toggle("sk-tbar-float", fl); bar.classList.toggle("sk-tbar-vert", fl && !!w.vert);
-    $("sk-tbdock").hidden = !fl; $("sk-tbvert").hidden = !fl; $("sk-tbvert").setAttribute("aria-pressed", !!w.vert);
+    bar.hidden = false; var w = tbState(), fl = !!w.float, dk = fl ? "" : w.dock;
+    if (dk === "left") { if (bar.parentNode !== lay) lay.insertBefore(bar, main); }
+    else if (dk === "bottom") { if (bar.parentNode !== main || bar.previousElementSibling !== $("sk-stage")) main.insertBefore(bar, $("sk-stage").nextSibling); }
+    else if (dk === "top" && (bar.parentNode !== main || bar.nextElementSibling !== $("sk-stage"))) main.insertBefore(bar, $("sk-stage")); /* floating: left where it is, so a drag in progress keeps hold of it */
+    lay.classList.toggle("sk-tl", dk === "left");
+    bar.classList.toggle("sk-tbar-float", fl); bar.classList.toggle("sk-tbar-vert", fl && !!w.vert); bar.classList.toggle("sk-tbar-left", dk === "left"); bar.classList.toggle("sk-tbar-bottom", dk === "bottom");
+    $("sk-tbvert").hidden = !fl; $("sk-tbvert").setAttribute("aria-pressed", !!w.vert);
+    Array.prototype.forEach.call(bar.querySelectorAll("[data-dock]"), function (b) { b.setAttribute("aria-pressed", b.dataset.dock === dk); });
     if (fl) { var bw = bar.offsetWidth || 200, bh = bar.offsetHeight || 50; bar.style.left = Math.max(4, Math.min(w.x || 0, window.innerWidth - bw - 4)) + "px"; bar.style.top = Math.max(4, Math.min(w.y || 0, window.innerHeight - bh - 4)) + "px"; }
     else { bar.style.left = ""; bar.style.top = ""; }
   }
@@ -887,16 +895,19 @@
     var grip = $("sk-tbgrip"), bar = $("sk-tbar");
     grip.addEventListener("pointerdown", function (e) {
       if (e.button !== 0) return; e.preventDefault();
-      var r = bar.getBoundingClientRect(), ox = e.clientX - r.left, oy = e.clientY - r.top, moved = false; grip.setPointerCapture(e.pointerId);
+      var r = bar.getBoundingClientRect(), ox = e.clientX - r.left, oy = e.clientY - r.top, moved = false, snap = "", stg = $("sk-stage"); grip.setPointerCapture(e.pointerId);
       var mv = function (ev) {
         if (!moved && Math.hypot(ev.clientX - e.clientX, ev.clientY - e.clientY) < 4) return;
-        if (!moved) { moved = true; var w = tbState(); w.float = true; tbSave(w); bar.classList.add("sk-tbar-float"); $("sk-tbdock").hidden = false; $("sk-tbvert").hidden = false; fitSheet(); }
+        if (!moved) { moved = true; var w = tbState(); w.float = true; tbSave(w); placeTools(); fitSheet(); var r2 = bar.getBoundingClientRect(); ox = Math.min(ox, r2.width - 10); oy = Math.min(oy, r2.height - 10); }
         var br = bar.getBoundingClientRect(); bar.style.left = Math.max(4, Math.min(window.innerWidth - br.width - 4, ev.clientX - ox)) + "px"; bar.style.top = Math.max(4, Math.min(window.innerHeight - br.height - 4, ev.clientY - oy)) + "px";
+        var sr = stg.getBoundingClientRect(), x = ev.clientX, y = ev.clientY, inX = x > sr.left - 80 && x < sr.right, inY = y > sr.top - 60 && y < sr.bottom + 60; /* near an edge of the drawing: snap there */
+        snap = inY && x < sr.left + 50 && x > sr.left - 120 ? "left" : inX && Math.abs(y - sr.top) < 45 ? "top" : inX && Math.abs(y - sr.bottom) < 45 ? "bottom" : "";
+        stg.dataset.snap = snap;
       };
-      var up = function () { grip.removeEventListener("pointermove", mv); grip.removeEventListener("pointerup", up); grip.removeEventListener("pointercancel", up); if (moved) { var w = tbState(); w.x = parseFloat(bar.style.left); w.y = parseFloat(bar.style.top); tbSave(w); } };
+      var up = function () { grip.removeEventListener("pointermove", mv); grip.removeEventListener("pointerup", up); grip.removeEventListener("pointercancel", up); stg.dataset.snap = ""; if (moved) { var w = tbState(); if (snap) { w.float = false; w.dock = snap; tbSave(w); placeTools(); fitSheet(); } else { w.x = parseFloat(bar.style.left); w.y = parseFloat(bar.style.top); tbSave(w); } } };
       grip.addEventListener("pointermove", mv); grip.addEventListener("pointerup", up); grip.addEventListener("pointercancel", up);
     });
-    $("sk-tbdock").addEventListener("click", function () { var w = tbState(); w.float = false; tbSave(w); placeTools(); fitSheet(); });
+    Array.prototype.forEach.call(bar.querySelectorAll("[data-dock]"), function (b) { b.addEventListener("click", function () { var w = tbState(); w.float = false; w.dock = b.dataset.dock; tbSave(w); placeTools(); fitSheet(); }); });
     $("sk-tbvert").addEventListener("click", function () { var w = tbState(); w.vert = !w.vert; tbSave(w); placeTools(); });
     $("sk-tball").addEventListener("click", function () { var d = app.querySelector('details.sk-sec[data-sec="alltools"]'); if (!d) return; if (isMob()) { d.open = true; setDrawer(true); return; } if (d.open) closeWin(d); else openWin(d); });
   })();
@@ -930,7 +941,7 @@
     var b = dd.querySelector(".sk-sec-body"), n = dd.querySelector(".sk-sec-in"), h = dd.querySelector(".sk-win-h"), side = $("sk-side"), w = winState(dd.dataset.sec);
     var pin = h.querySelector('[data-win="pin"]'); pin.setAttribute("aria-pressed", !!w.pin);
     var r = side.getBoundingClientRect(), VW = window.innerWidth, VH = window.innerHeight, x = w.x, y = w.y, left = dd.dataset.sec !== "style";
-    if (y == null) { var tb = $("sk-tbar"), tr = tb && !tb.hidden && !tb.classList.contains("sk-tbar-float") ? tb.getBoundingClientRect() : null; y = tr ? tr.bottom + 8 : Math.max(r.top, 8); } /* first time: under the toolbar */
+    if (y == null) { var tb = $("sk-tbar"), tr = tb && !tb.hidden && !/sk-tbar-(float|left|bottom)/.test(tb.className) ? tb.getBoundingClientRect() : null; y = tr ? tr.bottom + 8 : Math.max($("sk-stage").getBoundingClientRect().top, 8); } /* first time: under the toolbar */
     y = Math.max(8, Math.min(y, VH - 160));
     b.style.zIndex = ++winZ; b._placing = true;
     var hh0 = h.offsetHeight || 34;
@@ -944,7 +955,7 @@
       n.style.height = Math.min(H, Math.max(60, my - n0.top + 16)) + "px"; b.style.width = cw + "px";
     }
     var bw = b.offsetWidth, bh = b.offsetHeight;
-    if (x == null) x = left ? r.right + 8 : VW - bw - 16; /* Style opens at the right; the others at the left, beside the side bar */
+    if (x == null) { var tbl = $("sk-tbar"); x = left ? (tbl && tbl.classList.contains("sk-tbar-left") ? tbl.getBoundingClientRect().right : r.right) + 8 : VW - bw - 16; } /* Style opens at the right; the others at the left, beside the side bar */
     x = Math.max(8, Math.min(x, VW - bw - 8)); y = Math.max(8, Math.min(y, VH - bh - 8));
     b.style.left = x + "px"; b.style.top = y + "px";
     b._size = [b.offsetWidth, b.offsetHeight]; setTimeout(function () { b._placing = false; }, 0);

@@ -941,6 +941,24 @@ html.sk-lock .sk-main > *:not(.sk-stage), .sk-app:fullscreen .sk-main > *:not(.s
 .sk-tbar-vert .sk-tbar-grip svg { transform: rotate(90deg); }
 .sk-tbar-vert .sk-tools { flex-direction: column; flex-wrap: nowrap; max-height: calc(100vh - 150px); overflow-y: auto; scrollbar-width: thin; }
 .sk-tbar-vert .sk-tbar-end { flex-direction: column; }
+.sk-tbdocks { display: inline-flex; gap: 1px; }
+.sk-tbdocks .sk-win-b[aria-pressed="true"] { background: var(--line); }
+.sk-layout.sk-tl { grid-template-columns: 340px auto minmax(0, 1fr); }
+html.sk-lock .sk-layout.sk-tl, .sk-app:fullscreen .sk-layout.sk-tl, .sk-app.sk-full .sk-layout.sk-tl { grid-template-columns: 210px auto minmax(0, 1fr); }
+.sk-tbar-left { flex-direction: column; align-items: stretch; align-self: stretch; min-height: 0; max-height: 100%; padding: 4px 3px; gap: 4px; }
+html:not(.sk-lock) .sk-tbar-left { position: sticky; top: var(--sk-top, 56px); max-height: calc(100vh - var(--sk-top, 56px) - 16px); align-self: start; }
+.sk-tbar-left .sk-tbar-grip { padding: 3px 0; }
+.sk-tbar-left .sk-tbar-grip svg { transform: rotate(90deg); }
+.sk-tbar-left .sk-tbar-slot { flex: 1 1 auto; min-height: 0; overflow-y: auto; scrollbar-width: thin; }
+.sk-tbar-left .sk-tools { display: grid; grid-template-columns: repeat(2, 48px); gap: 2px; }
+.sk-tbar-left .sk-tool { min-width: 0; }
+.sk-tbar-left .sk-tbar-lay { border-left: 0; border-top: 1px solid var(--tool-line); padding: 4px 0 0; display: grid; grid-template-columns: repeat(2, 48px); gap: 2px; }
+.sk-tbar-left .sk-tbar-lay .sk-laytogs { display: contents; }
+.sk-tbar-left .sk-ltog { min-width: 0; }
+.sk-tbar-left .sk-tbar-end { flex-direction: column; align-items: stretch; }
+.sk-stage[data-snap="left"] { box-shadow: inset 4px 0 0 var(--accent); }
+.sk-stage[data-snap="top"] { box-shadow: inset 0 4px 0 var(--accent); }
+.sk-stage[data-snap="bottom"] { box-shadow: inset 0 -4px 0 var(--accent); }
 .sk-alltip { margin: 0; }
 html.sk-lock .sk-layout, .sk-app:fullscreen .sk-layout, .sk-app.sk-full .sk-layout { grid-template-columns: 210px minmax(0, 1fr); }
 .sk-tool { position: relative; }
@@ -2961,9 +2979,9 @@ footer .wrap { font-family: var(--font-body); }
 <script src="js/news-feed.js?v=20261122b"></script>
 <script src="js/news-archive.js?v=20261122b"></script>
 <script src="js/pages.js?v=20261122b"></script>
-<script src="js/tools/sketch-templates.js?v=20261128zf"></script>
-<script src="js/tools/sketch.js?v=20261128zf"></script>
-<script src="js/tools/drawing-check.js?v=20261128zf"></script>
+<script src="js/tools/sketch-templates.js?v=20261128zg"></script>
+<script src="js/tools/sketch.js?v=20261128zg"></script>
+<script src="js/tools/drawing-check.js?v=20261128zg"></script>
 <script src="js/tools/hydraulics.js?v=20261127a"></script>
 <script src="js/tools/pipeflow.js?v=20261127a"></script>
 <script src="js/tools/catchment.js?v=20261127a"></script>
@@ -2975,7 +2993,7 @@ footer .wrap { font-family: var(--font-body); }
 <script src="js/tools/culvert.js?v=20261127a"></script>
 <script src="js/tools/site-diary.js?v=20261127a"></script>
 <script src="js/learn.js?v=20261127m"></script>
-<script src="js/site.js?v=20261128zf"></script>
+<script src="js/site.js?v=20261128zg"></script>
 <script src="js/art.js?v=20261127m"></script>
 </body>
 </html>
