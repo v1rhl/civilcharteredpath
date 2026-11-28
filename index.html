@@ -1025,6 +1025,10 @@ html:not(.sk-mob) .sk-main > .sk-hint, html:not(.sk-mob) .sk-main > .sk-status {
 .sk-sideacts .sk-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; width: 100%; }
 .sk-sideacts .sk-actions > * { width: 100%; min-width: 0; padding: 4px 6px !important; font-size: 0.76rem; }
 .sk-sideacts .sk-actions select { grid-column: 1 / -1; }
+.sk-expmenu { position: fixed; z-index: 60; min-width: 190px; display: flex; flex-direction: column; padding: 4px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: 0 8px 24px rgba(0,0,0,.16); }
+.sk-expmenu[hidden] { display: none; }
+.sk-expmenu button { text-align: left; background: none; border: 0; border-radius: calc(var(--radius) - 2px); padding: 8px 10px; font: 500 0.88rem var(--font-body); color: var(--ink); cursor: default; }
+.sk-expmenu button:hover, .sk-expmenu button:focus-visible { background: var(--accent-soft, var(--paper)); outline: none; }
 .sk-sideacts .sk-actions #sk-export { grid-column: 1 / -1; }
 .sk-sideacts .sk-actions .sr-only { display: none; }
 /* windows can be resized from the corner */
@@ -3026,9 +3030,9 @@ footer .wrap { font-family: var(--font-body); }
 <script src="js/news-feed.js?v=20261122b"></script>
 <script src="js/news-archive.js?v=20261122b"></script>
 <script src="js/pages.js?v=20261122b"></script>
-<script src="js/tools/sketch-templates.js?v=20261129d"></script>
-<script src="js/tools/sketch.js?v=20261129d"></script>
-<script src="js/tools/drawing-check.js?v=20261129d"></script>
+<script src="js/tools/sketch-templates.js?v=20261129e"></script>
+<script src="js/tools/sketch.js?v=20261129e"></script>
+<script src="js/tools/drawing-check.js?v=20261129e"></script>
 <script src="js/tools/hydraulics.js?v=20261127a"></script>
 <script src="js/tools/pipeflow.js?v=20261127a"></script>
 <script src="js/tools/catchment.js?v=20261127a"></script>
@@ -3040,7 +3044,7 @@ footer .wrap { font-family: var(--font-body); }
 <script src="js/tools/culvert.js?v=20261127a"></script>
 <script src="js/tools/site-diary.js?v=20261127a"></script>
 <script src="js/learn.js?v=20261127m"></script>
-<script src="js/site.js?v=20261129d"></script>
+<script src="js/site.js?v=20261129e"></script>
 <script src="js/art.js?v=20261127m"></script>
 </body>
 </html>

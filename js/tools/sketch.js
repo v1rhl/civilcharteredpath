@@ -677,13 +677,14 @@
     img: '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="M21 17l-5-5-9 8"/></svg>'
   };
   var app = $("sk-app");
+  var EXPF = [["png", "PNG image"], ["jpeg", "JPEG image"], ["svg", "SVG drawing"], ["pdf", "PDF, this sheet"], ["pdfall", "PDF, all sheets"], ["dxf", "DXF for CAD, this sheet"]];
   app.innerHTML =
     '<div class="sk-head" id="sk-head"><div class="sk-top">' +
       '<div class="sk-seg" role="group" aria-label="Mode"><button type="button" data-mode="free">Freehand</button><button type="button" data-mode="struct">Beam and frame diagram</button></div>' +
 
       '<div class="sk-actions"><button type="button" class="sk-btn" id="sk-undo" title="Undo (Ctrl+Z)">Undo</button><button type="button" class="sk-btn" id="sk-redo" title="Redo (Ctrl+Y)">Redo</button>' +
         '<button type="button" class="sk-btn" id="sk-clear">Clear</button>' +
-        '<label class="sr-only" for="sk-fmt">Export format</label><select id="sk-fmt"><option value="png">PNG image</option><option value="jpeg">JPEG image</option><option value="svg">SVG drawing</option><option value="pdf">PDF, this sheet</option><option value="pdfall">PDF, all sheets</option><option value="dxf">DXF for CAD, this sheet</option></select><button type="button" class="btn" id="sk-export">Export</button></div>' +
+        '<select id="sk-fmt" hidden aria-hidden="true" tabindex="-1">' + EXPF.map(function (f) { return '<option value="' + f[0] + '">' + f[1] + "</option>"; }).join("") + '</select><button type="button" class="btn" id="sk-export" aria-haspopup="menu" aria-expanded="false" aria-controls="sk-expmenu">Export <span aria-hidden="true">\u25BE</span></button></div>' +
     "</div>" +
     '<div class="sk-toolrow"><div class="sk-tools" id="sk-tools" role="toolbar" aria-label="Drawing tools"></div><div class="sk-tools sk-tools2" id="sk-tools2" role="toolbar" aria-label="Shapes and symbols"></div>' +
       '<label class="sk-check" id="sk-ermode" hidden>Erase <select id="sk-erm"><option value="whole">Whole item</option><option value="part">Part of a line</option></select></label>' +
@@ -1975,7 +1976,28 @@
   }
   /* Before exporting: if the drawing has a legend and some of its line types or hatches aren't in it,
      say which, with a choice to add them, open the legend editor, or export as it is. */
+  /* Export is one button with its formats in a drop-down menu */
+  var expMenu = document.createElement("div"); expMenu.className = "sk-expmenu"; expMenu.id = "sk-expmenu"; expMenu.setAttribute("role", "menu"); expMenu.hidden = true;
+  expMenu.innerHTML = EXPF.map(function (f) { return '<button type="button" role="menuitem" data-f="' + f[0] + '">' + f[1] + "</button>"; }).join("");
+  document.body.appendChild(expMenu);
+  function expClose() { expMenu.hidden = true; $("sk-export").setAttribute("aria-expanded", "false"); }
   $("sk-export").addEventListener("click", function () {
+    if (!expMenu.hidden) return expClose();
+    var r = this.getBoundingClientRect(); expMenu.hidden = false; this.setAttribute("aria-expanded", "true");
+    var mh = expMenu.offsetHeight, mw = expMenu.offsetWidth;
+    expMenu.style.left = Math.max(8, Math.min(r.left, innerWidth - mw - 8)) + "px";
+    expMenu.style.top = (r.bottom + 4 + mh > innerHeight - 8 ? Math.max(8, r.top - 4 - mh) : r.bottom + 4) + "px";
+    var cur = expMenu.querySelector('[data-f="' + $("sk-fmt").value + '"]') || expMenu.firstChild; cur.focus();
+  });
+  expMenu.addEventListener("click", function (e) { var b = e.target.closest("[data-f]"); if (!b) return; $("sk-fmt").value = b.dataset.f; expClose(); startExport(); });
+  expMenu.addEventListener("keydown", function (e) {
+    var bs = [].slice.call(expMenu.children), i = bs.indexOf(document.activeElement);
+    if (e.key === "ArrowDown" || e.key === "ArrowUp") { e.preventDefault(); bs[(i + (e.key === "ArrowDown" ? 1 : bs.length - 1)) % bs.length].focus(); }
+    else if (e.key === "Escape") { expClose(); $("sk-export").focus(); }
+  });
+  document.addEventListener("pointerdown", function (e) { if (!expMenu.hidden && !expMenu.contains(e.target) && !e.target.closest("#sk-export")) expClose(); });
+  window.addEventListener("resize", expClose);
+  function startExport() {
     var d = doc(), off = false; try { off = localStorage.getItem("cp-sketch-legwarn") === "off"; } catch (e) {}
     var inUse = (d.legItems || []).length || mapLegOn(), have = {}; (d.legItems || []).forEach(function (L) { have[legKey(L)] = 1; });
     var miss = inUse && !off ? legFound().filter(function (F) { return !have[legKey(F.L)]; }) : [];
@@ -1992,7 +2014,7 @@
       if (w === "add") { begin(); d.legItems = (d.legItems || []).concat(miss.map(function (F) { var L = {}; for (var k in F.L) L[k] = F.L[k]; L.t = legDefault(F.L); return L; })); commit(); renderAll(); setTimeout(doExport, 50); }
       else if (w === "edit") openLeg(); else if (w === "go") doExport();
     });
-  });
+  }
   function doExport() {
     var f = $("sk-fmt").value, G = geo(), fail = function () { status("Couldn't export in this browser. Try SVG instead."); };
     if (f === "svg") return download(new Blob([exportSvg()], { type: "image/svg+xml" }), fname("svg"));
