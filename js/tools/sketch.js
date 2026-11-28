@@ -755,9 +755,14 @@
     side.appendChild(modes); side.appendChild(toolrow);
     var all = toolrow.querySelector("#sk-tools2"), tpl = toolrow.querySelector("#sk-tpl"), allSec = sec("alltools", "All tools", false, [mk("p", "small sk-alltip", "Click ☆ on a tool to star it onto the toolbar."), all]); allSec.classList.add("sk-alltools"); side.appendChild(allSec); side.appendChild(tpl);
     side.appendChild(sec("style", "Style", true, [styleEl]));
-    side.appendChild(sec("sheet", "Sheet", false, [sheet]));
-    side.appendChild(sec("layers", "Layers and map", false, [layers, mp]));
-    var more = mk("button", "sk-btn sk-more", "More"); more.type = "button"; more.id = "sk-more"; more.setAttribute("aria-expanded", "false"); more.title = "All tools, style, sheet and layers"; toolrow.appendChild(more); /* phones: opens the side bar as a drawer */
+    side.appendChild(sec("layers", "Layers and map", false, [layers, mp])); /* takes the layer toggles out of the sheet options first */
+    /* Page settings (paper, orientation, frame, title block, revisions, legend) and View settings (watermark,
+       grid, checks, scale, snaps): everything from the watermark on goes in View. */
+    var viewEl = mk("div", "sk-style sk-sheetopts sk-viewopts"), kids = Array.prototype.slice.call(sheet.children), wm0 = kids.indexOf($("sk-wm").closest("label"));
+    kids.slice(wm0).forEach(function (c) { viewEl.appendChild(c); });
+    side.insertBefore(sec("view", "View settings", false, [viewEl]), side.querySelector('[data-sec="layers"]'));
+    side.insertBefore(sec("sheet", "Page settings", false, [sheet]), side.querySelector('[data-sec="layers"]'));
+    var more = mk("button", "sk-btn sk-more", "More"); more.type = "button"; more.id = "sk-more"; more.setAttribute("aria-expanded", "false"); more.title = "All tools, style, view, page and layers"; toolrow.appendChild(more); /* phones: opens the side bar as a drawer */
     var main = mk("div", "sk-main"); main.id = "sk-main";
     top.insertAdjacentHTML("beforeend", '<button type="button" class="sk-btn" id="sk-fit" title="See the whole sheet (0)" hidden>Fit sheet</button><button type="button" class="sk-btn" id="sk-full" title="Full screen (F)" aria-pressed="false">Full screen</button>');
     top.querySelector(".sk-actions").appendChild($("sk-fit")); top.querySelector(".sk-actions").appendChild($("sk-full"));
