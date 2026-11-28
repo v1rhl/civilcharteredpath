@@ -703,6 +703,7 @@
     side.appendChild(sec("style", "Style", true, [styleEl]));
     side.appendChild(sec("sheet", "Sheet", false, [sheet]));
     side.appendChild(sec("layers", "Layers and map", false, [layers, mp]));
+    var more = mk("button", "sk-btn sk-more", "More"); more.type = "button"; more.id = "sk-more"; more.setAttribute("aria-expanded", "false"); more.title = "All tools, style, sheet and layers"; toolrow.appendChild(more); /* phones: opens the side bar as a drawer */
     var main = mk("div", "sk-main"); main.id = "sk-main";
     top.insertAdjacentHTML("beforeend", '<button type="button" class="sk-btn" id="sk-fit" title="See the whole sheet (0)" hidden>Fit sheet</button><button type="button" class="sk-btn" id="sk-full" title="Full screen (F)" aria-pressed="false">Full screen</button>');
     top.querySelector(".sk-actions").appendChild($("sk-fit")); top.querySelector(".sk-actions").appendChild($("sk-full"));
@@ -800,13 +801,16 @@
   }
   /* Keep the whole sheet in view under the sticky toolbars on a desktop screen. */
   /* keep the sketch pad fixed in the window on wide screens while it is the page on show */
+  function isMob() { return window.innerWidth <= 1000; }
   function lockPage() {
-    var on = !view.hidden && window.innerWidth > 1000 && !isFull(), h = document.documentElement, was = h.classList.contains("sk-lock");
+    var shown = !view.hidden && !isFull(), on = shown && !isMob(), mob = !view.hidden && isMob(), h = document.documentElement, was = h.classList.contains("sk-lock");
     if (on !== was) h.classList.toggle("sk-lock", on);
-    if (on) { if (window.scrollY) window.scrollTo(0, 0); var lay = app.querySelector(".sk-layout"); if (lay) app.style.setProperty("--sk-avail", Math.max(360, Math.floor(window.innerHeight - lay.getBoundingClientRect().top - 10)) + "px"); }
+    if (mob !== h.classList.contains("sk-mob")) { h.classList.toggle("sk-mob", mob); if (!mob) side0().classList.remove("sk-drawer"); }
+    if (on || (mob && !isFull())) { if (window.scrollY) window.scrollTo(0, 0); var lay = app.querySelector(".sk-layout"); if (lay) app.style.setProperty("--sk-avail", Math.max(360, Math.floor(window.innerHeight - lay.getBoundingClientRect().top - 10)) + "px"); }
   }
   /* the site bar and tool links stay at the top; only the sketch pad's own panels scroll */
-  window.addEventListener("scroll", function () { if (document.documentElement.classList.contains("sk-lock") && window.scrollY) window.scrollTo(0, 0); });
+  window.addEventListener("scroll", function () { var hc = document.documentElement.classList; if ((hc.contains("sk-lock") || hc.contains("sk-mob")) && window.scrollY) window.scrollTo(0, 0); });
+  function side0() { return $("sk-side") || document.createElement("div"); }
   new MutationObserver(function () { lockPage(); if (!view.hidden) setTimeout(fitSheet, 0); }).observe(view, { attributes: true, attributeFilter: ["hidden"] });
   function fitSheet() {
     lockPage();
@@ -814,7 +818,7 @@
     app.style.setProperty("--sk-top", th + "px");
     var avail = window.innerHeight - th - hh - $("sk-tabs").offsetHeight - (full ? 24 : 36);
     svg.style.maxWidth = Math.max(320, avail * G.W / G.H) + "px";
-    if (document.documentElement.classList.contains("sk-lock") || full) { var sh = stage.clientHeight - 22; if (sh > 120) svg.style.maxWidth = Math.max(320, sh * G.W / G.H) + "px"; } /* the stage fills what's left of the column */
+    if (document.documentElement.classList.contains("sk-lock") || document.documentElement.classList.contains("sk-mob") || full) { var sh = stage.clientHeight - (isMob() ? 10 : 22); if (sh > 120) svg.style.maxWidth = Math.max(320, sh * G.W / G.H) + "px"; } /* the stage fills what's left of the column */
     flyCheck();
   }
   /* A side section too long for the side bar opens as a panel beside it, its options flowed into columns,
@@ -2657,6 +2661,36 @@
   document.addEventListener("pointerdown", function (e) { if (ctxEl && !ctxEl.contains(e.target)) closeCtx(); }, true);
   document.addEventListener("keydown", function (e) { if (e.key === "Escape" && ctxEl) closeCtx(); }, true);
   window.addEventListener("wheel", function (e) { if (ctxEl && !ctxEl.contains(e.target)) closeCtx(); }, { passive: true });
+  /* Phones and tablets: the side bar is a strip of pinned tools under the sheet; More opens the rest as a drawer. */
+  function setDrawer(on) { var sd = side0(); sd.classList.toggle("sk-drawer", on); var mb = $("sk-more"); if (mb) { mb.setAttribute("aria-expanded", on); mb.textContent = on ? "Close" : "More"; } }
+  $("sk-more").addEventListener("click", function () { setDrawer(!side0().classList.contains("sk-drawer")); });
+  side0().addEventListener("click", function (e) { var b = e.target.closest("[data-tool]"); if (b && side0().classList.contains("sk-drawer") && !e.target.closest("[data-pin]")) setTimeout(function () { setDrawer(false); }, 0); });
+  svg.addEventListener("pointerdown", function () { if (side0().classList.contains("sk-drawer")) setDrawer(false); }, true);
+  /* Touch: two fingers pinch to zoom and drag to slide the sheet. A second finger cancels whatever the first one started. */
+  var touches = {}, pinch = null;
+  function tN() { return Object.keys(touches).length; }
+  svg.addEventListener("pointerdown", function (e) {
+    if (e.pointerType !== "touch") return;
+    touches[e.pointerId] = { x: e.clientX, y: e.clientY };
+    if (tN() === 2 && !pinch) {
+      if (drag) { drag = null; gLive.innerHTML = ""; if (before !== null) { restore(before); before = null; } renderAll(); renderProps(); }
+      var ids = Object.keys(touches), a = touches[ids[0]], b = touches[ids[1]], v = zv || { s: 1, tx: 0, ty: 0 };
+      pinch = { d0: Math.hypot(a.x - b.x, a.y - b.y) || 1, m0: { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 }, v0: { s: v.s, tx: v.tx, ty: v.ty }, o: svgHome() };
+    }
+    if (pinch) { e.stopImmediatePropagation(); e.preventDefault(); }
+  }, true);
+  window.addEventListener("pointermove", function (e) {
+    if (e.pointerType !== "touch" || !touches[e.pointerId]) return;
+    touches[e.pointerId] = { x: e.clientX, y: e.clientY };
+    if (!pinch) return;
+    e.stopImmediatePropagation();
+    var ids = Object.keys(touches); if (ids.length < 2) return;
+    var a = touches[ids[0]], b = touches[ids[1]], P = pinch, dd = Math.hypot(a.x - b.x, a.y - b.y), m = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
+    var sN = Math.min(40, Math.max(0.3, P.v0.s * dd / P.d0)), lx = (P.m0.x - P.o.x - P.v0.tx) / P.v0.s, ly = (P.m0.y - P.o.y - P.v0.ty) / P.v0.s;
+    zv = clampView({ s: sN, tx: m.x - P.o.x - lx * sN, ty: m.y - P.o.y - ly * sN }); zvSheet = doc(); applyView();
+  }, true);
+  function tUp(e) { if (e.pointerType !== "touch") return; delete touches[e.pointerId]; if (pinch) { e.stopImmediatePropagation(); if (!tN()) { pinch = null; status(zv ? "Zoom " + Math.round(zv.s * 100) + "%. Pinch or drag with two fingers; press Fit sheet to see it all." : ""); } } }
+  window.addEventListener("pointerup", tUp, true); window.addEventListener("pointercancel", tUp, true);
   window.CPSketch = { importDetail: importDetail, exportSvg: exportSvg, exportDxf: exportDxf, toPng: toPng, exportPdf: exportPdf, insertTemplate: insertTemplate, state: function () { return S; }, setMode: setMode, setTool: setTool, render: function () { underKey = ""; renderAll(); renderProps(); } };
 
   window.addEventListener("resize", function () { if (!view.hidden) { renderAll(); if (tbKey) closeTB(true); } });

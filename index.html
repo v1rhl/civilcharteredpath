@@ -951,6 +951,39 @@ html.sk-lock .sk-main > *:not(.sk-stage), .sk-app:fullscreen .sk-main > *:not(.s
 .sk-lg-row .sk-btn { padding: 3px 8px; }
 .sk-lg-t { flex: 0 1 150px; min-width: 0; color: var(--muted); font-size: 0.78rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .sk-lg-foot { display: flex; justify-content: space-between; align-items: center; margin-top: 10px; gap: 8px; }
+/* Phones and tablets: sheet first, pinned tools in a strip below it, everything else in a drawer */
+html.sk-mob, html.sk-mob body { overflow: hidden; }
+html.sk-mob #view-sketch .view-head { display: none; }
+html.sk-mob #view-sketch { padding-top: 4px; gap: 4px; }
+html.sk-mob .sk-layout { display: flex; flex-direction: column; align-items: stretch; width: 100%; min-width: 0; gap: 4px; height: var(--sk-avail, calc(100vh - 120px)); }
+.sk-app:fullscreen .sk-layout { height: 100vh; }
+html.sk-mob .sk-app { width: 100%; min-width: 0; }
+html.sk-mob .sk-side { min-width: 0; width: 100%; }
+html.sk-mob .sk-main { width: 100%; order: 1; flex: 1 1 0; min-height: 0; display: flex; flex-direction: column; gap: 4px; position: relative; overflow: hidden; }
+html.sk-mob .sk-main > * { flex: 0 0 auto; }
+html.sk-mob .sk-main > .sk-stage { flex: 1 1 0; min-height: 0; padding: 4px; }
+html.sk-mob .sk-row1 { flex-wrap: nowrap; overflow-x: auto; align-items: center; scrollbar-width: none; }
+html.sk-mob .sk-row1 > .sk-tabs { flex: 0 0 auto; flex-wrap: nowrap; margin-bottom: 0; }
+html.sk-mob .sk-row1 > .sk-top { flex-wrap: nowrap; padding: 0 !important; }
+html.sk-mob .sk-row1 .sk-actions { flex-wrap: nowrap; }
+html.sk-mob .sk-row1 .sk-btn, html.sk-mob .sk-row1 select, html.sk-mob .sk-row1 .btn { padding: 4px 8px; font-size: 0.78rem; white-space: nowrap; }
+html.sk-mob .sk-main > .sk-props { position: absolute; left: 0; right: 0; bottom: 0; z-index: 6; flex-wrap: nowrap; overflow-x: auto; min-height: 0; padding: 4px 8px; gap: 6px; box-shadow: 0 -2px 10px rgba(0,0,0,.12); scrollbar-width: thin; }
+html.sk-mob .sk-main > .sk-props:has(.sk-props-none) { display: none; }
+html.sk-mob .sk-main > .sk-props > * { flex: 0 0 auto; }
+html.sk-mob .sk-main > .sk-hint { display: none; }
+html.sk-mob .sk-main > .sk-status { margin: 0; font-size: 0.74rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-height: 1.1em; }
+html.sk-mob .sk-side { order: 2; position: static; max-height: none; overflow: visible; padding: 0; gap: 0; flex: 0 0 auto; }
+html.sk-mob .sk-side:not(.sk-drawer) > :not(.sk-toolrow) { display: none; }
+html.sk-mob .sk-side .sk-toolrow { flex-direction: row; flex-wrap: nowrap; align-items: stretch; gap: 4px; }
+html.sk-mob .sk-side .sk-toolrow > .sk-tools:not(.sk-tools2) { display: flex; flex-wrap: nowrap; overflow-x: auto; flex: 1 1 auto; min-width: 0; scrollbar-width: none; }
+html.sk-mob .sk-side .sk-tool { min-width: 50px; flex: 0 0 auto; padding: 3px 2px; font-size: 0.62rem; }
+html.sk-mob .sk-side .sk-tool svg { width: 20px; height: 20px; }
+html.sk-mob .sk-more { flex: 0 0 auto; font-weight: 700; padding: 4px 10px; }
+.sk-more { display: none; }
+html.sk-mob .sk-more { display: inline-flex; align-items: center; }
+html.sk-mob .sk-side.sk-drawer { position: fixed; left: 0; right: 0; bottom: 0; z-index: 50; max-height: 72vh; overflow-y: auto; background: var(--paper); border-top: 1px solid var(--line); box-shadow: 0 -8px 28px rgba(0,0,0,.22); padding: 8px 10px calc(10px + env(safe-area-inset-bottom, 0px)); gap: 8px; display: flex; flex-direction: column; }
+html.sk-mob .sk-side.sk-drawer .sk-toolrow { order: -1; position: sticky; top: -8px; z-index: 2; background: var(--paper); padding: 4px 0; }
+html.sk-mob .sk-side.sk-drawer .sk-tools2 { display: flex; flex-wrap: wrap; }
 .sk-props-none { color: var(--muted, #6b7685); font-size: 0.85rem; }
 .sk-app:fullscreen .sk-main > .sk-top, .sk-app:fullscreen .sk-main > .sk-props, .sk-app.sk-full .sk-main > .sk-top, .sk-app.sk-full .sk-main > .sk-props { position: static; }
 html.sk-lock .sk-main { height: 100%; overflow-y: auto; scrollbar-width: thin; }
@@ -2831,9 +2864,9 @@ footer .wrap { font-family: var(--font-body); }
 <script src="js/news-feed.js?v=20261122b"></script>
 <script src="js/news-archive.js?v=20261122b"></script>
 <script src="js/pages.js?v=20261122b"></script>
-<script src="js/tools/sketch-templates.js?v=20261128v"></script>
-<script src="js/tools/sketch.js?v=20261128v"></script>
-<script src="js/tools/drawing-check.js?v=20261128v"></script>
+<script src="js/tools/sketch-templates.js?v=20261128w"></script>
+<script src="js/tools/sketch.js?v=20261128w"></script>
+<script src="js/tools/drawing-check.js?v=20261128w"></script>
 <script src="js/tools/hydraulics.js?v=20261127a"></script>
 <script src="js/tools/pipeflow.js?v=20261127a"></script>
 <script src="js/tools/catchment.js?v=20261127a"></script>
