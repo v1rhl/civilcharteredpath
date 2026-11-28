@@ -924,8 +924,60 @@ html.sk-lock #view-sketch .view-head { gap: 0; }
 .sk-stage { overflow: hidden; }
 html.sk-lock .sk-main > .sk-stage, .sk-app:fullscreen .sk-main > .sk-stage, .sk-app.sk-full .sk-main > .sk-stage { flex: 1 1 0; min-height: 0; }
 html.sk-lock .sk-main > *:not(.sk-stage), .sk-app:fullscreen .sk-main > *:not(.sk-stage), .sk-app.sk-full .sk-main > *:not(.sk-stage) { flex: 0 0 auto; }
-.sk-sec.sk-fly > .sk-sec-body { position: fixed; z-index: 30; display: flex; flex-direction: column; flex-wrap: wrap; align-content: flex-start; gap: 8px 18px; padding: 10px 14px; overflow: auto; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: 0 6px 24px rgba(0,0,0,.18); scrollbar-width: thin; }
-.sk-sec.sk-fly > .sk-sec-body > *, .sk-sec.sk-fly .sk-layers > *, .sk-sec.sk-fly #sk-mappanel > * { width: 290px; max-width: 290px; flex: 0 0 auto; }
+/* starred tools toolbar along the top of the sheet; it can float anywhere */
+.sk-tbar { display: flex; align-items: center; gap: 6px; background: var(--tool-bg); border: 1px solid var(--tool-line); border-radius: var(--radius); padding: 3px 4px; }
+.sk-tbar[hidden] { display: none; }
+.sk-tbar-slot { flex: 1 1 auto; min-width: 0; }
+.sk-tbar .sk-tools { border: 0; padding: 0; background: none; display: flex; flex-wrap: wrap; gap: 2px; }
+.sk-tbar .sk-tool { min-width: 52px; padding: 3px 4px; font-size: 0.64rem; line-height: 1.1; }
+.sk-tbar .sk-tool svg { width: 19px; height: 19px; }
+.sk-tbar-grip { flex: 0 0 auto; align-self: stretch; border: 0; background: none; color: var(--muted); padding: 0 3px; cursor: grab; touch-action: none; border-radius: 4px; }
+.sk-tbar-grip:hover { background: var(--line); }
+.sk-tbar-end { display: flex; align-items: center; gap: 2px; flex: 0 0 auto; }
+.sk-tbar-all { padding: 4px 8px; font-size: 0.78rem; }
+.sk-tbar-float { position: fixed; z-index: 45; max-width: min(760px, calc(100vw - 16px)); box-shadow: 0 6px 24px rgba(0,0,0,.18); background: var(--surface); }
+.sk-tbar-vert { flex-direction: column; align-items: stretch; }
+.sk-tbar-vert .sk-tbar-grip { padding: 3px 0; }
+.sk-tbar-vert .sk-tbar-grip svg { transform: rotate(90deg); }
+.sk-tbar-vert .sk-tools { flex-direction: column; flex-wrap: nowrap; max-height: calc(100vh - 150px); overflow-y: auto; scrollbar-width: thin; }
+.sk-tbar-vert .sk-tbar-end { flex-direction: column; }
+.sk-alltip { margin: 0; }
+html.sk-lock .sk-layout, .sk-app:fullscreen .sk-layout, .sk-app.sk-full .sk-layout { grid-template-columns: 210px minmax(0, 1fr); }
+.sk-tool { position: relative; }
+.sk-tool.sk-locked::after { content: ""; position: absolute; left: 3px; top: 3px; width: 7px; height: 7px; border-radius: 50%; background: #c08a00; box-shadow: 0 0 0 1.5px var(--surface); }
+.sk-mlgrp { flex: 1 1 100%; margin-top: 4px; }
+.sk-mls { font-size: 0.72rem; font-weight: 600; margin-left: 2px; }
+.sk-mls-busy { color: var(--muted); }
+.sk-mls-ok { color: #2e7d32; }
+.sk-mls-none { color: #8a6d00; }
+.sk-mls-err { color: var(--review, #b3261e); cursor: help; }
+.sk-mlmsg { margin: 6px 0 0; padding: 6px 8px; border-radius: var(--radius); font-size: 0.8rem; border: 1px solid var(--line); }
+.sk-mlmsg[hidden] { display: none; }
+.sk-mlmsg-busy { color: var(--muted); }
+.sk-mlmsg-busy::before { content: ""; display: inline-block; width: 10px; height: 10px; margin-right: 6px; border: 2px solid currentColor; border-right-color: transparent; border-radius: 50%; vertical-align: -1px; animation: sk-spin .8s linear infinite; }
+@keyframes sk-spin { to { transform: rotate(360deg); } }
+.sk-mlmsg-ok { color: #1b5e20; background: #e8f5e9; border-color: #a5d6a7; }
+.sk-mlmsg-ok::before { content: "✓ "; font-weight: 700; }
+.sk-mlmsg-none { color: #6d5600; background: #fff8e1; border-color: #ffe082; }
+.sk-mlmsg-err { color: #8c1d18; background: #fdecea; border-color: #f5b5ae; }
+.sk-mlmsg-err::before { content: "✗ "; font-weight: 700; }
+/* the item options bar sits under the sheet, compact */
+.sk-main > .sk-props { position: static; min-height: 0; padding: 3px 8px; gap: 4px 10px; font-size: 0.8rem; }
+.sk-main > .sk-props .sk-btn, .sk-main > .sk-props select, .sk-main > .sk-props input[type="text"] { padding: 3px 7px; font-size: 0.78rem; }
+.sk-main > .sk-props .sk-props-none { font-size: 0.76rem; }
+.sk-main > .sk-hint, .sk-main > .sk-status { font-size: 0.74rem; margin: 0; min-height: 1em; }
+#sk-svg .sk-warn { cursor: help !important; }
+#sk-svg .sk-warn * { cursor: help !important; }
+.sk-win-h { display: none; }
+.sk-sec.sk-fly > .sk-sec-body { position: fixed; z-index: 40; display: flex; flex-direction: column; padding: 0; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: 0 6px 24px rgba(0,0,0,.18); max-height: calc(100vh - 16px); }
+.sk-sec.sk-fly .sk-win-h { display: flex; align-items: center; gap: 4px; padding: 4px 6px 4px 12px; border-bottom: 1px solid var(--line); cursor: move; user-select: none; touch-action: none; background: var(--paper); border-radius: var(--radius) var(--radius) 0 0; }
+.sk-win-h.sk-drag { cursor: grabbing; }
+.sk-win-t { flex: 1 1 auto; font: 600 0.78rem var(--font-mono); letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); }
+.sk-win-b { border: 1px solid transparent; background: none; border-radius: 4px; width: 26px; height: 26px; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; color: var(--muted); font-size: 1.1rem; line-height: 1; }
+.sk-win-b:hover { border-color: var(--line); color: var(--ink, #15233a); }
+.sk-win-b[aria-pressed="true"] { color: var(--accent, #0b4f6c); background: color-mix(in srgb, var(--accent, #0b4f6c) 14%, transparent); }
+.sk-sec.sk-fly .sk-sec-in { display: flex; flex-direction: column; flex-wrap: wrap; align-content: flex-start; gap: 8px 18px; padding: 10px 14px; overflow: auto; scrollbar-width: thin; }
+.sk-sec.sk-fly .sk-sec-in > *, .sk-sec.sk-fly .sk-layers > *, .sk-sec.sk-fly #sk-mappanel > * { width: 290px; max-width: 290px; flex: 0 0 auto; }
 .sk-sec.sk-fly .sk-layers, .sk-sec.sk-fly #sk-mappanel:not([hidden]), .sk-sec.sk-fly .sk-sheetopts { display: contents; }
 .sk-sec.sk-fly .sk-sheetopts > * { width: 290px; max-width: 290px; flex: 0 0 auto; }
 .sk-sec.sk-fly > summary { color: var(--accent, #0b4f6c); }
@@ -951,6 +1003,39 @@ html.sk-lock .sk-main > *:not(.sk-stage), .sk-app:fullscreen .sk-main > *:not(.s
 .sk-lg-row .sk-btn { padding: 3px 8px; }
 .sk-lg-t { flex: 0 1 150px; min-width: 0; color: var(--muted); font-size: 0.78rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .sk-lg-foot { display: flex; justify-content: space-between; align-items: center; margin-top: 10px; gap: 8px; }
+/* Phones and tablets: sheet first, pinned tools in a strip below it, everything else in a drawer */
+html.sk-mob, html.sk-mob body { overflow: hidden; }
+html.sk-mob #view-sketch .view-head { display: none; }
+html.sk-mob #view-sketch { padding-top: 4px; gap: 4px; }
+html.sk-mob .sk-layout { display: flex; flex-direction: column; align-items: stretch; width: 100%; min-width: 0; gap: 4px; height: var(--sk-avail, calc(100vh - 120px)); }
+.sk-app:fullscreen .sk-layout { height: 100vh; }
+html.sk-mob .sk-app { width: 100%; min-width: 0; }
+html.sk-mob .sk-side { min-width: 0; width: 100%; }
+html.sk-mob .sk-main { width: 100%; order: 1; flex: 1 1 0; min-height: 0; display: flex; flex-direction: column; gap: 4px; position: relative; overflow: hidden; }
+html.sk-mob .sk-main > * { flex: 0 0 auto; }
+html.sk-mob .sk-main > .sk-stage { flex: 1 1 0; min-height: 0; padding: 4px; }
+html.sk-mob .sk-row1 { flex-wrap: nowrap; overflow-x: auto; align-items: center; scrollbar-width: none; }
+html.sk-mob .sk-row1 > .sk-tabs { flex: 0 0 auto; flex-wrap: nowrap; margin-bottom: 0; }
+html.sk-mob .sk-row1 > .sk-top { flex-wrap: nowrap; padding: 0 !important; }
+html.sk-mob .sk-row1 .sk-actions { flex-wrap: nowrap; }
+html.sk-mob .sk-row1 .sk-btn, html.sk-mob .sk-row1 select, html.sk-mob .sk-row1 .btn { padding: 4px 8px; font-size: 0.78rem; white-space: nowrap; }
+html.sk-mob .sk-main > .sk-props { position: absolute; left: 0; right: 0; bottom: 0; z-index: 6; flex-wrap: nowrap; overflow-x: auto; min-height: 0; padding: 4px 8px; gap: 6px; box-shadow: 0 -2px 10px rgba(0,0,0,.12); scrollbar-width: thin; }
+html.sk-mob .sk-main > .sk-props:has(.sk-props-none) { display: none; }
+html.sk-mob .sk-main > .sk-props > * { flex: 0 0 auto; }
+html.sk-mob .sk-main > .sk-hint { display: none; }
+html.sk-mob .sk-main > .sk-status { margin: 0; font-size: 0.74rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-height: 1.1em; }
+html.sk-mob .sk-side { order: 2; position: static; max-height: none; overflow: visible; padding: 0; gap: 0; flex: 0 0 auto; }
+html.sk-mob .sk-side:not(.sk-drawer) > :not(.sk-toolrow) { display: none; }
+html.sk-mob .sk-side .sk-toolrow { flex-direction: row; flex-wrap: nowrap; align-items: stretch; gap: 4px; }
+html.sk-mob .sk-side .sk-toolrow > .sk-tools:not(.sk-tools2) { display: flex; flex-wrap: nowrap; overflow-x: auto; flex: 1 1 auto; min-width: 0; scrollbar-width: none; }
+html.sk-mob .sk-side .sk-tool { min-width: 50px; flex: 0 0 auto; padding: 3px 2px; font-size: 0.62rem; }
+html.sk-mob .sk-side .sk-tool svg { width: 20px; height: 20px; }
+html.sk-mob .sk-more { flex: 0 0 auto; font-weight: 700; padding: 4px 10px; }
+.sk-more { display: none; }
+html.sk-mob .sk-more { display: inline-flex; align-items: center; }
+html.sk-mob .sk-side.sk-drawer { position: fixed; left: 0; right: 0; bottom: 0; z-index: 50; max-height: 72vh; overflow-y: auto; background: var(--paper); border-top: 1px solid var(--line); box-shadow: 0 -8px 28px rgba(0,0,0,.22); padding: 8px 10px calc(10px + env(safe-area-inset-bottom, 0px)); gap: 8px; display: flex; flex-direction: column; }
+html.sk-mob .sk-side.sk-drawer .sk-toolrow { order: -1; position: sticky; top: -8px; z-index: 2; background: var(--paper); padding: 4px 0; }
+html.sk-mob .sk-side.sk-drawer .sk-tools2 { display: flex; flex-wrap: wrap; }
 .sk-props-none { color: var(--muted, #6b7685); font-size: 0.85rem; }
 .sk-app:fullscreen .sk-main > .sk-top, .sk-app:fullscreen .sk-main > .sk-props, .sk-app.sk-full .sk-main > .sk-top, .sk-app.sk-full .sk-main > .sk-props { position: static; }
 html.sk-lock .sk-main { height: 100%; overflow-y: auto; scrollbar-width: thin; }
@@ -1022,13 +1107,19 @@ html.sk-lock .sk-main > .sk-top, html.sk-lock .sk-main > .sk-props { top: 0; }
 .sk-layers { padding-left: 10px; border-left: 1px solid var(--line); }
 .sk-stage { position: relative; background: #e9edec; border: 1px solid var(--line); border-radius: var(--radius); padding: 10px; }
 #sk-svg { display: block; width: 100%; margin: 0 auto; height: auto; background: #fff; box-shadow: 0 1px 4px rgba(0,0,0,.18); touch-action: none; user-select: none; -webkit-user-select: none; }
-.sk-stage[data-tool="pen"] #sk-svg, .sk-stage[data-tool="line"] #sk-svg, .sk-stage[data-tool="member"] #sk-svg, .sk-stage[data-tool="hatch"] #sk-svg, .sk-stage[data-tool="udl"] #sk-svg, .sk-stage[data-tool="dim"] #sk-svg, .sk-stage[data-tool="leader"] #sk-svg { cursor: crosshair; }
-.sk-stage[data-tool="text"] #sk-svg { cursor: text; }
-.sk-stage[data-tool="eraser"] #sk-svg { cursor: cell; }
+/* cursors: Select shows a pointer over things it can pick; drawing tools show a crosshair everywhere on
+   the sheet (even over existing items) with their own icon beside it; the pen shows a pen, the eraser an eraser */
+.sk-stage:not([data-tool="select"]):not([data-tool="xform"]) #sk-svg, .sk-stage:not([data-tool="select"]):not([data-tool="xform"]) #sk-svg *:not(.sk-h) { cursor: var(--sk-cur, crosshair); }
+.sk-stage[data-tool="pen"] #sk-svg, .sk-stage[data-tool="pen"] #sk-svg *:not(.sk-h) { cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cpath d='M3 21l1.2-4.8L16.5 3.9a1.6 1.6 0 0 1 2.3 0l1.3 1.3a1.6 1.6 0 0 1 0 2.3L7.8 19.8z' fill='%23fff' stroke='%2315233a' stroke-width='1.5' stroke-linejoin='round'/%3E%3Cpath d='M3 21l1.2-4.8 3.6 3.6z' fill='%2315233a'/%3E%3Cpath d='M14.6 5.8l3.6 3.6' stroke='%2315233a' stroke-width='1.3'/%3E%3C/svg%3E") 2 22, crosshair; }
+.sk-stage[data-tool="eraser"] #sk-svg, .sk-stage[data-tool="eraser"] #sk-svg *:not(.sk-h) { cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cpath d='M8.5 20.5L3.2 15.2a1.6 1.6 0 0 1 0-2.3l9.7-9.7a1.6 1.6 0 0 1 2.3 0l5.6 5.6a1.6 1.6 0 0 1 0 2.3l-9.7 9.4z' fill='%23fff' stroke='%2315233a' stroke-width='1.5' stroke-linejoin='round'/%3E%3Cpath d='M3.2 15.2l5.3 5.3h0l4.6-4.5-5.8-5.8z' fill='%23e98b8b' stroke='%2315233a' stroke-width='1.2' stroke-linejoin='round'/%3E%3C/svg%3E") 5 18, cell; }
 #sk-svg .sk-tbcell { cursor: text; }
 #sk-svg .sk-tbcell:hover rect { fill: rgba(11,79,108,0.07); }
-#sk-svg [data-id] { cursor: pointer; }
-.sk-stage[data-tool="pen"] #sk-svg [data-id] { cursor: crosshair; }
+.sk-stage[data-tool="select"] #sk-svg [data-id] { cursor: pointer; }
+#sk-svg .sk-gmv { cursor: move; }
+#sk-svg .sk-gmv circle { fill: #fff; stroke: #0b4f6c; stroke-width: 2; vector-effect: non-scaling-stroke; filter: drop-shadow(0 1px 2px rgba(0,0,0,.25)); }
+#sk-svg .sk-gmv .ar { stroke: #0b4f6c; stroke-width: 1.6; vector-effect: non-scaling-stroke; fill: none; }
+#sk-svg .sk-gmv .hd { fill: #0b4f6c; }
+#sk-svg .sk-gmv:hover circle { fill: #e6eff2; }
 #sk-svg .sk-h { fill: #fff; stroke: #0b4f6c; stroke-width: 2; cursor: grab; vector-effect: non-scaling-stroke; }
 #sk-svg .sk-sel { fill: none; stroke: #0b4f6c; stroke-dasharray: 5 4; vector-effect: non-scaling-stroke; pointer-events: none; }
 #sk-svg .sk-sel.grp { stroke: #137a37; }
@@ -1058,6 +1149,7 @@ html.sk-lock .sk-main > .sk-top, html.sk-lock .sk-main > .sk-props { top: 0; }
 #view-drawing-check .dc-field input { font: 400 0.95rem var(--font-body); padding: 7px 9px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--paper); color: var(--ink); min-width: 0; }
 #view-drawing-check .dc-groups { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 440px), 1fr)); gap: 14px; align-items: start; }
 #view-drawing-check .dc-group h3 { margin: 0; display: flex; gap: 8px; align-items: baseline; font-size: 1.02rem; }
+#view-drawing-check .dc-ref { display: inline-block; min-width: 2.4em; font: 600 0.72rem var(--font-mono); color: #b35c00; }
 #view-drawing-check .dc-n { font: 600 0.78rem var(--font-mono); color: var(--accent-2); }
 #view-drawing-check .dc-c { margin-left: auto; color: var(--muted); }
 #view-drawing-check .dc-complete { border-color: var(--accent); }
@@ -2284,7 +2376,7 @@ footer .wrap { font-family: var(--font-body); }
 <!-- TOOL: DRAWING CHECKLIST (js/tools/drawing-check.js) -->
 <section class="view wrap" id="view-drawing-check" data-view="drawing-check" hidden>
   <div class="view-head">
-    <span class="eyebrow"><a href="#tools">Tools</a> / Drawing checklist</span>
+    <span class="eyebrow"><a href="#resources">Guidance</a> / Drawing checklist</span>
     <h2>Drawing checklist</h2>
     <p class="lede">Run this over a drawing before it goes out for review or issue: once yourself, then again by the checker. Tick each check, or mark it N/A if it doesn't apply.</p>
     <p class="small">Written from general drawing-office practice for UK civils and drainage work. It is not taken from, and doesn't claim to meet, any published drawing standard. Checks tagged <span class="dc-office">office std</span> vary between organisations, so follow your employer's standard and the project's information requirements. Your ticks are saved in this browser only.</p>
@@ -2826,9 +2918,9 @@ footer .wrap { font-family: var(--font-body); }
 <script src="js/news-feed.js?v=20261122b"></script>
 <script src="js/news-archive.js?v=20261122b"></script>
 <script src="js/pages.js?v=20261122b"></script>
-<script src="js/tools/sketch-templates.js?v=20261128s"></script>
-<script src="js/tools/sketch.js?v=20261128s"></script>
-<script src="js/tools/drawing-check.js?v=20261128s"></script>
+<script src="js/tools/sketch-templates.js?v=20261128za"></script>
+<script src="js/tools/sketch.js?v=20261128za"></script>
+<script src="js/tools/drawing-check.js?v=20261128za"></script>
 <script src="js/tools/hydraulics.js?v=20261127a"></script>
 <script src="js/tools/pipeflow.js?v=20261127a"></script>
 <script src="js/tools/catchment.js?v=20261127a"></script>
@@ -2840,7 +2932,7 @@ footer .wrap { font-family: var(--font-body); }
 <script src="js/tools/culvert.js?v=20261127a"></script>
 <script src="js/tools/site-diary.js?v=20261127a"></script>
 <script src="js/learn.js?v=20261127m"></script>
-<script src="js/site.js?v=20261127m"></script>
+<script src="js/site.js?v=20261128za"></script>
 <script src="js/art.js?v=20261127m"></script>
 </body>
 </html>

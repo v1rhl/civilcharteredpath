@@ -550,7 +550,9 @@
   /* Tools: each tool script (js/tools/<id>.js, loaded before this file) registers itself in window.CP_TOOLS as
      { id, label, blurb } and supplies its own <section id="view-<id>">. The Tools nav item, its dropdown, the
      subnav and the #tools hub are all built from that list, so adding a tool never needs a change here. */
-  var TOOLS = (window.CP_TOOLS || []).filter(function (t) { return t && t.id && $("view-" + t.id); });
+  var ALLT = (window.CP_TOOLS || []).filter(function (t) { return t && t.id && $("view-" + t.id); });
+  var GUIDES = ALLT.filter(function (t) { return t.section === "guidance"; }); /* e.g. the drawing checklist, listed under Guidance */
+  var TOOLS = ALLT.filter(function (t) { return t.section !== "guidance"; });
   var toolIds = TOOLS.map(function (t) { return t.id; });
   (function () {
     var hub = $("tools-hub"), navA = document.querySelector('#nav a[href="#tools"]');
@@ -566,10 +568,11 @@
      if it has sub-pages, its ids to SECTIONS.learning below): its nav tab is hidden until that section exists. */
   var SECTIONS = {
     chartership: [["route", "The route"], ["planner", "Planner"], ["attributes", "Attributes"], ["review", "Review day"], ["presentation", "Presentation tips"], ["flashcards", "Flashcards"], ["questions", "Practice questions"], ["cheat-sheet", "Cheat sheet"]],
-    guidance: [["resources", "Technical resources"], ["careers", "Careers"]],
+    guidance: [["resources", "Technical resources"]].concat(GUIDES.map(function (t) { return [t.id, t.label]; })).concat([["careers", "Careers"]]),
     learning: [["learning", "Overview"], ["nec4", "NEC4 contracts"], ["cdm", "CDM 2015 by role"], ["learn-theory", "How engineers learn"]],
     tools: [["tools", "All tools"]].concat(TOOLS.map(function (t) { return [t.id, t.label]; }))
   };
+  var guideA = document.querySelector('#nav a[href="#resources"]'); if (guideA) guideA.dataset.group = SECTIONS.guidance.map(function (x) { return x[0]; }).join(" ");
   var learnA = document.querySelector('#nav a[href="#learning"]');
   if (learnA) {
     SECTIONS.learning = SECTIONS.learning.filter(function (x) { return $("view-" + x[0]); });
@@ -590,6 +593,7 @@
       if ((a.dataset.group || "").split(" ").indexOf(v) > -1) a.setAttribute("aria-current", "page"); else a.removeAttribute("aria-current");
     });
     var grp = sectionOf(v); if (grp && SECTIONS[grp].length < 2) grp = "";
+    if (grp === "tools") grp = ""; /* the tools are reached from the Tools menu at the top, so no row of links on each tool */
     $("subnav").hidden = !grp;
     $("subnav").innerHTML = grp ? SECTIONS[grp].map(function (x) { return '<a href="#' + x[0] + '"' + (x[0] === v ? ' aria-current="page"' : "") + ">" + x[1] + "</a>"; }).join("") : "";
     var withSources = ["route", "attributes", "review", "presentation", "cheat-sheet", "planner"].indexOf(v) > -1;
@@ -633,6 +637,12 @@
   menu.addEventListener("click", function (e) { var l = e.target.closest("a"); if (!l) return; closeMenu(); if (l.getAttribute("href") === location.hash) route(); });
   document.addEventListener("click", function (e) { if (openFor && !e.target.closest("#nav") && !e.target.closest("#navmenu")) closeMenu(); });
   document.addEventListener("keydown", function (e) { if (e.key === "Escape" && openFor) { var a = openFor; closeMenu(); a.focus(); } });
+  /* with a mouse, hovering a section opens its menu, and moving away closes it */
+  if (window.matchMedia && window.matchMedia("(hover: hover) and (pointer: fine)").matches) {
+    var hoverT = null, later = function () { clearTimeout(hoverT); hoverT = setTimeout(closeMenu, 250); }, keep = function () { clearTimeout(hoverT); };
+    Array.prototype.forEach.call(nav.querySelectorAll("a[data-menu]"), function (a) { a.addEventListener("mouseenter", function () { keep(); if (openFor !== a) openMenu(a); }); a.addEventListener("mouseleave", later); });
+    menu.addEventListener("mouseenter", keep); menu.addEventListener("mouseleave", later);
+  }
   window.addEventListener("resize", closeMenu);
   window.addEventListener("hashchange", closeMenu);
   route();

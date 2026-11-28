@@ -10,6 +10,7 @@
   window.CP_TOOLS = (window.CP_TOOLS || []).concat([{
     id: "drawing-check",
     label: "Drawing checklist",
+    section: "guidance", /* listed under Guidance with the technical resources, not under Tools */
     blurb: "Tick through a drawing before it goes out for review or issue: title block, scale, labels, dimensions, notes, legend and revisions."
   }]);
 
@@ -160,10 +161,14 @@
     return g;
   }
 
+  /* Each check's reference number, e.g. 1.3 for the third check in group 1. The sketch pad's orange warning
+     markers use the same numbers. */
+  function refOf(id) { for (var gi = 0; gi < GROUPS.length; gi++) for (var ii = 0; ii < GROUPS[gi].items.length; ii++) if (GROUPS[gi].items[ii][0] === id) return (gi + 1) + "." + (ii + 1); return ""; }
+  window.CPDrawCheck = { ref: refOf, text: function (id) { for (var gi = 0; gi < GROUPS.length; gi++) for (var ii = 0; ii < GROUPS[gi].items.length; ii++) if (GROUPS[gi].items[ii][0] === id) return GROUPS[gi].items[ii][1]; return ""; } };
   function itemHtml(it, own) {
-    var m = state.marks[it[0]] || "";
+    var m = state.marks[it[0]] || "", rf = own ? "" : refOf(it[0]);
     return '<li class="dc-item' + (m === "y" ? " done" : m === "na" ? " na" : "") + '" data-id="' + it[0] + '">' +
-      '<label><input type="checkbox" ' + (m === "y" ? "checked " : "") + (m === "na" ? "disabled " : "") + '><span class="t">' + esc(it[1]) +
+      '<label><input type="checkbox" ' + (m === "y" ? "checked " : "") + (m === "na" ? "disabled " : "") + '><span class="t">' + (rf ? '<span class="dc-ref">' + rf + "</span> " : "") + esc(it[1]) +
       (it[2] ? ' <span class="dc-office" title="Varies by organisation: follow your office standard">office std</span>' : "") + "</span></label>" +
       '<button type="button" class="dc-na no-print" aria-pressed="' + (m === "na") + '" aria-label="Not applicable: ' + esc(it[1]) + '">N/A</button>' +
       (own ? '<button type="button" class="dc-del no-print" aria-label="Remove ' + esc(it[1]) + '">&times;</button>' : "") +
