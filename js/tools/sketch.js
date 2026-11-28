@@ -847,7 +847,13 @@
     } else if (isSet()) {
       var bx = null, gl = selList(), anyLock = gl.some(locked);
       gl.forEach(function (gi) { var e2 = gContent.querySelector('[data-id="' + gi.id + '"] .v'); if (!e2) return; try { var b2 = e2.getBBox(); if (!b2.width && !b2.height) return; if (!bx) bx = { x1: b2.x, y1: b2.y, x2: b2.x + b2.width, y2: b2.y + b2.height }; else { bx.x1 = Math.min(bx.x1, b2.x); bx.y1 = Math.min(bx.y1, b2.y); bx.x2 = Math.max(bx.x2, b2.x + b2.width); bx.y2 = Math.max(bx.y2, b2.y + b2.height); } } catch (er) {} });
-      if (bx) { var pg = 8 * Math.max(k, 1); o += '<rect x="' + r1(bx.x1 - pg) + '" y="' + r1(bx.y1 - pg) + '" width="' + r1(bx.x2 - bx.x1 + 2 * pg) + '" height="' + r1(bx.y2 - bx.y1 + 2 * pg) + '" class="sk-sel' + (sel.k === "group" ? " grp" : "") + (anyLock ? " lk" : "") + '" stroke-width="' + sw + '"/>'; }
+      if (bx) { var pg = 8 * Math.max(k, 1); o += '<rect x="' + r1(bx.x1 - pg) + '" y="' + r1(bx.y1 - pg) + '" width="' + r1(bx.x2 - bx.x1 + 2 * pg) + '" height="' + r1(bx.y2 - bx.y1 + 2 * pg) + '" class="sk-sel' + (sel.k === "group" ? " grp" : "") + (anyLock ? " lk" : "") + '" stroke-width="' + sw + '"/>';
+        if (!anyLock) { /* a grip in the middle to drag the whole selection */
+          var gx = (bx.x1 + bx.x2) / 2, gy = (bx.y1 + bx.y2) / 2, gr = Math.max(13 * k, 10), ga = gr * 0.62, gh = gr * 0.24;
+          var arr = function (dx, dy) { var tx = gx + dx * ga, ty = gy + dy * ga, bx0 = gx + dx * (ga - gh * 1.6), by0 = gy + dy * (ga - gh * 1.6); return "M" + r1(tx) + " " + r1(ty) + "L" + r1(bx0 - dy * gh) + " " + r1(by0 - dx * gh) + "L" + r1(bx0 + dy * gh) + " " + r1(by0 + dx * gh) + "Z"; };
+          o += '<g data-h="gmv" class="sk-gmv"><title>Drag to move the selection</title><circle cx="' + r1(gx) + '" cy="' + r1(gy) + '" r="' + r1(gr) + '"/><path class="ar" d="M' + r1(gx - ga * 0.7) + " " + r1(gy) + "H" + r1(gx + ga * 0.7) + "M" + r1(gx) + " " + r1(gy - ga * 0.7) + "V" + r1(gy + ga * 0.7) + '"/><path class="hd" d="' + arr(1, 0) + arr(-1, 0) + arr(0, 1) + arr(0, -1) + '"/></g>';
+        }
+      }
     } else if (sel) {
       var it = byId(sel.id), el = gContent.querySelector('[data-id="' + sel.id + '"] .v');
       if (it && el) {
@@ -1224,6 +1230,7 @@
     e.preventDefault();
     var h = e.target.closest("[data-h]");
     if (h && /^xs\d$/.test(h.dataset.h) && sel && xbox) { begin(); var ci = +h.dataset.h[2], cx0 = ci === 0 || ci === 3 ? xbox.x2 : xbox.x1, cy0 = ci < 2 ? xbox.y2 : xbox.y1; drag = { type: "xs", orig: clone(selList()), ax: cx0, ay: cy0, cx: ci === 0 || ci === 3 ? xbox.x1 : xbox.x2, cy: ci < 2 ? xbox.y1 : xbox.y2 }; return; }
+    if (h && h.dataset.h === "gmv" && isSet()) { var gml = selList(); if (!gml.some(locked)) { begin(); drag = { type: "gmove", orig: clone(gml), start: p }; } return; }
     if (h && h.dataset.h !== "first" && sel) {
       begin();
       if (sel.k === "img") { var im = imgById(sel.id); drag = { type: "ih", h: h.dataset.h, orig: clone(im), d0: Math.hypot(p.x - im.x, p.y - im.y) || 1 }; }
