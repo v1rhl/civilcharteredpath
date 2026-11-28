@@ -1448,7 +1448,49 @@
     stage.dataset.tool = tool[mode]; stage.style.setProperty("--sk-cur", toolCursor(tool[mode]));
     updateCtx();
     var aw = app.querySelector('details.sk-sec[data-sec="alltools"]'); if (aw && aw.open && aw.classList.contains("sk-fly")) { var z = aw.querySelector(".sk-sec-body").style.zIndex; placeWin(aw); aw.querySelector(".sk-sec-body").style.zIndex = z; }
+    iconBar();
   }
+  /* The toolbar shows icons only; each one's name pops up beside it on hover (or keyboard focus). */
+  var TBI = (function () { var S = function (d) { return '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + d + "</svg>"; };
+    return { alltools: S('<rect x="4" y="4" width="6" height="6" rx="1"/><rect x="14" y="4" width="6" height="6" rx="1"/><rect x="4" y="14" width="6" height="6" rx="1"/><rect x="14" y="14" width="6" height="6" rx="1"/>'),
+      sheet: S('<path d="M6 3h9l4 4v14H6z"/><path d="M15 3v4h4"/><path d="M9 17h7"/>'),
+      layers: S('<path d="M12 3l9 5-9 5-9-5z"/><path d="M3 13l9 5 9-5"/>'),
+      "sk-undo": S('<path d="M9 7L4 12l5 5"/><path d="M4 12h11a5 5 0 0 1 0 10h-2"/>'),
+      "sk-redo": S('<path d="M15 7l5 5-5 5"/><path d="M20 12H9a5 5 0 0 0 0 10h2"/>'),
+      "sk-clear": S('<path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/>'),
+      "sk-fit": S('<path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5"/><rect x="8" y="8" width="8" height="8" rx="1"/>'),
+      "sk-full": S('<path d="M3 8V3h5M16 3h5v5M21 16v5h-5M8 21H3v-5"/>'),
+      "sk-tball": S('<rect x="4" y="4" width="6" height="6" rx="1"/><rect x="14" y="4" width="6" height="6" rx="1"/><rect x="4" y="14" width="6" height="6" rx="1"/><path d="M17 14v6M14 17h6"/>'),
+      snaps: S('<path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/>') }; })();
+  function iconBar() {
+    var bar = $("sk-tbar"); if (!bar) return;
+    var tip = function (el, t) { el.setAttribute("data-tip", t); if (el.title && !el.dataset.hint) el.dataset.hint = el.title; el.removeAttribute("title"); if (!el.getAttribute("aria-label") && el.tagName !== "LABEL") el.setAttribute("aria-label", t); };
+    bar.querySelectorAll(".sk-tool").forEach(function (b) { if (b.closest(".sk-sec-body")) return; var sp = b.querySelector("span:not(.sk-pin)"); if (sp) tip(b, sp.textContent); });
+    bar.querySelectorAll(".sk-ltog").forEach(function (l) { var sp = l.querySelector("span"); if (sp) tip(l, sp.textContent); });
+    var wrap = function (el, key) { if (!el || el.dataset.ib) return; el.dataset.ib = "1"; var t = el.textContent.replace(/[\u25BE\u25B8]/g, "").trim(); el.innerHTML = TBI[key] + '<span class="sk-tlab">' + el.innerHTML + "</span>"; tip(el, t); };
+    bar.querySelectorAll(".sk-side > details.sk-sec > summary").forEach(function (sm) { var k = sm.parentNode.dataset.sec; if (TBI[k]) wrap(sm, k); });
+    ["sk-undo", "sk-redo", "sk-clear", "sk-fit", "sk-full", "sk-tball"].forEach(function (id) { wrap($(id), id); });
+    var sn = bar.querySelector(".sk-snapmenu > summary"); if (sn) wrap(sn, "snaps");
+    var tp = $("sk-tpl"); if (tp && bar.contains(tp)) tip(tp, "Insert a typical detail");
+    var ex = $("sk-export"); if (ex) { ex.setAttribute("data-tip", "Export"); ex.removeAttribute("title"); }
+  }
+  setTimeout(iconBar, 0);
+  (function () {
+    var tipEl = null, cur = null;
+    var hide = function () { if (tipEl) tipEl.hidden = true; cur = null; };
+    var show = function (el) {
+      if (isMob() || !el) return hide(); var bar = $("sk-tbar"); if (!bar || !bar.contains(el)) return hide();
+      if (!tipEl) { tipEl = document.createElement("div"); tipEl.className = "sk-tip"; tipEl.setAttribute("role", "tooltip"); document.body.appendChild(tipEl); }
+      cur = el; tipEl.textContent = el.getAttribute("data-tip"); tipEl.hidden = false;
+      var r = el.getBoundingClientRect(), w = tipEl.offsetWidth, h = tipEl.offsetHeight, x, y;
+      if (bar.classList.contains("sk-tbar-left") || bar.classList.contains("sk-tbar-vert")) { x = r.right + 8; y = r.top + r.height / 2 - h / 2; if (x + w > innerWidth - 4) x = r.left - w - 8; }
+      else { x = r.left + r.width / 2 - w / 2; y = bar.classList.contains("sk-tbar-bottom") ? r.top - h - 6 : r.bottom + 6; }
+      tipEl.style.left = Math.max(4, Math.min(innerWidth - w - 4, x)) + "px"; tipEl.style.top = Math.max(4, y) + "px";
+    };
+    document.addEventListener("pointerover", function (e) { var el = e.target.closest && e.target.closest("#sk-tbar [data-tip]"); if (el && el.closest(".sk-sec-body")) el = null; if (el !== cur) { if (el) show(el); else hide(); } });
+    document.addEventListener("focusin", function (e) { var el = e.target.closest && e.target.closest("#sk-tbar [data-tip]"); if (el && !el.closest(".sk-sec-body") && e.target.matches(":focus-visible")) show(el); else hide(); });
+    document.addEventListener("pointerdown", hide, true); window.addEventListener("scroll", hide, true);
+  })();
   $("sk-swatches").innerHTML = COLORS.map(function (c) { return '<button type="button" class="sk-sw" data-color="' + c[0] + '" style="background:' + c[0] + '" title="' + c[1] + '" aria-label="' + c[1] + '"></button>'; }).join("");
   $("sk-widths").innerHTML = WIDTHS.map(function (w) { return '<button type="button" class="sk-chip" data-w="' + w[0] + '" title="' + w[1] + '" aria-label="' + w[1] + '"><i style="height:' + Math.min(w[0], 10) + 'px"></i></button>'; }).join("");
   function syncControls() {
