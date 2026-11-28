@@ -488,18 +488,20 @@
     for (i = 0; i < n; i++) { var A = pts[i], B = pts[(i + 1) % n], am = (A[2] + (i === n - 1 ? B[2] + Math.PI * 2 : B[2])) / 2; if (!i) d += "M" + r1(A[0]) + " " + r1(A[1]); d += "Q" + r1(cx + Math.cos(am) * R * bulge) + " " + r1(cy + Math.sin(am) * ry * bulge) + " " + r1(B[0]) + " " + r1(B[1]); }
     return d + "Z";
   }
+  /* the trunk in plan: a dot, or a circle at its true diameter when one is set */
+  function trunkStr(it, x, y, r0, c, sw) { return it.tr ? '<circle cx="' + r1(x) + '" cy="' + r1(y) + '" r="' + r1(it.tr) + '" fill="#fff" stroke="' + c + '" stroke-width="' + r1(sw) + '"/>' : '<circle cx="' + r1(x) + '" cy="' + r1(y) + '" r="' + r1(Math.max(2, r0)) + '" fill="' + c + '"/>'; }
   function vegStr(it, c) {
     var R = Math.max(4, it.r || 40), x = it.x, y = it.y, rnd = vegRand(it.sd || it.id || "v"), sw = Math.max(1, Math.min(2.2, R / 30)), kind = it.kind || "tree", o = "", i, a, L;
     var S0 = ' fill="none" stroke="' + c + '" stroke-width="' + r1(sw) + '" stroke-linecap="round" stroke-linejoin="round"', F = ' fill="' + c + '" fill-opacity="0.1" stroke="' + c + '" stroke-width="' + r1(sw * 1.2) + '" stroke-linejoin="round"';
     if (kind === "tree") {
       o += '<path d="' + vegBlob(x, y, R, R, Math.max(9, Math.round(R / 7)), rnd, 1.16) + '"' + F + "/>";
       for (i = 0; i < 6; i++) { a = (i + rnd() * 0.6) / 6 * Math.PI * 2; L = R * (0.45 + rnd() * 0.2); o += '<path d="M' + r1(x) + " " + r1(y) + "L" + r1(x + Math.cos(a) * L) + " " + r1(y + Math.sin(a) * L) + '"' + S0 + ' stroke-width="' + r1(sw * 0.7) + '"/>'; }
-      o += '<circle cx="' + r1(x) + '" cy="' + r1(y) + '" r="' + r1(Math.max(2, R * 0.07)) + '" fill="' + c + '"/>';
+      o += trunkStr(it, x, y, R * 0.07, c, sw);
     } else if (kind === "conifer") {
       var n = Math.max(12, Math.round(R / 4)) * 2, d = ""; for (i = 0; i < n; i++) { a = i / n * Math.PI * 2; L = R * (i % 2 ? 0.72 : 1) * (0.94 + rnd() * 0.06); d += (i ? "L" : "M") + r1(x + Math.cos(a) * L) + " " + r1(y + Math.sin(a) * L); }
       o += '<path d="' + d + 'Z"' + F + "/>";
       for (i = 0; i < n / 2; i++) { a = i / (n / 2) * Math.PI * 2; o += '<path d="M' + r1(x) + " " + r1(y) + "L" + r1(x + Math.cos(a) * R * 0.6) + " " + r1(y + Math.sin(a) * R * 0.6) + '"' + S0 + ' stroke-width="' + r1(sw * 0.6) + '"/>'; }
-      o += '<circle cx="' + r1(x) + '" cy="' + r1(y) + '" r="' + r1(Math.max(2, R * 0.06)) + '" fill="' + c + '"/>';
+      o += trunkStr(it, x, y, R * 0.06, c, sw);
     } else if (kind === "bush") {
       o += '<path d="' + vegBlob(x, y, R, R * 0.92, Math.max(7, Math.round(R / 5)), rnd, 1.22) + '"' + F + "/>";
       o += '<path d="' + vegBlob(x + R * 0.05, y - R * 0.05, R * 0.55, R * 0.5, Math.max(5, Math.round(R / 8)), rnd, 1.2) + '"' + S0 + ' stroke-width="' + r1(sw * 0.7) + '"/>';
@@ -509,8 +511,8 @@
       for (i = 0; i < tn; i++) { var rr = R * 0.85 * Math.sqrt(rnd()), aa = rnd() * Math.PI * 2, tx = x + Math.cos(aa) * rr, ty = y + Math.sin(aa) * rr; dd += "M" + r1(tx - t2 * 0.6) + " " + r1(ty - t2) + "L" + r1(tx) + " " + r1(ty) + "L" + r1(tx + t2 * 0.6) + " " + r1(ty - t2); }
       o += '<path d="' + dd + '"' + S0 + ' stroke-width="' + r1(sw * 0.7) + '"/>';
     } else if (kind === "treel") { /* (x, y) is the foot of the trunk */
-      var cy2 = y - R * 1.9;
-      o += '<path d="M' + r1(x - R * 0.09) + " " + r1(y) + "Q" + r1(x - R * 0.05) + " " + r1(y - R * 0.6) + " " + r1(x - R * 0.06) + " " + r1(y - R * 1.2) + "M" + r1(x + R * 0.09) + " " + r1(y) + "Q" + r1(x + R * 0.05) + " " + r1(y - R * 0.6) + " " + r1(x + R * 0.06) + " " + r1(y - R * 1.2) + '"' + S0 + "/>";
+      var cy2 = y - R * 1.9, th = it.tr ? Math.min(it.tr, R * 0.6) : R * 0.09, tt = th * 0.7; /* trunk half-width at the foot and where it meets the canopy */
+      o += '<path d="M' + r1(x - th) + " " + r1(y) + "Q" + r1(x - tt * 0.9) + " " + r1(y - R * 0.6) + " " + r1(x - tt) + " " + r1(y - R * 1.2) + "M" + r1(x + th) + " " + r1(y) + "Q" + r1(x + tt * 0.9) + " " + r1(y - R * 0.6) + " " + r1(x + tt) + " " + r1(y - R * 1.2) + '"' + S0 + "/>";
       o += '<path d="' + vegBlob(x, cy2, R, R * 1.05, Math.max(10, Math.round(R / 7)), rnd, 1.15) + '"' + F + "/>";
       o += '<path d="M' + r1(x) + " " + r1(y - R * 1.1) + "L" + r1(x) + " " + r1(cy2 - R * 0.2) + "M" + r1(x) + " " + r1(cy2 + R * 0.3) + "L" + r1(x - R * 0.45) + " " + r1(cy2 - R * 0.15) + "M" + r1(x) + " " + r1(cy2 + R * 0.1) + "L" + r1(x + R * 0.5) + " " + r1(cy2 - R * 0.3) + '"' + S0 + ' stroke-width="' + r1(sw * 0.7) + '"/>';
       o += '<path d="M' + r1(x - R * 0.5) + " " + r1(y) + "L" + r1(x + R * 0.5) + " " + r1(y) + '"' + S0 + "/>";
@@ -1472,7 +1474,7 @@
     if (measured() && (it.type === "rect" || it.type === "cloud")) h += '<label class="sk-check">W <input type="number" id="skp-rw" step="0.01" min="0" style="width:6em" value="' + r3(toM(Math.abs(it.x2 - it.x1))) + '"></label><label class="sk-check">H <input type="number" id="skp-rh" step="0.01" min="0" style="width:6em" value="' + r3(toM(Math.abs(it.y2 - it.y1))) + '"> m</label>';
     if (measured() && it.type === "circle") h += '<label class="sk-check">Radius <input type="number" id="skp-rad" step="0.01" min="0" style="width:6em" value="' + r3(toM(Math.hypot(it.x2 - it.x1, it.y2 - it.y1))) + '"> m</label>';
     if (it.type === "section" || it.type === "wl") h += '<input type="text" id="skp-label" spellcheck="true" lang="en-GB" value="' + esc(it.label || "") + '" aria-label="Label" style="width:' + (it.type === "wl" ? 11 : 4) + 'em">';
-    if (it.type === "veg") h += '<select id="skp-veg" aria-label="Planting type">' + VEG.map(function (x) { return '<option value="' + x[0] + '"' + ((it.kind || "tree") === x[0] ? " selected" : "") + ">" + x[1] + "</option>"; }).join("") + '</select><label class="sk-check">' + (measured() ? "Spread" : "Size") + ' <input type="number" id="skp-vr" min="0.01" step="any" style="width:5.5em" value="' + (measured() ? r3(toM(2 * (it.r || 40))) : Math.round(2 * (it.r || 40) / 4)) + '"> ' + (measured() ? "m" : "mm") + "</label>";
+    if (it.type === "veg") h += '<select id="skp-veg" aria-label="Planting type">' + VEG.map(function (x) { return '<option value="' + x[0] + '"' + ((it.kind || "tree") === x[0] ? " selected" : "") + ">" + x[1] + "</option>"; }).join("") + '</select><label class="sk-check">' + (/^(tree|conifer|treel)$/.test(it.kind || "tree") ? "Canopy" : measured() ? "Spread" : "Size") + ' <input type="number" id="skp-vr" min="0.01" step="any" style="width:5.5em" value="' + (measured() ? r3(toM(2 * (it.r || 40))) : Math.round(2 * (it.r || 40) / 4)) + '"> ' + (measured() ? "m" : "mm") + "</label>" + (/^(tree|conifer|treel)$/.test(it.kind || "tree") ? '<label class="sk-check" title="Leave blank for a simple dot">Trunk diameter <input type="number" id="skp-vt" min="0" step="any" style="width:5em" value="' + (it.tr ? (measured() ? r3(toM(2 * it.tr)) : Math.round(2 * it.tr / 4)) : "") + '" placeholder="' + (measured() ? "m" : "mm") + '"> ' + (measured() ? "m" : "mm") + "</label>" : "");
     if (it.type === "slope" || it.type === "north" || it.type === "wl") h += '<label class="sk-check">Size <select id="skp-s">' + [0.5, 0.75, 1, 1.5, 2, 3].map(function (v) { return '<option value="' + v + '"' + ((it.s || 1) === v ? " selected" : "") + ">×" + v + "</option>"; }).join("") + "</select></label>";
     if (it.type === "section" || it.type === "slope") h += '<button type="button" class="sk-btn" data-act="flip">Flip side</button>';
     if (it.type === "leader" || it.type === "arrow") h += '<label class="sk-check">Arrowhead <select id="skp-ah">' + (it.type === "leader" ? [[0, "None"], [-1, "Dot"], [7, "Small"], [11, "Medium"], [16, "Large"]] : [[8, "Small"], [11, "Medium"], [16, "Large"], [22, "Extra large"]]).map(function (x) { var cur = it.ah == null ? (it.type === "leader" ? 11 : 11) : it.ah; return '<option value="' + x[0] + '"' + (cur === x[0] ? " selected" : "") + ">" + x[1] + "</option>"; }).join("") + "</select></label>";
@@ -1533,6 +1535,7 @@
     liveEdit("skp-label", function (it, el) { it.label = el.value; });
     liveEdit("skp-size", function (it, el) { it.size = +el.value; });
     liveEdit("skp-s", function (it, el) { it.s = +el.value; });
+    liveEdit("skp-vt", function (it, el) { var v = parseFloat(el.value); if (!(v > 0)) { delete it.tr; return; } it.tr = r1(measured() ? fromM(v) / 2 : v * 4 / 2); });
     liveEdit("skp-vr", function (it, el) { var v = parseFloat(el.value); if (!(v > 0)) return; it.r = r1(measured() ? fromM(v) / 2 : v * 4 / 2); });
     var vsel = $("skp-veg"); if (vsel) vsel.addEventListener("change", function () { var it = byId(sel.id); if (!it) return; begin(); it.kind = this.value; style.veg = this.value; commit(); renderProps(); });
     liveEdit("skp-mask", function (it, el) { it.mask = el.checked; });
