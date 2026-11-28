@@ -896,7 +896,7 @@ nav a[aria-current="page"][aria-expanded="true"] { color: var(--accent-ink); bac
 .sk-sec > summary { cursor: pointer; font: 600 0.8rem var(--font-mono); letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); padding: 2px 0; }
 .sk-main { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
 .sk-main > .sk-top { position: sticky; top: var(--sk-top, 56px); z-index: 4; background: var(--paper); padding: 6px 0; }
-.sk-main > .sk-props { position: sticky; top: calc(var(--sk-top, 56px) + 48px); z-index: 3; }
+.sk-main .sk-props { position: sticky; top: calc(var(--sk-top, 56px) + 48px); z-index: 3; }
 /* wide screens: the sketch pad fills the window under the site bar and the page itself doesn't scroll;
    the side bar and the area round the sheet scroll on their own if they need to */
 html.sk-lock, html.sk-lock body { overflow: hidden; }
@@ -923,7 +923,7 @@ html.sk-lock #view-sketch .view-head { gap: 0; }
 .sk-app:fullscreen .sk-main, .sk-app.sk-full .sk-main { height: 100%; overflow: hidden; }
 .sk-stage.sk-panning #sk-svg, .sk-stage.sk-panning #sk-svg * { cursor: grab !important; }
 .sk-hint { margin: 2px 0 0; color: var(--muted, #5a6677); min-height: 1.2em; }
-.sk-main > .sk-props[hidden] { display: none; }
+.sk-main .sk-props[hidden] { display: none; }
 .sk-stage { overflow: hidden; }
 html.sk-lock .sk-main > .sk-stage, .sk-app:fullscreen .sk-main > .sk-stage, .sk-app.sk-full .sk-main > .sk-stage { flex: 1 1 0; min-height: 0; }
 html.sk-lock .sk-main > *:not(.sk-stage), .sk-app:fullscreen .sk-main > *:not(.sk-stage), .sk-app.sk-full .sk-main > *:not(.sk-stage) { flex: 0 0 auto; }
@@ -983,16 +983,16 @@ html.sk-lock .sk-layout, .sk-app:fullscreen .sk-layout, .sk-app.sk-full .sk-layo
 .sk-mlmsg-err { color: #8c1d18; background: #fdecea; border-color: #f5b5ae; }
 .sk-mlmsg-err::before { content: "✗ "; font-weight: 700; }
 /* the item options bar sits under the sheet, compact */
-.sk-main > .sk-props { position: static; min-height: 0; padding: 3px 8px; gap: 4px 10px; font-size: 0.8rem; }
-.sk-main > .sk-props .sk-btn, .sk-main > .sk-props select, .sk-main > .sk-props input[type="text"] { padding: 3px 7px; font-size: 0.78rem; }
-.sk-main > .sk-props .sk-props-none { font-size: 0.76rem; }
+.sk-main .sk-props { position: static; min-height: 0; padding: 3px 8px; gap: 4px 10px; font-size: 0.8rem; }
+.sk-main .sk-props .sk-btn, .sk-main .sk-props select, .sk-main .sk-props input[type="text"] { padding: 3px 7px; font-size: 0.78rem; }
+.sk-main .sk-props .sk-props-none { font-size: 0.76rem; }
 /* one fixed-height row, so picking or dropping an item never resizes the sheet area and moves the page */
-html:not(.sk-mob) .sk-main > .sk-props { height: 40px; min-height: 40px; max-height: 40px; box-sizing: border-box; flex-wrap: nowrap; overflow-x: auto; overflow-y: hidden; scrollbar-width: thin; }
-html:not(.sk-mob) .sk-main > .sk-props > * { flex: 0 0 auto; }
-html:not(.sk-mob) .sk-main > .sk-props textarea { min-height: 0; height: 28px; padding: 3px 7px; resize: horizontal; font-size: 0.78rem; }
-html:not(.sk-mob) .sk-main > .sk-props label, html:not(.sk-mob) .sk-main > .sk-props .sk-btn { white-space: nowrap; }
-.sk-main > .sk-hint, .sk-main > .sk-status { font-size: 0.74rem; margin: 0; min-height: 1em; }
-html:not(.sk-mob) .sk-main > .sk-hint, html:not(.sk-mob) .sk-main > .sk-status { height: 1.35em; line-height: 1.35em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } /* fixed heights: messages never resize the sheet area */
+html:not(.sk-mob) .sk-main .sk-props { height: 40px; min-height: 40px; max-height: 40px; box-sizing: border-box; flex-wrap: nowrap; overflow-x: auto; overflow-y: hidden; scrollbar-width: thin; }
+html:not(.sk-mob) .sk-main .sk-props > * { flex: 0 0 auto; }
+html:not(.sk-mob) .sk-main .sk-props textarea { min-height: 0; height: 28px; padding: 3px 7px; resize: horizontal; font-size: 0.78rem; }
+html:not(.sk-mob) .sk-main .sk-props label, html:not(.sk-mob) .sk-main .sk-props .sk-btn { white-space: nowrap; }
+.sk-main .sk-hint, .sk-main .sk-status { font-size: 0.74rem; margin: 0; min-height: 1em; }
+html:not(.sk-mob) .sk-main .sk-hint, html:not(.sk-mob) .sk-main .sk-status { height: 1.35em; line-height: 1.35em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } /* fixed heights: messages never resize the sheet area */
 #sk-svg .sk-warn { cursor: help !important; pointer-events: none; }
 .sk-stage { position: relative; }
 .sk-warnbar { position: absolute; bottom: 8px; right: 8px; width: 170px; max-height: 60%; overflow: auto; scrollbar-width: thin; z-index: 3; background: var(--surface); border: 1px solid #f0b35c; border-left: 3px solid #f08a00; border-radius: 6px; box-shadow: 0 2px 10px rgba(0,0,0,.12); font-size: 11px; line-height: 1.3; }
@@ -1120,11 +1120,11 @@ html.sk-mob .sk-row1 > .sk-tabs { flex: 0 0 auto; flex-wrap: nowrap; margin-bott
 html.sk-mob .sk-row1 > .sk-top { flex-wrap: nowrap; padding: 0 !important; }
 html.sk-mob .sk-row1 .sk-actions { flex-wrap: nowrap; }
 html.sk-mob .sk-row1 .sk-btn, html.sk-mob .sk-row1 select, html.sk-mob .sk-row1 .btn { padding: 4px 8px; font-size: 0.78rem; white-space: nowrap; }
-html.sk-mob .sk-main > .sk-props { position: absolute; left: 0; right: 0; bottom: 0; z-index: 6; flex-wrap: nowrap; overflow-x: auto; min-height: 0; padding: 4px 8px; gap: 6px; box-shadow: 0 -2px 10px rgba(0,0,0,.12); scrollbar-width: thin; }
-html.sk-mob .sk-main > .sk-props:has(.sk-props-none) { display: none; }
-html.sk-mob .sk-main > .sk-props > * { flex: 0 0 auto; }
-html.sk-mob .sk-main > .sk-hint { display: none; }
-html.sk-mob .sk-main > .sk-status { margin: 0; font-size: 0.74rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-height: 1.1em; }
+html.sk-mob .sk-main .sk-props { position: absolute; left: 0; right: 0; bottom: 0; z-index: 6; flex-wrap: nowrap; overflow-x: auto; min-height: 0; padding: 4px 8px; gap: 6px; box-shadow: 0 -2px 10px rgba(0,0,0,.12); scrollbar-width: thin; }
+html.sk-mob .sk-main .sk-props:has(.sk-props-none) { display: none; }
+html.sk-mob .sk-main .sk-props > * { flex: 0 0 auto; }
+html.sk-mob .sk-main .sk-hint { display: none; }
+html.sk-mob .sk-main .sk-status { margin: 0; font-size: 0.74rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-height: 1.1em; }
 html.sk-mob .sk-side { order: 2; position: static; max-height: none; overflow: visible; padding: 0; gap: 0; flex: 0 0 auto; }
 html.sk-mob .sk-side:not(.sk-drawer) > :not(.sk-toolrow) { display: none; }
 html.sk-mob .sk-side .sk-toolrow { flex-direction: row; flex-wrap: nowrap; align-items: stretch; gap: 4px; }
@@ -1138,9 +1138,9 @@ html.sk-mob .sk-side.sk-drawer { position: fixed; left: 0; right: 0; bottom: 0; 
 html.sk-mob .sk-side.sk-drawer .sk-toolrow { order: -1; position: sticky; top: -8px; z-index: 2; background: var(--paper); padding: 4px 0; }
 html.sk-mob .sk-side.sk-drawer .sk-tools2 { display: flex; flex-wrap: wrap; }
 .sk-props-none { color: var(--muted, #6b7685); font-size: 0.85rem; }
-.sk-app:fullscreen .sk-main > .sk-top, .sk-app:fullscreen .sk-main > .sk-props, .sk-app.sk-full .sk-main > .sk-top, .sk-app.sk-full .sk-main > .sk-props { position: static; }
+.sk-app:fullscreen .sk-main > .sk-top, .sk-app:fullscreen .sk-main .sk-props, .sk-app.sk-full .sk-main > .sk-top, .sk-app.sk-full .sk-main .sk-props { position: static; }
 html.sk-lock .sk-main { height: 100%; overflow-y: auto; scrollbar-width: thin; }
-html.sk-lock .sk-main > .sk-top, html.sk-lock .sk-main > .sk-props { top: 0; }
+html.sk-lock .sk-main > .sk-top, html.sk-lock .sk-main .sk-props { top: 0; }
 .sk-pin { position: absolute; top: 1px; right: 2px; font-size: 0.7rem; line-height: 1; color: var(--muted, #8a94a6); padding: 1px; border-radius: 3px; }
 .sk-pin.on { color: #c08a00; }
 .sk-pin:hover { background: var(--line); }
@@ -1157,7 +1157,7 @@ html.sk-lock .sk-main > .sk-top, html.sk-lock .sk-main > .sk-props { top: 0; }
   .sk-side .sk-tool { min-width: 60px; flex: none; }
   .sk-side .sk-toolrow > * { flex: none; }
   .sk-side .sk-style { flex-direction: row; flex-wrap: wrap; }
-  .sk-main > .sk-top, .sk-main > .sk-props { position: static; }
+  .sk-main > .sk-top, .sk-main .sk-props { position: static; }
 }
 .sk-top, .sk-style, .sk-toolrow, .sk-props { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; }
 .sk-top { justify-content: space-between; }
@@ -1524,18 +1524,20 @@ html:not(.sk-mob) #sk-tbar.sk-tbar-left .sk-tools:not(.sk-tools2), html:not(.sk-
 html:not(.sk-mob) #sk-tbar.sk-tbar-side > .sk-side { width: 72px; display: grid; grid-template-columns: repeat(2, 34px); gap: 2px; justify-content: center; align-content: start; }
 html:not(.sk-mob) #sk-tbar.sk-tbar-side > .sk-side > :not(details.sk-sec) { grid-column: 1 / -1; }
 html:not(.sk-mob) #sk-tbar.sk-tbar-side > .sk-side > details.sk-sec { padding: 0; }
-html:not(.sk-mob) #sk-tbar.sk-tbar-side > .sk-side > .sk-toolrow { grid-column: auto; display: flex; justify-content: center; }
+html:not(.sk-mob) #sk-tbar.sk-tbar-side > .sk-side > select.sk-tpl { grid-column: auto !important; justify-self: stretch; width: 34px !important; }
+html:not(.sk-mob) #sk-tbar.sk-tbar-side > .sk-side > .sk-toolrow:not(:has(> :not([hidden]):not(.sr-only):not(.sk-more))) { display: none; }
+html:not(.sk-mob) #sk-tbar.sk-tbar-side .sk-sideacts .sk-actions { gap: 2px !important; }
 html:not(.sk-mob) #sk-tbar.sk-tbar-side #sk-tball { display: none; }
-html:not(.sk-mob) #sk-tbar > .sk-side > details.sk-sec > summary, html:not(.sk-mob) #sk-tbar .sk-snapmenu > summary { list-style: none; display: flex; align-items: center; justify-content: center; width: 34px; height: 30px; padding: 0 !important; border-radius: 4px; cursor: pointer; }
+html:not(.sk-mob) #sk-tbar > .sk-side > details.sk-sec > summary, html:not(.sk-mob) #sk-tbar .sk-snapmenu > summary { list-style: none; display: flex; align-items: center; justify-content: center; width: 34px; height: 32px; box-sizing: border-box; padding: 0 !important; border-radius: 4px; cursor: pointer; }
 html:not(.sk-mob) #sk-tbar > .sk-side > details.sk-sec > summary::-webkit-details-marker, html:not(.sk-mob) #sk-tbar .sk-snapmenu > summary::-webkit-details-marker { display: none; }
 html:not(.sk-mob) #sk-tbar > .sk-side > details.sk-sec > summary:hover, html:not(.sk-mob) #sk-tbar .sk-snapmenu > summary:hover { background: var(--line); }
 html:not(.sk-mob) #sk-tbar > .sk-side > details.sk-sec[open] > summary { color: var(--accent); }
 html:not(.sk-mob) #sk-tbar .sk-sideacts .sk-actions { grid-template-columns: repeat(2, 34px) !important; justify-content: center; }
-html:not(.sk-mob) #sk-tbar .sk-sideacts .sk-actions > * { grid-column: auto !important; width: 34px; height: 30px; min-height: 0; padding: 0 !important; display: inline-flex; align-items: center; justify-content: center; }
+html:not(.sk-mob) #sk-tbar .sk-sideacts .sk-actions > * { grid-column: auto !important; width: 34px; height: 32px; box-sizing: border-box; min-height: 0; padding: 0 !important; display: inline-flex; align-items: center; justify-content: center; }
 html:not(.sk-mob) #sk-tbar .sk-sideacts .sk-actions svg { width: 16px; height: 16px; }
 html:not(.sk-mob) #sk-tbar .sk-tbar-all { width: 34px; height: 30px; padding: 0 !important; display: inline-flex; align-items: center; justify-content: center; align-self: center; }
 html:not(.sk-mob) #sk-tbar .sk-snapwrap { display: flex; justify-content: center; gap: 2px; }
-html:not(.sk-mob) #sk-tbar select.sk-tpl { width: 34px !important; height: 30px; padding: 0 !important; color: transparent; appearance: none; -webkit-appearance: none; background: var(--surface) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2315233a' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='4' y='4' width='16' height='16' rx='2'/%3E%3Cpath d='M4 10h16M10 10v10'/%3E%3C/svg%3E") center / 18px no-repeat; border: 1px solid var(--tool-line); border-radius: 4px; cursor: pointer; justify-self: center; }
+html:not(.sk-mob) #sk-tbar select.sk-tpl { width: 34px !important; height: 32px; box-sizing: border-box; padding: 0 !important; color: transparent; appearance: none; -webkit-appearance: none; background: var(--surface) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2315233a' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='4' y='4' width='16' height='16' rx='2'/%3E%3Cpath d='M4 10h16M10 10v10'/%3E%3C/svg%3E") center / 18px no-repeat; border: 1px solid var(--tool-line); border-radius: 4px; cursor: pointer; justify-self: center; }
 html:not(.sk-mob) #sk-tbar select.sk-tpl option { color: var(--ink); }
 html[data-theme="dark"]:not(.sk-mob) #sk-tbar select.sk-tpl { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23dbe7f0' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='4' y='4' width='16' height='16' rx='2'/%3E%3Cpath d='M4 10h16M10 10v10'/%3E%3C/svg%3E"); }
 /* All tools window: one compact grid that fills the window and reflows with it */
@@ -1546,6 +1548,43 @@ html[data-theme="dark"]:not(.sk-mob) #sk-tbar select.sk-tpl { background-image: 
 .sk-sec[data-sec="alltools"].sk-fly .sk-tools2 .sk-tool { min-width: 0; width: auto; padding: 4px 2px; }
 .sk-sec[data-sec="alltools"].sk-fly .sk-tools2 .sk-tool > span:not(.sk-pin) { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
 .sk-sec[data-sec="alltools"].sk-fly .sk-kitt { grid-template-columns: repeat(auto-fill, minmax(76px, 1fr)); }
+/* ---- Slim chrome round the sheet: thin tabs, and one line under the sheet for options and messages ---- */
+html.sk-mob .sk-bar2, html.sk-mob .sk-msgs { display: contents; }
+html:not(.sk-mob) .sk-bar2 { display: flex; align-items: center; gap: 10px; height: 30px; min-height: 30px; flex: 0 0 auto; min-width: 0; }
+html:not(.sk-mob) .sk-bar2 .sk-props { height: 30px !important; min-height: 30px !important; max-height: 30px !important; padding: 2px 6px !important; flex: 1 1 auto; min-width: 0; }
+html:not(.sk-mob) .sk-bar2 .sk-props:has(.sk-props-none) { display: none; }
+html:not(.sk-mob) .sk-msgs { flex: 1 1 0; min-width: 0; display: flex; align-items: center; gap: 12px; overflow: hidden; }
+html:not(.sk-mob) .sk-bar2:has(.sk-props:not(:has(.sk-props-none))) .sk-msgs { flex: 0 1 32%; }
+html:not(.sk-mob) .sk-msgs > p { margin: 0 !important; min-width: 0; height: auto !important; line-height: 1.3 !important; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+html:not(.sk-mob) .sk-msgs > .sk-status { flex: 0 1 auto; color: var(--ink); }
+html:not(.sk-mob) .sk-msgs > .sk-status:empty { display: none; }
+html:not(.sk-mob) .sk-msgs > .sk-hint { flex: 1 1 0; color: var(--muted); }
+html:not(.sk-mob) .sk-main { gap: 4px; }
+html:not(.sk-mob) .sk-tabs { margin-bottom: -5px; gap: 2px; }
+html:not(.sk-mob) .sk-tab button { padding: 2px 8px !important; font-size: 11px !important; line-height: 1.4; }
+html:not(.sk-mob) .sk-tab .sk-tabx { padding: 2px 6px 2px 0 !important; font-size: 12px !important; }
+html:not(.sk-mob) .sk-tabs .sk-tabadd { padding: 2px 8px !important; font-size: 11px !important; min-height: 0; }
+/* a window opened from a toolbar button is joined to it: the button takes the window's colour and the seam between them disappears */
+html:not(.sk-mob) .sk-sec.sk-attached > summary { position: relative; z-index: 2147483000; background: var(--paper) !important; color: var(--accent) !important; border: 1px solid var(--line); border-right: 0; border-radius: 6px 0 0 6px !important; box-shadow: -2px 2px 8px rgba(0,0,0,.08); }
+html:not(.sk-mob) .sk-sec.sk-attached > summary::after { content: ""; position: absolute; top: 0; bottom: 0; right: -3px; width: 4px; background: var(--paper); }
+html:not(.sk-mob) .sk-sec.sk-attached > .sk-sec-body { border-top-left-radius: 0 !important; }
+/* tool groups */
+.sk-tsep { display: block; flex: 0 0 auto; align-self: stretch; width: 1px; margin: 3px 2px; background: var(--tool-line); }
+.sk-tbar-left .sk-tsep, .sk-tbar-vert .sk-tsep { grid-column: 1 / -1; width: auto; height: 1px; margin: 3px 2px; }
+.sk-tgh { grid-column: 1 / -1; display: block; margin: 6px 0 2px; font: 600 11px var(--font-body); letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); }
+.sk-tgh:first-child { margin-top: 0; }
+html.sk-mob .sk-tsep { display: none; }
+html.sk-mob .sk-tgh { flex: 1 1 100%; }
+/* first-visit tour */
+.sk-tour { position: fixed; z-index: 2147483600; width: min(320px, calc(100vw - 16px)); background: var(--paper); color: var(--ink); border: 1px solid var(--line); border-radius: 10px; box-shadow: 0 10px 34px rgba(0,0,0,.28); padding: 12px 14px; font-size: 12px; line-height: 1.45; }
+.sk-tour[hidden], .sk-tour-ring[hidden] { display: none; }
+.sk-tour h4 { margin: 2px 0 4px; font-size: 14px; }
+.sk-tour p { margin: 0 0 10px; }
+.sk-tour-n { font: 600 10px var(--font-mono); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.sk-tour-b { display: flex; align-items: center; gap: 6px; }
+.sk-tour-b > span { flex: 1 1 auto; }
+.sk-tour-b .btn, .sk-tour-b .sk-btn { font-size: 12px !important; padding: 4px 10px !important; min-height: 0; }
+.sk-tour-ring { position: fixed; z-index: 2147483500; border: 2px solid var(--accent); border-radius: 8px; box-shadow: 0 0 0 4000px rgba(10,20,30,.25); pointer-events: none; transition: all .2s; }
 /* icon buttons in the map panel */
 .sk-app .sk-btn.sk-ibtn, html:not(.sk-mob) .sk-app :is(.sk-sec-in, .sk-dlg, .sk-toolpop, .sk-props) .sk-btn.sk-ibtn { width: 32px !important; max-width: 32px !important; height: 28px; min-height: 28px; padding: 0 !important; display: inline-flex; align-items: center; justify-content: center; flex: 0 0 auto; }
 .sk-app .sk-btn.sk-icbtn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
@@ -3133,9 +3172,9 @@ html[data-theme="dark"]:not(.sk-mob) #sk-tbar select.sk-tpl { background-image: 
 <script src="js/news-feed.js?v=20261122b"></script>
 <script src="js/news-archive.js?v=20261122b"></script>
 <script src="js/pages.js?v=20261122b"></script>
-<script src="js/tools/sketch-templates.js?v=20261129q"></script>
-<script src="js/tools/sketch.js?v=20261129q"></script>
-<script src="js/tools/drawing-check.js?v=20261129q"></script>
+<script src="js/tools/sketch-templates.js?v=20261129x"></script>
+<script src="js/tools/sketch.js?v=20261129x"></script>
+<script src="js/tools/drawing-check.js?v=20261129x"></script>
 <script src="js/tools/hydraulics.js?v=20261127a"></script>
 <script src="js/tools/pipeflow.js?v=20261127a"></script>
 <script src="js/tools/catchment.js?v=20261127a"></script>
@@ -3147,7 +3186,7 @@ html[data-theme="dark"]:not(.sk-mob) #sk-tbar select.sk-tpl { background-image: 
 <script src="js/tools/culvert.js?v=20261127a"></script>
 <script src="js/tools/site-diary.js?v=20261127a"></script>
 <script src="js/learn.js?v=20261127m"></script>
-<script src="js/site.js?v=20261129q"></script>
+<script src="js/site.js?v=20261129x"></script>
 <script src="js/art.js?v=20261127m"></script>
 </body>
 </html>

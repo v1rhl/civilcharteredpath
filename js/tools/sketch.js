@@ -67,6 +67,9 @@
     kit: [["member", "Member"], ["pin", "Pin"], ["roller", "Roller"], ["fixed", "Fixed"], ["pload", "Point load"], ["udl", "UDL"], ["moment", "Moment"]], /* beam and frame diagram kit, a group in All tools */
     shapes: [["line", "Line"], ["arrow", "Arrow"], ["rect", "Rectangle"], ["circle", "Circle"], ["poly", "Polygon"], ["curve", "Curve"], ["section", "Section"], ["north", "North"], ["veg", "Vegetation"], ["fig", "Scale figure"], ["brk", "Break line"], ["cloud", "Rev cloud"], ["slope", "Slope"], ["wl", "Water level"], ["image", "Image"], ["inset", "Detail window"], ["window", "New viewport"]]
   };
+  /* tool groups, in order: the toolbar and All tools both follow them */
+  var TGRP = [["base", "", ["select", "eraser"]], ["lines", "Lines", ["pen", "line", "curve", "arrow", "leader", "brk", "section"]], ["shapes", "Shapes and fills", ["rect", "circle", "poly", "hatch", "cloud"]],
+    ["notes", "Text and dimensions", ["text", "dim"]], ["objects", "Objects and symbols", ["north", "veg", "fig", "wl", "slope", "image", "inset", "window"]], ["kit", "Beam and frame kit", ["member", "pin", "roller", "fixed", "pload", "udl", "moment"]]];
   var HINTS = {
     select: "Click to select, drag a box to select several, Shift or Ctrl click to add or remove. Drag to move, drag a corner square to resize, drag the round grip above to rotate (Shift for 15° steps). Delete removes, Ctrl+C / Ctrl+V copy and paste, Ctrl+D duplicates, Ctrl+A selects all, Esc clears.",
     pen: "Draw freehand. Ctrl+Z undoes the last stroke.",
@@ -926,15 +929,16 @@
     side.insertBefore(sec("sheet", "Page settings", false, [sheet]), side.querySelector('[data-sec="layers"]'));
     var more = mk("button", "sk-btn sk-more", "More"); more.type = "button"; more.id = "sk-more"; more.setAttribute("aria-expanded", "false"); more.title = "All tools, style, view, page and layers"; toolrow.appendChild(more); /* phones: opens the side bar as a drawer */
     var main = mk("div", "sk-main"); main.id = "sk-main";
-    top.insertAdjacentHTML("beforeend", '<button type="button" class="sk-btn" id="sk-fit" title="See the whole sheet (0)" disabled>Fit sheet</button><button type="button" class="sk-btn" id="sk-full" title="Full screen (F)" aria-pressed="false">Full screen</button>');
-    top.querySelector(".sk-actions").appendChild($("sk-fit")); top.querySelector(".sk-actions").appendChild($("sk-full"));
+    top.insertAdjacentHTML("beforeend", '<button type="button" class="sk-btn" id="sk-fit" title="See the whole sheet (0)" disabled>Fit sheet</button><button type="button" class="sk-btn" id="sk-full" title="Full screen (F)" aria-pressed="false">Full screen</button><button type="button" class="sk-btn" id="sk-help" title="A quick tour of the sketch pad">Tour</button>');
+    top.querySelector(".sk-actions").appendChild($("sk-fit")); top.querySelector(".sk-actions").appendChild($("sk-full")); top.querySelector(".sk-actions").appendChild($("sk-help"));
     var hint = mk("p", "small sk-hint"); hint.id = "sk-hint";
     var row1 = mk("div", "sk-row1"); row1.appendChild($("sk-tabs")); row1.appendChild(top); /* sheet tabs and the undo/export bar share one row */
     var tbar = mk("div", "sk-tbar"); tbar.id = "sk-tbar"; tbar.setAttribute("role", "group"); tbar.setAttribute("aria-label", "Starred tools");
     tbar.innerHTML = '<button type="button" class="sk-tbar-grip" id="sk-tbgrip" title="Drag to move the toolbar anywhere" aria-label="Move toolbar"><svg viewBox="0 0 8 16" width="8" height="16" aria-hidden="true"><g fill="currentColor"><circle cx="2" cy="3" r="1.2"/><circle cx="6" cy="3" r="1.2"/><circle cx="2" cy="8" r="1.2"/><circle cx="6" cy="8" r="1.2"/><circle cx="2" cy="13" r="1.2"/><circle cx="6" cy="13" r="1.2"/></g></svg></button><div class="sk-tbar-slot" id="sk-tbslot"></div>' +
       '<div class="sk-tbar-lay" id="sk-tblay"></div><div class="sk-tbar-end"><button type="button" class="sk-btn sk-tbar-all" id="sk-tball" title="All tools: star the ones you want on this toolbar">All tools</button><span class="sk-tbdocks"><button type="button" class="sk-win-b" id="sk-tbvert" aria-pressed="false" title="Stand the toolbar up as a column" aria-label="Vertical toolbar" hidden>⇅</button><button type="button" class="sk-win-b" data-dock="left" title="Dock the toolbar at the left of the drawing" aria-label="Dock toolbar at the left">⇤</button><button type="button" class="sk-win-b" data-dock="top" title="Dock the toolbar along the top of the drawing" aria-label="Dock toolbar at the top">⤒</button><button type="button" class="sk-win-b" data-dock="bottom" title="Dock the toolbar along the bottom of the drawing" aria-label="Dock toolbar at the bottom">⤓</button></span></div>';
     var vbar = mk("div", "sk-vbar"); vbar.id = "sk-vbar"; vbar.setAttribute("role", "group"); vbar.setAttribute("aria-label", "View settings");
-    [row1, tbar, $("sk-stage"), $("sk-props"), hint, $("sk-status"), vbar].forEach(function (n) { main.appendChild(n); }); /* the item options and messages sit under the sheet, kept small */
+    var bar2 = mk("div", "sk-bar2"), msgs = mk("div", "sk-msgs"); msgs.appendChild($("sk-status")); msgs.appendChild(hint); bar2.appendChild($("sk-props")); bar2.appendChild(msgs); /* one slim line: the item's options (when something is selected) and the messages */
+    [row1, tbar, $("sk-stage"), bar2, vbar].forEach(function (n) { main.appendChild(n); }); /* the item options and messages sit under the sheet, kept small */
     var lay = mk("div", "sk-layout"); lay.appendChild(side); lay.appendChild(main);
     head.remove(); app.innerHTML = ""; app.appendChild(lay);
     top.id = "sk-head"; /* the bar above the sheet: kept in view on wide screens */
@@ -1166,7 +1170,7 @@
   function winSave(dd, patch) { var w = winState(dd.dataset.sec); for (var k in patch) w[k] = patch[k]; try { localStorage.setItem("cp-sketch-win2-" + dd.dataset.sec, JSON.stringify(w)); } catch (e) {} }
   /* the map panel's collapsible groups; open or shut is remembered */
   function mgO(key, title, dflt, extra) { var st = null; try { st = localStorage.getItem("cp-sketch-mg-" + key); } catch (e) {} var on = st == null ? dflt : st === "1"; return '<details class="sk-mgrp" data-mg="' + key + '"' + (on ? " open" : "") + '><summary>' + title + (extra ? " " + extra : "") + '</summary><div class="sk-mgrp-in">'; }
-  function unfly(d) { var b = d.querySelector(".sk-sec-body"), n = d.querySelector(".sk-sec-in"); d.classList.remove("sk-fly"); if (b) b.removeAttribute("style"); if (n) n.removeAttribute("style"); }
+  function unfly(d) { var b = d.querySelector(".sk-sec-body"), n = d.querySelector(".sk-sec-in"); d.classList.remove("sk-fly", "sk-attached"); if (b) b.removeAttribute("style"); if (n) n.removeAttribute("style"); }
   function openWin(dd) {
     Array.prototype.forEach.call(document.querySelectorAll(".sk-side > details.sk-sec[open]"), function (o) { if (o !== dd && !winState(o.dataset.sec).pin) closeWin(o); });
     dd.classList.add("sk-fly"); dd.open = true; placeWin(dd); /* laid out before the browser paints, so it never shows dropping down first */
@@ -1176,6 +1180,8 @@
     var b = dd.querySelector(".sk-sec-body"), n = dd.querySelector(".sk-sec-in"), h = dd.querySelector(".sk-win-h"), side = $("sk-side"), w = winState(dd.dataset.sec);
     var pin = h.querySelector('[data-win="pin"]'); pin.setAttribute("aria-pressed", !!w.pin);
     var r = side.getBoundingClientRect(), VW = window.innerWidth, VH = window.innerHeight, x = w.x, y = w.y, left = dd.dataset.sec !== "style";
+    var sm = dd.querySelector(":scope > summary"), sr = sm && sm.offsetParent ? sm.getBoundingClientRect() : null, att = w.x == null && !!sr && sr.width > 0 && !isMob(); /* opens joined to the button that opened it */
+    if (att) y = sr.top;
     if (y == null) { var tb = $("sk-tbar"), tr = tb && !tb.hidden && !/sk-tbar-(float|left|bottom)/.test(tb.className) ? tb.getBoundingClientRect() : null; var tlb = tb && !tb.hidden && tb.classList.contains("sk-tbar-left") ? tb.getBoundingClientRect() : null; y = tr ? tr.bottom + 8 : tlb ? Math.max(tlb.top, 8) : Math.max($("sk-stage").getBoundingClientRect().top, 8); } /* first time: under the toolbar */
     y = Math.max(8, Math.min(y, VH - 160));
     b.style.zIndex = ++winZ; b._placing = true;
@@ -1191,7 +1197,10 @@
     }
     var bw = b.offsetWidth, bh = b.offsetHeight;
     if (x == null) { var tbl = $("sk-tbar"), tl = tbl && !tbl.hidden && tbl.classList.contains("sk-tbar-left") ? tbl.getBoundingClientRect() : null; x = left ? (tl ? tl.left : r.right + 8) : VW - bw - 16; } /* left-hand windows open over the toolbar column, leaving the drawing clear */ /* Style opens at the right; the others at the left, beside the side bar */
+    if (att) x = sr.right - 1;
     x = Math.max(8, Math.min(x, VW - bw - 8)); y = Math.max(8, Math.min(y, VH - bh - 8));
+    if (att && (x !== sr.right - 1 || y > sr.top || y + bh < sr.bottom)) att = false; /* no room beside the button: float as before */
+    dd.classList.toggle("sk-attached", att);
     b.style.left = x + "px"; b.style.top = y + "px";
     b._size = [b.offsetWidth, b.offsetHeight]; setTimeout(function () { b._placing = false; }, 0);
   }
@@ -1208,8 +1217,8 @@
     head.addEventListener("pointerdown", function (e) {
       if (e.button !== 0 || e.target.closest("[data-win]") || !dd.classList.contains("sk-fly")) return; e.preventDefault();
       var r = body.getBoundingClientRect(), ox = e.clientX - r.left, oy = e.clientY - r.top; head.setPointerCapture(e.pointerId); head.classList.add("sk-drag");
-      var mv = function (ev) { var x = Math.max(4, Math.min(window.innerWidth - r.width - 4, ev.clientX - ox)), y = Math.max(4, Math.min(window.innerHeight - r.height - 4, ev.clientY - oy)); body.style.left = x + "px"; body.style.top = y + "px"; };
-      var up = function () { head.removeEventListener("pointermove", mv); head.removeEventListener("pointerup", up); head.removeEventListener("pointercancel", up); head.classList.remove("sk-drag"); winSave(dd, { x: parseFloat(body.style.left), y: parseFloat(body.style.top) }); };
+      var mv = function (ev) { var x = Math.max(4, Math.min(window.innerWidth - r.width - 4, ev.clientX - ox)), y = Math.max(4, Math.min(window.innerHeight - r.height - 4, ev.clientY - oy)); body.style.left = x + "px"; body.style.top = y + "px"; if (Math.abs(x - r.left) + Math.abs(y - r.top) > 3) { moved = true; dd.classList.remove("sk-attached"); } };
+      var moved = false, up = function () { head.removeEventListener("pointermove", mv); head.removeEventListener("pointerup", up); head.removeEventListener("pointercancel", up); head.classList.remove("sk-drag"); if (moved) winSave(dd, { x: parseFloat(body.style.left), y: parseFloat(body.style.top) }); };
       head.addEventListener("pointermove", mv); head.addEventListener("pointerup", up); head.addEventListener("pointercancel", up);
     });
   }
@@ -1438,9 +1447,11 @@
   function renderTools() {
     var tb = function (t, pinUI) { var pinned = pinUI && pinsFor(mode).indexOf(t[0]) > -1; return '<button type="button" class="sk-tool' + (toolLock === t[0] ? " sk-locked" : "") + '" data-tool="' + t[0] + '" aria-pressed="' + (tool[mode] === t[0]) + '" title="' + esc(HINTS[t[0]] + (pinUI ? "" : " Right-click for its colour, width, line type, text size and transparency.")) + '">' + iconSvg(t[0]) + "<span>" + t[1] + "</span>" + (pinUI ? '<span class="sk-pin' + (pinned ? " on" : "") + '" data-pin="' + t[0] + '" role="button" tabindex="0" title="' + (pinned ? "Unpin from" : "Pin to") + ' the tools at the top" aria-label="' + (pinned ? "Unpin " : "Pin ") + t[1] + '">' + (pinned ? "★" : "☆") + "</span>" : "") + "</button>"; };
     var all = TOOLS.free.concat(TOOLS.shapes, TOOLS.kit), byT = {}; all.forEach(function (t) { byT[t[0]] = t; });
-    $("sk-tools").innerHTML = pinsFor(mode).filter(function (id) { return byT[id]; }).map(function (id) { return tb(byT[id]); }).join("");
+    var pins = pinsFor(mode), bar = [];
+    TGRP.forEach(function (g) { var inG = g[2].filter(function (id) { return byT[id] && pins.indexOf(id) > -1; }); if (!inG.length) return; if (bar.length) bar.push('<span class="sk-tsep" role="separator" aria-hidden="true"></span>'); inG.forEach(function (id) { bar.push(tb(byT[id])); }); });
+    $("sk-tools").innerHTML = bar.join(""); /* starred tools, in their groups, a thin rule between groups */
     var kitAll = KIT.every(function (k) { return pinsFor(mode).indexOf(k) > -1; });
-    $("sk-tools2").innerHTML = TOOLS.free.concat(TOOLS.shapes).map(function (t) { return tb(t, true); }).join("") +
+    $("sk-tools2").innerHTML = TGRP.filter(function (g) { return g[0] !== "kit"; }).map(function (g) { return (g[1] ? '<span class="sk-tgh">' + g[1] + "</span>" : "") + g[2].filter(function (id) { return byT[id]; }).map(function (id) { return tb(byT[id], true); }).join(""); }).join("") +
       '<div class="sk-kit"><label class="sk-check sk-kith" title="Star the whole beam and frame kit onto the toolbar, or take it all off"><input type="checkbox" id="sk-kit"' + (kitAll ? " checked" : "") + '> Beam and frame kit</label><div class="sk-kitt">' + TOOLS.kit.map(function (t) { return tb(t, true); }).join("") + "</div></div>";
     $("sk-ermode").hidden = tool[mode] !== "eraser";
     Array.prototype.forEach.call(app.querySelectorAll("[data-mode]"), function (b) { b.setAttribute("aria-pressed", b.dataset.mode === mode); });
@@ -1460,6 +1471,8 @@
       "sk-clear": S('<path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/>'),
       "sk-fit": S('<path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5"/><rect x="8" y="8" width="8" height="8" rx="1"/>'),
       "sk-full": S('<path d="M3 8V3h5M16 3h5v5M21 16v5h-5M8 21H3v-5"/>'),
+      "sk-help": S('<circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .8-1 1.5v.7M12 17h.01"/>'),
+      "sk-fullx": S('<path d="M8 3v5H3M16 3v5h5M21 16h-5v5M3 16h5v5"/>'),
       "sk-tball": S('<rect x="4" y="4" width="6" height="6" rx="1"/><rect x="14" y="4" width="6" height="6" rx="1"/><rect x="4" y="14" width="6" height="6" rx="1"/><path d="M17 14v6M14 17h6"/>'),
       snaps: S('<path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/>') }; })();
   function iconBar() {
@@ -1469,7 +1482,7 @@
     bar.querySelectorAll(".sk-ltog").forEach(function (l) { var sp = l.querySelector("span"); if (sp) tip(l, sp.textContent); });
     var wrap = function (el, key) { if (!el || el.dataset.ib) return; el.dataset.ib = "1"; var t = el.textContent.replace(/[\u25BE\u25B8]/g, "").trim(); el.innerHTML = TBI[key] + '<span class="sk-tlab">' + el.innerHTML + "</span>"; tip(el, t); };
     bar.querySelectorAll(".sk-side > details.sk-sec > summary").forEach(function (sm) { var k = sm.parentNode.dataset.sec; if (TBI[k]) wrap(sm, k); });
-    ["sk-undo", "sk-redo", "sk-clear", "sk-fit", "sk-full", "sk-tball"].forEach(function (id) { wrap($(id), id); });
+    ["sk-undo", "sk-redo", "sk-clear", "sk-fit", "sk-full", "sk-help", "sk-tball"].forEach(function (id) { wrap($(id), id); });
     var sn = bar.querySelector(".sk-snapmenu > summary"); if (sn) wrap(sn, "snaps");
     var tp = $("sk-tpl"); if (tp && bar.contains(tp)) tip(tp, "Insert a typical detail");
     var ex = $("sk-export"); if (ex) { ex.setAttribute("data-tip", "Export"); ex.removeAttribute("title"); }
@@ -1617,7 +1630,7 @@
 
   /* ---------- Properties bar ---------- */
   var ROT_TYPES = { support: 90, pload: 45, north: 45 };
-  function renderProps() { updateCtx(); renderProps0(); var pe = $("sk-props"); if (!pe.innerHTML) pe.innerHTML = '<span class="sk-props-none">Nothing selected. Click an item to change it, or drag a box round several.</span>'; pe.hidden = false; var hn = $("sk-hint"); if (hn) hn.textContent = HINTS[tool[mode]] || ""; if (window.innerWidth > 1000) fitSheet(); }
+  function renderProps() { updateCtx(); renderProps0(); var pe = $("sk-props"); if (!pe.innerHTML) pe.innerHTML = '<span class="sk-props-none">Nothing selected. Click an item to change it, or drag a box round several.</span>'; pe.hidden = false; var hn = $("sk-hint"); if (hn) { hn.textContent = HINTS[tool[mode]] || ""; hn.title = hn.textContent; } if (window.innerWidth > 1000) fitSheet(); }
   function renderProps0() {
     var p = $("sk-props"), it = sel && sel.k === "item" ? byId(sel.id) : null, im = sel && sel.k === "img" ? imgById(sel.id) : null;
     if (im) {
@@ -3579,6 +3592,38 @@
   }, true);
   function tUp(e) { if (e.pointerType !== "touch") return; delete touches[e.pointerId]; if (pinch) { e.stopImmediatePropagation(); if (!tN()) { pinch = null; status(zv ? "Zoom " + Math.round(zv.s * 100) + "%. Pinch or drag with two fingers; press Fit sheet to see it all." : ""); } } }
   window.addEventListener("pointerup", tUp, true); window.addEventListener("pointercancel", tUp, true);
+  /* A short tour for first-time visitors: a small card that points at each part in turn. Shown once; Tour reopens it. */
+  var TOUR = [
+    [null, "Welcome to the sketch pad", "A quick look round in a few steps. Skip it any time, and reopen it from the ? button in the toolbar."],
+    ["#sk-tools", "Draw with the tools", "Pick a tool from the toolbar. Point at an icon to see its name. Tools are grouped: lines, shapes and fills, text and dimensions, objects and symbols."],
+    ["#sk-tools", "Right-click for formatting", "Right-click a tool to set its colour, weight, line type, text size or mode, such as polyline or angle dimension. Right-click the sheet to go back to Select. Double-click anything you've drawn to change it."],
+    ['.sk-side > details.sk-sec[data-sec="alltools"] > summary', "All tools", "Every tool is in here. Click the star on a tool to put it on the toolbar."],
+    ["#sk-snap", "Snapping", "Snap ties points to the grid and to ends, middles and crossings of what you've drawn. Snaps chooses which. Hold Alt to draw freely."],
+    ['.sk-side > details.sk-sec[data-sec="layers"] > summary', "Layers and map", "Trace over a photo, or place a map under the drawing, with LiDAR contours, hillshade, geology, flood and designation layers. The map's location is sent to the services listed there."],
+    ["#sk-tpl", "Typical details", "Drop in a starting sketch of a common detail, then edit it to suit."],
+    ["#sk-vbar", "View settings", "Grid, the checks list, spelling, scale, scale bar and watermark sit along the bottom. Checks flags drawing checklist items the sheet seems to miss."],
+    ["#sk-export", "Export", "Save as PNG, JPEG, SVG, PDF or DXF for CAD. Your drawing stays in this browser: nothing is uploaded."]
+  ];
+  var tourEl = null, tourI = 0, tourRing = null;
+  function tourEnd() { if (tourEl) tourEl.hidden = true; if (tourRing) tourRing.hidden = true; try { localStorage.setItem("cp-sketch-tour", "1"); } catch (e) {} window.removeEventListener("resize", tourShow); }
+  function tourShow() {
+    if (!tourEl || tourEl.hidden) return; var st = TOUR[tourI], tg = st[0] ? document.querySelector(st[0]) : null; if (tg && (!tg.getClientRects().length || tg.closest("[hidden]"))) tg = tg.closest("label") || null; if (tg && !tg.getClientRects().length) tg = null;
+    tourEl.innerHTML = '<div class="sk-tour-n">' + (tourI + 1) + " of " + TOUR.length + '</div><h4>' + st[1] + "</h4><p>" + st[2] + '</p><div class="sk-tour-b">' + (tourI < TOUR.length - 1 ? '<button type="button" class="sk-btn" data-tour="skip">Skip tour</button>' : "") + '<span></span>' + (tourI ? '<button type="button" class="sk-btn" data-tour="prev">Back</button>' : "") + (tourI < TOUR.length - 1 ? '<button type="button" class="btn" data-tour="next">Next</button>' : '<button type="button" class="btn" data-tour="skip">Start drawing</button>') + "</div>";
+    var W = tourEl.offsetWidth, H = tourEl.offsetHeight, VW = innerWidth, VH = innerHeight, x, y;
+    if (tg) { var r = tg.getBoundingClientRect(); tourRing.hidden = false; tourRing.style.left = (r.left - 4) + "px"; tourRing.style.top = (r.top - 4) + "px"; tourRing.style.width = (r.width + 8) + "px"; tourRing.style.height = (r.height + 8) + "px";
+      x = r.right + 14; y = r.top; if (x + W > VW - 8) { x = r.left - W - 14; } if (x < 8) { x = Math.min(VW - W - 8, Math.max(8, r.left)); y = r.bottom + 12 + H > VH ? r.top - H - 12 : r.bottom + 12; } }
+    else { tourRing.hidden = true; x = (VW - W) / 2; y = (VH - H) / 2; }
+    tourEl.style.left = Math.max(8, Math.min(VW - W - 8, x)) + "px"; tourEl.style.top = Math.max(8, Math.min(VH - H - 8, y)) + "px";
+    var nb = tourEl.querySelector('[data-tour="next"]') || tourEl.querySelector(".btn"); if (nb) nb.focus({ preventScroll: true });
+  }
+  function tourStart() {
+    if (!tourEl) { tourEl = document.createElement("div"); tourEl.className = "sk-tour"; tourEl.setAttribute("role", "dialog"); tourEl.setAttribute("aria-label", "Sketch pad tour"); tourRing = document.createElement("div"); tourRing.className = "sk-tour-ring"; app.appendChild(tourRing); app.appendChild(tourEl);
+      tourEl.addEventListener("click", function (e) { var b = e.target.closest("[data-tour]"); if (!b) return; var a = b.dataset.tour; if (a === "skip") tourEnd(); else { tourI = Math.max(0, Math.min(TOUR.length - 1, tourI + (a === "next" ? 1 : -1))); tourShow(); } });
+      tourEl.addEventListener("keydown", function (e) { if (e.key === "Escape") { e.stopPropagation(); tourEnd(); } else if (e.key === "ArrowRight" && tourI < TOUR.length - 1) { tourI++; tourShow(); } else if (e.key === "ArrowLeft" && tourI) { tourI--; tourShow(); } }); }
+    closeFly(); closeCtx(); tourI = 0; tourEl.hidden = false; window.addEventListener("resize", tourShow); tourShow();
+  }
+  $("sk-help").addEventListener("click", tourStart);
+  (function () { var seen = null; try { seen = localStorage.getItem("cp-sketch-tour"); } catch (e) {} if (!seen) setTimeout(function () { if (app.offsetParent || document.fullscreenElement === app) tourStart(); }, 900); })();
   window.CPSketch = { importDetail: importDetail, exportSvg: exportSvg, exportDxf: exportDxf, toPng: toPng, exportPdf: exportPdf, insertTemplate: insertTemplate, state: function () { return S; }, setMode: setMode, setTool: setTool, render: function () { underKey = ""; renderAll(); renderProps(); } };
 
   window.addEventListener("resize", function () { if (!view.hidden) { renderAll(); if (tbKey) closeTB(true); } });
@@ -3588,7 +3633,7 @@
     if (on) { if (app.requestFullscreen) app.requestFullscreen().catch(function () { app.classList.add("sk-full"); afterFull(); }); else { app.classList.add("sk-full"); afterFull(); } }
     else { if (document.fullscreenElement) document.exitFullscreen(); app.classList.remove("sk-full"); afterFull(); }
   }
-  function afterFull() { var f = isFull(); $("sk-full").setAttribute("aria-pressed", f); $("sk-full").textContent = f ? "Exit full screen" : "Full screen"; app.style.setProperty("--sk-top", f ? "0px" : ((document.querySelector(".topbar") || {}).offsetHeight || 0) + "px"); setTimeout(function () { renderAll(); measureK(); renderUI(); }, 60); }
+  function afterFull() { var f = isFull(); $("sk-full").setAttribute("aria-pressed", f); var fb = $("sk-full"), fl = f ? "Exit full screen" : "Full screen", fsp = fb.querySelector(".sk-tlab"); if (fsp) { fsp.textContent = fl; var fsv = fb.querySelector("svg"); if (fsv && TBI) fsv.outerHTML = TBI[f ? "sk-fullx" : "sk-full"]; } else fb.textContent = fl; fb.setAttribute("data-tip", fl); fb.setAttribute("aria-label", fl); app.style.setProperty("--sk-top", f ? "0px" : ((document.querySelector(".topbar") || {}).offsetHeight || 0) + "px"); setTimeout(function () { renderAll(); measureK(); renderUI(); }, 60); }
   $("sk-full").addEventListener("click", function () { setFull(!isFull()); });
   svg.addEventListener("wheel", function (e) {
     if (e.shiftKey && !e.ctrlKey) { e.preventDefault(); panBy(-(e.deltaY || e.deltaX), 0); return; } /* Shift+wheel pans sideways */
