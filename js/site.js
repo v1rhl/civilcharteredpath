@@ -553,12 +553,21 @@
   var ALLT = (window.CP_TOOLS || []).filter(function (t) { return t && t.id && $("view-" + t.id); });
   var GUIDES = ALLT.filter(function (t) { return t.section === "guidance"; }); /* e.g. the drawing checklist, listed under Guidance */
   var TOOLS = ALLT.filter(function (t) { return t.section !== "guidance"; });
+  /* Tools are listed in groups. A tool can name its own with group: "calc" | "draw"; these are the defaults. */
+  var TGROUPS = [["calc", "Calculators"], ["draw", "Site diary and drawing"]];
+  var TGROUP_OF = { "site-diary": "draw", pipeflow: "calc", catchment: "calc", culvert: "calc", "retaining-wall": "calc", sketch: "draw", manhole: "draw" };
+  function tgroup(t) { var g = t.group || TGROUP_OF[t.id] || "calc"; return TGROUPS.some(function (x) { return x[0] === g; }) ? g : "calc"; }
+  var TBY = TGROUPS.map(function (g) { return { key: g[0], label: g[1], tools: TOOLS.filter(function (t) { return tgroup(t) === g[0]; }) }; }).filter(function (g) { return g.tools.length; });
+  TOOLS = [].concat.apply([], TBY.map(function (g) { return g.tools; }));
   var toolIds = TOOLS.map(function (t) { return t.id; });
   (function () {
     var hub = $("tools-hub"), navA = document.querySelector('#nav a[href="#tools"]');
     if (navA) navA.dataset.group = ["tools"].concat(toolIds).join(" ");
-    if (hub) hub.innerHTML = TOOLS.length ? TOOLS.map(function (t) {
+    function card(t) {
       return '<a class="panel tool tool-card" href="#' + esc(t.id) + '" aria-label="Open ' + esc(t.label.toLowerCase()) + '">' + icon(ICONS[t.id] ? t.id : "check-generic") + "<h3>" + esc(t.label) + "</h3>" + (t.blurb ? "<p>" + esc(t.blurb) + "</p>" : "") + "</a>";
+    }
+    if (hub) hub.innerHTML = TOOLS.length ? TBY.map(function (g) {
+      return '<section class="tools-group" aria-labelledby="tg-' + g.key + '"><h3 class="tools-group-h" id="tg-' + g.key + '">' + esc(g.label) + '</h3><div class="tools-grid">' + g.tools.map(card).join("") + "</div></section>";
     }).join("") : '<p class="small">No tools yet.</p>';
   })();
 
@@ -609,7 +618,8 @@
   window.addEventListener("hashchange", route);
 
   /* Dropdown menus on the top nav. Tap a section to open its list; tap it again (or pick an item) to go. */
-  var MENUS = { route: SECTIONS.chartership, resources: SECTIONS.guidance, tools: SECTIONS.tools };
+  /* the Tools menu shows its group names as headings between the links */
+  var MENUS = { route: SECTIONS.chartership, resources: SECTIONS.guidance, tools: [["tools", "All tools"]].concat([].concat.apply([], TBY.map(function (g) { return [[null, g.label]].concat(g.tools.map(function (t) { return [t.id, t.label]; })); }))) };
   if (SECTIONS.learning.length > 1) MENUS.learning = SECTIONS.learning;
   var nav = $("nav"), menu = document.createElement("div"), openFor = null;
   menu.id = "navmenu"; menu.className = "navmenu"; menu.hidden = true;
@@ -622,7 +632,7 @@
   function openMenu(a) {
     closeMenu(); openFor = a; a.setAttribute("aria-expanded", "true");
     var here = location.hash.slice(1).split("?")[0] || "home";
-    menu.innerHTML = '<ul role="list">' + MENUS[a.dataset.menu].map(function (x) { return '<li><a href="#' + x[0] + '"' + (x[0] === here ? ' aria-current="page"' : "") + ">" + esc(x[1]) + "</a></li>"; }).join("") + "</ul>";
+    menu.innerHTML = '<ul role="list">' + MENUS[a.dataset.menu].map(function (x) { if (!x[0]) return '<li class="navmenu-h" role="presentation">' + esc(x[1]) + "</li>"; return '<li><a href="#' + x[0] + '"' + (x[0] === here ? ' aria-current="page"' : "") + ">" + esc(x[1]) + "</a></li>"; }).join("") + "</ul>";
     menu.hidden = false;
     var bar = menu.parentNode.getBoundingClientRect(), r = a.getBoundingClientRect();
     if (window.innerWidth > 760) { menu.style.left = Math.max(8, Math.min(r.left - bar.left, bar.width - menu.offsetWidth - 8)) + "px"; menu.style.top = (r.bottom - bar.top + 4) + "px"; }
