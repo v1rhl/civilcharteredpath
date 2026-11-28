@@ -1941,21 +1941,38 @@
     img.onerror = function () { URL.revokeObjectURL(url); cb(null); };
     img.src = url;
   }
-  function toPng(cb) { var G = geo(); raster(exportSvg(), G.W, G.H, 2, "image/png", undefined, cb); }
+  function toPng(cb) { var G = geo(); raster(exportSvg(), G.W, G.H, fitSc(G.W, G.H, 2), "image/png", undefined, cb); }
+  /* Browsers cap the size of a canvas (Safari and iPads at about 16.7 million pixels), so a big sheet is drawn at
+     a scale that fits, and PDF pages are built from bands, each its own canvas, to keep full detail on A2 to A0. */
+  var MAXPX = 16e6;
+  function fitSc(W, Hh, sc) { return Math.min(sc, Math.sqrt(MAXPX / (W * Hh))); }
+  function bandSvg(svgStr, W, y0, bh) { return svgStr.replace(/^<svg([^>]*?) width="[^"]*" height="[^"]*" viewBox="[^"]*"/, '<svg$1 width="' + W + '" height="' + bh + '" viewBox="0 ' + y0 + " " + W + " " + bh + '"'); }
+  function rasterBands(svgStr, W, Hh, sc, cb) {
+    var bh = Math.max(50, Math.floor(MAXPX * 0.75 / (W * sc * sc))), n = Math.ceil(Hh / bh), out = [], k = 0;
+    (function next() {
+      if (k >= n) return cb(out);
+      var y0 = k * bh, h0 = Math.min(bh, Hh - y0); k++;
+      raster(bandSvg(svgStr, W, y0, h0), W, h0, sc, "image/jpeg", 0.92, function (b, w, h) {
+        if (!b) return sc > 1.1 ? rasterBands(svgStr, W, Hh, Math.max(1, sc * 0.6), cb) : cb(null); /* try again smaller */
+        b.arrayBuffer().then(function (ab) { out.push({ bytes: new Uint8Array(ab), w: w, h: h, y0: y0 / Hh, hf: h0 / Hh }); next(); });
+      });
+    })();
+  }
   /* A minimal PDF writer: one A4 page per sheet, each page a full-bleed JPEG of the sheet. No library needed. */
   function buildPdf(pages) {
     var enc = function (str) { var u = new Uint8Array(str.length); for (var i = 0; i < str.length; i++) u[i] = str.charCodeAt(i) & 255; return u; };
-    var chunks = [], offs = [], len = 0, n = 2 + pages.length * 3;
+    var chunks = [], offs = [], len = 0, nxt = 3, kids = pages.map(function (p) { var o = { po: nxt, co: nxt + 1, io: nxt + 2 }; nxt += 2 + p.bands.length; return o; }), n = nxt - 1;
     function push(u) { chunks.push(u); len += u.length; }
     function obj(i, body, stream) { offs[i] = len; push(enc(i + " 0 obj\n" + body + (stream ? "\nstream\n" : "\nendobj\n"))); if (stream) { push(stream); push(enc("\nendstream\nendobj\n")); } }
     push(enc("%PDF-1.4\n%\xE2\xE3\xCF\xD3\n"));
     obj(1, "<< /Type /Catalog /Pages 2 0 R >>");
-    obj(2, "<< /Type /Pages /Count " + pages.length + " /Kids [" + pages.map(function (p, i) { return (3 + i * 3) + " 0 R"; }).join(" ") + "] >>");
+    obj(2, "<< /Type /Pages /Count " + pages.length + " /Kids [" + kids.map(function (o) { return o.po + " 0 R"; }).join(" ") + "] >>");
     pages.forEach(function (p, i) {
-      var po = 3 + i * 3, co = po + 1, io = po + 2, cs = "q " + p.ptW + " 0 0 " + p.ptH + " 0 0 cm /Im0 Do Q";
-      obj(po, "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 " + p.ptW + " " + p.ptH + "] /Resources << /XObject << /Im0 " + io + " 0 R >> >> /Contents " + co + " 0 R >>");
-      obj(co, "<< /Length " + cs.length + " >>", enc(cs));
-      obj(io, "<< /Type /XObject /Subtype /Image /Width " + p.w + " /Height " + p.h + " /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length " + p.bytes.length + " >>", p.bytes);
+      var K = kids[i], f = function (v) { return (+v.toFixed(3)).toString(); };
+      var cs = p.bands.map(function (b, k) { return "q " + f(p.ptW) + " 0 0 " + f(b.hf * p.ptH) + " 0 " + f(p.ptH * (1 - b.y0 - b.hf)) + " cm /Im" + k + " Do Q"; }).join("\n");
+      obj(K.po, "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 " + p.ptW + " " + p.ptH + "] /Resources << /XObject << " + p.bands.map(function (b, k) { return "/Im" + k + " " + (K.io + k) + " 0 R"; }).join(" ") + " >> >> /Contents " + K.co + " 0 R >>");
+      obj(K.co, "<< /Length " + cs.length + " >>", enc(cs));
+      p.bands.forEach(function (b, k) { obj(K.io + k, "<< /Type /XObject /Subtype /Image /Width " + b.w + " /Height " + b.h + " /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length " + b.bytes.length + " >>", b.bytes); });
     });
     var xref = len, x = "xref\n0 " + (n + 1) + "\n0000000000 65535 f \n";
     for (var i = 1; i <= n; i++) x += ("000000000" + offs[i]).slice(-10) + " 00000 n \n";
@@ -1969,9 +1986,9 @@
     (function next() {
       if (j >= jobs.length) { cb(buildPdf(pages)); return; }
       var jb = jobs[j++];
-      raster(jb.svg, jb.W, jb.H, 2.5, "image/jpeg", 0.92, function (b, w, h) {
-        if (!b) { cb(null); return; }
-        b.arrayBuffer().then(function (ab) { pages.push({ bytes: new Uint8Array(ab), w: w, h: h, ptW: jb.pt[jb.land ? 0 : 1], ptH: jb.pt[jb.land ? 1 : 0] }); next(); });
+      rasterBands(jb.svg, jb.W, jb.H, 2.5, function (bands) {
+        if (!bands) { cb(null); return; }
+        pages.push({ bands: bands, ptW: jb.pt[jb.land ? 0 : 1], ptH: jb.pt[jb.land ? 1 : 0] }); next();
       });
     })();
   }
@@ -2022,8 +2039,8 @@
     if (f === "dxf") { try { var dx = exportDxf(); download(new Blob([dx.text], { type: "application/dxf" }), fname("dxf")); status(dx.note); } catch (er) { status("Couldn't build the DXF: " + er.message); } return; }
     status("Preparing your export…"); exportSvg(); var miss = mapMissing;
     if (miss) setTimeout(function () { status(miss + " map tile" + (miss > 1 ? "s hadn't" : " hadn't") + " finished loading, so they're blank in this export. Wait a moment and export again."); }, 1500);
-    if (f === "png" || f === "jpeg") raster(exportSvg(), G.W, G.H, 2, "image/" + f, 0.92, function (b) { if (!b) return fail(); status(""); download(b, fname(f === "jpeg" ? "jpg" : "png")); });
-    else exportPdf(f === "pdfall", function (b) { if (!b) return fail(); status(f === "pdfall" ? S.sheets.length + " sheets saved as one PDF, one A4 page each." : ""); download(b, fname("pdf", f === "pdfall")); });
+    if (f === "png" || f === "jpeg") { var sc0 = fitSc(G.W, G.H, 2), dpi = Math.round(sc0 * 4 * 25.4); raster(exportSvg(), G.W, G.H, sc0, "image/" + f, 0.92, function (b) { if (!b) return fail(); status(sc0 < 2 ? "Saved at about " + dpi + " dpi: browsers limit how big an image can be. For full detail on a sheet this size, export PDF or SVG." : ""); download(b, fname(f === "jpeg" ? "jpg" : "png")); }); }
+    else exportPdf(f === "pdfall", function (b) { if (!b) return fail(); status(f === "pdfall" ? S.sheets.length + " sheets saved as one PDF, each page at its sheet's own paper size." : ""); download(b, fname("pdf", f === "pdfall")); });
   }
 
   /* ---------- Map backdrop: OpenStreetMap tiles and EA LiDAR contours ----------
