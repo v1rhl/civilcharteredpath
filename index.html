@@ -897,10 +897,31 @@ nav a[aria-current="page"][aria-expanded="true"] { color: var(--accent-ink); bac
 /* wide screens: the sketch pad fills the window under the site bar and the page itself doesn't scroll;
    the side bar and the area round the sheet scroll on their own if they need to */
 html.sk-lock, html.sk-lock body { overflow: hidden; }
-html.sk-lock .sk-layout { height: calc(100vh - var(--sk-top, 56px) - 20px); }
-html.sk-lock .sk-side { max-height: 100%; }
+html.sk-lock .sk-layout { height: var(--sk-avail, calc(100vh - 220px)); }
+html.sk-lock .sk-side { position: static; max-height: 100%; height: 100%; }
+html.sk-lock #view-sketch .view-head { display: none; } /* the tool links above already show where you are */
+html.sk-lock #view-sketch .view-head { margin-bottom: 6px; padding-bottom: 0; }
+html.sk-lock #view-sketch { padding-top: 8px; gap: 8px; }
+html.sk-lock .sk-side { gap: 6px; padding-bottom: 4px; }
+html.sk-lock .sk-side .sk-tool { padding: 3px 1px; font-size: 0.6rem; gap: 1px; }
+html.sk-lock .sk-side .sk-tool svg { width: 19px; height: 19px; }
+html.sk-lock .sk-side .sk-tools { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+html.sk-lock .sk-side .sk-sec > summary { padding-block: 4px; }
+html.sk-lock .sk-side .sk-style { gap: 6px; }
+.sk-row1 { display: flex; align-items: flex-end; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+.sk-row1 > .sk-tabs { flex: 1 1 auto; min-width: 0; }
+.sk-row1 > .sk-top { padding: 0 0 6px !important; position: static !important; }
+.sk-row1 > .sk-top .sk-btn, .sk-row1 > .sk-top select, .sk-row1 > .sk-top .btn { padding-block: 5px; }
+html.sk-lock #view-sketch .view-head { gap: 0; }
+.sk-hint { margin: 2px 0 0; color: var(--muted, #5a6677); min-height: 1.2em; }
+.sk-main > .sk-props[hidden] { display: none; }
 html.sk-lock .sk-main { height: 100%; overflow-y: auto; scrollbar-width: thin; }
 html.sk-lock .sk-main > .sk-top, html.sk-lock .sk-main > .sk-props { top: 0; }
+.sk-pin { position: absolute; top: 1px; right: 2px; font-size: 0.7rem; line-height: 1; color: var(--muted, #8a94a6); padding: 1px; border-radius: 3px; }
+.sk-pin.on { color: #c08a00; }
+.sk-pin:hover { background: var(--line); }
+.sk-side .sk-tool { position: relative; }
+.sk-side .sk-alltools .sk-tools2 { margin-top: 6px; }
 .sk-app:fullscreen, .sk-app.sk-full { background: var(--paper); padding: 10px 14px; overflow: auto; }
 .sk-app.sk-full { position: fixed; inset: 0; z-index: 1000; }
 .sk-app:fullscreen .sk-side, .sk-app.sk-full .sk-side { top: 8px; max-height: calc(100vh - 20px); }
@@ -2767,8 +2788,8 @@ footer .wrap { font-family: var(--font-body); }
 <script src="js/news-feed.js?v=20261122b"></script>
 <script src="js/news-archive.js?v=20261122b"></script>
 <script src="js/pages.js?v=20261122b"></script>
-<script src="js/tools/sketch-templates.js?v=20261128i"></script>
-<script src="js/tools/sketch.js?v=20261128i"></script>
+<script src="js/tools/sketch-templates.js?v=20261128o"></script>
+<script src="js/tools/sketch.js?v=20261128o"></script>
 <script src="js/tools/hydraulics.js?v=20261127a"></script>
 <script src="js/tools/pipeflow.js?v=20261127a"></script>
 <script src="js/tools/drawing-check.js?v=20261127a"></script>
