@@ -337,7 +337,8 @@
     return { id: t.id, dx: p.x - t.x, dy: p.y - t.y };
   }
   function syncLeaders() { doc().items.forEach(function (it) {
-    if (it.type === "leader") { var a = anchorOf(it); it.ax = r1(a.x); it.ay = r1(a.y); if (it.att && !byId(it.att.id)) it.att = null; }
+    if (it.type === "leader") { var a = anchorOf(it); it.ax = r1(a.x); it.ay = r1(a.y); if (it.att && !byId(it.att.id)) it.att = null;
+      if (it.ba) { if (!byId(it.ba.id)) it.ba = null; else { var qb = attPt(it.ba, it.bx, it.by); it.bx = r1(qb.x); it.by = r1(qb.y); } } } /* an anchored note box follows its feature too */
     if (it.type === "arrow") ["1", "2"].forEach(function (k) { var at = it["a" + k]; if (!at) return; if (!byId(at.id)) { it["a" + k] = null; return; } var q = attPt(at, it["x" + k], it["y" + k]); it["x" + k] = r1(q.x); it["y" + k] = r1(q.y); }); /* anchored arrow ends follow their feature */
   }); }
   /* The item drawn at a sheet point (not the one given), for anchoring an arrow end to it. */
@@ -599,7 +600,7 @@
     if (n.holes) n.holes = n.holes.map(function (h) { return h.map(sh); });
     if (n.seed) n.seed = { x: n.seed.x + dx, y: n.seed.y + dy };
     if ("x1" in n) { n.x1 += dx; n.y1 += dy; n.x2 += dx; n.y2 += dy; }
-    if (n.type === "leader") { n.bx += dx; n.by += dy; if (!n.att) { n.ax += dx; n.ay += dy; } }
+    if (n.type === "leader") { n.bx += dx; n.by += dy; if (!n.att) { n.ax += dx; n.ay += dy; } if (n.ba && byId(n.ba.id)) n.ba = makeAttach(byId(n.ba.id), { x: n.bx, y: n.by }, true); }
     else if ("x" in n) { n.x += dx; n.y += dy; }
     return n;
   }
@@ -839,11 +840,19 @@
   function tbGet(key) { var d = doc(), m = /^r\.(\d+)\.(\w+)$/.exec(key); if (m) return ((d.revs || [])[+m[1]] || {})[m[2]] || ""; if (key === "note") return d.tb.note == null ? (d.dscale ? NOTE_SC : NOTE) : d.tb.note; if (key === "scale") return d.tb.scale == null ? (d.dscale ? nS(d.dscale) + " at " + (d.paper || "A4") : "NTS") : d.tb.scale; return d.tb[key] || ""; }
   function tbSet(key, v) { var d = doc(), m = /^r\.(\d+)\.(\w+)$/.exec(key); if (m) { d.revs = d.revs || []; while (d.revs.length <= +m[1]) d.revs.push({ rev: "", date: "", desc: "", by: "" }); d.revs[+m[1]][m[2]] = v; } else d.tb[key] = v; }
   /* Scale bar: a round length of about 60 to 100 mm on paper, in alternate black and white blocks. */
-  function scaleBar(G, d) { return sbarAt(G.inner.x + 16, G.inner.y + G.inner.h - (d.map ? 34 : 22), d.dscale, 320, " at " + (d.paper || "A4"), true); } /* always on a white box, so it reads over a map */
-  function sbarAt(x0, y0, N, maxW, extra, mask) {
+  function scaleBar(G, d) { return sbarAt(G.inner.x + 16, G.inner.y + G.inner.h - 22, d.dscale, 320, " at " + (d.paper || "A4"), true, credOnBar(d) ? mapAttr(d.map) : ""); } /* always on a white box, so it reads over a map */
+  function mapAttr(m) { return [m.osm !== false ? (m.base === "sat" ? "Imagery © Esri, Maxar, Earthstar Geographics and the GIS User Community" : "Map © OpenStreetMap contributors") : "", m.cont !== false && m.c ? "Contours " + m.c.iv + " m from " + (m.c.src || "EA LiDAR DTM © Environment Agency (OGL)") + ", indicative" : "", m.hsOn && m.hs ? "Hillshade from " + (m.hs.src || "EA LiDAR DTM © Environment Agency (OGL)") : ""].concat(layerAttr(m)).filter(Boolean).join(" · "); }
+  function credOnBar(d) { var m = d.map; return !!(m && m.show !== false && !m.box && d.dscale && d.sbar !== false && mapAttr(m)); }
+  function sbarAt(x0, y0, N, maxW, extra, mask, cred) {
     var mPerU = N / 4000, target = maxW * mPerU, p10 = Math.pow(10, Math.floor(Math.log10(target))), L = [1, 2, 5, 10].map(function (x) { return x * p10; }).filter(function (x) { return x <= target * 1.25; }).pop() || p10;
     var n = /^[15]/.test(String(L / p10)) ? 5 : 4, seg = L / n / mPerU, c = "#15233a", o = '<g class="sk-sbar">';
-    if (mask) o += '<rect x="' + r1(x0 - 10) + '" y="' + r1(y0 - 17) + '" width="' + r1(n * seg + 24 + tw(nS(N) + (extra || ""), 8.5)) + '" height="29" fill="#fff" stroke="' + c + '" stroke-width="0.6"/>';
+    var bw = n * seg + 24 + tw(nS(N) + (extra || ""), 8.5), cl = [], CF = 6.5, LH = 8;
+    if (cred) { /* map credits, small, wrapped to the width of the box, under the bar */
+      var cur = ""; String(cred).split(" · ").forEach(function (part) { part.split(" ").forEach(function (w0, wi) { var t1 = cur ? cur + (wi ? " " : " · ") + w0 : w0; if (cur && tw(t1, CF) > bw - 12) { cl.push(cur); cur = w0; } else cur = t1; }); }); if (cur) cl.push(cur);
+      y0 -= cl.length * LH;
+    }
+    if (mask) o += '<rect x="' + r1(x0 - 10) + '" y="' + r1(y0 - 17) + '" width="' + r1(bw) + '" height="' + (29 + cl.length * LH) + '" fill="#fff" stroke="' + c + '" stroke-width="0.6"/>';
+    cl.forEach(function (l, i0) { o += txt(x0 - 4, y0 + 18 + i0 * LH, l, "#5a6677", CF, "start"); });
     for (var i = 0; i < n; i++) o += '<rect x="' + r1(x0 + i * seg) + '" y="' + y0 + '" width="' + r1(seg) + '" height="6" fill="' + (i % 2 ? "#fff" : c) + '" stroke="' + c + '" stroke-width="0.8"/>';
     var lab = function (v) { return v >= 1000 ? v / 1000 + " km" : v >= 1 ? +v.toFixed(2) + " m" : Math.round(v * 1000) + " mm"; };
     o += txt(x0, y0 - 4, "0", c, 9, "middle") + txt(x0 + n * seg / 2, y0 - 4, lab(L / 2), c, 9, "middle") + txt(x0 + n * seg, y0 - 4, lab(L), c, 9, "middle") + txt(x0 + n * seg + 10, y0 + 6, nS(N) + (extra || ""), "#5a6677", 8.5, "start");
@@ -1467,6 +1476,7 @@
     if (it.type === "slope" || it.type === "north" || it.type === "wl") h += '<label class="sk-check">Size <select id="skp-s">' + [0.5, 0.75, 1, 1.5, 2, 3].map(function (v) { return '<option value="' + v + '"' + ((it.s || 1) === v ? " selected" : "") + ">×" + v + "</option>"; }).join("") + "</select></label>";
     if (it.type === "section" || it.type === "slope") h += '<button type="button" class="sk-btn" data-act="flip">Flip side</button>';
     if (it.type === "leader" || it.type === "arrow") h += '<label class="sk-check">Arrowhead <select id="skp-ah">' + (it.type === "leader" ? [[0, "None"], [-1, "Dot"], [7, "Small"], [11, "Medium"], [16, "Large"]] : [[8, "Small"], [11, "Medium"], [16, "Large"], [22, "Extra large"]]).map(function (x) { var cur = it.ah == null ? (it.type === "leader" ? 11 : 11) : it.ah; return '<option value="' + x[0] + '"' + (cur === x[0] ? " selected" : "") + ">" + x[1] + "</option>"; }).join("") + "</select></label>";
+    if (it.type === "leader") h += '<label class="sk-check" title="Lock the arrow point onto the feature it points at, so it follows when that moves"><input type="checkbox" id="skp-la"' + (it.att ? " checked" : "") + '> Anchor arrow end</label><label class="sk-check" title="Lock the note box to the feature too, so it keeps its place beside it when that moves"><input type="checkbox" id="skp-lb"' + (it.ba ? " checked" : "") + "> Anchor note box</label>";
     if (it.type === "arrow") h += '<label class="sk-check" title="Lock the tail end onto the feature it sits on, so it follows when that moves"><input type="checkbox" id="skp-a1"' + (it.a1 ? " checked" : "") + '> Anchor tail</label><label class="sk-check" title="Lock the arrowhead end onto the feature it points at, so it follows when that moves"><input type="checkbox" id="skp-a2"' + (it.a2 ? " checked" : "") + "> Anchor head</label>";
     if (it.type === "pload" || it.type === "udl" || it.type === "moment" || it.type === "dim") h += '<input type="text" id="skp-label" spellcheck="true" lang="en-GB" value="' + esc(it.label || "") + '" placeholder="' + (it.type === "dim" ? esc(dimAuto(it)) : "Value") + '" aria-label="Label" style="width:9em">';
     if (it.type === "north") h += '<label class="sk-check">Angle <input type="number" id="skp-nrot" min="0" max="360" step="any" style="width:4.5em" value="' + (it.rot || 0) + '">°</label>' + (doc().map ? '<label class="sk-check" title="Turn with the map when it is rotated"><input type="checkbox" id="skp-nfol"' + (it.rotSet ? "" : " checked") + "> Follow the map</label>" : "");
@@ -1542,6 +1552,11 @@
     liveEdit("skp-rh", function (it, el) { var v = parseFloat(el.value); if (!(v > 0)) return; it.y2 = r1(it.y1 + (it.y2 >= it.y1 ? 1 : -1) * fromM(v)); });
     liveEdit("skp-rad", function (it, el) { var v = parseFloat(el.value); if (!(v > 0)) return; var n = norm(it), L = fromM(v); it.x2 = r1(it.x1 + n.dx * L); it.y2 = r1(it.y1 + n.dy * L); });
     liveEdit("skp-ah", function (it, el) { it.ah = +el.value; });
+    [["la", "att", "arrow end", "ax", "ay"], ["lb", "ba", "note box", "bx", "by"]].forEach(function (L) { var cb = $("skp-" + L[0]); if (!cb) return; cb.addEventListener("change", function () {
+      var it = sel && byId(sel.id); if (!it) return; var pt = L[1] === "att" ? anchorOf(it) : { x: it.bx, y: it.by };
+      if (cb.checked) { var tg = L[1] === "att" ? itemAtPt(pt, it.id) : (it.att && byId(it.att.id)) || itemAtPt(pt, it.id), at = makeAttach(tg, pt, L[1] === "ba"); if (!at) { cb.checked = false; status(L[1] === "att" ? "There's nothing under the leader's arrow to anchor to. Drag its point onto a line, shape or symbol first." : "Anchor the arrow end first, or put the box on a feature: the box follows whatever the arrow points at."); return; } begin(); it[L[1]] = at; commit(); status("Leader " + L[2] + " anchored: it follows that feature when you move it."); }
+      else { begin(); it[L[1]] = null; commit(); status("Leader " + L[2] + " no longer anchored."); }
+    }); });
     ["1", "2"].forEach(function (k) { var cb = $("skp-a" + k); if (!cb) return; cb.addEventListener("change", function () {
       var it = sel && byId(sel.id); if (!it) return; var end = k === "1" ? "tail" : "head", pt = { x: it["x" + k], y: it["y" + k] };
       if (cb.checked) { var tg = itemAtPt(pt, it.id), at = makeAttach(tg, pt, true); if (!at) { cb.checked = false; status("There's nothing under the arrow's " + end + " to anchor to. Drag that end onto a line, shape or symbol first."); return; } begin(); it["a" + k] = at; commit(); status("Arrow " + end + " anchored: it follows that feature when you move it."); }
@@ -2221,7 +2236,7 @@
     o += flowStr(m, F);
     if (F.rot) o += "</g>";
     I = I0;
-    var attr = [m.osm !== false ? (m.base === "sat" ? "Imagery © Esri, Maxar, Earthstar Geographics and the GIS User Community" : "Map © OpenStreetMap contributors") : "", m.cont !== false && m.c ? "Contours " + m.c.iv + " m from " + (m.c.src || "EA LiDAR DTM © Environment Agency (OGL)") + ", indicative" : "", m.hsOn && m.hs ? "Hillshade from " + (m.hs.src || "EA LiDAR DTM © Environment Agency (OGL)") : ""].concat(layerAttr(m)).filter(Boolean).join(" · ");
+    var attr = credOnBar(doc()) ? "" : mapAttr(m); /* with a scale bar, the credits sit in its box */
     if (m.box) o += '<rect x="' + r1(I.x) + '" y="' + r1(I.y) + '" width="' + r1(I.w) + '" height="' + r1(I.h) + '" fill="none" stroke="#15233a" stroke-width="1.2"/>';
     if (m.leg) o += legendStr(m, I, forExport);
     if (attr) o += txt(I.x + 6, I.y + I.h - 6, attr, "#5a6677", 8, "start", ' stroke="#fff" stroke-width="3" paint-order="stroke"');
@@ -2294,7 +2309,7 @@
     var x = pos[1] === "l" ? I.x + 10 : I.x + I.w - W - 10, y = pos[0] === "t" ? I.y + 10 : I.y + I.h - H - 22;
     var TB = geo().tb; if (pos === "br" && doc().frame !== false && !TB.off && x + W > TB.x && y + H > TB.y) y = Math.max(I.y + 10, TB.y - H - 10); /* keep clear of the title block */
     var D0 = doc(), G0 = geo(); if (D0.dscale && D0.sbar !== false && pos[0] === "b") { /* and stack above the sheet scale bar, never on it */
-      var sbY = G0.inner.y + G0.inner.h - (D0.map ? 34 : 22) - 16, sbX1 = G0.inner.x + 16 + 500;
+      var sbm = /<rect x="([\d.-]+)" y="([\d.-]+)" width="([\d.-]+)"/.exec(scaleBar(G0, D0)), sbY = sbm ? +sbm[2] : G0.inner.y + G0.inner.h - 40, sbX1 = sbm ? +sbm[1] + +sbm[3] + 8 : G0.inner.x + 516;
       if (x < sbX1 && y + H > sbY) y = Math.max(I.y + 10, sbY - H - 8);
     }
     var o = '<g><rect x="' + r1(x) + '" y="' + r1(y) + '" width="' + r1(W) + '" height="' + r1(H) + '" fill="#fff" fill-opacity="0.94" stroke="#15233a" stroke-width="1"/>' + txt(x + 10, y + 16, "LEGEND", "#15233a", fs + 1, "start", ' font-weight="bold"');
