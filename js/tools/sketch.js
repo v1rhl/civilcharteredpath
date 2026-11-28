@@ -675,7 +675,7 @@
       '<div class="sk-maprow"><span class="sk-lab">From the terrain</span><button type="button" class="sk-btn" id="sk-mapsect" aria-pressed="false" title="Drag a line on the map to draw a ground section from the LiDAR">Draw section</button><button type="button" class="sk-btn" id="sk-mapcatch" aria-pressed="false" title="Click a ditch, stream or low point to outline the land that drains to it">Find catchment</button><button type="button" class="sk-btn" id="sk-mapfall" aria-pressed="false" title="Click on the map to add an arrow showing which way the ground falls there, with its gradient">Fall arrow</button><label class="sk-check"><input type="checkbox" id="sk-mapflow"> Flow lines</label></div>' +
       '<p class="small">Find catchment works like the Catchment runoff tool: it shows the flow lines, then outlines the land draining to the point you click, with the longest flow path and outlet. It uses EA LiDAR, or your file if you loaded one with Load LiDAR file.</p>' +
       '<div class="sk-maprow sk-maplayers"><span class="sk-lab">Layers</span>' + MAPL.map(function (L) { return '<label class="sk-check" title="' + esc(L.src) + '"><input type="checkbox" data-ml="' + L.id + '"> ' + L.name + "</label>"; }).join("") +
-        '<label class="sk-check sk-wide">ArcGIS layer URL <input type="url" id="sk-mlurl" placeholder="https://…/FeatureServer/0"></label><button type="button" class="sk-btn" id="sk-mladd">Add layer</button><button type="button" class="sk-btn" id="sk-mlgj-b">Load GeoJSON</button><input type="file" id="sk-mlgj" accept=".geojson,.json" hidden></div>' +
+        '<label class="sk-check sk-wide">ArcGIS layer URL <input type="url" id="sk-mlurl" placeholder="FeatureServer/0 or Hub dataset link"></label><button type="button" class="sk-btn" id="sk-mladd">Add layer</button><button type="button" class="sk-btn" id="sk-mlgj-b">Load GeoJSON</button><input type="file" id="sk-mlgj" accept=".geojson,.json" hidden></div>' +
       '<div id="sk-mlextra" class="sk-maprow"></div>' +
       '<div class="sk-maprow"><label class="sk-check"><input type="checkbox" id="sk-mapleg"> Legend for the layers</label><label class="sk-check">at <select id="sk-maplegpos"><option value="br">bottom right</option><option value="bl">bottom left</option><option value="tr">top right</option><option value="tl">top left</option></select></label></div>' +
       '<p class="small">Grid north up, centred on the drawing frame (or the map area you draw) at the drawing scale. Map tiles come from OpenStreetMap (or Esri World Imagery for satellite), terrain from the Environment Agency, postcodes from postcodes.io, geology from BGS and designations from Natural England, so the location is sent to them. <strong>EA LiDAR covers England only.</strong> Files you load stay in this browser. Contours, designations and geology are indicative: check them against the source before relying on them. © OpenStreetMap contributors (ODbL). LiDAR © Environment Agency, OGL. Contains Natural England data © Natural England, OGL. Contains British Geological Survey materials © UKRI, OGL. Contains OS data © Crown copyright and database right, OGL.</p>' +
@@ -1663,9 +1663,9 @@
       }
       var lay = m.L[L.id]; if (!lay || !lay.f) return; var oO = cOff(m, lay), P = function (q) { return r1(F.cx + (q[0] + oO[0]) / F.mu) + " " + r1(F.cy - (q[1] + oO[1]) / F.mu); };
       o += '<g fill="' + (L.line ? "none" : L.fill || "#3f6fd1") + '" fill-opacity="' + (L.fo || 0.12) + '" fill-rule="evenodd" stroke="' + (L.stroke || "#3f6fd1") + '" stroke-width="' + (L.line ? 1.6 : 1.1) + '"' + (L.dash ? ' stroke-dasharray="' + L.dash + '"' : "") + ' stroke-linejoin="round">';
-      lay.f.forEach(function (f) { o += '<path d="' + f.r.map(function (rg) { return "M" + rg.map(P).join("L") + (L.line ? "" : "Z"); }).join("") + '"/>'; });
+      lay.f.forEach(function (f) { if (f.p) { var pp = P(f.p).split(" "); o += '<circle cx="' + pp[0] + '" cy="' + pp[1] + '" r="4" fill-opacity="0.85"/>'; return; } o += '<path d="' + f.r.map(function (rg) { return "M" + rg.map(P).join("L") + (L.line ? "" : "Z"); }).join("") + '"/>'; });
       o += "</g>";
-      lay.f.forEach(function (f) { if (f.n && !L.line && f.r[0].length > 3) { var c = f.r[0].reduce(function (a, q) { return [a[0] + q[0] / f.r[0].length, a[1] + q[1] / f.r[0].length]; }, [0, 0]), xy = P(c).split(" "); o += txt(+xy[0], +xy[1], f.n.length > 40 ? f.n.slice(0, 39) + "…" : f.n, L.stroke || "#333", 8.5, "middle", ' stroke="#fff" stroke-width="2.5" paint-order="stroke"'); } });
+      lay.f.forEach(function (f) { if (f.n && !L.line && f.r && f.r[0] && f.r[0].length > 3) { var c = f.r[0].reduce(function (a, q) { return [a[0] + q[0] / f.r[0].length, a[1] + q[1] / f.r[0].length]; }, [0, 0]), xy = P(c).split(" "); o += txt(+xy[0], +xy[1], f.n.length > 40 ? f.n.slice(0, 39) + "…" : f.n, L.stroke || "#333", 8.5, "middle", ' stroke="#fff" stroke-width="2.5" paint-order="stroke"'); } });
     });
     return o;
   }
@@ -1677,7 +1677,10 @@
     fetch(url).then(function (r) { if (!r.ok) throw new Error("the service answered " + r.status); return r.json(); }).then(function (j) {
       if (j.error) throw new Error(j.error.message || "the service refused the request");
       var nameF = null; (j.fields || []).some(function (f) { if (/^(name|.*_name|sssi_name|name1)$/i.test(f.name) && f.type === "esriFieldTypeString") { nameF = f.name; return true; } return false; });
-      var feats = (j.features || []).map(function (f) { var g = f.geometry || {}, rings = g.rings || g.paths || []; return { n: nameF ? f.attributes[nameF] : null, r: rings.map(function (rg) { return rg.map(function (q) { return [Math.round((q[0] - m.e) * 10) / 10, Math.round((q[1] - m.n) * 10) / 10]; }); }) }; }).filter(function (f) { return f.r.length; });
+      if (j.geometryType === "esriGeometryPolyline" && !L.line) L.line = true;
+      var pts = (j.features || []).filter(function (f) { return f.geometry && f.geometry.x != null; }).slice(0, 3000).map(function (f) { return { n: nameF ? f.attributes[nameF] : null, p: [Math.round((f.geometry.x - m.e) * 10) / 10, Math.round((f.geometry.y - m.n) * 10) / 10] }; });
+      var feats = (j.features || []).filter(function (f) { return !(f.geometry && f.geometry.x != null); }).map(function (f) { var g = f.geometry || {}, rings = g.rings || g.paths || []; return { n: nameF ? f.attributes[nameF] : null, r: rings.map(function (rg) { return rg.map(function (q) { return [Math.round((q[0] - m.e) * 10) / 10, Math.round((q[1] - m.n) * 10) / 10]; }); }) }; }).filter(function (f) { return f.r.length; });
+      feats = feats.concat(pts);
       if (!sheet.map) return; sheet.map.L = sheet.map.L || {}; sheet.map.L[L.id] = { f: feats, oe: m.e, on: m.n }; persist(); renderAll();
       mapStatus(feats.length ? feats.length + " " + L.name + " feature" + (feats.length > 1 ? "s" : "") + " in the map area." + (j.exceededTransferLimit ? " There are more than this; zoom in to see them all." : "") : "No " + L.name + " in the map area.");
     }).catch(function (err) { mapStatus("Couldn't fetch " + L.name + ": " + err.message + "."); });
@@ -1892,12 +1895,32 @@
     m.on = m.on || {}; m.on[id] = e.target.checked; persist(); renderAll();
     var L = mapLayers().filter(function (x) { return x.id === id; })[0]; if (e.target.checked && L && L.kind === "fs" && !L.local) fetchLayer(L);
   });
-  $("sk-mladd").addEventListener("click", function () {
-    var u = ($("sk-mlurl").value || "").trim().replace(/\/query.*$/, "").replace(/\/+$/, ""), m = doc().map;
-    if (!m) { mapStatus("Place the map first."); return; }
-    if (!/^https:\/\/[^\s]+\/(FeatureServer|MapServer)\/\d+$/i.test(u)) { mapStatus("Paste an ArcGIS layer address ending in /FeatureServer/0 or /MapServer/0 (with the layer number). Natural England's open data pages give one under \"I want to use this\" > \"View API resources\"."); return; }
-    var L = { id: "x" + Date.now().toString(36), name: u.split("/").slice(-3, -2)[0].replace(/_/g, " "), kind: "fs", url: u, src: u, stroke: "#6a3fa0", fill: "#6a3fa0", fo: 0.1, attr: "Layer: " + u.split("/")[2] };
+  /* Add a layer from an ArcGIS FeatureServer/MapServer address, or from an ArcGIS Hub or ArcGIS Online
+     dataset page: the item's details (title, credits, licence) come from ArcGIS Online's public item API. */
+  var XCOL = ["#6a3fa0", "#c2185b", "#00838f", "#ef6c00", "#5d4037", "#1565c0"];
+  function addArcLayer(u, meta) {
+    var m = doc().map; if (!m) return;
+    var n = (m.extra || []).length, col = XCOL[n % XCOL.length], host = u.split("/")[2];
+    var L = { id: "x" + Date.now().toString(36), name: (meta && meta.title) || u.split("/").slice(-3, -2)[0].replace(/_/g, " "), kind: "fs", url: u, src: (meta && meta.page) || u, stroke: col, fill: col, fo: 0.1, attr: (meta && meta.credit) ? meta.credit : "Layer: " + host };
     m.extra = (m.extra || []).concat([L]); m.on = m.on || {}; m.on[L.id] = true; persist(); renderMapExtra(); fetchLayer(L); $("sk-mlurl").value = "";
+    if (meta && meta.lic) setTimeout(function () { mapStatus("Added " + L.name + (meta.credit ? " (" + meta.credit + ")" : "") + ". Licence: " + meta.lic.slice(0, 260) + (meta.lic.length > 260 ? "…" : /[.!?]$/.test(meta.lic) ? "" : ".") + " Check it allows your use."); }, 1800);
+  }
+  function plain(h) { var dv = document.createElement("div"); dv.innerHTML = String(h || ""); return (dv.textContent || "").replace(/\s+/g, " ").trim(); }
+  $("sk-mladd").addEventListener("click", function () {
+    var raw = ($("sk-mlurl").value || "").trim(), u = raw.replace(/\/query.*$/, "").replace(/[?#].*$/, "").replace(/\/+$/, ""), m = doc().map;
+    if (!m) { mapStatus("Place the map first."); return; }
+    var hub = /(?:datasets|items?|item\.html\?id=|id=)\/?([0-9a-f]{32})(?:_(\d+))?/i.exec(raw);
+    if (/^https:\/\/[^\s]+\/(FeatureServer|MapServer)$/i.test(u)) u += "/0";
+    if (/^https:\/\/[^\s]+\/(FeatureServer|MapServer)\/\d+$/i.test(u)) { addArcLayer(u); return; }
+    if (!hub) { mapStatus("Paste an ArcGIS layer address ending in /FeatureServer/0 or /MapServer/0, or an ArcGIS Hub or ArcGIS Online dataset page address."); return; }
+    mapStatus("Looking up that dataset on ArcGIS Online…");
+    fetch("https://www.arcgis.com/sharing/rest/content/items/" + hub[1] + "?f=json").then(function (r) { return r.json(); }).then(function (it) {
+      if (it.error) throw new Error(it.error.message || "not found or not public");
+      var su = (it.url || "").replace(/[?#].*$/, "").replace(/\/+$/, "");
+      if (!/\/(FeatureServer|MapServer)(\/\d+)?$/i.test(su)) throw new Error("it's a " + (it.type || "item") + ", not a feature layer the sketch pad can draw" + (/csv|shapefile|geojson|file/i.test(it.type || "") ? ". Download it and use Load GeoJSON if it's GeoJSON" : ""));
+      if (!/\/\d+$/.test(su)) su += "/" + (hub[2] || 0);
+      addArcLayer(su, { title: it.title, credit: plain(it.accessInformation).slice(0, 160), lic: plain(it.licenseInfo), page: raw });
+    }).catch(function (er) { mapStatus("Couldn't add that dataset: " + er.message + "."); });
   });
   $("sk-mlgj-b").addEventListener("click", function () { $("sk-mlgj").click(); });
   $("sk-mlgj").addEventListener("change", function () { var f = this.files[0]; this.value = ""; if (f) f.text().then(loadGeoJson).catch(function (er) { mapStatus("Couldn't read that file: " + er.message); }); });
@@ -2353,7 +2376,7 @@
       if (d.map && d.map.show !== false && d.map.cont !== false && d.map.c && d.dscale) {
         var MF = mapFrame(); layers["SK-CONTOURS"] = 1;
         var dO = cOff(d.map, d.map.c); d.map.c.lines.forEach(function (l) { pline(l.p.map(function (q) { return [MF.cx + (q[0] + dO[0]) / MF.mu, MF.cy - (q[1] + dO[1]) / MF.mu]; }), false, "SK-CONTOURS", 34, null, l.z); });
-        if (d.map.on) mapLayers().forEach(function (L) { var lay = d.map.L && d.map.L[L.id]; if (!d.map.on[L.id] || !lay || !lay.f) return; var lo = cOff(d.map, lay), LN = "SK-MAP-" + L.id.toUpperCase(); layers[LN] = 1; lay.f.forEach(function (f) { f.r.forEach(function (rg) { pline(rg.map(function (q) { return [MF.cx + (q[0] + lo[0]) / MF.mu, MF.cy - (q[1] + lo[1]) / MF.mu]; }), !L.line, LN, aci(L.stroke)); }); }); });
+        if (d.map.on) mapLayers().forEach(function (L) { var lay = d.map.L && d.map.L[L.id]; if (!d.map.on[L.id] || !lay || !lay.f) return; var lo = cOff(d.map, lay), LN = "SK-MAP-" + L.id.toUpperCase(); layers[LN] = 1; lay.f.forEach(function (f) { (f.r || (f.p ? [[f.p, [f.p[0] + 0.5, f.p[1]]]] : [])).forEach(function (rg) { pline(rg.map(function (q) { return [MF.cx + (q[0] + lo[0]) / MF.mu, MF.cy - (q[1] + lo[1]) / MF.mu]; }), !L.line, LN, aci(L.stroke)); }); }); });
       }
       walk(frameStr(true), "SK-FRAME"); layers["SK-FRAME"] = 1; if (d.wm) layers["SK-WATERMARK"] = 1;
     } finally { host.remove(); }
