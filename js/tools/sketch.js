@@ -313,22 +313,32 @@
   }
 
   /* Where a leader's arrow points: follows the thing it's attached to. */
-  function anchorOf(it) {
-    var a = it.att, t = a && byId(a.id);
+  function anchorOf(it) { return attPt(it.att, it.ax, it.ay); }
+  function attPt(a, fx, fy) {
+    var t = a && byId(a.id);
     if (t) {
-      if (SEG[t.type]) return { x: t.x1 + (t.x2 - t.x1) * a.t, y: t.y1 + (t.y2 - t.y1) * a.t };
+      if (SEG[t.type]) { if (a.s == null) return { x: t.x1 + (t.x2 - t.x1) * a.t, y: t.y1 + (t.y2 - t.y1) * a.t }; var nq = norm(t); return { x: t.x1 + (nq.dx * a.t + nq.nx * a.s) * nq.L, y: t.y1 + (nq.dy * a.t + nq.ny * a.s) * nq.L }; }
       if (PTS[t.type] && t.pts.length) return { x: t.pts[0][0] + a.dx, y: t.pts[0][1] + a.dy };
       if ("x" in t) return { x: t.x + a.dx, y: t.y + a.dy };
     }
-    return { x: it.ax, y: it.ay };
+    return { x: fx, y: fy };
   }
-  function makeAttach(t, p) {
+  function makeAttach(t, p, exact) {
     if (!t || t.type === "leader") return null;
+    if (exact && SEG[t.type]) { var nE = norm(t); if (nE.L > 0) return { id: t.id, t: ((p.x - t.x1) * nE.dx + (p.y - t.y1) * nE.dy) / nE.L, s: ((p.x - t.x1) * nE.nx + (p.y - t.y1) * nE.ny) / nE.L }; } /* keeps the exact point, moving and scaling with the item */
     if (SEG[t.type]) { var n = norm(t), tt = ((p.x - t.x1) * n.dx + (p.y - t.y1) * n.dy) / n.L; return { id: t.id, t: Math.max(0, Math.min(1, tt)) }; }
     if (PTS[t.type]) return { id: t.id, dx: p.x - t.pts[0][0], dy: p.y - t.pts[0][1] };
     return { id: t.id, dx: p.x - t.x, dy: p.y - t.y };
   }
-  function syncLeaders() { doc().items.forEach(function (it) { if (it.type === "leader") { var a = anchorOf(it); it.ax = r1(a.x); it.ay = r1(a.y); if (it.att && !byId(it.att.id)) it.att = null; } }); }
+  function syncLeaders() { doc().items.forEach(function (it) {
+    if (it.type === "leader") { var a = anchorOf(it); it.ax = r1(a.x); it.ay = r1(a.y); if (it.att && !byId(it.att.id)) it.att = null; }
+    if (it.type === "arrow") ["1", "2"].forEach(function (k) { var at = it["a" + k]; if (!at) return; if (!byId(at.id)) { it["a" + k] = null; return; } var q = attPt(at, it["x" + k], it["y" + k]); it["x" + k] = r1(q.x); it["y" + k] = r1(q.y); }); /* anchored arrow ends follow their feature */
+  }); }
+  /* The item drawn at a sheet point (not the one given), for anchoring an arrow end to it. */
+  function itemAtPt(p, skip) {
+    var m = svg.getScreenCTM(); if (!m) return null;
+    return itemAt({ clientX: m.a * p.x + m.c * p.y + m.e, clientY: m.b * p.x + m.d * p.y + m.f }, skip);
+  }
   function leaderBox(it) {
     var lines = String(it.text || "").split("\n"), sz = it.fs || 14, w = 0;
     lines.forEach(function (l) { w = Math.max(w, tw(l, sz)); });
@@ -636,6 +646,7 @@
       var n = shifted(o, off, off); n.id = map[o.id]; n.lock = false;
       if (n.g) n.g = gmap[n.g];
       if (n.type === "leader" && n.att) { if (map[n.att.id]) n.att.id = map[n.att.id]; else { n.att = null; n.ax = o.ax + off; n.ay = o.ay + off; } }
+      if (n.type === "arrow") ["a1", "a2"].forEach(function (k) { if (n[k]) { if (map[n[k].id]) n[k].id = map[n[k].id]; else n[k] = null; } });
       doc().items.push(n); out.push(n);
     });
     commit(); setTool("select"); setSel(out);
@@ -1378,6 +1389,7 @@
     if (it.type === "slope" || it.type === "north" || it.type === "wl") h += '<label class="sk-check">Size <select id="skp-s">' + [0.5, 0.75, 1, 1.5, 2, 3].map(function (v) { return '<option value="' + v + '"' + ((it.s || 1) === v ? " selected" : "") + ">×" + v + "</option>"; }).join("") + "</select></label>";
     if (it.type === "section" || it.type === "slope") h += '<button type="button" class="sk-btn" data-act="flip">Flip side</button>';
     if (it.type === "leader" || it.type === "arrow") h += '<label class="sk-check">Arrowhead <select id="skp-ah">' + (it.type === "leader" ? [[0, "None"], [-1, "Dot"], [7, "Small"], [11, "Medium"], [16, "Large"]] : [[8, "Small"], [11, "Medium"], [16, "Large"], [22, "Extra large"]]).map(function (x) { var cur = it.ah == null ? (it.type === "leader" ? 11 : 11) : it.ah; return '<option value="' + x[0] + '"' + (cur === x[0] ? " selected" : "") + ">" + x[1] + "</option>"; }).join("") + "</select></label>";
+    if (it.type === "arrow") h += '<label class="sk-check" title="Lock the tail end onto the feature it sits on, so it follows when that moves"><input type="checkbox" id="skp-a1"' + (it.a1 ? " checked" : "") + '> Anchor tail</label><label class="sk-check" title="Lock the arrowhead end onto the feature it points at, so it follows when that moves"><input type="checkbox" id="skp-a2"' + (it.a2 ? " checked" : "") + "> Anchor head</label>";
     if (it.type === "pload" || it.type === "udl" || it.type === "moment" || it.type === "dim") h += '<input type="text" id="skp-label" spellcheck="true" lang="en-GB" value="' + esc(it.label || "") + '" placeholder="' + (it.type === "dim" ? esc(dimAuto(it)) : "Value") + '" aria-label="Label" style="width:9em">';
     if (it.type === "north") h += '<label class="sk-check">Angle <input type="number" id="skp-nrot" min="0" max="360" step="any" style="width:4.5em" value="' + (it.rot || 0) + '">°</label>' + (doc().map ? '<label class="sk-check" title="Turn with the map when it is rotated"><input type="checkbox" id="skp-nfol"' + (it.rotSet ? "" : " checked") + "> Follow the map</label>" : "");
     if (ROT_TYPES[it.type]) h += '<button type="button" class="sk-btn" data-act="rot">Rotate' + (it.type === "north" ? " 45°" : "") + "</button>";
@@ -1452,6 +1464,12 @@
     liveEdit("skp-rh", function (it, el) { var v = parseFloat(el.value); if (!(v > 0)) return; it.y2 = r1(it.y1 + (it.y2 >= it.y1 ? 1 : -1) * fromM(v)); });
     liveEdit("skp-rad", function (it, el) { var v = parseFloat(el.value); if (!(v > 0)) return; var n = norm(it), L = fromM(v); it.x2 = r1(it.x1 + n.dx * L); it.y2 = r1(it.y1 + n.dy * L); });
     liveEdit("skp-ah", function (it, el) { it.ah = +el.value; });
+    ["1", "2"].forEach(function (k) { var cb = $("skp-a" + k); if (!cb) return; cb.addEventListener("change", function () {
+      var it = sel && byId(sel.id); if (!it) return; var end = k === "1" ? "tail" : "head", pt = { x: it["x" + k], y: it["y" + k] };
+      if (cb.checked) { var tg = itemAtPt(pt, it.id), at = makeAttach(tg, pt, true); if (!at) { cb.checked = false; status("There's nothing under the arrow's " + end + " to anchor to. Drag that end onto a line, shape or symbol first."); return; } begin(); it["a" + k] = at; commit(); status("Arrow " + end + " anchored: it follows that feature when you move it."); }
+      else { begin(); it["a" + k] = null; commit(); status("Arrow " + end + " no longer anchored."); }
+    }); });
+
     liveEdit("skp-hsc", function (it, el) { it.ps = +el.value; });
     liveEdit("skp-hbg", function (it, el) { if (el.value) { it.bg = el.value; if (it.bo == null) it.bo = 1; } else { delete it.bg; delete it.bo; } });
     liveEdit("skp-hbo", function (it, el) { it.bo = +el.value; if (!it.bg) it.bg = it.c || "#15233a"; });
@@ -1714,6 +1732,7 @@
         var n = shifted(drag.orig, snapDelta(p.x - drag.start.x), snapDelta(p.y - drag.start.y)); replaceItem(n); renderContent(); return;
       case "h":
         it = clone(drag.orig); var hh = drag.h;
+        if ((hh === "p1" || hh === "p2") && it.type === "arrow" && it["a" + hh[1]]) { var tga = itemAt(e, it.id); it["a" + hh[1]] = tga ? makeAttach(tga, p, true) : null; } /* an anchored end re-anchors where you drop it, or lets go off any feature */
         if (hh === "p1" || hh === "p2") { var q = snapPt(p, { skip: it.id }); var other = hh === "p1" ? { x: it.x2, y: it.y2 } : { x: it.x1, y: it.y1 }; if (e.shiftKey) q = constrain(other, q); it[hh === "p1" ? "x1" : "x2"] = q.x; it[hh === "p1" ? "y1" : "y2"] = q.y; }
         else if (hh === "off") { var nn = norm(it); it.o = r1((p.x - it.x1) * nn.nx + (p.y - it.y1) * nn.ny); }
         else if (hh === "anc") { var tg = itemAt(e, it.id); it.att = makeAttach(tg, p); var ap = tg ? p : snapPt(p); it.ax = r1(ap.x); it.ay = r1(ap.y); if (!tg) it.att = null; }
