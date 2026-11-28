@@ -3149,6 +3149,7 @@
   svg.addEventListener("auxclick", function (e) { if (e.button === 1) e.preventDefault(); });
   svg.addEventListener("dblclick", function (e) { if (e.button === 1) fitView(); });
   document.addEventListener("keyup", function (e) { if (e.key === " " && spaceDown) { spaceDown = false; stage.classList.remove("sk-panning"); } });
+  window.addEventListener("blur", function () { if (spaceDown) { spaceDown = false; stage.classList.remove("sk-panning"); } }); /* space let go in another window: don't leave the grab hand stuck on */
   $("sk-fit").addEventListener("click", fitView);
   document.addEventListener("fullscreenchange", afterFull);
   function toTop() { var top = document.querySelector(".topbar"), th = top ? top.offsetHeight : 0; window.scrollTo(0, Math.max(0, app.getBoundingClientRect().top + window.scrollY - th - 8)); }
