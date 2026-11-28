@@ -921,6 +921,38 @@ html.sk-lock #view-sketch .view-head { gap: 0; }
 .sk-stage.sk-panning #sk-svg, .sk-stage.sk-panning #sk-svg * { cursor: grab !important; }
 .sk-hint { margin: 2px 0 0; color: var(--muted, #5a6677); min-height: 1.2em; }
 .sk-main > .sk-props[hidden] { display: none; }
+.sk-stage { overflow: hidden; }
+html.sk-lock .sk-main > .sk-stage, .sk-app:fullscreen .sk-main > .sk-stage, .sk-app.sk-full .sk-main > .sk-stage { flex: 1 1 0; min-height: 0; }
+html.sk-lock .sk-main > *:not(.sk-stage), .sk-app:fullscreen .sk-main > *:not(.sk-stage), .sk-app.sk-full .sk-main > *:not(.sk-stage) { flex: 0 0 auto; }
+.sk-sec.sk-fly > .sk-sec-body { position: fixed; z-index: 30; display: flex; flex-direction: column; flex-wrap: wrap; align-content: flex-start; gap: 8px 18px; padding: 10px 14px; overflow: auto; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: 0 6px 24px rgba(0,0,0,.18); scrollbar-width: thin; }
+.sk-sec.sk-fly > .sk-sec-body > *, .sk-sec.sk-fly .sk-layers > *, .sk-sec.sk-fly #sk-mappanel > * { width: 290px; max-width: 290px; flex: 0 0 auto; }
+.sk-sec.sk-fly .sk-layers, .sk-sec.sk-fly #sk-mappanel:not([hidden]), .sk-sec.sk-fly .sk-sheetopts { display: contents; }
+.sk-sec.sk-fly .sk-sheetopts > * { width: 290px; max-width: 290px; flex: 0 0 auto; }
+.sk-sec.sk-fly > summary { color: var(--accent, #0b4f6c); }
+.sk-ctx { position: fixed; z-index: 60; min-width: 230px; max-width: 340px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: 0 8px 28px rgba(0,0,0,.22); padding: 6px; display: flex; flex-direction: column; gap: 4px; font-size: 0.82rem; }
+.sk-ctx-h { font: 600 0.72rem var(--font-mono); text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); padding: 2px 4px 4px; border-bottom: 1px solid var(--line); }
+.sk-ctx-row { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; padding: 2px 4px; }
+.sk-ctx-row > span { width: 66px; color: var(--muted); }
+.sk-ctx-row .sk-sw { width: 18px; height: 18px; }
+.sk-ctx-row input[type="color"] { width: 26px; height: 20px; padding: 0; border: 1px solid var(--line); }
+.sk-ctx-row select { padding: 3px 6px; font-size: 0.8rem; }
+.sk-ctx-row .sk-chip.on { outline: 2px solid var(--accent, #0b4f6c); }
+.sk-ctx-acts { display: grid; grid-template-columns: 1fr 1fr; gap: 2px; border-top: 1px solid var(--line); padding-top: 4px; }
+.sk-ctx-act { text-align: left; background: none; border: 0; padding: 5px 8px; border-radius: 4px; cursor: pointer; color: var(--ink); font: inherit; }
+.sk-ctx-act:hover, .sk-ctx-act:focus-visible { background: var(--accent-soft, #e6eff2); }
+.sk-ctx-act.del { color: #b84a32; }
+.sk-dlg { position: fixed; z-index: 70; right: 24px; top: 90px; width: min(520px, calc(100vw - 32px)); max-height: calc(100vh - 120px); overflow: auto; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: 0 10px 36px rgba(0,0,0,.25); padding: 12px 14px; font-size: 0.86rem; }
+.sk-dlg-h { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
+.sk-dlg h4 { margin: 10px 0 4px; font: 600 0.72rem var(--font-mono); text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); }
+.sk-lg-list { display: flex; flex-direction: column; gap: 4px; }
+.sk-lg-row { display: flex; align-items: center; gap: 6px; }
+.sk-lg-row svg { flex: 0 0 auto; background: #fff; border: 1px solid var(--line); border-radius: 3px; }
+.sk-lg-row input[type="text"] { flex: 1 1 auto; min-width: 0; padding: 4px 6px; }
+.sk-lg-row .sk-btn { padding: 3px 8px; }
+.sk-lg-t { flex: 0 1 150px; min-width: 0; color: var(--muted); font-size: 0.78rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sk-lg-foot { display: flex; justify-content: space-between; align-items: center; margin-top: 10px; gap: 8px; }
+.sk-props-none { color: var(--muted, #6b7685); font-size: 0.85rem; }
+.sk-app:fullscreen .sk-main > .sk-top, .sk-app:fullscreen .sk-main > .sk-props, .sk-app.sk-full .sk-main > .sk-top, .sk-app.sk-full .sk-main > .sk-props { position: static; }
 html.sk-lock .sk-main { height: 100%; overflow-y: auto; scrollbar-width: thin; }
 html.sk-lock .sk-main > .sk-top, html.sk-lock .sk-main > .sk-props { top: 0; }
 .sk-pin { position: absolute; top: 1px; right: 2px; font-size: 0.7rem; line-height: 1; color: var(--muted, #8a94a6); padding: 1px; border-radius: 3px; }
@@ -2794,11 +2826,11 @@ footer .wrap { font-family: var(--font-body); }
 <script src="js/news-feed.js?v=20261122b"></script>
 <script src="js/news-archive.js?v=20261122b"></script>
 <script src="js/pages.js?v=20261122b"></script>
-<script src="js/tools/sketch-templates.js?v=20261128p"></script>
-<script src="js/tools/sketch.js?v=20261128p"></script>
+<script src="js/tools/sketch-templates.js?v=20261128s"></script>
+<script src="js/tools/sketch.js?v=20261128s"></script>
+<script src="js/tools/drawing-check.js?v=20261128s"></script>
 <script src="js/tools/hydraulics.js?v=20261127a"></script>
 <script src="js/tools/pipeflow.js?v=20261127a"></script>
-<script src="js/tools/drawing-check.js?v=20261127a"></script>
 <script src="js/tools/catchment.js?v=20261127a"></script>
 <script src="js/tools/manhole.js?v=20261127a"></script>
 <script src="js/tools/export.js?v=20261127a"></script>

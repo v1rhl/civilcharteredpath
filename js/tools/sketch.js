@@ -53,7 +53,7 @@
   var TOOLS = {
     free: [["select", "Select"], ["xform", "Move/resize"], ["pen", "Pen"], ["eraser", "Eraser"], ["hatch", "Hatch"], ["text", "Text"], ["leader", "Leader"], ["dim", "Dimension"]],
     struct: [["select", "Select"], ["xform", "Move/resize"], ["member", "Member"], ["pin", "Pin"], ["roller", "Roller"], ["fixed", "Fixed"], ["pload", "Point load"], ["udl", "UDL"], ["moment", "Moment"], ["dim", "Dimension"], ["hatch", "Hatch"], ["text", "Text"], ["leader", "Leader"], ["eraser", "Eraser"]],
-    shapes: [["line", "Line"], ["arrow", "Arrow"], ["rect", "Rectangle"], ["circle", "Circle"], ["poly", "Polygon"], ["section", "Section"], ["north", "North"], ["brk", "Break line"], ["cloud", "Rev cloud"], ["slope", "Slope"], ["wl", "Water level"], ["image", "Image"], ["inset", "Detail window"], ["window", "Window"]]
+    shapes: [["line", "Line"], ["arrow", "Arrow"], ["rect", "Rectangle"], ["circle", "Circle"], ["poly", "Polygon"], ["section", "Section"], ["north", "North"], ["brk", "Break line"], ["cloud", "Rev cloud"], ["slope", "Slope"], ["wl", "Water level"], ["image", "Image"], ["inset", "Detail window"], ["window", "New viewport"]]
   };
   var HINTS = {
     select: "Click to select, drag a box to select several, Shift or Ctrl click to add or remove. Drag to move, Delete removes, Ctrl+C / Ctrl+V copy and paste, Ctrl+D duplicates, Ctrl+A selects all, Esc clears.",
@@ -81,7 +81,7 @@
     cloud: "Drag a box round the change to draw a revision cloud.",
     slope: "Drag along the top of the slope. The ticks point down the slope; Flip side if they're the wrong way.",
     xform: "Click or box-select items, then drag them to move, or drag a corner handle to resize them all together (Shift to stretch). Works on typical details and groups too.",
-    window: "Drag a box for a separate window on the sheet, such as a cross-section or detail, at its own scale with its own scale bar. Dimensions and areas inside it are measured at that scale.",
+    window: "Drag a box for a new viewport on the sheet, such as a cross-section or detail, at its own scale with its own scale bar. Dimensions and areas inside it are measured at that scale.",
     inset: "Drag a box round the part of the drawing or map to enlarge. A detail window at a larger scale is added: move it with Select, resize it from its square handle, and drag its round handle to change what it shows.",
     image: "Add a picture or screenshot to the drawing. You can also paste a screenshot straight in with Ctrl+V.",
     wl: "Click on the water line to place a water level marker, then type the level below."
@@ -126,15 +126,15 @@
   function newId(p) { var d = doc(); return (p || "i") + (d.seq++); }
 
   /* ---------- Undo ---------- */
-  function snap() { var d = doc(); return JSON.stringify({ items: d.items, under: d.under, tb: d.tb, orient: d.orient }); }
+  function snap() { var d = doc(); return JSON.stringify({ items: d.items, under: d.under, tb: d.tb, orient: d.orient, legItems: d.legItems || [], legpos: d.legpos }); }
   function begin() { if (before === null) before = snap(); }
   function commit() {
-    syncLeaders(); reHatch();
+    syncLeaders(); reHatch(); try { syncSections(); } catch (er) {}
     var now = snap(), h = H();
     if (before !== null && now !== before) { h.u.push(before); if (h.u.length > 60) h.u.shift(); h.r = []; }
     before = null; persist(); renderAll();
   }
-  function restore(str) { var o = JSON.parse(str), d = doc(); d.items = o.items; d.under = o.under; d.tb = o.tb; d.orient = o.orient; }
+  function restore(str) { var o = JSON.parse(str), d = doc(); d.items = o.items; d.under = o.under; d.tb = o.tb; d.orient = o.orient; d.legItems = o.legItems || []; if (o.legpos) d.legpos = o.legpos; }
   function undo() { var h = H(); if (!h.u.length) return; h.r.push(snap()); restore(h.u.pop()); sel = null; pend = null; persist(); renderAll(); renderProps(); }
   function redo() { var h = H(); if (!h.r.length) return; h.u.push(snap()); restore(h.r.pop()); sel = null; persist(); renderAll(); renderProps(); }
 
@@ -440,13 +440,13 @@
   function hit(it) {
     var w = Math.max(16 * k, 10), T = 'stroke="transparent" fill="none" pointer-events="stroke" stroke-linecap="round" stroke-width="';
     switch (it.type) {
-      case "stroke": return '<path d="' + smooth(it.pts) + '" ' + T + Math.max(w, it.w + 8) + '"/>';
+      case "stroke": return '<path d="' + smooth(it.pts) + '" ' + T + Math.max(w, (it.w || 2) + 8) + '"/>';
       case "rect": case "cloud": var rx1 = Math.min(it.x1, it.x2), ry1 = Math.min(it.y1, it.y2); return '<rect x="' + rx1 + '" y="' + ry1 + '" width="' + r1(Math.abs(it.x2 - it.x1)) + '" height="' + r1(Math.abs(it.y2 - it.y1)) + '" ' + T + Math.max(w, (it.w || 2) + 8) + '"/>';
-      case "circle": return '<circle cx="' + it.x1 + '" cy="' + it.y1 + '" r="' + r1(Math.hypot(it.x2 - it.x1, it.y2 - it.y1)) + '" ' + T + Math.max(w, it.w + 8) + '"/>';
-      case "poly": return '<path d="' + (it.open ? opath(it.pts) : poly(it.pts)) + '" ' + T + Math.max(w, it.w + 8) + '"/>';
+      case "circle": return '<circle cx="' + it.x1 + '" cy="' + it.y1 + '" r="' + r1(Math.hypot(it.x2 - it.x1, it.y2 - it.y1)) + '" ' + T + Math.max(w, (it.w || 2) + 8) + '"/>';
+      case "poly": return '<path d="' + (it.open ? opath(it.pts) : poly(it.pts)) + '" ' + T + Math.max(w, (it.w || 2) + 8) + '"/>';
       case "slope": var sn = norm(it), sd = it.side === -1 ? -1 : 1, hl = 36 * (it.s || 1); return '<path d="M' + it.x1 + " " + it.y1 + "L" + it.x2 + " " + it.y2 + "L" + r1(it.x2 + sn.nx * sd * hl) + " " + r1(it.y2 + sn.ny * sd * hl) + "L" + r1(it.x1 + sn.nx * sd * hl) + " " + r1(it.y1 + sn.ny * sd * hl) + 'Z" fill="transparent" pointer-events="all"/>';
       case "arrow": case "section": case "brk":
-      case "line": case "member": return '<line x1="' + it.x1 + '" y1="' + it.y1 + '" x2="' + it.x2 + '" y2="' + it.y2 + '" ' + T + Math.max(w, it.w + 8) + '"/>';
+      case "line": case "member": return '<line x1="' + it.x1 + '" y1="' + it.y1 + '" x2="' + it.x2 + '" y2="' + it.y2 + '" ' + T + Math.max(w, (it.w || 2) + 8) + '"/>';
       case "udl": var n = norm(it), sd = it.side === -1 ? -1 : 1; return '<path d="M' + r1(it.x1 + n.nx * sd * 8) + " " + r1(it.y1 + n.ny * sd * 8) + "L" + r1(it.x2 + n.nx * sd * 8) + " " + r1(it.y2 + n.ny * sd * 8) + "L" + r1(it.x2 + n.nx * sd * 42) + " " + r1(it.y2 + n.ny * sd * 42) + "L" + r1(it.x1 + n.nx * sd * 42) + " " + r1(it.y1 + n.ny * sd * 42) + 'Z" fill="transparent" pointer-events="all"/>';
       case "dim": var dn = norm(it), off = it.o == null ? 30 : it.o; return '<line x1="' + r1(it.x1 + dn.nx * off) + '" y1="' + r1(it.y1 + dn.ny * off) + '" x2="' + r1(it.x2 + dn.nx * off) + '" y2="' + r1(it.y2 + dn.ny * off) + '" ' + T + w + '"/>';
       case "hatch": return '<path d="' + hpath(it) + '" fill-rule="evenodd" fill="transparent" pointer-events="all"/>';
@@ -463,6 +463,13 @@
   function insetScale(it) { var N = insetN(it); return N ? "1:" + N : "×" + (it.k || 2); }
   function insetFrame(it) {
     var c = it.c || "#15233a";
+    if (it.blank) { /* a viewport: title top left and scale bar bottom left, inside the box on a white mask */
+      var tt = String(it.label || "Viewport").toUpperCase() + "  (" + insetScale(it) + ")", tsz = 13, twd = Math.min(it.w - 12, tw(tt, tsz, true) + 14);
+      return '<rect x="' + it.x + '" y="' + it.y + '" width="' + it.w + '" height="' + it.h + '" fill="none" stroke="' + c + '" stroke-width="2"/>' +
+        '<rect x="' + r1(it.x + 4) + '" y="' + r1(it.y + 4) + '" width="' + r1(twd) + '" height="22" fill="#fff" fill-opacity="0.92" stroke="' + c + '" stroke-width="0.6"/>' +
+        txt(it.x + 11, it.y + 20, tt, c, tsz, "start", ' font-weight="bold"') +
+        (it.sbar !== false && it.N ? sbarAt(it.x + 14, it.y + it.h - 14, it.N, Math.min(220, (it.w - 120) * 0.7), "", true) : "");
+    }
     return '<rect x="' + it.x + '" y="' + it.y + '" width="' + it.w + '" height="' + it.h + '" fill="none" stroke="' + c + '" stroke-width="2"/>' +
       txt(it.x, it.y + it.h + 20, (it.blank ? String(it.label || "Window").toUpperCase() : "DETAIL " + (it.label || "1")) + "  (" + insetScale(it) + ")", c, 14, "start", ' font-weight="bold"') +
       (it.sbar !== false && insetN(it) ? sbarAt(it.x + 4, it.y + it.h + 44, insetN(it), Math.min(260, it.w * 0.7)) : "");
@@ -492,9 +499,9 @@
     var d = doc(), x = Math.min(a.x, b.x), y = Math.min(a.y, b.y), w = Math.abs(b.x - a.x), h = Math.abs(b.y - a.y);
     if (w < 40 || h < 40) { status("Drag a box for the window."); return; }
     var N = d.dscale ? SCALES.filter(function (n) { return n <= d.dscale / 2; }).pop() || d.dscale : 20, n = d.items.filter(function (q) { return q.type === "inset" && q.blank; }).length + 1;
-    var it = addItem(base("inset", { blank: true, x: r1(x), y: r1(y), w: r1(w), h: r1(h), N: N, label: "Window " + n, c: "#15233a" }));
+    var it = addItem(base("inset", { blank: true, x: r1(x), y: r1(y), w: r1(w), h: r1(h), N: N, label: "Viewport " + n, c: "#15233a" }));
     selectAfterCreate(it);
-    status("Window added at 1:" + N + ". Draw in it: dimensions and areas inside it are measured at its own scale. Change the scale or title above.");
+    status("Viewport added at 1:" + N + ". Draw in it: dimensions and areas inside it are measured at its own scale. Change the scale or title above.");
   }
   function shifted(o, dx, dy) {
     var n = clone(o);
@@ -591,6 +598,7 @@
       '<label class="sk-check"><input type="checkbox" id="sk-showframe"> Frame</label>' +
       '<label class="sk-check">Title block <select id="sk-tbs"><option value="small">Small</option><option value="medium">Medium</option><option value="large">Large</option><option value="off">Off</option></select></label>' +
       '<label class="sk-check"><input type="checkbox" id="sk-rev"> Revisions</label><button type="button" class="sk-btn" id="sk-addrev">Add revision</button><button type="button" class="sk-btn" id="sk-delrev" title="Remove the last revision row">Remove last</button>' +
+      '<button type="button" class="sk-btn" id="sk-legedit" title="Build a legend from the line types and hatches on the drawing">Legend editor</button>' +
       '<label class="sk-check">Watermark <select id="sk-wm"><option value="">None</option><option>DRAFT</option><option>NOT FOR CONSTRUCTION</option><option>PRELIMINARY</option><option>FOR INFORMATION</option><option value="*">Your own text…</option></select></label><input type="text" id="sk-wmtext" placeholder="Watermark text" hidden style="width:12em">' +
       '<label class="sk-check"><input type="checkbox" id="sk-grid"> Grid</label>' +
       '<label class="sk-check">Scale <select id="sk-dscale"><option value="0">Not to scale</option>' + SCALES.map(function (n) { return '<option value="' + n + '">1:' + n + "</option>"; }).join("") + '</select></label><span class="small" id="sk-gridinfo"></span><label class="sk-check" id="sk-sbar-l"><input type="checkbox" id="sk-sbar"> Scale bar</label>' +
@@ -634,7 +642,7 @@
      properties above it, so the drawing sits at the top of the screen without scrolling. */
   (function () {
     function mk(tag, cls, html) { var e = document.createElement(tag); if (cls) e.className = cls; if (html) e.innerHTML = html; return e; }
-    function sec(name, title, open, nodes) { var dd = mk("details", "sk-sec"); dd.dataset.sec = name; var st = null; try { st = localStorage.getItem("cp-sketch-sec-" + name); } catch (e) {} dd.open = st == null ? open : st === "1"; dd.appendChild(mk("summary", "", title)); nodes.forEach(function (n) { if (n) dd.appendChild(n); }); dd.addEventListener("toggle", function () { if (dd.open && window.innerWidth > 1000) Array.prototype.forEach.call(document.querySelectorAll(".sk-side > details.sk-sec"), function (o) { if (o !== dd && o.open) o.open = false; }); /* one section open at a time, so the side bar fits without scrolling */ try { localStorage.setItem("cp-sketch-sec-" + name, dd.open ? "1" : "0"); } catch (e) {} if (window.innerWidth > 1000) fitSheet(); }); return dd; }
+    function sec(name, title, open, nodes) { var dd = mk("details", "sk-sec"); dd.dataset.sec = name; var st = null; try { st = localStorage.getItem("cp-sketch-sec-" + name); } catch (e) {} dd.open = st == null ? open : st === "1"; dd.appendChild(mk("summary", "", title)); var body = mk("div", "sk-sec-body"); dd.appendChild(body); nodes.forEach(function (n) { if (n) body.appendChild(n); }); dd.addEventListener("toggle", function () { if (dd.open && window.innerWidth > 1000) Array.prototype.forEach.call(document.querySelectorAll(".sk-side > details.sk-sec"), function (o) { if (o !== dd && o.open) o.open = false; }); /* one section open at a time, so the side bar fits without scrolling */ try { localStorage.setItem("cp-sketch-sec-" + name, dd.open ? "1" : "0"); } catch (e) {} if (window.innerWidth > 1000) fitSheet(); }); return dd; }
     var head = $("sk-head"), top = head.querySelector(".sk-top"), modes = top.querySelector(".sk-seg"), toolrow = head.querySelector(".sk-toolrow"), styleEl = head.querySelector(".sk-style:not(.sk-sheetopts)"), sheet = head.querySelector(".sk-sheetopts"), layers = sheet.querySelector(".sk-layers"), mp = $("sk-mappanel");
     var side = mk("aside", "sk-side"); side.id = "sk-side"; side.setAttribute("aria-label", "Tools and options");
     side.appendChild(modes); side.appendChild(toolrow);
@@ -673,9 +681,10 @@
   function tbSet(key, v) { var d = doc(), m = /^r\.(\d+)\.(\w+)$/.exec(key); if (m) { d.revs = d.revs || []; while (d.revs.length <= +m[1]) d.revs.push({ rev: "", date: "", desc: "", by: "" }); d.revs[+m[1]][m[2]] = v; } else d.tb[key] = v; }
   /* Scale bar: a round length of about 60 to 100 mm on paper, in alternate black and white blocks. */
   function scaleBar(G, d) { return sbarAt(G.inner.x + 16, G.inner.y + G.inner.h - (d.map ? 34 : 22), d.dscale, 320, " at " + (d.paper || "A4")); }
-  function sbarAt(x0, y0, N, maxW, extra) {
+  function sbarAt(x0, y0, N, maxW, extra, mask) {
     var mPerU = N / 4000, target = maxW * mPerU, p10 = Math.pow(10, Math.floor(Math.log10(target))), L = [1, 2, 5, 10].map(function (x) { return x * p10; }).filter(function (x) { return x <= target * 1.25; }).pop() || p10;
     var n = /^[15]/.test(String(L / p10)) ? 5 : 4, seg = L / n / mPerU, c = "#15233a", o = '<g class="sk-sbar">';
+    if (mask) o += '<rect x="' + r1(x0 - 10) + '" y="' + r1(y0 - 17) + '" width="' + r1(n * seg + 24 + tw("1:" + N + (extra || ""), 8.5)) + '" height="29" fill="#fff" fill-opacity="0.92" stroke="' + c + '" stroke-width="0.6"/>';
     for (var i = 0; i < n; i++) o += '<rect x="' + r1(x0 + i * seg) + '" y="' + y0 + '" width="' + r1(seg) + '" height="6" fill="' + (i % 2 ? "#fff" : c) + '" stroke="' + c + '" stroke-width="0.8"/>';
     var lab = function (v) { return v >= 1000 ? v / 1000 + " km" : v >= 1 ? +v.toFixed(2) + " m" : Math.round(v * 1000) + " mm"; };
     o += txt(x0, y0 - 4, "0", c, 9, "middle") + txt(x0 + n * seg / 2, y0 - 4, lab(L / 2), c, 9, "middle") + txt(x0 + n * seg, y0 - 4, lab(L), c, 9, "middle") + txt(x0 + n * seg + 10, y0 + 6, "1:" + N + (extra || ""), "#5a6677", 8.5, "start");
@@ -688,6 +697,7 @@
       o += '<g class="sk-wm" opacity="0.13" pointer-events="none" transform="rotate(' + r1(wang) + " " + r1(wcx) + " " + r1(wcy) + ')">' + txt(wcx, wcy + wsz * 0.35, d.wm, "#7a1f1f", r1(wsz), "middle", ' font-weight="bold" letter-spacing="2"') + "</g>";
     }
     if (d.dscale && d.sbar !== false) o += scaleBar(G, d);
+    if (!mapLegOn() && d.legItems && d.legItems.length) o += legendStr(null, G.inner, forExport);
     if (d.frame !== false) o += '<rect x="' + G.inner.x + '" y="' + G.inner.y + '" width="' + G.inner.w + '" height="' + G.inner.h + '" fill="none" stroke="' + c + '" stroke-width="2"/>';
     if (G.tb.off) return o;
     var K = G.k, t = G.tbBlock, rh = G.rh, lw = Math.max(1, 1.6 * K);
@@ -751,20 +761,47 @@
     app.style.setProperty("--sk-top", th + "px");
     var avail = window.innerHeight - th - hh - $("sk-tabs").offsetHeight - (full ? 24 : 36);
     svg.style.maxWidth = Math.max(320, avail * G.W / G.H) + "px";
-    var mn = $("sk-main"); if ((document.documentElement.classList.contains("sk-lock") || full) && mn) { var over = mn.scrollHeight - mn.clientHeight; if (over > 0) svg.style.maxWidth = Math.max(320, (avail - over - 2) * G.W / G.H) + "px"; }
+    if (document.documentElement.classList.contains("sk-lock") || full) { var sh = stage.clientHeight - 22; if (sh > 120) svg.style.maxWidth = Math.max(320, sh * G.W / G.H) + "px"; } /* the stage fills what's left of the column */
+    flyCheck();
   }
-  function measureK() { var w = svg.getBoundingClientRect().width; k = w ? (zv ? zv.w : geo().W) / w : 1; }
-  /* Zoom: the wheel (or a trackpad pinch) zooms about the pointer; drag with the middle button, or hold
-     Space and drag, to pan; double-click the middle button, press 0, or use Fit to see the whole sheet. */
+  /* A side section too long for the side bar opens as a panel beside it, its options flowed into columns,
+     so nothing needs scrolling. Closing the section (click its heading again) puts it back. */
+  function unfly(d) { var b = d.querySelector(".sk-sec-body"); d.classList.remove("sk-fly"); if (b) b.removeAttribute("style"); }
+  function flyCheck() {
+    var side = $("sk-side"); if (!side) return;
+    var secs = side.querySelectorAll(".sk-side > details.sk-sec"), wide = window.innerWidth > 1000, d = null;
+    Array.prototype.forEach.call(secs, function (o) { if (o.open && wide && !d) d = o; else if (o.classList.contains("sk-fly")) unfly(o); });
+    if (!d) return;
+    if (!d.classList.contains("sk-fly")) { if (side.scrollHeight <= side.clientHeight + 1) return; d.classList.add("sk-fly"); }
+    var b = d.querySelector(".sk-sec-body"), r = side.getBoundingClientRect(), left = r.right + 8, top = Math.max(r.top, 4), H = Math.max(240, Math.min(r.bottom, window.innerHeight - 8) - top), avail = Math.max(300, window.innerWidth - left - 16);
+    b.style.left = left + "px"; b.style.top = top + "px"; b.style.height = H + "px"; b.style.width = avail + "px";
+    var mx = left; Array.prototype.forEach.call(b.querySelectorAll("*"), function (c) { var q = c.getBoundingClientRect(); if (q.width && q.right > mx) mx = q.right; });
+    b.style.width = Math.min(avail, mx - left + 16) + "px";
+  }
+  function measureK() { var w = svg.getBoundingClientRect().width; k = w ? geo().W / w : 1; }
+  /* Zoom and pan move the sheet itself about the grey desk, like sliding a sheet of paper: the wheel (or a
+     trackpad pinch) zooms about the pointer; drag with the middle button, or hold Space and drag, to slide it;
+     press 0 or use Fit sheet to put it back. zv is {s, tx, ty}: a scale and a shift in screen pixels. */
   var zv = null, zvSheet = null, spaceDown = false;
-  function vbStr() { var G = geo(); if (zv && (zvSheet !== doc() || zv.w >= G.W - 0.5)) zv = null; return zv ? [zv.x, zv.y, zv.w, zv.h].map(r1).join(" ") : "0 0 " + G.W + " " + G.H; }
-  function clampView(v) { var G = geo(); v.x = Math.min(Math.max(v.x, -v.w * 0.25), G.W - v.w * 0.75); v.y = Math.min(Math.max(v.y, -v.h * 0.25), G.H - v.h * 0.75); return v; }
-  function applyView() { svg.setAttribute("viewBox", vbStr()); measureK(); renderUI(); var fb = $("sk-fit"); if (fb) fb.hidden = !zv; }
-  function zoomAt(p, f) {
-    var G = geo(), v = zv || { x: 0, y: 0, w: G.W, h: G.H }, nw = Math.min(G.W, Math.max(G.W / 50, v.w * f)), s2 = nw / v.w;
-    if (nw >= G.W - 0.5) { zv = null; } else { zv = clampView({ x: p.x - (p.x - v.x) * s2, y: p.y - (p.y - v.y) * s2, w: nw, h: v.h * s2 }); zvSheet = doc(); }
-    applyView(); status(zv ? "Zoom " + Math.round(G.W / zv.w * 100) + "%. Drag with the middle button or hold Space to pan; press 0 to fit the sheet." : "");
+  function vbStr() { var G = geo(); if (zv && zvSheet !== doc()) { zv = null; svg.style.transform = ""; } return "0 0 " + G.W + " " + G.H; }
+  function svgHome() { var r = svg.getBoundingClientRect(), v = zv || { s: 1, tx: 0, ty: 0 }; return { x: r.left - v.tx, y: r.top - v.ty, w: r.width / v.s, h: r.height / v.s }; }
+  function clampView(v) {
+    var o = svgHome(), sr = stage.getBoundingClientRect(), m = 60;
+    v.tx = Math.min(Math.max(v.tx, sr.left + m - o.x - o.w * v.s), sr.right - m - o.x);
+    v.ty = Math.min(Math.max(v.ty, sr.top + m - o.y - o.h * v.s), sr.bottom - m - o.y);
+    return v;
   }
+  function applyView() {
+    if (zv && Math.abs(zv.s - 1) < 0.01 && Math.abs(zv.tx) < 1 && Math.abs(zv.ty) < 1) zv = null;
+    svg.style.transformOrigin = "0 0"; svg.style.transform = zv ? "translate(" + r1(zv.tx) + "px," + r1(zv.ty) + "px) scale(" + zv.s + ")" : "";
+    measureK(); renderUI(); var fb = $("sk-fit"); if (fb) fb.hidden = !zv;
+  }
+  function zoomAt(c, f) {
+    var v = zv || { s: 1, tx: 0, ty: 0 }, o = svgHome(), ns = Math.min(40, Math.max(0.3, v.s / f)), q = ns / v.s;
+    zv = clampView({ s: ns, tx: c.x - o.x - (c.x - o.x - v.tx) * q, ty: c.y - o.y - (c.y - o.y - v.ty) * q }); zvSheet = doc();
+    applyView(); status(zv ? "Zoom " + Math.round(zv.s * 100) + "%. Drag with the middle button, or hold Space and drag, to slide the sheet; press 0 to fit it." : "");
+  }
+  function panBy(dx, dy, v0) { v0 = v0 || zv || { s: 1, tx: 0, ty: 0 }; zv = clampView({ s: v0.s, tx: v0.tx + dx, ty: v0.ty + dy }); zvSheet = doc(); applyView(); }
   function fitView() { zv = null; applyView(); status(""); }
   var underKey = "";
   function renderAll() {
@@ -978,7 +1015,7 @@
 
   /* ---------- Properties bar ---------- */
   var ROT_TYPES = { support: 90, pload: 45, north: 45 };
-  function renderProps() { updateCtx(); renderProps0(); var pe = $("sk-props"); pe.hidden = !pe.innerHTML; var hn = $("sk-hint"); if (hn) hn.textContent = HINTS[tool[mode]] || ""; if (window.innerWidth > 1000) fitSheet(); }
+  function renderProps() { updateCtx(); renderProps0(); var pe = $("sk-props"); if (!pe.innerHTML) pe.innerHTML = '<span class="sk-props-none">Nothing selected. Click an item to change it, or drag a box round several.</span>'; pe.hidden = false; var hn = $("sk-hint"); if (hn) hn.textContent = HINTS[tool[mode]] || ""; if (window.innerWidth > 1000) fitSheet(); }
   function renderProps0() {
     var p = $("sk-props"), it = sel && sel.k === "item" ? byId(sel.id) : null, im = sel && sel.k === "img" ? imgById(sel.id) : null;
     if (im) {
@@ -998,7 +1035,7 @@
     }
     if (!it) { p.innerHTML = ""; return; }
     updateCtx();
-    var NAMES = { inset: "Detail or window", image: "Image", arrow: "Arrow", rect: "Rectangle", circle: "Circle", poly: "Polygon", cloud: "Revision cloud", brk: "Break line", slope: "Slope marker", section: "Section marker", north: "North arrow", wl: "Water level", stroke: "Pen stroke", line: "Line", member: "Member", support: "Support", pload: "Point load", udl: "Distributed load", moment: "Moment", dim: "Dimension", text: "Text", leader: "Leader note", hatch: "Hatched area" };
+    var NAMES = { inset: "Detail or viewport", image: "Image", arrow: "Arrow", rect: "Rectangle", circle: "Circle", poly: "Polygon", cloud: "Revision cloud", brk: "Break line", slope: "Slope marker", section: "Section marker", north: "North arrow", wl: "Water level", stroke: "Pen stroke", line: "Line", member: "Member", support: "Support", pload: "Point load", udl: "Distributed load", moment: "Moment", dim: "Dimension", text: "Text", leader: "Leader note", hatch: "Hatched area" };
     var h = '<span class="sk-lab">' + NAMES[it.type] + "</span>";
     if (locked(it)) {
       h += '<span class="small">' + (doc().lockDraw ? "The drawing is locked. Untick \"Lock drawing\" to change it." : "Locked in place.") + "</span>";
@@ -1175,8 +1212,8 @@
   }
   function selectAfterCreate(it) { sel = { k: "item", id: it.id }; renderContent(); renderProps(); }
 
-  svg.addEventListener("pointerdown", function (e) {
-    if (e.button === 1 || (e.button === 0 && spaceDown)) { e.preventDefault(); if (!zv) return; try { svg.setPointerCapture(e.pointerId); } catch (er) {} drag = { type: "zpan", cx: e.clientX, cy: e.clientY, v: { x: zv.x, y: zv.y, w: zv.w, h: zv.h } }; return; }
+  svg.addEventListener("pointerdown", function (e) { closeFly(); closeCtx(); if (e.button === 2) return;
+    if (e.button === 1 || (e.button === 0 && spaceDown)) { e.preventDefault(); try { svg.setPointerCapture(e.pointerId); } catch (er) {} drag = { type: "zpan", cx: e.clientX, cy: e.clientY, v: zv ? { s: zv.s, tx: zv.tx, ty: zv.ty } : null }; stage.classList.add("sk-panning"); return; }
     if (e.button !== 0) return;
     measureK();
     var p = world(e), d = doc(), t = tool[mode];
@@ -1341,7 +1378,7 @@
         if (!e.shiftKey) { var uf = Math.max(0.05, (fx + fy) / 2); fx = fy = uf; } else { fx = Math.max(0.05, fx); fy = Math.max(0.05, fy); }
         drag.orig.forEach(function (o) { replaceItem(scaleItem(o, drag.ax, drag.ay, fx, fy)); }); renderContent(); status("Scale ×" + (+fx.toFixed(2)) + (fx !== fy ? " by ×" + (+fy.toFixed(2)) : "")); return;
       case "mappan": mapPanning = true; var mf = mapFrame(), mpm = doc().map; mpm.e = Math.round(drag.e0 - (p.x - drag.start.x) * mf.mu); mpm.n = Math.round(drag.n0 + (p.y - drag.start.y) * mf.mu); renderAll(); return;
-      case "zpan": var rw = svg.getBoundingClientRect().width || 1, sc2 = drag.v.w / rw; zv = clampView({ x: drag.v.x - (e.clientX - drag.cx) * sc2, y: drag.v.y - (e.clientY - drag.cy) * sc2, w: drag.v.w, h: drag.v.h }); applyView(); return;
+      case "zpan": panBy(e.clientX - drag.cx, e.clientY - drag.cy, drag.v); return;
       case "inset0": case "mapsect":
         drag.cur = p; gLive.innerHTML = drag.type === "inset0" ? '<rect x="' + r1(Math.min(p.x, drag.start.x)) + '" y="' + r1(Math.min(p.y, drag.start.y)) + '" width="' + r1(Math.abs(p.x - drag.start.x)) + '" height="' + r1(Math.abs(p.y - drag.start.y)) + '" fill="rgba(11,79,108,0.06)" stroke="#0b4f6c" stroke-dasharray="6 4" vector-effect="non-scaling-stroke"/>' : ln(drag.start.x, drag.start.y, p.x, p.y, "#b84a32", 2, "dashed");
         if (drag.type === "mapsect") status("Section " + fmtM(toM(dist(drag.start, p))) + " long. Let go to draw it.");
@@ -1394,7 +1431,7 @@
     if (mod && e.key.toLowerCase() === "y") { e.preventDefault(); redo(); return; }
     if (e.key === " " && !mod) { if (!spaceDown) { spaceDown = true; stage.classList.add("sk-panning"); } e.preventDefault(); return; }
     if (!mod && (e.key === "0" || e.key === "Home")) { e.preventDefault(); fitView(); return; }
-    if (!mod && (e.key === "+" || e.key === "=" || e.key === "-")) { var G0 = geo(), v0 = zv || { x: 0, y: 0, w: G0.W, h: G0.H }; e.preventDefault(); zoomAt({ x: v0.x + v0.w / 2, y: v0.y + v0.h / 2 }, e.key === "-" ? 1.25 : 0.8); return; }
+    if (!mod && (e.key === "+" || e.key === "=" || e.key === "-")) { var sr0 = stage.getBoundingClientRect(); e.preventDefault(); zoomAt({ x: sr0.left + sr0.width / 2, y: sr0.top + sr0.height / 2 }, e.key === "-" ? 1.25 : 0.8); return; }
     if (e.key === "Enter" && pend) { e.preventDefault(); if (pend.poly) finishPoly(); else finishHatch(); return; }
     if ((e.key === "f" || e.key === "F") && !mod && !e.altKey) { e.preventDefault(); setFull(!isFull()); return; }
     if (e.key === "Escape" && app.classList.contains("sk-full") && !pend && !sel) { setFull(false); return; }
@@ -1530,7 +1567,7 @@
   var mapKeyV = "", tileCache = {}, tilePending = {};
   function RO() { return window.Runoff; }
   function mapFrame() { var d = doc(), G = geo(), mu = (d.dscale || 0) / 4000; return { cx: G.inner.x + G.inner.w / 2, cy: G.inner.y + G.inner.h / 2, mu: mu, inner: G.inner }; }
-  function mapKey() { var d = doc(), m = d.map; return m ? [m.e, m.n, d.dscale, d.paper, d.orient, d.tbs, m.show, m.osm, m.base, m.cont, m.op, m.cop, m.grey, m.box, m.c ? m.c.lines.length + ":" + m.c.iv + ":" + m.c.oe : "", JSON.stringify(m.on || {}), Object.keys(m.L || {}).map(function (k2) { return k2 + (m.L[k2].f || []).length; }).join(), m.leg, m.legpos, legVer, m.flow, m.fl ? m.fl.lines.length + ":" + m.fl.oe + ":" + m.fl.on : ""].join("|") : ""; }
+  function mapKey() { var d = doc(), m = d.map; return m ? [m.e, m.n, d.dscale, d.paper, d.orient, d.tbs, m.show, m.osm, m.base, m.cont, m.op, m.cop, m.grey, m.box, m.c ? m.c.lines.length + ":" + m.c.iv + ":" + m.c.oe : "", JSON.stringify(m.on || {}), Object.keys(m.L || {}).map(function (k2) { return k2 + (m.L[k2].f || []).length; }).join(), m.leg, m.legpos, legVer, JSON.stringify(d.legItems || []), m.flow, m.fl ? m.fl.lines.length + ":" + m.fl.oe + ":" + m.fl.on : ""].join("|") : ""; }
   /* contours and vector layers are stored in metres from their own origin, so the map can move under them */
   function cOff(m, c) { return [(c.oe == null ? m.e : c.oe) - m.e, (c.on == null ? m.n : c.on) - m.n]; }
   function mapLayers() { return MAPL.concat(doc().map && doc().map.extra || []); }
@@ -1629,8 +1666,14 @@
      geology the units actually showing are found by matching the colours in the fetched map image to
      the BGS service's own renderer (its published key), and listed by their BGS LEX-RCS codes. */
   var bgsRend = {}, bgsUnits = {}, legVer = 0;
+  function mapLegOn() { var d = doc(), m = d.map; return !!(m && m.show !== false && d.dscale && m.leg && RO()); }
+  function legSwatch(L, x, y, sw, lh) { /* a legend entry's sample, drawn with the item renderer so it matches the drawing */
+    if (L.kind === "hatch") return '<defs>' + patDef(L.pat, L.c, L.ps) + '</defs>' + draw({ type: "hatch", pts: [[x, y + 2], [x + sw, y + 2], [x + sw, y + lh - 3], [x, y + lh - 3]], pat: L.pat, c: L.c, ps: L.ps, outline: true, w: 1, ls: "solid" });
+    return draw({ type: "line", x1: r1(x), y1: r1(y + lh / 2), x2: r1(x + sw), y2: r1(y + lh / 2), c: L.c, w: Math.min(L.w || 2, 8), ls: L.ls || "solid" });
+  }
   function legendStr(m, I, forExport) {
     var rows = [], fs = 10, sw = 22;
+    if (!m) m = { legpos: doc().legpos };
     if (m.cont !== false && m.c && m.c.lines.length) rows.push({ kind: "line", c: "#8a5a2b", w: 1.3, t: "Contour, every " + m.c.iv + " m (m AOD)" });
     if (m.flow !== false && m.fl && m.fl.lines.length) rows.push({ kind: "line", c: "#2f7fd6", w: 1.6, t: "Flow line from LiDAR (drains over " + (m.fl.thr >= 10000 ? (m.fl.thr / 10000).toFixed(1) + " ha" : m.fl.thr + " m²") + ")" });
     mapLayers().forEach(function (L) {
@@ -1648,17 +1691,24 @@
       }
       rows.push(L.line ? { kind: "line", c: L.stroke || "#3f6fd1", w: 1.6, t: L.name } : { kind: "fill", c: L.fill || "#3f6fd1", fo: L.fo || 0.12, st: L.stroke, dash: L.dash, t: L.name });
     });
+    (doc().legItems || []).forEach(function (L) { rows.push({ kind: "item", L: L, t: L.t || "" }); });
     if (!rows.length) return "";
+    if (rows.some(function (r) { return r.kind === "item" && r.L.kind === "hatch"; })) sw = 30;
     var w = 0; rows.forEach(function (r) { w = Math.max(w, tw(r.t, r.kind === "head" ? fs + 0.5 : r.kind === "note" ? fs - 1.5 : fs, r.kind === "head") + (r.kind === "head" || r.kind === "note" ? 0 : sw + 8)); });
     var lh = 15, W = Math.min(I.w - 20, w + 20), H = 26 + rows.length * lh, pos = m.legpos || "br";
     var x = pos[1] === "l" ? I.x + 10 : I.x + I.w - W - 10, y = pos[0] === "t" ? I.y + 10 : I.y + I.h - H - 22;
     var TB = geo().tb; if (pos === "br" && doc().frame !== false && !TB.off && x + W > TB.x && y + H > TB.y) y = Math.max(I.y + 10, TB.y - H - 10); /* keep clear of the title block */
+    var D0 = doc(), G0 = geo(); if (D0.dscale && D0.sbar !== false && pos[0] === "b") { /* and stack above the sheet scale bar, never on it */
+      var sbY = G0.inner.y + G0.inner.h - (D0.map ? 34 : 22) - 16, sbX1 = G0.inner.x + 16 + 500;
+      if (x < sbX1 && y + H > sbY) y = Math.max(I.y + 10, sbY - H - 8);
+    }
     var o = '<g><rect x="' + r1(x) + '" y="' + r1(y) + '" width="' + r1(W) + '" height="' + r1(H) + '" fill="#fff" fill-opacity="0.94" stroke="#15233a" stroke-width="1"/>' + txt(x + 10, y + 16, "LEGEND", "#15233a", fs + 1, "start", ' font-weight="bold"');
     rows.forEach(function (r, i) {
       var yy = y + 24 + i * lh, tx = x + 10;
       if (r.kind === "line") o += '<line x1="' + r1(tx) + '" y1="' + r1(yy + lh / 2) + '" x2="' + r1(tx + sw) + '" y2="' + r1(yy + lh / 2) + '" stroke="' + r.c + '" stroke-width="' + r.w + '"/>';
       if (r.kind === "fill") o += '<rect x="' + r1(tx) + '" y="' + r1(yy + 2) + '" width="' + sw + '" height="' + (lh - 5) + '" fill="' + r.c + '" fill-opacity="' + r.fo + '" stroke="' + (r.st || r.c) + '" stroke-width="' + (r.st ? 1.1 : 0.4) + '"' + (r.dash ? ' stroke-dasharray="' + r.dash + '"' : "") + "/>";
-      if (r.kind === "line" || r.kind === "fill") tx += sw + 8;
+      if (r.kind === "item") o += legSwatch(r.L, tx, yy, sw, lh);
+      if (r.kind === "line" || r.kind === "fill" || r.kind === "item") tx += sw + 8;
       o += txt(tx, yy + lh / 2 + 3.5, r.t, r.kind === "note" ? "#5a6677" : "#15233a", r.kind === "head" ? fs + 0.5 : r.kind === "note" ? fs - 1.5 : fs, "start", r.kind === "head" ? ' font-weight="bold"' : r.kind === "note" ? ' font-style="italic"' : "");
     });
     return o + "</g>";
@@ -1845,7 +1895,8 @@
   }
   /* moving the map and limiting it to an area are done by dragging on the sheet */
   var mapMode = null, mapPanning = false;
-  function setMapMode(mm) { mapMode = mapMode === mm ? null : mm; $("sk-mappan").setAttribute("aria-pressed", mapMode === "pan"); $("sk-mapbox").setAttribute("aria-pressed", mapMode === "box"); $("sk-mapsect").setAttribute("aria-pressed", mapMode === "sect"); $("sk-mapcatch").setAttribute("aria-pressed", mapMode === "catch"); $("sk-mapfall").setAttribute("aria-pressed", mapMode === "fall"); stage.dataset.map = mapMode || ""; if (mapMode === "sect" || mapMode === "catch" || mapMode === "fall") mapStatus(mapMode === "sect" ? "Drag a line across the map where you want the ground section." : mapMode === "fall" ? "Click on the map to add a fall arrow there." : "Finding the flow lines. Then click on one where you want the outlet."); else if (mapMode) mapStatus(mapMode === "pan" ? "Drag on the sheet to move the map. Your drawing stays where it is. Click Move map again to finish." : "Drag a box on the sheet for the map area."); }
+  function closeFly() { Array.prototype.forEach.call(document.querySelectorAll(".sk-sec.sk-fly[open]"), function (d) { d.open = false; }); }
+  function setMapMode(mm) { mapMode = mapMode === mm ? null : mm; if (mapMode) closeFly(); $("sk-mappan").setAttribute("aria-pressed", mapMode === "pan"); $("sk-mapbox").setAttribute("aria-pressed", mapMode === "box"); $("sk-mapsect").setAttribute("aria-pressed", mapMode === "sect"); $("sk-mapcatch").setAttribute("aria-pressed", mapMode === "catch"); $("sk-mapfall").setAttribute("aria-pressed", mapMode === "fall"); stage.dataset.map = mapMode || ""; if (mapMode === "sect" || mapMode === "catch" || mapMode === "fall") mapStatus(mapMode === "sect" ? "Drag a line across the map where you want the ground section." : mapMode === "fall" ? "Click on the map to add a fall arrow there." : "Finding the flow lines. Then click on one where you want the outlet."); else if (mapMode) mapStatus(mapMode === "pan" ? "Drag on the sheet to move the map. Your drawing stays where it is. Click Move map again to finish." : "Drag a box on the sheet for the map area."); }
   $("sk-mappan").addEventListener("click", function () { if (!doc().map) { mapStatus("Place the map first."); return; } setMapMode("pan"); });
   $("sk-mapbox").addEventListener("click", function () { if (!doc().map) { mapStatus("Place the map first."); return; } setMapMode("box"); });
   $("sk-mapall").addEventListener("click", function () { var m = doc().map; if (!m) return; delete m.box; persist(); renderAll(); afterMapMove(); });
@@ -1930,20 +1981,58 @@
 
   /* A ground section along a line drawn on the map: horizontal at the drawing scale (or smaller, to fit),
      vertical exaggerated so the relief reads, with chainage and level rows. */
+  function secKey(m) { return [m.x1, m.y1, m.x2, m.y2, m.label].join(","); }
   function makeSection(A, B, g) {
     var d = doc(); if (!d.map || !g) return;
+    var lab = nextSectionLetter(), gid = "sec" + Date.now().toString(36), r = buildSection(A, B, g, lab, gid);
+    if (!r) { mapStatus("There's no terrain along that line. Fetch EA LiDAR or load a LiDAR file that covers it."); return; }
+    var mk = base("section", { x1: r1(A.x), y1: r1(A.y), x2: r1(B.x), y2: r1(B.y), label: lab, sg: gid });
+    mk.sk = secKey(mk);
+    begin(); d.items.push(mk); r.out.forEach(function (x) { d.items.push(x); }); commit(); persist();
+    setSel(r.out);
+    mapStatus("Section " + lab + "–" + lab + " drawn: " + r.msg + ". It's selected, so drag it where you want it. Move or flip the section marker and the view redraws to match.");
+  }
+  /* Keep each section view tied to its marker: when the marker's line or letter changes, redraw the
+     profile in place (top-left of the old view kept). Runs inside commit, so it's one undo step. */
+  var secWait = false;
+  function syncSections() {
+    var d = doc(); if (!d.map) return;
+    var stale = d.items.filter(function (m) { return m.type === "section" && m.sg && m.sk !== secKey(m); });
+    if (!stale.length) return;
+    if (!(terrain && terrain.sheet === d && terrain.fine)) {
+      if (secWait || d.map.csrc === "file") { if (d.map.csrc === "file") mapStatus("Load your LiDAR file again to update the section view."); return; }
+      secWait = true; getFine(function () { secWait = false; begin(); commit(); }); return;
+    }
+    stale.forEach(function (m) { resection(d, m, terrain.fine); });
+  }
+  function resection(d, m, g) {
+    var old = d.items.filter(function (x) { return x.g === m.sg; });
+    if (!old.length) { delete m.sg; delete m.sk; return; }
+    var r = buildSection({ x: m.x1, y: m.y1 }, { x: m.x2, y: m.y2 }, g, m.label || "A", m.sg);
+    m.sk = secKey(m);
+    if (!r) { mapStatus("There's no terrain along the moved section line, so section " + (m.label || "") + " wasn't redrawn."); return; }
+    var f0 = old.filter(function (x) { return x.type === "rect"; })[0], f1 = r.out[0], dx = f0 ? Math.min(f0.x1, f0.x2) - Math.min(f1.x1, f1.x2) : 0, dy = f0 ? Math.min(f0.y1, f0.y2) - Math.min(f1.y1, f1.y2) : 0;
+    var at = d.items.indexOf(old[0]);
+    d.items = d.items.filter(function (x) { return x.g !== m.sg; });
+    var neu = r.out.map(function (x) { var n = shifted(x, dx, dy); n.id = x.id; return n; });
+    Array.prototype.splice.apply(d.items, [Math.min(at, d.items.length), 0].concat(neu));
+    if (sel && ((sel.k === "item" && !byId(sel.id)) || (sel.k === "multi" && sel.ids.some(function (id) { return !byId(id); })))) sel = null;
+    mapStatus("Section " + m.label + "–" + m.label + " redrawn: " + r.msg + ".");
+  }
+  function buildSection(A, B, g, lab, gid) {
+    var d = doc();
     var a = w2bng(A), b = w2bng(B), Lm = Math.hypot(b.e - a.e, b.n - a.n), nS = Math.max(20, Math.min(400, Math.round(Lm / (g.cell / 2)))), pr = [], i;
     var zf = function (ch) { var t = ch / Lm; return zAt(g, a.e + (b.e - a.e) * t, a.n + (b.n - a.n) * t); };
     for (i = 0; i <= nS; i++) pr.push([Lm * i / nS, zf(Lm * i / nS)]);
     var zs = pr.map(function (q) { return q[1]; }).filter(function (z) { return z === z; });
-    if (zs.length < 2) { mapStatus("There's no terrain along that line. Fetch EA LiDAR or load a LiDAR file that covers it."); return; }
+    if (zs.length < 2) return null;
     var zmn = Math.min.apply(null, zs), zmx = Math.max.apply(null, zs), I = geo().inner, N = d.dscale || 500;
     var Hs = N; if (Lm * 4000 / Hs > I.w * 0.75) Hs = SCALES.filter(function (n) { return Lm * 4000 / n <= I.w * 0.75; })[0] || 10000;
     var R = Math.max(zmx - zmn, 0.5), Vs = SCALES.filter(function (n) { return R * 4000 / n <= 160; })[0] || Hs; if (Vs > Hs) Vs = Hs;
     var hu = 4000 / Hs, vu = 4000 / Vs, ls = niceStep(R, Math.max(2, Math.floor(R * vu / 24))), datum = Math.floor((zmn - ls * 0.5) / ls) * ls, ztop = Math.ceil((zmx + ls * 0.2) / ls) * ls;
     var W = Lm * hu, Hh = (ztop - datum) * vu, x0 = I.x + (I.w - W) / 2 + 50, yb = r1((A.y + B.y) / 2 < I.y + I.h / 2 ? I.y + I.h - 130 : I.y + 50 + Hh); /* on the other half of the sheet from the line */
     var X = function (ch) { return r1(x0 + ch * hu); }, Y = function (z) { return r1(yb - (z - datum) * vu); };
-    var gid = "sec" + Date.now().toString(36), C = "#15233a", G2 = "#8a94a6", out = [], lab = nextSectionLetter();
+    var C = "#15233a", G2 = "#8a94a6", out = [];
     var add = function (type, ex) { ex.g = gid; if (!ex.c) ex.c = C; out.push(base(type, ex)); };
     var addT = function (x, y, t, sz, ex) { ex = ex || {}; ex.x = r1(x); ex.y = r1(y); ex.text = t; ex.size = sz; add("text", ex); };
     add("rect", { x1: r1(X(0) - 150), y1: r1(Y(ztop) - 24), x2: r1(X(Lm) + 24), y2: r1(yb + 90), w: 1, ls: "solid", c: "#c9d1dc", fill: true });
@@ -1963,10 +2052,7 @@
     var ve = Hs / Vs;
     addT(X(0), yb + 50, "SECTION " + lab + "–" + lab, 16, { bold: true });
     addT(X(0), yb + 72, "Ground from " + terrainSrc() + ". Horizontal 1:" + Hs + ", vertical 1:" + Vs + (ve > 1 ? " (×" + (Math.round(ve * 10) / 10) + ")" : "") + ". Datum " + datum.toFixed(2) + " m AOD. Indicative only.", 10);
-    var mk = base("section", { x1: r1(A.x), y1: r1(A.y), x2: r1(B.x), y2: r1(B.y), label: lab });
-    begin(); d.items.push(mk); out.forEach(function (x) { d.items.push(x); }); commit(); persist();
-    setSel(out);
-    mapStatus("Section " + lab + "–" + lab + " drawn: " + Math.round(Lm) + " m long, ground from " + zmn.toFixed(2) + " to " + zmx.toFixed(2) + " m AOD" + (zs.length < pr.length ? ", with gaps where there's no LiDAR" : "") + ". It's selected, so drag it where you want it.");
+    return { out: out, msg: Math.round(Lm) + " m long, ground from " + zmn.toFixed(2) + " to " + zmx.toFixed(2) + " m AOD" + (zs.length < pr.length ? ", with gaps where there's no LiDAR" : "") };
   }
 
   function clipRect(P, x0, y0, x1, y1) { /* Sutherland–Hodgman against an axis-aligned box */
@@ -2408,6 +2494,100 @@
   }
 
   /* For tests and the example sheet */
+  /* Right-click menu: formatting and actions for whatever is under the pointer (or the selection). The
+     controls drive the same side-bar style controls and properties-bar buttons, so they behave alike. */
+  var ctxEl = null;
+  function closeCtx() { if (ctxEl) { ctxEl.remove(); ctxEl = null; } }
+  function ctxMenu(e) {
+    var g = e.target.closest && e.target.closest("[data-id]"), it = g && svg.contains(g) ? byId(g.dataset.id) : null;
+    if (it && selList().indexOf(it) < 0) setSel([it]);
+    var l = selList(); if (!l.length) { closeCtx(); return; }
+    e.preventDefault(); closeCtx(); renderProps();
+    var has = function (re) { return l.some(function (x) { return re.test(x.type); }); };
+    var o = '<div class="sk-ctx-h">' + esc(l.length === 1 ? (NAMES_ALL[l[0].type] || l[0].type) : l.length + " items") + "</div>";
+    o += '<div class="sk-ctx-row"><span>Colour</span>' + COLORS.map(function (c) { return '<button type="button" class="sk-sw" data-cc="' + c[0] + '" style="background:' + c[0] + '" title="' + c[1] + '" aria-label="' + c[1] + '"></button>'; }).join("") + '<input type="color" data-cin value="' + (l[0].c || style.c) + '" aria-label="Any colour"></div>';
+    if (l.some(function (x) { return "w" in x; })) o += '<div class="sk-ctx-row"><span>Weight</span>' + WIDTHS.map(function (w) { return '<button type="button" class="sk-chip' + (l[0].w === w[0] ? " on" : "") + '" data-cw="' + w[0] + '" title="' + w[1] + '" aria-label="' + w[1] + '"><i style="height:' + Math.min(w[0], 10) + 'px"></i></button>'; }).join("") + "</div>";
+    if (has(/^(stroke|line|member|hatch|arrow|rect|circle|poly)$/)) o += '<div class="sk-ctx-row"><span>Line</span><select data-cs="sk-ls">' + LINES.map(function (x) { return '<option value="' + x[0] + '"' + ((l[0].ls || "solid") === x[0] ? " selected" : "") + ">" + x[1] + "</option>"; }).join("") + "</select></div>";
+    if (l.some(function (x) { return x.type === "text" || x.type === "leader" || x.type === "dim" || x.label != null; })) o += '<div class="sk-ctx-row"><span>Text size</span><select data-cs="sk-fs">' + [8, 10, 12, 14, 16, 18, 24, 32].map(function (v) { var cur = l[0].size || l[0].fs || style.fs; return '<option value="' + v + '"' + (cur === v ? " selected" : "") + ">" + v + "</option>"; }).join("") + "</select></div>";
+    if (has(/^hatch$/)) { var h0 = l.filter(function (x) { return x.type === "hatch"; })[0]; o += '<div class="sk-ctx-row"><span>Hatch</span><select data-cs="sk-pat">' + PATS.map(function (x) { return '<option value="' + x[0] + '"' + (h0.pat === x[0] ? " selected" : "") + ">" + x[1] + "</option>"; }).join("") + '</select><select data-cs="sk-hsc" aria-label="Hatch scale">' + [0.1, 0.25, 0.5, 0.75, 1, 1.5, 2, 3, 4].map(function (v) { return '<option value="' + v + '"' + ((h0.ps || 1) === v ? " selected" : "") + ">×" + v + "</option>"; }).join("") + "</select></div>"; }
+    var acts = Array.prototype.map.call(propsEl.querySelectorAll("button[data-act]"), function (b) { return '<button type="button" class="sk-ctx-act' + (b.dataset.act === "del" || b.dataset.act === "gdel" ? " del" : "") + '" data-ca="' + esc(b.dataset.act) + '">' + esc(b.textContent) + "</button>"; });
+    if (acts.length) o += '<div class="sk-ctx-acts">' + acts.join("") + "</div>";
+    ctxEl = document.createElement("div"); ctxEl.className = "sk-ctx"; ctxEl.setAttribute("role", "menu"); ctxEl.innerHTML = o; app.appendChild(ctxEl);
+    var r = ctxEl.getBoundingClientRect(), x = Math.min(e.clientX, window.innerWidth - r.width - 8), y = Math.min(e.clientY, window.innerHeight - r.height - 8);
+    ctxEl.style.left = Math.max(4, x) + "px"; ctxEl.style.top = Math.max(4, y) + "px";
+    ctxEl.addEventListener("click", function (ev) {
+      var b = ev.target.closest("button"); if (!b) return;
+      if (b.dataset.cc) { var sw = $("sk-swatches").querySelector('[data-color="' + b.dataset.cc + '"]'); if (sw) sw.click(); }
+      else if (b.dataset.cw) { var wb = $("sk-widths").querySelector('[data-w="' + b.dataset.cw + '"]'); if (wb) wb.click(); ctxEl.querySelectorAll("[data-cw]").forEach(function (q) { q.classList.toggle("on", q === b); }); return; }
+      else if (b.dataset.ca) { var pb = propsEl.querySelector('button[data-act="' + b.dataset.ca + '"]'); closeCtx(); if (pb) pb.click(); return; }
+    });
+    ctxEl.addEventListener("change", function (ev) {
+      var t = ev.target;
+      if (t.dataset.cs) { var c = $(t.dataset.cs); c.value = t.value; c.dispatchEvent(new Event("change")); }
+      else if (t.hasAttribute("data-cin")) { var ci = $("sk-color"); ci.value = t.value; ci.dispatchEvent(new Event("change")); }
+    });
+  }
+  /* Legend editor: the line types and hatches used on the drawing, to add to the legend with your own words. */
+  function legKey(L) { return L.kind === "hatch" ? ["h", L.pat, L.c, L.ps || 1].join("|") : ["l", L.c, L.w, L.ls || "solid"].join("|"); }
+  function legFound() {
+    var f = {}, out = [];
+    doc().items.forEach(function (it) {
+      var L = it.type === "hatch" ? { kind: "hatch", pat: it.pat, c: it.c, ps: it.ps || 1 } : /^(line|member|stroke|poly|rect|circle|arrow|cloud|brk)$/.test(it.type) ? { kind: "line", c: it.c, w: it.w || 2, ls: it.ls || "solid" } : null;
+      if (!L) return; var k2 = legKey(L);
+      if (!f[k2]) { f[k2] = { L: L, n: 0, types: {} }; out.push(f[k2]); }
+      f[k2].n++; f[k2].types[NAMES_ALL[it.type] || it.type] = 1;
+    });
+    return out;
+  }
+  function legDefault(L) {
+    var cn = (COLORS.filter(function (c) { return c[0] === L.c; })[0] || [0, ""])[1];
+    if (L.kind === "hatch") return (PATS.filter(function (p) { return p[0] === L.pat; })[0] || [0, "Hatch"])[1];
+    var ln = (LINES.filter(function (x) { return x[0] === L.ls; })[0] || [0, "Solid"])[1], wn = (WIDTHS.filter(function (x) { return x[0] === L.w; })[0] || [0, ""])[1];
+    return ((wn ? wn + " " : "") + (ln === "Solid" ? "" : ln.toLowerCase() + " ") + (cn ? cn.toLowerCase() + " " : "") + "line").replace(/^./, function (c) { return c.toUpperCase(); });
+  }
+  function legSvg(L) { return '<svg width="46" height="18" viewBox="-2 -1 34 16" aria-hidden="true">' + legSwatch(L, 0, 0, 30, 15) + "</svg>"; }
+  var legDlg = null;
+  function closeLeg() { if (legDlg) { legDlg.remove(); legDlg = null; } }
+  function openLeg() {
+    closeCtx(); closeFly(); if (!legDlg) { legDlg = document.createElement("div"); legDlg.className = "sk-dlg"; legDlg.setAttribute("role", "dialog"); legDlg.setAttribute("aria-label", "Legend editor"); app.appendChild(legDlg); wireLeg(); }
+    var d = doc(), items = d.legItems || [], have = {}; items.forEach(function (L) { have[legKey(L)] = 1; });
+    var found = legFound(), pos = mapLegOn() ? d.map.legpos || "br" : d.legpos || "br";
+    var o = '<div class="sk-dlg-h"><b>Legend editor</b><button type="button" class="sk-btn" data-lg="close" aria-label="Close">Close</button></div>';
+    o += '<p class="small">Pick line types and hatches from the drawing, then type what each one means.' + (mapLegOn() ? " They're added under the map layers in the map legend." : "") + "</p>";
+    o += '<h4>On the drawing</h4>' + (found.length ? '<div class="sk-lg-list">' + found.map(function (F, i) {
+      var k2 = legKey(F.L); return '<div class="sk-lg-row">' + legSvg(F.L) + '<span class="sk-lg-t">' + esc(Object.keys(F.types).join(", ")) + ' <i>×' + F.n + '</i></span>' + (have[k2] ? '<span class="small">In legend</span>' : '<input type="text" data-lgnew="' + i + '" value="' + esc(legDefault(F.L)) + '" aria-label="Legend label"><button type="button" class="sk-btn" data-lg="add" data-i="' + i + '">Add</button>') + "</div>";
+    }).join("") + "</div>" : '<p class="small">Nothing yet: draw some lines or hatches first.</p>');
+    o += '<h4>In the legend</h4>' + (items.length ? '<div class="sk-lg-list">' + items.map(function (L, i) {
+      return '<div class="sk-lg-row">' + legSvg(L) + '<input type="text" data-lgt="' + i + '" value="' + esc(L.t || "") + '" aria-label="Legend label"><button type="button" class="sk-btn" data-lg="up" data-i="' + i + '"' + (i ? "" : " disabled") + ' aria-label="Move up">↑</button><button type="button" class="sk-btn" data-lg="down" data-i="' + i + '"' + (i < items.length - 1 ? "" : " disabled") + ' aria-label="Move down">↓</button><button type="button" class="sk-btn" data-lg="del" data-i="' + i + '" aria-label="Remove">✕</button></div>';
+    }).join("") + "</div>" : '<p class="small">Empty. Add entries from the list above.</p>');
+    o += '<div class="sk-lg-foot"><label class="sk-check">Position <select data-lgpos><option value="br">bottom right</option><option value="bl">bottom left</option><option value="tr">top right</option><option value="tl">top left</option></select></label>' + (items.length ? '<button type="button" class="sk-btn" data-lg="clear">Remove all</button>' : "") + "</div>";
+    legDlg.innerHTML = o; legDlg.querySelector("[data-lgpos]").value = pos; legDlg._found = found;
+  }
+  function wireLeg() {
+    legDlg.addEventListener("click", function (e) {
+      var b = e.target.closest("[data-lg]"); if (!b) return; var a = b.dataset.lg, i = +b.dataset.i, d = doc();
+      if (a === "close") { closeLeg(); return; }
+      begin(); d.legItems = (d.legItems || []).slice();
+      if (a === "add") { var F = legDlg._found[i], inp = legDlg.querySelector('[data-lgnew="' + i + '"]'), L = clone(F.L); L.t = inp ? inp.value : legDefault(F.L); d.legItems.push(L); }
+      else if (a === "del") d.legItems.splice(i, 1);
+      else if (a === "up" && i > 0) d.legItems.splice(i - 1, 0, d.legItems.splice(i, 1)[0]);
+      else if (a === "down") d.legItems.splice(i + 1, 0, d.legItems.splice(i, 1)[0]);
+      else if (a === "clear") d.legItems = [];
+      commit(); openLeg();
+    });
+    legDlg.addEventListener("change", function (e) {
+      var t = e.target, d = doc();
+      if (t.dataset.lgt != null) { begin(); d.legItems[+t.dataset.lgt].t = t.value; commit(); }
+      else if (t.hasAttribute("data-lgpos")) { begin(); d.legpos = t.value; if (d.map) d.map.legpos = t.value; commit(); syncControls(); }
+    });
+  }
+  $("sk-legedit").addEventListener("click", openLeg);
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape" && legDlg) closeLeg(); });
+  var NAMES_ALL = { line: "Line", member: "Member", stroke: "Pen stroke", text: "Text", dim: "Dimension", leader: "Leader", hatch: "Hatch", udl: "UDL", pload: "Point load", moment: "Moment", support: "Support", inset: "Detail or viewport", image: "Image", arrow: "Arrow", rect: "Rectangle", circle: "Circle", poly: "Polygon", cloud: "Revision cloud", brk: "Break line", slope: "Slope marker", section: "Section marker", north: "North arrow", wl: "Water level" };
+  svg.addEventListener("contextmenu", ctxMenu);
+  document.addEventListener("pointerdown", function (e) { if (ctxEl && !ctxEl.contains(e.target)) closeCtx(); }, true);
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape" && ctxEl) closeCtx(); }, true);
+  window.addEventListener("wheel", function (e) { if (ctxEl && !ctxEl.contains(e.target)) closeCtx(); }, { passive: true });
   window.CPSketch = { importDetail: importDetail, exportSvg: exportSvg, exportDxf: exportDxf, toPng: toPng, exportPdf: exportPdf, insertTemplate: insertTemplate, state: function () { return S; }, setMode: setMode, setTool: setTool, render: function () { underKey = ""; renderAll(); renderProps(); } };
 
   window.addEventListener("resize", function () { if (!view.hidden) { renderAll(); if (tbKey) closeTB(true); } });
@@ -2420,9 +2600,9 @@
   function afterFull() { var f = isFull(); $("sk-full").setAttribute("aria-pressed", f); $("sk-full").textContent = f ? "Exit full screen" : "Full screen"; app.style.setProperty("--sk-top", f ? "0px" : ((document.querySelector(".topbar") || {}).offsetHeight || 0) + "px"); setTimeout(function () { renderAll(); measureK(); renderUI(); }, 60); }
   $("sk-full").addEventListener("click", function () { setFull(!isFull()); });
   svg.addEventListener("wheel", function (e) {
-    if (e.shiftKey && !e.ctrlKey && zv) { e.preventDefault(); var rw = svg.getBoundingClientRect().width || 1; zv = clampView({ x: zv.x + (e.deltaY || e.deltaX) * zv.w / rw, y: zv.y, w: zv.w, h: zv.h }); applyView(); return; } /* Shift+wheel pans sideways */
+    if (e.shiftKey && !e.ctrlKey) { e.preventDefault(); panBy(-(e.deltaY || e.deltaX), 0); return; } /* Shift+wheel pans sideways */
     e.preventDefault();
-    var dy = e.deltaMode === 1 ? e.deltaY * 16 : e.deltaY; zoomAt(world(e), Math.exp(Math.max(-1, Math.min(1, dy * (e.ctrlKey ? 0.01 : 0.0015)))));
+    var dy = e.deltaMode === 1 ? e.deltaY * 16 : e.deltaY; zoomAt({ x: e.clientX, y: e.clientY }, Math.exp(Math.max(-1, Math.min(1, dy * (e.ctrlKey ? 0.01 : 0.0015)))));
   }, { passive: false });
   svg.addEventListener("auxclick", function (e) { if (e.button === 1) e.preventDefault(); });
   svg.addEventListener("dblclick", function (e) { if (e.button === 1) fitView(); });
