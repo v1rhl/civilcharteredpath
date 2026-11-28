@@ -139,7 +139,7 @@
   var tool = { free: "pen", struct: "member" };
   var style = { c: COLORS[0][0], w: 2, ls: "solid", pat: "diag", fs: 14, veg: "tree", op: 1 };
   var sel = null; /* {k:"item"|"img", id} */
-  var drag = null, pend = null, before = null, k = 1;
+  var drag = null, pend = null, before = null, k = 1, legBox = {};
   var hist = {}; function H() { var id = S.cur; return hist[id] || (hist[id] = { u: [], r: [] }); }
 
   function byId(id) { var a = doc().items; for (var i = 0; i < a.length; i++) if (a[i].id === id) return a[i]; return null; }
@@ -319,6 +319,33 @@
   }
   function hpath(it) { return poly(it.pts) + (it.holes || []).map(poly).join(""); }
   function opath(pts) { return "M" + pts.map(function (p) { return p[0] + " " + p[1]; }).join("L"); }
+  /* Total length along a line or polyline, written at its middle on a white mask (curves are measured along the bend) */
+  function pathLen(pts, curve) {
+    if (curve && pts.length > 2) { var tmp = document.createElementNS(NS, "path"); tmp.setAttribute("d", cmr(pts, false)); try { return tmp.getTotalLength(); } catch (e) {} }
+    var L = 0; for (var i = 1; i < pts.length; i++) L += Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]); return L;
+  }
+  function lenLab(pts, c, curve) {
+    if (!measured() || pts.length < 2) return "";
+    var L = pathLen(pts, curve), half = L / 2, acc = 0, i, q = null, ang = 0;
+    for (i = 1; i < pts.length; i++) { var sl = Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]); if (acc + sl >= half || i === pts.length - 1) { var f = sl ? Math.min(1, (half - acc) / sl) : 0; q = [pts[i - 1][0] + (pts[i][0] - pts[i - 1][0]) * f, pts[i - 1][1] + (pts[i][1] - pts[i - 1][1]) * f]; ang = Math.atan2(pts[i][1] - pts[i - 1][1], pts[i][0] - pts[i - 1][0]) * 180 / Math.PI; break; } acc += sl; }
+    if (ang > 90) ang -= 180; if (ang < -90) ang += 180;
+    var t = toM(L).toFixed(2) + " m", w0 = tw(t, 10) + 8;
+    return '<g transform="rotate(' + r1(ang) + " " + r1(q[0]) + " " + r1(q[1]) + ')"><rect x="' + r1(q[0] - w0 / 2) + '" y="' + r1(q[1] - 16) + '" width="' + r1(w0) + '" height="13" fill="#fff"/>' + txt(q[0], q[1] - 6, t, c, 10, "middle") + "</g>";
+  }
+  /* Angle dimension: pts are the vertex and a point on each arm; the arc spans the smaller angle between them */
+  function adimStr(it, c) {
+    var v = it.pts[0], a = it.pts[1], b = it.pts[2], ta = Math.atan2(a[1] - v[1], a[0] - v[0]), tb = Math.atan2(b[1] - v[1], b[0] - v[0]), d = tb - ta;
+    while (d > Math.PI) d -= 2 * Math.PI; while (d <= -Math.PI) d += 2 * Math.PI;
+    var la = Math.hypot(a[0] - v[0], a[1] - v[1]), lb = Math.hypot(b[0] - v[0], b[1] - v[1]), R = it.r || Math.max(18, Math.min(90, Math.min(la, lb) * 0.6));
+    var P = function (t, rr) { return [v[0] + Math.cos(t) * rr, v[1] + Math.sin(t) * rr]; }, p1 = P(ta, R), p2 = P(tb, R), pm = P(ta + d / 2, R + 14);
+    var deg = Math.abs(d) * 180 / Math.PI, t = (Math.round(deg * 10) / 10) + "°", w0 = tw(t, 10) + 8, sw = Math.max(0.8, (it.w || 1.2));
+    var ah = function (pt, tang) { var s0 = 7, l = [pt[0] - Math.cos(tang - 0.35) * s0, pt[1] - Math.sin(tang - 0.35) * s0], r = [pt[0] - Math.cos(tang + 0.35) * s0, pt[1] - Math.sin(tang + 0.35) * s0]; return '<path d="M' + r1(l[0]) + " " + r1(l[1]) + "L" + r1(pt[0]) + " " + r1(pt[1]) + "L" + r1(r[0]) + " " + r1(r[1]) + 'Z" fill="' + c + '"/>'; };
+    var dir = d > 0 ? 1 : -1;
+    return '<path d="' + opath([a, v, b]) + '" fill="none" stroke="' + c + '" stroke-width="' + r1(sw * 0.6) + '" stroke-dasharray="4 3"/>' +
+      '<path d="M' + r1(p1[0]) + " " + r1(p1[1]) + "A" + r1(R) + " " + r1(R) + " 0 0 " + (d > 0 ? 1 : 0) + " " + r1(p2[0]) + " " + r1(p2[1]) + '" fill="none" stroke="' + c + '" stroke-width="' + r1(sw) + '"/>' +
+      ah(p1, ta - dir * Math.PI / 2) + ah(p2, tb + dir * Math.PI / 2) +
+      '<rect x="' + r1(pm[0] - w0 / 2) + '" y="' + r1(pm[1] - 8) + '" width="' + r1(w0) + '" height="14" fill="#fff"/>' + txt(pm[0], pm[1] + 3.5, t, c, 10, "middle");
+  }
   /* a smooth curve through the points (Catmull-Rom as cubic Beziers) */
   function cmr(pts, closed) {
     var n = pts.length; if (n < 3) return opath(pts) + (closed ? "Z" : "");
@@ -390,7 +417,8 @@
     var c = it.c || "#15233a", o = "", i;
     switch (it.type) {
       case "stroke": return '<path d="' + smooth(it.pts) + '" fill="none" stroke="' + c + '" stroke-width="' + it.w + '" stroke-linecap="round" stroke-linejoin="round"' + dash(it.ls, it.w) + "/>";
-      case "line": case "member": return ln(it.x1, it.y1, it.x2, it.y2, c, it.w, it.ls);
+      case "line": case "member": return ln(it.x1, it.y1, it.x2, it.y2, c, it.w, it.ls) + (it.ml ? lenLab([[it.x1, it.y1], [it.x2, it.y2]], c) : "");
+      case "adim": return adimStr(it, c);
       case "hatch":
         return (it.bg ? '<path d="' + hpath(it) + '" fill-rule="evenodd" fill="' + it.bg + '" fill-opacity="' + (it.bo == null ? 1 : it.bo) + '" stroke="none"/>' : "") + '<path d="' + hpath(it) + '" fill-rule="evenodd" fill="' + (it.pat === "none" ? "none" : "url(#" + patId(it.pat, c, it.ps, it.ha) + ")") + '" stroke="' + (it.outline ? it.oc || c : "none") + '" stroke-width="' + (it.w || 2) + '" stroke-linejoin="round"' + (it.outline ? dash(it.ls, it.w || 2) : "") + "/>";
       case "support":
@@ -437,7 +465,7 @@
       case "rect": return '<rect x="' + Math.min(it.x1, it.x2) + '" y="' + Math.min(it.y1, it.y2) + '" width="' + r1(Math.abs(it.x2 - it.x1)) + '" height="' + r1(Math.abs(it.y2 - it.y1)) + '" fill="' + (it.fill ? "#fff" : "none") + '" stroke="' + c + '" stroke-width="' + it.w + '" stroke-linejoin="round"' + dash(it.ls, it.w) + "/>";
       case "circle": return '<circle cx="' + it.x1 + '" cy="' + it.y1 + '" r="' + r1(Math.hypot(it.x2 - it.x1, it.y2 - it.y1)) + '" fill="' + (it.fill || "none") + '" stroke="' + c + '" stroke-width="' + it.w + '"' + dash(it.ls, it.w) + "/>";
       case "fig": return figStr(it, c);
-      case "poly": return '<path d="' + ppath(it) + '" fill="none" stroke="' + c + '" stroke-width="' + it.w + '" stroke-linejoin="round"' + dash(it.ls, it.w) + "/>";
+      case "poly": return '<path d="' + ppath(it) + '" fill="none" stroke="' + c + '" stroke-width="' + it.w + '" stroke-linejoin="round"' + dash(it.ls, it.w) + "/>" + (it.ml ? lenLab(it.open ? it.pts : it.pts.concat([it.pts[0]]), c, it.curve) : "");
       case "cloud": return '<path d="' + cloudPath(it) + '" fill="none" stroke="' + c + '" stroke-width="' + (it.w || 2) + '" stroke-linejoin="round"/>';
       case "brk":
         var bn = norm(it), mx2 = (it.x1 + it.x2) / 2, my2 = (it.y1 + it.y2) / 2, zz = [[it.x1 - bn.dx * 8, it.y1 - bn.dy * 8], [mx2 - bn.dx * 9, my2 - bn.dy * 9], [mx2 - bn.dx * 4 + bn.nx * 16, my2 - bn.dy * 4 + bn.ny * 16], [mx2 + bn.dx * 4 - bn.nx * 16, my2 + bn.dy * 4 - bn.ny * 16], [mx2 + bn.dx * 9, my2 + bn.dy * 9], [it.x2 + bn.dx * 8, it.y2 + bn.dy * 8]];
@@ -605,6 +633,7 @@
       case "slope": var sn = norm(it), sd = it.side === -1 ? -1 : 1, hl = 36 * (it.s || 1); return '<path d="M' + it.x1 + " " + it.y1 + "L" + it.x2 + " " + it.y2 + "L" + r1(it.x2 + sn.nx * sd * hl) + " " + r1(it.y2 + sn.ny * sd * hl) + "L" + r1(it.x1 + sn.nx * sd * hl) + " " + r1(it.y1 + sn.ny * sd * hl) + 'Z" fill="transparent" pointer-events="all"/>';
       case "arrow": case "section": case "brk":
       case "line": case "member": return '<line x1="' + it.x1 + '" y1="' + it.y1 + '" x2="' + it.x2 + '" y2="' + it.y2 + '" ' + T + Math.max(w, (it.w || 2) + 8) + '"/>';
+      case "adim": return '<path d="' + opath([it.pts[1], it.pts[0], it.pts[2]]) + '" ' + T + w + '"/>';
       case "udl": var n = norm(it), sd = it.side === -1 ? -1 : 1; return '<path d="M' + r1(it.x1 + n.nx * sd * 8) + " " + r1(it.y1 + n.ny * sd * 8) + "L" + r1(it.x2 + n.nx * sd * 8) + " " + r1(it.y2 + n.ny * sd * 8) + "L" + r1(it.x2 + n.nx * sd * 42) + " " + r1(it.y2 + n.ny * sd * 42) + "L" + r1(it.x1 + n.nx * sd * 42) + " " + r1(it.y1 + n.ny * sd * 42) + 'Z" fill="transparent" pointer-events="all"/>';
       case "dim": var dn = norm(it), off = it.o == null ? 30 : it.o; return '<line x1="' + r1(it.x1 + dn.nx * off) + '" y1="' + r1(it.y1 + dn.ny * off) + '" x2="' + r1(it.x2 + dn.nx * off) + '" y2="' + r1(it.y2 + dn.ny * off) + '" ' + T + w + '"/>';
       case "hatch": return '<path d="' + hpath(it) + '" fill-rule="evenodd" fill="transparent" pointer-events="all"/>';
@@ -1065,6 +1094,11 @@
       var t = btn.dataset.tool; if (t !== tool[mode]) { setTool(t); btn = $("sk-tbar").querySelector('.sk-tool[data-tool="' + t + '"]') || btn; } updateCtx(); /* the toolbar redraws when the tool changes */
       if (stEl.parentNode !== pop) { home = stEl.parentNode; pop.appendChild(stEl); }
       $("sk-toolpop-t").textContent = (btn.textContent || "").trim() + (t === "select" || t === "xform" ? ": selected items" : ""); pop.hidden = false; at = btn;
+      var md = $("sk-tpmode"); if (!md) { md = document.createElement("div"); md.className = "sk-tpmode"; md.id = "sk-tpmode"; pop.insertBefore(md, pop.children[1] || null); }
+      md.innerHTML = t === "line" ? '<div class="sk-seg sk-seg-sm" role="group" aria-label="Line type"><button type="button" data-lm="single" aria-pressed="' + (style.lmode !== "poly") + '">Single line</button><button type="button" data-lm="poly" aria-pressed="' + (style.lmode === "poly") + '">Polyline</button></div><label class="sk-check"><input type="checkbox" data-ml' + (style.ml ? " checked" : "") + "> Show length</label>"
+        : t === "curve" ? '<label class="sk-check"><input type="checkbox" data-ml' + (style.ml ? " checked" : "") + "> Show length</label>"
+        : t === "dim" ? '<div class="sk-seg sk-seg-sm" role="group" aria-label="Dimension type"><button type="button" data-dm="len" aria-pressed="' + (style.dmode !== "ang") + '">Length</button><button type="button" data-dm="ang" aria-pressed="' + (style.dmode === "ang") + '">Angle</button></div>' : "";
+      md.hidden = !md.innerHTML;
       var r = btn.getBoundingClientRect(), bar = $("sk-tbar"), pw = pop.offsetWidth, ph = pop.offsetHeight, VW = window.innerWidth, VH = window.innerHeight, x, y;
       if (bar.classList.contains("sk-tbar-left") || bar.classList.contains("sk-tbar-vert")) { x = r.right + 6; y = r.top; }
       else if (bar.classList.contains("sk-tbar-bottom")) { x = r.left; y = r.top - ph - 6; }
@@ -1072,7 +1106,13 @@
       pop.style.left = Math.max(8, Math.min(x, VW - pw - 8)) + "px"; pop.style.top = Math.max(8, Math.min(y, VH - ph - 8)) + "px";
     };
     $("sk-tbar").addEventListener("contextmenu", function (e) { var b = e.target.closest(".sk-tool[data-tool]"); if (!b || isMob()) return; e.preventDefault(); open(b); });
-    pop.addEventListener("click", function (e) { if (e.target.closest('[data-tp="x"]')) close(); });
+    pop.addEventListener("click", function (e) {
+      if (e.target.closest('[data-tp="x"]')) return close();
+      var lm = e.target.closest("[data-lm]"), dm = e.target.closest("[data-dm]");
+      if (lm) { style.lmode = lm.dataset.lm; pop.querySelectorAll("[data-lm]").forEach(function (b) { b.setAttribute("aria-pressed", b === lm); }); status(style.lmode === "poly" ? "Polyline: click each point, then press Enter or double-click to finish." : HINTS.line); }
+      if (dm) { style.dmode = dm.dataset.dm; pop.querySelectorAll("[data-dm]").forEach(function (b) { b.setAttribute("aria-pressed", b === dm); }); status(style.dmode === "ang" ? "Angle: click the corner, then a point on each of the two lines." : HINTS.dim); }
+    });
+    pop.addEventListener("change", function (e) { if (e.target.matches("[data-ml]")) style.ml = e.target.checked; });
     document.addEventListener("pointerdown", function (e) { if (!pop.hidden && !pop.contains(e.target) && !(at && at.contains(e.target))) close(); }, true);
     document.addEventListener("keydown", function (e) { if (e.key === "Escape") close(); });
     window.addEventListener("resize", close);
@@ -1190,7 +1230,7 @@
   function panBy(dx, dy, v0) { v0 = v0 || zv || { s: 1, tx: 0, ty: 0 }; zv = clampView({ s: v0.s, tx: v0.tx + dx, ty: v0.ty + dy }); zvSheet = doc(); applyView(); }
   function fitView() { zv = null; applyView(); status(""); }
   var underKey = "";
-  function renderAll() {
+  function renderAll() { legBox.frame = null;
     var d = doc(), G = geo();
     svg.setAttribute("viewBox", vbStr()); fitSheet(); var fb0 = $("sk-fit"); if (fb0) fb0.disabled = !zv;
     stage.classList.toggle("port", d.orient === "port");
@@ -1199,7 +1239,7 @@
     var uk = d.under.map(function (im) { return im.id + im.src.length; }).join() + d.showUnder;
     if (uk !== underKey) { gUnder.innerHTML = d.showUnder ? underStr() : ""; underKey = uk; } else d.under.forEach(updImg);
     gUnder.style.pointerEvents = d.lockUnder ? "none" : "";
-    var mk = mapKey(); if (mk !== mapKeyV) { $("sk-mapg").innerHTML = mapStr(false); mapKeyV = mk; if (d.map && d.map.leg && !mapPanning) updateBgsLegend(); }
+    var mk = mapKey(); if (mk !== mapKeyV) { legBox.map = null; $("sk-mapg").innerHTML = mapStr(false); mapKeyV = mk; if (d.map && d.map.leg && !mapPanning) updateBgsLegend(); }
     gGrid.innerHTML = d.grid ? gridStr() : "";
     renderContent();
     gFrame.innerHTML = frameStr(false);
@@ -1417,7 +1457,7 @@
     $("sk-undo").disabled = !H().u.length; $("sk-redo").disabled = !H().r.length;
   }
   function setMode(m) { mode = m; S.mode = m; pend = null; sel = null; persist(); renderTools(); renderAll(); renderLive(); renderProps(); }
-  function setTool(t) { if (mapMode) setMapMode(mapMode); if (pend && pend.poly && t !== "poly" && t !== "curve") finishPoly(); else if (pend && !pend.poly && t !== "hatch") finishHatch(); tool[mode] = t; snapHit = null; showSnap(); renderTools(); if (t !== "select" && t !== "xform") sel = null; renderUI(); renderProps(); }
+  function setTool(t) { if (mapMode) setMapMode(mapMode); if (pend && pend.adim) { pend = null; renderLive(); } else if (pend && pend.poly && t !== "poly" && t !== "curve" && t !== "line") finishPoly(); else if (pend && !pend.poly && !pend.adim && t !== "hatch") finishHatch(); tool[mode] = t; snapHit = null; showSnap(); renderTools(); if (t !== "select" && t !== "xform") sel = null; renderUI(); renderProps(); }
 
   /* Turning the sheet keeps everything on it, shifted so it stays centred on the new sheet. */
   function setOrient(o, paper) {
@@ -1537,7 +1577,7 @@
     }
     if (!it) { p.innerHTML = ""; return; }
     updateCtx();
-    var NAMES = { inset: "Detail or viewport", image: "Image", arrow: "Arrow", rect: "Rectangle", circle: "Circle", poly: "Polygon", curve: "Curve", fig: "Scale figure", cloud: "Revision cloud", brk: "Break line", slope: "Slope marker", section: "Section marker", veg: "Vegetation", north: "North arrow", wl: "Water level", stroke: "Pen stroke", line: "Line", member: "Member", support: "Support", pload: "Point load", udl: "Distributed load", moment: "Moment", dim: "Dimension", text: "Text", leader: "Leader note", hatch: "Hatched area" };
+    var NAMES = { inset: "Detail or viewport", image: "Image", arrow: "Arrow", rect: "Rectangle", circle: "Circle", poly: "Polygon", curve: "Curve", fig: "Scale figure", adim: "Angle dimension", cloud: "Revision cloud", brk: "Break line", slope: "Slope marker", section: "Section marker", veg: "Vegetation", north: "North arrow", wl: "Water level", stroke: "Pen stroke", line: "Line", member: "Member", support: "Support", pload: "Point load", udl: "Distributed load", moment: "Moment", dim: "Dimension", text: "Text", leader: "Leader note", hatch: "Hatched area" };
     var h = '<span class="sk-lab">' + NAMES[it.type] + "</span>";
     if (locked(it)) {
       h += '<span class="small">' + (doc().lockDraw ? "The drawing is locked. Untick \"Lock drawing\" to change it." : "Locked in place.") + "</span>";
@@ -1556,6 +1596,7 @@
     if (it.type === "slope" || it.type === "north" || it.type === "wl") h += '<label class="sk-check">Size <select id="skp-s">' + [0.5, 0.75, 1, 1.5, 2, 3].map(function (v) { return '<option value="' + v + '"' + ((it.s || 1) === v ? " selected" : "") + ">×" + v + "</option>"; }).join("") + "</select></label>";
     if (it.type === "section" || it.type === "slope") h += '<button type="button" class="sk-btn" data-act="flip">Flip side</button>';
     if (it.type === "leader" || it.type === "arrow") h += '<label class="sk-check">Arrowhead <select id="skp-ah">' + (it.type === "leader" ? [[0, "None"], [-1, "Dot"], [7, "Small"], [11, "Medium"], [16, "Large"]] : [[8, "Small"], [11, "Medium"], [16, "Large"], [22, "Extra large"]]).map(function (x) { var cur = it.ah == null ? (it.type === "leader" ? 11 : 11) : it.ah; return '<option value="' + x[0] + '"' + (cur === x[0] ? " selected" : "") + ">" + x[1] + "</option>"; }).join("") + "</select></label>";
+    if (it.type === "line" || (it.type === "poly" && it.open)) h += '<label class="sk-check"><input type="checkbox" id="skp-ml"' + (it.ml ? " checked" : "") + "> Show length</label>";
     if (it.type === "leader") h += '<label class="sk-check" title="Lock the arrow point onto the feature it points at, so it follows when that moves"><input type="checkbox" id="skp-la"' + (it.att ? " checked" : "") + '> Anchor arrow end</label><label class="sk-check" title="Lock the note box to the feature too, so it keeps its place beside it when that moves"><input type="checkbox" id="skp-lb"' + (it.ba ? " checked" : "") + "> Anchor note box</label>";
     if (it.type === "arrow") h += '<label class="sk-check" title="Lock the tail end onto the feature it sits on, so it follows when that moves"><input type="checkbox" id="skp-a1"' + (it.a1 ? " checked" : "") + '> Anchor tail</label><label class="sk-check" title="Lock the arrowhead end onto the feature it points at, so it follows when that moves"><input type="checkbox" id="skp-a2"' + (it.a2 ? " checked" : "") + "> Anchor head</label>";
     if (it.type === "pload" || it.type === "udl" || it.type === "moment" || it.type === "dim") h += '<input type="text" id="skp-label" spellcheck="true" lang="en-GB" value="' + esc(it.label || "") + '" placeholder="' + (it.type === "dim" ? esc(dimAuto(it)) : "Value") + '" aria-label="Label" style="width:9em">';
@@ -1613,6 +1654,7 @@
     liveEdit("skp-label", function (it, el) { it.label = el.value; });
     liveEdit("skp-size", function (it, el) { it.size = +el.value; });
     liveEdit("skp-s", function (it, el) { it.s = +el.value; });
+    liveEdit("skp-ml", function (it, el) { if (el.checked) it.ml = true; else delete it.ml; if (el.checked && !measured()) status("Set a drawing scale in Page settings to show lengths."); });
     liveEdit("skp-vt", function (it, el) { var v = parseFloat(el.value); if (!(v > 0)) { delete it.tr; return; } it.tr = r1(measured() ? fromM(v) / 2 : v * 4 / 2); });
     liveEdit("skp-vr", function (it, el) { var v = parseFloat(el.value); if (!(v > 0)) return; it.r = r1(measured() ? fromM(v) / 2 : v * 4 / 2); });
     var fsel = $("skp-fig"); if (fsel) fsel.addEventListener("change", function () { var it = byId(sel.id); if (!it) return; begin(); it.kind = this.value; style.fig = this.value; commit(); renderProps(); });
@@ -1734,11 +1776,12 @@
   function addItem(it) { begin(); doc().items.push(it); commit(); return it; }
   function constrain(a, p) { var dx = p.x - a.x, dy = p.y - a.y, ang = Math.round(Math.atan2(dy, dx) / (Math.PI / 4)) * (Math.PI / 4), L = Math.hypot(dx, dy); return { x: r1(a.x + Math.cos(ang) * L), y: r1(a.y + Math.sin(ang) * L) }; }
   function nextSectionLetter() { var used = doc().items.filter(function (x) { return x.type === "section"; }).map(function (x) { return x.label; }), L = "ABCDEFGHJKLMNPQRSTUVWXYZ"; for (var i = 0; i < L.length; i++) if (used.indexOf(L[i]) < 0) return L[i]; return "A"; }
-  function finishPoly(close) { if (!pend) return; var pts = pend.pts, cv = pend.curve; pend = null; renderLive();
-    if (cv) { if (pts.length >= 2) selectAfterCreate(addItem(base("poly", { pts: pts, w: style.w, ls: style.ls, curve: true, open: !close }))); return; }
+  function finishPoly(close) { if (!pend) return; var pts = pend.pts, cv = pend.curve, pl = pend.pl; pend = null; renderLive();
+    if (cv) { if (pts.length >= 2) selectAfterCreate(addItem(base("poly", { pts: pts, w: style.w, ls: style.ls, curve: true, open: !close, ml: style.ml || undefined }))); return; }
+    if (pl) { if (pts.length >= 2) selectAfterCreate(addItem(base("poly", { pts: pts, w: style.w, ls: style.ls, open: !close, ml: style.ml || undefined }))); return; }
     if (pts.length >= 3) selectAfterCreate(addItem(base("poly", { pts: pts, w: style.w, ls: style.ls }))); }
   function finishHatch() {
-    if (!pend) return; var pts = pend.pts; pend = null; renderLive();
+    if (!pend || pend.adim) return; var pts = pend.pts; pend = null; renderLive();
     if (pts.length >= 3) { var it = addItem(base("hatch", { pts: pts, pat: style.pat, outline: true, w: Math.min(style.w, 4), ls: style.ls })); selectAfterCreate(it); }
   }
   function selectAfterCreate(it) { sel = { k: "item", id: it.id }; renderContent(); renderProps(); backToSelect(); }
@@ -1812,13 +1855,18 @@
       }
       drag = { type: "hatch0", start: sp, raw: { x: p.x, y: p.y } }; return;
     }
-    if (t === "poly" || t === "curve") {
+    if (t === "dim" && style.dmode === "ang") { /* three clicks: the corner, then a point on each arm */
+      var pq = snapPt(p);
+      if (pend && pend.adim) { pend.pts.push([pq.x, pq.y]); if (pend.pts.length === 3) { var ap = pend.pts; pend = null; renderLive(); selectAfterCreate(addItem(base("adim", { pts: ap, w: Math.min(style.w, 1.5) }))); return; } status("Now click a point on the second line."); renderLive(); return; }
+      pend = { pts: [[pq.x, pq.y]], cur: pq, adim: true }; status("Angle: now click a point on the first line."); renderLive(); return;
+    }
+    if (t === "poly" || t === "curve" || (t === "line" && style.lmode === "poly")) {
       var pp = snapPt(p);
       if (pend && pend.poly) {
         if (pend.pts.length >= 3 && dist(pp, { x: pend.pts[0][0], y: pend.pts[0][1] }) < 14 * Math.max(k, 1)) { finishPoly(true); return; }
         var lp = pend.pts[pend.pts.length - 1]; if (dist(pp, { x: lp[0], y: lp[1] }) > 2) pend.pts.push([pp.x, pp.y]); renderLive(); return;
       }
-      pend = { pts: [[pp.x, pp.y]], cur: pp, poly: true, curve: t === "curve" }; renderLive(); return;
+      pend = { pts: [[pp.x, pp.y]], cur: pp, poly: true, curve: t === "curve", pl: t === "line" }; if (t === "line") status("Polyline: click each point, then press Enter or double-click to finish."); renderLive(); return;
     }
     if (t === "veg") { var qv = snapPt(p, { free: true }); drag = { type: "veg0", start: qv, temp: base("veg", { kind: style.veg || "tree", x: r1(qv.x), y: r1(qv.y), r: 40, sd: String(Math.floor(Math.random() * 1e9)), c: style.c === COLORS[0][0] ? "#2e7d32" : style.c }) }; drag.temp.id = "vtmp"; renderLive(); return; }
     if (t === "fig") { var qf = snapPt(p, { free: true }); var fg = addItem(base("fig", { x: qf.x, y: qf.y, kind: style.fig || "person" })); selectAfterCreate(fg); if (!measured()) status("No drawing scale is set, so it's sized from the grid square (" + (doc().scale || 0.2) + " m). Set a scale in Page settings for true size."); return; }
@@ -1826,6 +1874,7 @@
     if (DRAG2[t]) {
       var a = snapPt(p), ex = { x1: a.x, y1: a.y, x2: a.x, y2: a.y };
       if (t !== "udl" && t !== "dim" && t !== "section" && t !== "slope") { ex.w = t === "member" ? Math.max(style.w, 4) : t === "brk" || t === "cloud" ? Math.min(style.w, 2) : style.w; ex.ls = style.ls; }
+      if (t === "line" && style.ml) ex.ml = true;
       if (t === "udl") ex.label = "10 kN/m";
       if (t === "section") ex.label = nextSectionLetter();
       drag = { type: "seg", temp: base(t, ex), a: a }; renderLive(); return;
@@ -1975,6 +2024,7 @@
   svg.addEventListener("dblclick", function (e) {
     if (pend) { e.preventDefault(); if (pend.poly) finishPoly(); else finishHatch(); return; }
     var g = e.target.closest("[data-id]"); if (!g || !svg.contains(g)) { var hitEl = document.elementFromPoint(e.clientX, e.clientY); g = hitEl && hitEl.closest && hitEl.closest("[data-id]"); } /* the item may have been redrawn between the two clicks */
+    if (!g && tool[mode] === "select") { var pw = world(e), inL = function (b) { return b && pw.x >= b.x && pw.x <= b.x + b.w && pw.y >= b.y && pw.y <= b.y + b.h; }; if (inL(legBox.map) || inL(legBox.frame)) { e.preventDefault(); openLeg(); return; } } /* double-click the legend: its editor */
     if (g) { var it = byId(g.dataset.id); if (it && (it.type === "text" || it.type === "leader") && !locked(it)) { selectItem(it); focusText(); return; }
       if (it && !locked(it) && tool[mode] === "select") { setSel([it]); ctxMenu(e); } } /* double-click anything else: its formatting window, where you clicked */
   });
@@ -2054,7 +2104,17 @@
   stage.addEventListener("drop", function (e) { e.preventDefault(); $("sk-drop").hidden = true; var f = e.dataTransfer.files[0]; if (f) addImageFile(f); });
 
   /* ---------- Export ---------- */
-  function exportSvg() {
+  /* Strict XML (what an exported SVG, and the image the PNG and PDF are drawn from, must be) refuses a tag that sets
+     the same attribute twice, which browsers forgive on screen. Keep the last one, as the screen does. */
+  function dedupeAttrs(str) {
+    return str.replace(/<([a-zA-Z][\w:-]*)((?:\s+[\w:-]+="[^"]*")+)\s*(\/?)>/g, function (all, tag, attrs, sl) {
+      var seen = {}, list = [], re = /\s+([\w:-]+)="([^"]*)"/g, m, dup = false;
+      while ((m = re.exec(attrs))) { if (seen[m[1]] != null) { list[seen[m[1]]] = null; dup = true; } seen[m[1]] = list.length; list.push(" " + m[1] + '="' + m[2] + '"'); }
+      return !dup ? all : "<" + tag + list.filter(Boolean).join("") + (sl ? "/" : "") + ">";
+    });
+  }
+  function exportSvg() { return dedupeAttrs(exportSvg0()); }
+  function exportSvg0() {
     var d = doc(), G = geo(), c = contentStr(true);
     return '<svg xmlns="' + NS + '" xmlns:xlink="http://www.w3.org/1999/xlink" width="' + G.W + '" height="' + G.H + '" viewBox="0 0 ' + G.W + " " + G.H + '">' +
       "<defs>" + (d.grid ? gridDefs() : "") + c.defs + "</defs>" + '<rect width="' + G.W + '" height="' + G.H + '" fill="#fff"/>' +
@@ -2334,7 +2394,7 @@
      One entry per layer that is switched on. Vector layers use the colours they're drawn in. For BGS
      geology the units actually showing are found by matching the colours in the fetched map image to
      the BGS service's own renderer (its published key), and listed by their BGS LEX-RCS codes. */
-  var bgsRend = {}, bgsUnits = {}, legVer = 0, legImgs = {}, lexN = {};
+  var bgsRend = {}, bgsUnits = {}, legVer = 0, legImgs = {}, lexN = {}, lexFail = 0;
   /* Unit names from the BGS Lexicon of Named Rock Units (its linked-data pages, in Turtle): the part of a
      LEX-RCS code before the dash is the lexicon code, e.g. PET is the Peterborough Member. */
   function lexName(cd) {
@@ -2347,7 +2407,7 @@
       var nm = mm[1].replace(/\s*\[Obsolete[^\]]*\]/i, "").trim(); lexN[lx] = { n: nm };
       try { var st2 = JSON.parse(localStorage.getItem("cp-lex") || "{}"); st2[lx] = nm; localStorage.setItem("cp-lex", JSON.stringify(st2)); } catch (e) {}
       legVer++; mapKeyV = ""; renderAll();
-    }).catch(function () { lexN[lx] = { n: "" }; legVer++; mapKeyV = ""; renderAll(); });
+    }).catch(function () { lexN[lx] = { n: "" }; lexFail = Date.now(); setTimeout(function () { if (lexN[lx] && !lexN[lx].n) delete lexN[lx]; }, 300000); legVer++; mapKeyV = ""; renderAll(); }); /* try again in five minutes */
     return "";
   }
   function legImg(u) { /* the service's own key image: fetched once, measured, then drawn into the legend */
@@ -2361,6 +2421,7 @@
     return draw({ type: "line", x1: r1(x), y1: r1(y + lh / 2), x2: r1(x + sw), y2: r1(y + lh / 2), c: L.c, w: Math.min(L.w || 2, 8), ls: L.ls || "solid" });
   }
   function legendStr(m, I, forExport) {
+    var which = m ? "map" : "frame";
     var rows = [], fs = 10, sw = 22;
     if (!m) m = { legpos: doc().legpos };
     if (m.cont !== false && m.c && m.c.lines.length) rows.push({ kind: "line", c: "#8a5a2b", w: 1.3, t: "Contour, every " + m.c.iv + " m (m AOD)" });
@@ -2383,7 +2444,7 @@
           var anyName = false;
           u.list.slice(0, 14).forEach(function (q) { var labs = q.labels.slice(0, 2).map(function (cd) { var nm = lexName(cd); if (nm) anyName = true; return nm ? nm + " (" + cd + ")" : cd; }); rows.push({ kind: "fill", c: q.c, fo: m.lop || 0.6, t: labs.join("; ") + (q.labels.length > 2 ? " …" : "") }); });
           if (u.list.length > 14) rows.push({ kind: "note", t: "+ " + (u.list.length - 14) + " more units" });
-          if (u.list.length) rows.push({ kind: "note", t: anyName ? "Names from the BGS Lexicon of Named Rock Units; codes are LEX-RCS" : "Codes are BGS LEX-RCS (the BGS Lexicon couldn't be reached for the names)" });
+          if (u.list.length) rows.push({ kind: "note", t: anyName ? "Names from the BGS Lexicon of Named Rock Units; codes are LEX-RCS" : "Codes are BGS LEX-RCS. Names not found: neither the BGS map service nor the BGS Lexicon (data.bgs.ac.uk) gave them to this browser" });
         } else rows.push({ kind: "note", t: u && u.err ? "Key unavailable: " + u.err : "Reading the BGS key…" });
         return;
       }
@@ -2400,6 +2461,7 @@
       var sbm = /<rect x="([\d.-]+)" y="([\d.-]+)" width="([\d.-]+)"/.exec(scaleBar(G0, D0)), sbY = sbm ? +sbm[2] : G0.inner.y + G0.inner.h - 40, sbX1 = sbm ? +sbm[1] + +sbm[3] + 8 : G0.inner.x + 516;
       if (x < sbX1 && y + H > sbY) y = Math.max(I.y + 10, sbY - H - 8);
     }
+    if (!forExport) legBox[which] = { x: x, y: y, w: W, h: H }; /* for double-click to open the legend editor */
     var o = '<g><rect x="' + r1(x) + '" y="' + r1(y) + '" width="' + r1(W) + '" height="' + r1(H) + '" fill="#fff" fill-opacity="0.94" stroke="#15233a" stroke-width="1"/>' + txt(x + 10, y + 16, "LEGEND", "#15233a", fs + 1, "start", ' font-weight="bold"');
     var yc = y + 24;
     rows.forEach(function (r) {
@@ -2443,8 +2505,25 @@
           if (labs.length) list.push({ c: "rgb(" + rr + "," + gg + "," + bb + ")", labels: labs, n: cnt[k] });
         });
         if (mapClipKey(L) !== key) return; bgsUnits[L.id] = { key: key, list: list }; legVer++; mapKeyV = ""; renderAll();
+        namesFromService(L);
       }).catch(function (er) { fail(er.message || "couldn't read the BGS key"); });
     });
+  }
+  /* Unit names straight from the BGS map service: its features carry the lexicon code and description, so the
+     legend can name the units even when the Lexicon site doesn't answer this browser. */
+  var namesTried = {};
+  function namesFromService(L) {
+    var C = mapClipM(), k0 = L.id + ":" + Math.round(C.x0) + ":" + Math.round(C.y0); if (namesTried[k0]) return; namesTried[k0] = 1;
+    var url = L.rest + "/query?where=1%3D1&geometry=" + [C.x0, C.y0, C.x1, C.y1].map(Math.round).join("%2C") + "&geometryType=esriGeometryEnvelope&inSR=27700&spatialRel=esriSpatialRelIntersects&outFields=*&returnGeometry=false&resultRecordCount=400&f=json";
+    fetch(url).then(function (r) { if (!r.ok) throw 0; return r.json(); }).then(function (j) {
+      var got = 0;
+      (j.features || []).forEach(function (f) {
+        var a = f.attributes || {}, ks = Object.keys(a), fk = function (re) { for (var i = 0; i < ks.length; i++) if (re.test(ks[i])) return a[ks[i]]; return null; };
+        var code = fk(/^LEX$/i) || String(fk(/^LEX_RCS$/i) || "").split("-")[0], nm = fk(/^LEX_D$/i) || fk(/^LEX_?(DESC|NAME)$/i);
+        if (code && nm && !(lexN[code] && lexN[code].n)) { lexN[code] = { n: String(nm).replace(/\s*\[Obsolete[^\]]*\]/i, "").trim() }; got++; }
+      });
+      if (got) { legVer++; mapKeyV = ""; renderAll(); }
+    }).catch(function () {});
   }
   /* marching squares over the terrain grid, joined into polylines and simplified */
   function traceContours(g, iv, e0, n0) {
@@ -3394,7 +3473,7 @@
   }
   $("sk-legedit").addEventListener("click", openLeg);
   document.addEventListener("keydown", function (e) { if (e.key === "Escape" && legDlg) closeLeg(); });
-  var NAMES_ALL = { line: "Line", member: "Member", stroke: "Pen stroke", text: "Text", dim: "Dimension", leader: "Leader", hatch: "Hatch", udl: "UDL", pload: "Point load", moment: "Moment", support: "Support", inset: "Detail or viewport", image: "Image", arrow: "Arrow", rect: "Rectangle", circle: "Circle", poly: "Polygon", curve: "Curve", fig: "Scale figure", cloud: "Revision cloud", brk: "Break line", slope: "Slope marker", section: "Section marker", veg: "Vegetation", north: "North arrow", wl: "Water level" };
+  var NAMES_ALL = { line: "Line", member: "Member", stroke: "Pen stroke", text: "Text", dim: "Dimension", leader: "Leader", hatch: "Hatch", udl: "UDL", pload: "Point load", moment: "Moment", support: "Support", inset: "Detail or viewport", image: "Image", arrow: "Arrow", rect: "Rectangle", circle: "Circle", poly: "Polygon", curve: "Curve", fig: "Scale figure", adim: "Angle dimension", cloud: "Revision cloud", brk: "Break line", slope: "Slope marker", section: "Section marker", veg: "Vegetation", north: "North arrow", wl: "Water level" };
   svg.addEventListener("contextmenu", ctxMenu);
   document.addEventListener("pointerdown", function (e) { if (ctxEl && !ctxEl.contains(e.target)) closeCtx(); }, true);
   document.addEventListener("keydown", function (e) { if (e.key === "Escape" && ctxEl) closeCtx(); }, true);
