@@ -1591,7 +1591,24 @@ html.sk-mob .sk-tgh { flex: 1 1 100%; }
 /* Page settings, Layers and map, and All tools: one window style, one column, the same width */
 html:not(.sk-mob) .sk-sec:is([data-sec="sheet"], [data-sec="layers"]).sk-fly .sk-sec-in { flex-wrap: nowrap; }
 html:not(.sk-mob) .sk-sec:is([data-sec="sheet"], [data-sec="layers"]).sk-fly .sk-sec-in > *, html:not(.sk-mob) .sk-sec:is([data-sec="sheet"], [data-sec="layers"]).sk-fly .sk-layers > *, html:not(.sk-mob) .sk-sec[data-sec="sheet"].sk-fly .sk-sheetopts > *:not(.sk-check), html:not(.sk-mob) .sk-sec[data-sec="layers"].sk-fly #sk-mappanel > * { width: auto !important; max-width: none !important; align-self: stretch; }
+/* toolbar: one button style throughout, and small headings over each group */
+html:not(.sk-mob) #sk-tbar .sk-tsep { display: block; grid-column: 1 / -1; width: auto; height: auto; margin: 6px 0 1px; padding: 0 2px; background: none; font: 600 9px/1.2 var(--font-body); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); text-align: left; }
+html:not(.sk-mob) #sk-tbar .sk-tools > .sk-tsep:first-child { margin-top: 0; }
+html:not(.sk-mob) #sk-tbar:not(.sk-tbar-left):not(.sk-tbar-vert) .sk-tsep { font-size: 0; width: 1px; margin: 3px 2px; background: var(--tool-line); align-self: stretch; }
+html:not(.sk-mob) #sk-tbar:not(.sk-tbar-left):not(.sk-tbar-vert) .sk-tools > .sk-tsep:first-child { display: none; }
+html:not(.sk-mob) #sk-tbar.sk-tbar-side > .sk-side { border-top: 0; padding-top: 0; }
+html:not(.sk-mob) #sk-tbar.sk-tbar-left .sk-tbar-lay { border-top: 0; padding-top: 0; }
+html:not(.sk-mob) #sk-tbar :is(.sk-tool:not(.sk-sec-body .sk-tool), .sk-ltog, .sk-sideacts .sk-actions > *, .sk-side > details.sk-sec > summary, .sk-snapmenu > summary, select.sk-tpl) { width: 34px !important; height: 32px !important; box-sizing: border-box; border: 1px solid transparent !important; background-color: transparent !important; border-radius: 6px !important; box-shadow: none !important; color: var(--ink); }
+html:not(.sk-mob) #sk-tbar :is(.sk-tool:not(.sk-sec-body .sk-tool), .sk-ltog, .sk-sideacts .sk-actions > *, .sk-side > details.sk-sec > summary, .sk-snapmenu > summary, select.sk-tpl):hover:not(:disabled) { background-color: var(--line) !important; }
+html:not(.sk-mob) #sk-tbar .sk-tool:not(.sk-sec-body .sk-tool)[aria-pressed="true"] { background-color: var(--accent) !important; color: var(--accent-ink) !important; }
+html:not(.sk-mob) #sk-tbar .sk-ltog:has(input:checked), html:not(.sk-mob) #sk-tbar [aria-pressed="true"]:not(.sk-tool), html:not(.sk-mob) #sk-tbar > .sk-side > details.sk-sec[open] > summary { color: var(--accent) !important; border-color: var(--accent) !important; }
+html:not(.sk-mob) #sk-tbar .sk-ltog:not(:has(input:checked)) { color: var(--muted); }
+html:not(.sk-mob) #sk-tbar .sk-sideacts .sk-actions > :disabled { opacity: .4; }
+html:not(.sk-mob) #sk-tbar #sk-export { color: var(--accent) !important; }
 /* icon buttons in the map panel */
+html:not(.sk-mob) #sk-tbar select.sk-tpl { color: transparent !important; overflow: hidden; }
+html:not(.sk-mob) #sk-tbar .sk-side > details.sk-sec { background: transparent !important; border-color: transparent !important; box-shadow: none !important; }
+html:not(.sk-mob) #sk-tbar.sk-tbar-left > .sk-side > .sk-tsep { padding-left: 6px; }
 .sk-app .sk-btn.sk-ibtn, html:not(.sk-mob) .sk-app :is(.sk-sec-in, .sk-dlg, .sk-toolpop, .sk-props) .sk-btn.sk-ibtn { width: 32px !important; max-width: 32px !important; height: 28px; min-height: 28px; padding: 0 !important; display: inline-flex; align-items: center; justify-content: center; flex: 0 0 auto; }
 .sk-app .sk-btn.sk-icbtn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
 .sk-app .sk-btn.sk-ibtn svg, .sk-app .sk-btn.sk-icbtn svg { flex: 0 0 auto; display: block; }
@@ -3178,9 +3195,9 @@ html:not(.sk-mob) .sk-sec:is([data-sec="sheet"], [data-sec="layers"]).sk-fly .sk
 <script src="js/news-feed.js?v=20261122b"></script>
 <script src="js/news-archive.js?v=20261122b"></script>
 <script src="js/pages.js?v=20261122b"></script>
-<script src="js/tools/sketch-templates.js?v=20261130a"></script>
-<script src="js/tools/sketch.js?v=20261130a"></script>
-<script src="js/tools/drawing-check.js?v=20261130a"></script>
+<script src="js/tools/sketch-templates.js?v=20261130e"></script>
+<script src="js/tools/sketch.js?v=20261130e"></script>
+<script src="js/tools/drawing-check.js?v=20261130e"></script>
 <script src="js/tools/hydraulics.js?v=20261127a"></script>
 <script src="js/tools/pipeflow.js?v=20261127a"></script>
 <script src="js/tools/catchment.js?v=20261127a"></script>
@@ -3192,7 +3209,7 @@ html:not(.sk-mob) .sk-sec:is([data-sec="sheet"], [data-sec="layers"]).sk-fly .sk
 <script src="js/tools/culvert.js?v=20261127a"></script>
 <script src="js/tools/site-diary.js?v=20261127a"></script>
 <script src="js/learn.js?v=20261127m"></script>
-<script src="js/site.js?v=20261130a"></script>
+<script src="js/site.js?v=20261130e"></script>
 <script src="js/art.js?v=20261127m"></script>
 </body>
 </html>

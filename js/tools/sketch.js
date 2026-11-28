@@ -68,8 +68,8 @@
     shapes: [["line", "Line"], ["arrow", "Arrow"], ["rect", "Rectangle"], ["circle", "Circle"], ["poly", "Polygon"], ["curve", "Curve"], ["section", "Section"], ["north", "North"], ["veg", "Vegetation"], ["fig", "Scale figure"], ["brk", "Break line"], ["cloud", "Rev cloud"], ["slope", "Slope"], ["wl", "Water level"], ["image", "Image"], ["inset", "Detail window"], ["window", "New viewport"]]
   };
   /* tool groups, in order: the toolbar and All tools both follow them */
-  var TGRP = [["base", "", ["select", "eraser"]], ["lines", "Lines", ["pen", "line", "curve", "arrow", "leader", "brk", "section"]], ["shapes", "Shapes and fills", ["rect", "circle", "poly", "hatch", "cloud"]],
-    ["notes", "Text and dimensions", ["text", "dim"]], ["objects", "Objects and symbols", ["north", "veg", "fig", "wl", "slope", "image", "inset", "window"]], ["kit", "Beam and frame kit", ["member", "pin", "roller", "fixed", "pload", "udl", "moment"]]];
+  var TGRP = [["base", "", ["select", "eraser"], "Select"], ["lines", "Lines", ["pen", "line", "curve", "arrow", "leader", "brk", "section"], "Lines"], ["shapes", "Shapes and fills", ["rect", "circle", "poly", "hatch", "cloud"], "Shapes"],
+    ["notes", "Text and dimensions", ["text", "dim"], "Text"], ["objects", "Objects and symbols", ["north", "veg", "fig", "wl", "slope", "image", "inset", "window"], "Objects"], ["kit", "Beam and frame kit", ["member", "pin", "roller", "fixed", "pload", "udl", "moment"], "Beams"]];
   var HINTS = {
     select: "Click to select, drag a box to select several, Shift or Ctrl click to add or remove. Drag to move, drag a corner square to resize, drag the round grip above to rotate (Shift for 15° steps). Delete removes, Ctrl+C / Ctrl+V copy and paste, Ctrl+D duplicates, Ctrl+A selects all, Esc clears.",
     pen: "Draw freehand. Ctrl+Z undoes the last stroke.",
@@ -1448,7 +1448,7 @@
     var tb = function (t, pinUI) { var pinned = pinUI && pinsFor(mode).indexOf(t[0]) > -1; return '<button type="button" class="sk-tool' + (toolLock === t[0] ? " sk-locked" : "") + '" data-tool="' + t[0] + '" aria-pressed="' + (tool[mode] === t[0]) + '" title="' + esc(HINTS[t[0]] + (pinUI ? "" : " Right-click for its colour, width, line type, text size and transparency.")) + '">' + iconSvg(t[0]) + "<span>" + t[1] + "</span>" + (pinUI ? '<span class="sk-pin' + (pinned ? " on" : "") + '" data-pin="' + t[0] + '" role="button" tabindex="0" title="' + (pinned ? "Unpin from" : "Pin to") + ' the tools at the top" aria-label="' + (pinned ? "Unpin " : "Pin ") + t[1] + '">' + (pinned ? "★" : "☆") + "</span>" : "") + "</button>"; };
     var all = TOOLS.free.concat(TOOLS.shapes, TOOLS.kit), byT = {}; all.forEach(function (t) { byT[t[0]] = t; });
     var pins = pinsFor(mode), bar = [];
-    TGRP.forEach(function (g) { var inG = g[2].filter(function (id) { return byT[id] && pins.indexOf(id) > -1; }); if (!inG.length) return; if (bar.length) bar.push('<span class="sk-tsep" role="separator" aria-hidden="true"></span>'); inG.forEach(function (id) { bar.push(tb(byT[id])); }); });
+    TGRP.forEach(function (g) { var inG = g[2].filter(function (id) { return byT[id] && pins.indexOf(id) > -1; }); if (!inG.length) return; bar.push('<span class="sk-tsep" aria-hidden="true">' + g[3] + "</span>"); inG.forEach(function (id) { bar.push(tb(byT[id])); }); });
     $("sk-tools").innerHTML = bar.join(""); /* starred tools, in their groups, a thin rule between groups */
     var kitAll = KIT.every(function (k) { return pinsFor(mode).indexOf(k) > -1; });
     $("sk-tools2").innerHTML = TGRP.filter(function (g) { return g[0] !== "kit"; }).map(function (g) { return (g[1] ? '<span class="sk-tgh">' + g[1] + "</span>" : "") + g[2].filter(function (id) { return byT[id]; }).map(function (id) { return tb(byT[id], true); }).join(""); }).join("") +
@@ -1485,6 +1485,9 @@
     ["sk-undo", "sk-redo", "sk-clear", "sk-fit", "sk-full", "sk-help", "sk-tball"].forEach(function (id) { wrap($(id), id); });
     var sn = bar.querySelector(".sk-snapmenu > summary"); if (sn) wrap(sn, "snaps");
     var tp = $("sk-tpl"); if (tp && bar.contains(tp)) tip(tp, "Insert a typical detail");
+    var head = function (before, t) { if (!before || !before.parentNode || (before.previousElementSibling && before.previousElementSibling.classList.contains("sk-tsep"))) return; var h = document.createElement("span"); h.className = "sk-tsep sk-tsep-x"; h.setAttribute("aria-hidden", "true"); h.textContent = t; before.parentNode.insertBefore(h, before); };
+    var side = bar.querySelector(":scope > .sk-side"); if (side) { head(side.querySelector(':scope > details.sk-sec[data-sec="alltools"]'), "Sheet"); head(side.querySelector(":scope > .sk-sideacts"), "Actions"); }
+    var lay = $("sk-tblay"); if (lay && lay.firstElementChild && !lay.querySelector(".sk-tsep")) { var hl = document.createElement("span"); hl.className = "sk-tsep sk-tsep-x"; hl.setAttribute("aria-hidden", "true"); hl.textContent = "Layers"; lay.insertBefore(hl, lay.firstElementChild); }
     var ex = $("sk-export"); if (ex) { ex.setAttribute("data-tip", "Export"); ex.removeAttribute("title"); }
   }
   setTimeout(iconBar, 0);
