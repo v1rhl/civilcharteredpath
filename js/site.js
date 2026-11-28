@@ -63,7 +63,13 @@
     reference: '<path d="M5 4h11a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3z"/><path d="M5 17a3 3 0 0 1 3-3h11"/><path d="M9 8h6"/>',
     planner: '<rect x="3" y="4" width="18" height="16" rx="1.5"/><path d="M6 9h6M9 13h7M13 17h5"/>',
     flashcards: '<rect x="7" y="3" width="14" height="11" rx="1.5"/><path d="M4 7v11a2 2 0 0 0 2 2h11"/>',
-    check: '<path d="M6 3h9l4 4v14H6z"/><path d="M15 3v4h4"/><path d="M9 14l2 2 4-4"/>',
+    sketch: '<path d="M4 20l4-1 11-11-3-3L5 16z"/><path d="M14 7l3 3"/><path d="M3 21h18"/>',
+    pipeflow: '<circle cx="12" cy="12" r="8"/><path d="M4.5 14.5h15"/><path d="M6 17.5c2-.8 4-.8 6 0s4 .8 6 0"/>',
+    "drawing-check": '<rect x="4" y="3" width="16" height="18" rx="1"/><path d="M8 8l1.5 1.5L12 7M8 14l1.5 1.5L12 13"/><path d="M14 8h3M14 14h3"/>',
+    catchment: '<path d="M3 18c3-6 6-9 9-12 3 3 6 6 9 12z"/><path d="M12 6v12"/><path d="M8 14l4 4 4-4"/>',
+    manhole: '<rect x="7" y="3" width="10" height="4"/><path d="M8 7v13h8V7"/><path d="M3 16h5M16 16h5"/>',
+    "retaining-wall": '<path d="M7 3v17h10"/><path d="M7 3h3v17"/><path d="M10 9l8-2M10 13l8-1"/>',
+    "check-generic": '<circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M5.6 18.4l2.1-2.1M16.3 7.7l2.1-2.1"/>',
     news: '<rect x="3" y="5" width="15" height="15" rx="1.5"/><path d="M18 9h3v9a2 2 0 0 1-2 2"/><path d="M6 9h9M6 13h9M6 17h6"/>'
   };
   function icon(k) { return '<svg class="card-icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="stroke:var(--accent)">' + (ICONS[k] || "") + "</svg>"; }
@@ -220,18 +226,6 @@
   renderProgress();
   window.addEventListener("hashchange", function () { if (location.hash === "" || location.hash === "#home") renderProgress(); });
 
-  /* A flashcard to try */
-  var POOL = (window.FACT_CARDS || []).map(function (c) { return { deck: c.deck, q: c.q, a: c.a }; });
-  var cur = null, shown = false;
-  function nextCard() { cur = POOL[Math.floor(Math.random() * POOL.length)]; shown = false; drawCard(); }
-  function drawCard() {
-    if (!cur) return;
-    $("home-card").innerHTML = '<span class="deck">' + esc(cur.deck) + '</span><span class="q">' + esc(cur.q) + "</span>" + (shown ? '<span class="a">' + esc(cur.a) + "</span>" : "") + '<span class="hint">' + (shown ? "Tap for the question only" : "Tap to see the answer") + "</span>";
-  }
-  $("home-card").addEventListener("click", function () { shown = !shown; drawCard(); });
-  $("home-card-next").addEventListener("click", nextCard);
-  if (POOL.length) nextCard();
-
   /* Seven attributes wheel */
   (function () {
     if (!$("home-wheel")) return;
@@ -252,11 +246,6 @@
     levelHooks.push(function () { var t = document.getElementById("wheel-level"); if (t) t.textContent = LEVEL === "ieng" ? "IEng" : "CEng"; });
     $("home-wheel-key").innerHTML = (window.ATTRIBUTES || []).map(function (a) { return "<li>" + esc(a.title) + "</li>"; }).join("");
   })();
-
-  var latest = N[0];
-  $("home-news").innerHTML = '<p class="small mono">' + esc(latest.week) + "</p>" + latest.items.slice(0, 3).map(function (i) {
-    return '<div><strong>' + ext(i.url, i.t) + "</strong></div>";
-  }).join("");
 
   /* Route */
   $("route-list").innerHTML = R.map(function (s, i) {
@@ -567,12 +556,29 @@
     var hub = $("tools-hub"), navA = document.querySelector('#nav a[href="#tools"]');
     if (navA) navA.dataset.group = ["tools"].concat(toolIds).join(" ");
     if (hub) hub.innerHTML = TOOLS.length ? TOOLS.map(function (t) {
-      return '<a class="panel tool tool-card" href="#' + esc(t.id) + '"><h3>' + esc(t.label) + "</h3>" + (t.blurb ? "<p>" + esc(t.blurb) + "</p>" : "") + '<span class="more">Open ' + esc(t.label.toLowerCase()) + "</span></a>";
+      return '<a class="panel tool tool-card" href="#' + esc(t.id) + '" aria-label="Open ' + esc(t.label.toLowerCase()) + '">' + icon(ICONS[t.id] ? t.id : "check-generic") + "<h3>" + esc(t.label) + "</h3>" + (t.blurb ? "<p>" + esc(t.blurb) + "</p>" : "") + "</a>";
     }).join("") : '<p class="small">No tools yet.</p>';
   })();
 
   /* Routing on the hash */
-  var views = ["home", "route", "careers", "resources", "attributes", "planner", "flashcards", "review", "presentation", "questions", "news", "check", "cheat-sheet", "community", "tools"].concat(toolIds);
+  /* Top-level sections. Chartership holds everything for the review itself; Guidance holds wider technical and career
+     guidance; Tools is built from CP_TOOLS. A Learning section slots in by adding <section id="view-learning"> (and,
+     if it has sub-pages, its ids to SECTIONS.learning below): its nav tab is hidden until that section exists. */
+  var SECTIONS = {
+    chartership: [["route", "The route"], ["planner", "Planner"], ["attributes", "Attributes"], ["review", "Review day"], ["presentation", "Presentation tips"], ["flashcards", "Flashcards"], ["questions", "Practice questions"], ["cheat-sheet", "Cheat sheet"]],
+    guidance: [["resources", "Technical resources"], ["careers", "Careers"]],
+    learning: [["learning", "Overview"], ["nec4", "NEC4 contracts"], ["cdm", "CDM 2015 by role"], ["learn-theory", "How engineers learn"]],
+    tools: [["tools", "All tools"]].concat(TOOLS.map(function (t) { return [t.id, t.label]; }))
+  };
+  var learnA = document.querySelector('#nav a[href="#learning"]');
+  if (learnA) {
+    SECTIONS.learning = SECTIONS.learning.filter(function (x) { return $("view-" + x[0]); });
+    learnA.hidden = !SECTIONS.learning.length;
+    learnA.dataset.group = SECTIONS.learning.map(function (x) { return x[0]; }).join(" ");
+  }
+  function sectionOf(v) { for (var k in SECTIONS) if (SECTIONS[k].some(function (x) { return x[0] === v; })) return k; return ""; }
+  var views = ["home", "news", "community"];
+  Object.keys(SECTIONS).forEach(function (k) { SECTIONS[k].forEach(function (x) { if (views.indexOf(x[0]) < 0 && $("view-" + x[0])) views.push(x[0]); }); });
   function route() {
     var v = (location.hash || "#home").slice(1).split("?")[0]; /* tools may pass parameters, e.g. #pipeflow?Q=12 */
     if (v === "reference") { v = "cheat-sheet"; history.replaceState(null, "", "#cheat-sheet"); }
@@ -583,11 +589,9 @@
     Array.prototype.forEach.call(document.querySelectorAll("#nav a"), function (a) {
       if ((a.dataset.group || "").split(" ").indexOf(v) > -1) a.setAttribute("aria-current", "page"); else a.removeAttribute("aria-current");
     });
-    var SUB = { planner: [["planner", "Planner"], ["route", "The route"], ["careers", "Careers"], ["resources", "Resources"]], review: [["review", "Overview"], ["presentation", "Presentation tips"], ["flashcards", "Flashcards"], ["questions", "Practice questions"], ["cheat-sheet", "Cheat sheet"]],
-      tools: [["tools", "All tools"]].concat(TOOLS.map(function (t) { return [t.id, t.label]; })) };
-    var grp = ["planner", "route", "careers", "resources"].indexOf(v) > -1 ? "planner" : ["review", "presentation", "flashcards", "questions", "cheat-sheet"].indexOf(v) > -1 ? "review" : (v === "tools" || toolIds.indexOf(v) > -1) ? "tools" : "";
+    var grp = sectionOf(v); if (grp && SECTIONS[grp].length < 2) grp = "";
     $("subnav").hidden = !grp;
-    $("subnav").innerHTML = grp ? SUB[grp].map(function (x) { return '<a href="#' + x[0] + '"' + (x[0] === v ? ' aria-current="page"' : "") + ">" + x[1] + "</a>"; }).join("") : "";
+    $("subnav").innerHTML = grp ? SECTIONS[grp].map(function (x) { return '<a href="#' + x[0] + '"' + (x[0] === v ? ' aria-current="page"' : "") + ">" + x[1] + "</a>"; }).join("") : "";
     var withSources = ["route", "attributes", "review", "presentation", "cheat-sheet", "planner"].indexOf(v) > -1;
     document.body.classList.toggle("on-planner", v === "planner");
     $("sources-box").hidden = v === "planner"; $("ice-res-box").hidden = v !== "planner";
@@ -601,12 +605,8 @@
   window.addEventListener("hashchange", route);
 
   /* Dropdown menus on the top nav. Tap a section to open its list; tap it again (or pick an item) to go. */
-  var MENUS = {
-    planner: [["planner", "Planner"], ["route", "The route"], ["careers", "Careers"], ["resources", "Technical resources"]],
-    attributes: [["attributes", "All seven attributes"]].concat(A.map(function (a, i) { return ["attributes-" + (i + 1), a.n + ". " + a.title]; })),
-    review: [["review", "Overview"], ["presentation", "Presentation tips"], ["flashcards", "Revision flashcards"], ["questions", "Practice questions"], ["cheat-sheet", "Cheat sheet"]],
-    tools: [["tools", "All tools"]].concat(TOOLS.map(function (t) { return [t.id, t.label]; }))
-  };
+  var MENUS = { route: SECTIONS.chartership, resources: SECTIONS.guidance, tools: SECTIONS.tools };
+  if (SECTIONS.learning.length > 1) MENUS.learning = SECTIONS.learning;
   var nav = $("nav"), menu = document.createElement("div"), openFor = null;
   menu.id = "navmenu"; menu.className = "navmenu"; menu.hidden = true;
   nav.parentNode.appendChild(menu);

@@ -200,6 +200,33 @@
       "&scaleSize=i(" + n + "),j(" + n + ")&format=text%2Fplain";
   };
 
+  /* Large squares are fetched as tiles of at most `tile` cells a side (a size the EA service is known
+     to answer quickly) and stitched. Returns the requests and where each sits in the stitched grid. */
+  R.tilePlan = function (x0, y0, size, n, tile) {
+    var k = Math.ceil(n / tile), cell = size / n, out = [];
+    for (var row = 0; row < k; row++) for (var col = 0; col < k; col++) {
+      var c0 = col * tile, r0 = row * tile, w = Math.min(tile, n - c0), h = Math.min(tile, n - r0);
+      var tx0 = x0 + c0 * cell, ty1 = y0 + size - r0 * cell;
+      out.push({ c0: c0, r0: r0, w: w, h: h, x0: tx0, y0: ty1 - h * cell, x1: tx0 + w * cell, y1: ty1 });
+    }
+    return out;
+  };
+  R.tileUrl = function (t) {
+    return R.EA_WCS + "?service=WCS&version=2.0.1&request=GetCoverage&coverageId=" + R.EA_COVERAGE +
+      "&subset=E(" + t.x0 + "," + t.x1 + ")&subset=N(" + t.y0 + "," + t.y1 + ")" +
+      "&scaleSize=i(" + t.w + "),j(" + t.h + ")&format=text%2Fplain";
+  };
+  /* Stitch parsed tiles (same order as the plan) into one grid. */
+  R.mosaic = function (plan, grids, x0, y0, size, n) {
+    var z = new Float32Array(n * n).fill(NaN);
+    plan.forEach(function (t, k) {
+      var g = grids[k];
+      if (g.nx !== t.w || g.ny !== t.h) throw new Error("A terrain tile came back the wrong size (" + g.nx + " × " + g.ny + ").");
+      for (var r = 0; r < t.h; r++) z.set(g.z.subarray(r * t.w, (r + 1) * t.w), (t.r0 + r) * n + t.c0);
+    });
+    return { nx: n, ny: n, x0: x0, y0: y0, cell: size / n, z: z };
+  };
+
   var DX = [1, 1, 0, -1, -1, -1, 0, 1], DY = [0, 1, 1, 1, 0, -1, -1, -1];  /* E, SE, S, SW, W, NW, N, NE (rows go down) */
 
   /* Priority-flood depression filling with a tiny gradient, D8 directions and flow accumulation. */
@@ -373,7 +400,7 @@
     '<div class="table-wrap"><table class="ct-t ct-in"><thead><tr><th>Name</th><th>Area (ha)</th><th>Impermeable (%)</th><th>Flow path length (m)</th><th>Slope (%)</th><th>Travel time override (min)</th><th></th></tr></thead><tbody id="ct-subs"></tbody></table></div>' +
     '<div class="ct-actions"><button type="button" class="ct-row-btn" id="ct-sub-add">Add sub-catchment</button></div>' +
     '<details class="ct-more" id="ct-lidar-box"><summary>Find a catchment from LiDAR (England)</summary><div id="ct-lidar" style="display:flex;flex-direction:column;gap:12px;margin-top:12px"></div></details></div>' +
-    '<div class="panel"><div class="ct-actions" style="justify-content:space-between"><h3>4. Results</h3><div class="ct-actions"><a class="btn ghost" id="ct-pipe" href="#pipeflow">Size a pipe for this flow</a><button type="button" class="btn" id="ct-csv">Download CSV</button></div></div>' +
+    '<div class="panel"><div class="ct-actions" style="justify-content:space-between"><h3>4. Results</h3><div class="ct-actions"><a class="btn ghost" id="ct-pipe" href="#pipeflow">Size a pipe for this flow</a><a class="btn ghost" id="ct-culvert" href="#culvert">Check a culvert for this flow</a><button type="button" class="btn" id="ct-csv">Download CSV</button></div></div>' +
     '<div class="ct-big" id="ct-big"></div><div class="table-wrap"><table class="ct-t"><thead><tr><th>Sub-catchment</th><th class="num">Area (ha)</th><th class="num">C</th><th class="num">Tc (min)</th><th class="num">i (mm/h)</th><th class="num">Peak Q (l/s)</th><th class="num">Greenfield Q (l/s)</th><th class="num">Runoff vol (m³)</th><th class="num">Greenfield vol (m³)</th><th class="num">Extra vol (m³)</th></tr></thead><tbody id="ct-res"></tbody></table></div>' +
     '<p class="small" id="ct-flags"></p></div>' +
     '<div class="panel ref"><h3>Working and equations</h3><pre class="ct-work" id="ct-work"></pre>' +
@@ -438,6 +465,8 @@
     if (tot.A > 200) flags.push("The total area is large for the rational method. Consider a hydrograph method.");
     $("ct-flags").innerHTML = flags.join(" ");
     var pipe = $("ct-pipe"); if (c) pipe.href = "#pipeflow?Q=" + Math.round(c.Q);
+    var culv = $("ct-culvert"); if (culv && c) culv.href = "#culvert?Qls=" + Math.round(c.Q);
+    window.CPCatchment = { peakLs: function () { return c ? c.Q : null; } }; /* read by the culvert tool */
     renderWork();
     save();
   }
@@ -532,7 +561,8 @@
   renderAll();
 
   /* ---------- LiDAR step ---------- */
-  var SIZES = [[500, 1], [1000, 2], [2000, 4], [4000, 8]];
+  /* [square side (m), cell (m)]: at most 1000 × 1000 cells, fetched as 500-cell tiles */
+  var SIZES = [[500, 1], [1000, 2], [2000, 2], [4000, 4], [6000, 6], [10000, 10], [20000, 20]], TILE = 500;
   $("ct-lidar").innerHTML =
     '<p class="small">Fetches the Environment Agency\'s open 1 m LiDAR terrain model (DTM, Open Government Licence) for a square around a point in England, finds where water flows, and works out the area draining to the point you tap, its longest flow path and slope. Or load your own terrain grid as an ESRI ASCII .asc file (the format the EA\'s download portal offers), from anywhere. Everything runs in your browser; the only thing sent anywhere is the square\'s coordinates, to the EA.</p>' +
     '<div class="ct-terrain"><div style="display:flex;flex-direction:column;gap:10px">' +
@@ -545,7 +575,7 @@
     '<div style="display:flex;flex-direction:column;gap:8px"><canvas id="ct-dem" width="10" height="10" hidden aria-label="Terrain with flow lines; tap to set the catchment outlet"></canvas>' +
     '<div class="ct-legend" id="ct-legend" hidden><span><i style="background:#2f7fd6"></i>Flow lines</span><span><i style="background:rgba(13,107,120,.45)"></i>Catchment</span><span><i style="background:#d6452f"></i>Longest flow path</span><span><i style="background:#f2b705"></i>Outlet</span></div>' +
     '<div id="ct-catch" style="display:flex;flex-direction:column;gap:8px"></div></div></div>' +
-    '<p class="small">Limits: a bare-earth model doesn\'t know about pipes, culverts, kerbs, walls or ditches smaller than a cell, so urban catchments in particular need checking against drainage records and a site walk. Depressions are filled so all water reaches an edge. If the catchment touches the edge of the square it is cut off: fetch a bigger square. Impermeable area isn\'t found from LiDAR; enter it yourself.</p>';
+    '<p class="small">Limits: a bare-earth model doesn\'t know about pipes, culverts, kerbs, walls or ditches smaller than a cell, so urban catchments in particular need checking against drainage records and a site walk. Depressions are filled so all water reaches an edge. If the catchment touches the edge of the square it is cut off: use "Fetch a bigger square upstream". Bigger squares use coarser cells (up to 20 m on the 20 km square), which smooths out small channels and banks; above a few hundred hectares the rational method is not appropriate anyway. Impermeable area isn\'t found from LiDAR; enter it yourself.</p>';
 
   var grid = null, an = null, cat = null, outlet = -1, centre = null;
   function status(msg) { $("ct-status").textContent = msg; }
@@ -584,19 +614,57 @@
     if (!map || !centre) return;
     var half = SIZES[+$("ct-size").value][0] / 2, pts = [[-1, -1], [1, -1], [1, 1], [-1, 1]].map(function (c) { var ll = R.bngToWgs(centre.e + c[0] * half, centre.n + c[1] * half); return [ll.lat, ll.lon]; });
     if (mapSq) mapSq.remove();
-    mapSq = window.L.polygon(pts, { color: "#0d6b78", weight: 2, fillOpacity: 0.08 }).addTo(map);
+    mapSq = window.L.polygon(pts, { color: "#0b4f6c", weight: 2, fillOpacity: 0.08 }).addTo(map);
   }
 
   $("ct-fetch").addEventListener("click", function () {
     if (!centre) { var c = R.parseLocation($("ct-loc").value); if (c) setCentre(c.e, c.n, true); }
     if (!centre) { status("Enter a grid reference or pick a point on the map first."); return; }
+    fetchSquare(null);
+  });
+  function fetchSquare(keepOutlet) {
     var s = SIZES[+$("ct-size").value], x0 = Math.round(centre.e - s[0] / 2), y0 = Math.round(centre.n - s[0] / 2), n = s[0] / s[1];
-    var btn = this; btn.disabled = true; status("Fetching " + n + " × " + n + " cells from the Environment Agency…");
-    fetch(R.eaUrl(x0, y0, s[0], n)).then(function (r) { if (!r.ok) throw new Error("The EA service answered " + r.status + "."); return r.text(); })
-      .then(function (t) { useGrid(R.parseWcsText(t), "EA LiDAR composite DTM, " + s[1] + " m cells, © Environment Agency, Open Government Licence"); })
+    var plan = R.tilePlan(x0, y0, s[0], n, TILE), grids = new Array(plan.length), next = 0, done = 0;
+    var btn = $("ct-fetch"); btn.disabled = true;
+    function msg() { status("Fetching " + n + " × " + n + " cells from the Environment Agency" + (plan.length > 1 ? " (" + done + " of " + plan.length + " tiles)" : "") + "…"); }
+    msg();
+    function worker() {
+      if (next >= plan.length) return Promise.resolve();
+      var k = next++;
+      return fetch(R.tileUrl(plan[k])).then(function (r) { if (!r.ok) throw new Error("The EA service answered " + r.status + "."); return r.text(); })
+        .then(function (t) { grids[k] = R.parseWcsText(t); done++; msg(); return worker(); });
+    }
+    var workers = []; for (var w = 0; w < Math.min(3, plan.length); w++) workers.push(worker());
+    Promise.all(workers)
+      .then(function () {
+        var mg = R.mosaic(plan, grids, x0, y0, s[0], n); mg.fromEA = true; useGrid(mg, "EA LiDAR composite DTM, " + s[1] + " m cells, © Environment Agency, Open Government Licence");
+        if (keepOutlet) setOutletAt(keepOutlet.e, keepOutlet.n);
+      })
       .catch(function (err) { status("Couldn't fetch terrain: " + err.message + " The EA service may be busy; try again, or download a tile from the EA portal and load the .asc."); })
       .then(function () { btn.disabled = false; });
-  });
+  }
+  /* Re-centre on a cut-off catchment, shifted upstream, and fetch the next square up that should hold it. */
+  function extendUpstream() {
+    var g = grid, nx = g.nx, minx = nx, maxx = 0, miny = g.ny, maxy = 0;
+    for (var i = 0; i < nx * g.ny; i++) if (cat.mask[i]) { var x = i % nx, y = (i / nx) | 0; if (x < minx) minx = x; if (x > maxx) maxx = x; if (y < miny) miny = y; if (y > maxy) maxy = y; }
+    var toE = function (x) { return g.x0 + (x + 0.5) * g.cell; }, toN = function (y) { return g.y0 + (g.ny - y - 0.5) * g.cell; };
+    var o = { e: toE(outlet % nx), n: toN(Math.floor(outlet / nx)) };
+    var bc = { e: (toE(minx) + toE(maxx)) / 2, n: (toN(miny) + toN(maxy)) / 2 };
+    var span = Math.max(maxx - minx, maxy - miny) * g.cell, cur = +$("ct-size").value, k = cur + 1;
+    while (k < SIZES.length - 1 && SIZES[k][0] < span * 2.2) k++;
+    if (k >= SIZES.length) { status("This is already the largest square (20 km). For bigger catchments, use a hydrological model rather than the rational method."); return; }
+    var c = { e: bc.e + (bc.e - o.e) * 0.6, n: bc.n + (bc.n - o.n) * 0.6 }, lim = SIZES[k][0] / 2 * 0.85;
+    c.e = Math.min(Math.max(c.e, o.e - lim), o.e + lim); c.n = Math.min(Math.max(c.n, o.n - lim), o.n + lim);
+    $("ct-size").value = String(k); setCentre(c.e, c.n);
+    fetchSquare(o);
+  }
+  function setOutletAt(e, n) {
+    var g = grid; if (!g) return;
+    var x = Math.floor((e - g.x0) / g.cell), y = Math.floor((g.y0 + g.ny * g.cell - n) / g.cell);
+    if (x < 0 || y < 0 || x >= g.nx || y >= g.ny) return;
+    outlet = R.snap(g, an, x + y * g.nx, 2);
+    cat = R.catchment(g, an, outlet); draw(); showCatch();
+  }
   $("ct-file").addEventListener("change", function () {
     var file = this.files[0]; if (!file) return;
     if (file.size > 60e6) { status("That file is too big to work with in a browser. Crop it to the area you need."); return; }
@@ -663,9 +731,11 @@
       '<div class="ct-big"><div><span>Catchment area</span><b>' + f(cat.area / 10000, 2) + ' ha</b><span>' + cat.cells.toLocaleString() + " cells</span></div>" +
       "<div><span>Longest flow path</span><b>" + f(cat.L, 0) + ' m</b><span>' + f(cat.zTop, 1) + " m to " + f(cat.zOut, 1) + " m</span></div>" +
       "<div><span>Slope along path</span><b>" + f(useSlope * 100, 2) + ' %</b><span>10–85% points; end to end ' + f(cat.slope * 100, 2) + " %</span></div></div>" +
-      '<p class="small">Outlet at E ' + Math.round(ox) + ", N " + Math.round(oy) + "." + (cat.touchesEdge ? ' <span class="ct-flag">The catchment reaches the edge of the square, so it is probably cut off. Fetch a bigger square centred further upstream.</span>' : "") +
+      '<p class="small">Outlet at E ' + Math.round(ox) + ", N " + Math.round(oy) + "." + (cat.touchesEdge ? ' <span class="ct-flag">The catchment reaches the edge of the square, so it is probably cut off.</span>' : "") +
       (cat.cells < 20 ? ' <span class="ct-flag">Very small: tap closer to a blue flow line.</span>' : "") + "</p>" +
-      '<div class="ct-actions"><button type="button" class="btn" id="ct-add-catch">Add as a sub-catchment</button></div>';
+      '<div class="ct-actions"><button type="button" class="btn" id="ct-add-catch">Add as a sub-catchment</button>' +
+      (cat.touchesEdge && grid.fromEA ? '<button type="button" class="btn ghost" id="ct-extend">Fetch a bigger square upstream</button>' : "") + "</div>";
+    if ($("ct-extend")) $("ct-extend").addEventListener("click", extendUpstream);
     $("ct-add-catch").addEventListener("click", function () {
       state.subs.push({ name: "LiDAR catchment E" + Math.round(ox) + " N" + Math.round(oy), area: +(cat.area / 10000).toFixed(3), imp: 0, length: Math.round(cat.L), slope: +(useSlope * 100).toFixed(2), tcOverride: "" });
       renderSubs(); calc(); status("Added. Set its impermeable percentage in the table above.");
